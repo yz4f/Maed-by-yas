@@ -1,6 +1,6 @@
 import { Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDrMw5gxptqdancpaoSu2Mg0_C1DcSVqn8",
@@ -215,25 +215,35 @@ export const StoreDB = {
 
   async bulkAddKeys(productId: string, rawKeysText: string, createdById: string): Promise<{success: boolean; count: number}> {
     try {
-      const lines = rawKeysText.split('\\n').map(l => l.trim()).filter(l => l.length > 0);
+      const db = getDb();
+      const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
       let count = 0;
-      for (const keyString of lines) {
-        const newKey: Key = {
-          id: `key-${Date.now()}-${count}`,
-          key: keyString,
-          productId,
-          isUsed: false,
-          isDisabled: false,
-          isArchived: false,
-          duration: 'Lifetime',
-          createdById,
-          createdAt: new Date().toISOString()
-        };
-        await setDoc(doc(db, "keys", newKey.id), newKey);
-        count++;
+      
+      const BATCH_SIZE = 400;
+      for (let i = 0; i < lines.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = lines.slice(i, i + BATCH_SIZE);
+        
+        for (const keyString of chunk) {
+          const newKey: Key = {
+            id: `key-${Date.now()}-${count}`,
+            key: keyString,
+            productId,
+            isUsed: false,
+            isDisabled: false,
+            isArchived: false,
+            duration: 'Lifetime',
+            createdById,
+            createdAt: new Date().toISOString()
+          };
+          batch.set(doc(db, "keys", newKey.id), newKey);
+          count++;
+        }
+        await batch.commit();
       }
       return { success: true, count };
     } catch (e) {
+      console.error(e);
       return { success: false, count: 0 };
     }
   },

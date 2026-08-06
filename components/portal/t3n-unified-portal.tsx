@@ -2276,128 +2276,191 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
               )}
 
-              {/* TAB: الأكواد المتاحة (Salla Style) */}
+              {/* TAB: الأكواد المتاحة (Premium T3N Style) */}
               {inventoryTab === 'codes' && (
                 <div className="space-y-4">
                   
                   {keyActionMessage && (
-                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-semibold flex items-center justify-between">
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-semibold flex items-center justify-between shadow-lg">
                       <span>{keyActionMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
-                  {/* Salla-style Alert Info Box */}
-                  <div className="bg-[#1e2329] border border-white/5 rounded-md p-3.5 flex items-center justify-between text-sm">
-                    <div className="w-5 h-5 rounded-full border border-sky-400/50 flex items-center justify-center text-sky-400 font-serif italic text-xs shrink-0">i</div>
-                    <div className="flex-1 text-right text-slate-300 font-medium pr-3">
-                      لإضافة مجموعة أكواد دفعة واحدة <button onClick={() => setBulkAddOpen(!bulkAddOpen)} className="text-sky-400 underline underline-offset-4 hover:text-sky-300 cursor-pointer">اضغط هنا</button>
+                  {/* Premium Info Box */}
+                  <div className="bg-[#080a0f] border border-sky-500/20 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden shadow-lg">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500/30 flex items-center justify-center shrink-0">
+                        <Layers className="w-4 h-4 text-sky-400" />
+                      </div>
+                      <div className="flex-1 text-right">
+                        <h4 className="text-sm font-bold text-white mb-0.5">إدارة المخزون الذكية</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          يمكنك إضافة آلاف المفاتيح دفعة واحدة بدون أي تأخير. النظام سيقوم بمعالجتها في الخلفية.
+                        </p>
+                      </div>
                     </div>
+                    {!bulkAddOpen && (
+                      <button 
+                        onClick={() => setBulkAddOpen(true)}
+                        className="w-full py-2.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 text-xs font-bold rounded-lg transition-all cursor-pointer mt-1"
+                      >
+                        فتح لوحة الإضافة السريعة (Batch Add)
+                      </button>
+                    )}
                   </div>
 
-                  {bulkAddOpen && (
-                    <div className="bg-[#10131a] border border-[#1a1f2e] rounded-xl p-5 space-y-4 shadow-xl">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-lime-400 font-bold tracking-widest uppercase">Batch Key Input</span>
-                      </div>
-                      <textarea
-                        rows={6}
-                        value={bulkKeysText}
-                        onChange={(e) => setBulkKeysText(e.target.value)}
-                        placeholder="KEY-ABC123-XYZ&#10;KEY-DEF456-UVW&#10;KEY-GHI789-RST"
-                        className={`w-full bg-[#0b0d14] border rounded-lg p-4 text-sm text-lime-300 font-mono placeholder:text-slate-600 focus:outline-none transition-all ${isAddingKeys ? 'border-lime-500 shadow-[0_0_15px_rgba(163,230,53,0.3)]' : 'border-[#1f2638] focus:border-lime-500/50'}`}
-                        style={{ lineHeight: '1.6' }}
-                      />
-                      {bulkMessage && (
-                        <div className="p-3 bg-lime-500/10 text-lime-400 text-xs rounded-lg font-bold text-center border border-lime-500/20 shadow-[0_0_10px_rgba(163,230,53,0.2)]">
-                          {bulkMessage}
-                        </div>
-                      )}
-                      <button
-                        onClick={handleBulkAddKeys}
-                        disabled={isAddingKeys || !bulkKeysText.trim()}
-                        className={`w-full py-3.5 font-extrabold text-sm rounded-lg transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-lime-400 hover:bg-lime-300 text-black shadow-[0_0_20px_rgba(163,230,53,0.4)]' : 'bg-[#1f2638] text-slate-500 cursor-not-allowed'}`}
+                  {/* Bulk Add Panel */}
+                  <AnimatePresence>
+                    {bulkAddOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -10, height: 0 }}
+                        className="bg-[#10131a] border border-[#1e2330] rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden"
                       >
-                        {isAddingKeys ? (
-                          <>
-                            <RefreshCw className="w-5 h-5 animate-spin" />
-                            <span>جاري المعالجة الفورية...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-5 h-5" />
-                            <span>إضافة الأكواد دفعة واحدة</span>
-                          </>
-                        )}
-                      </button>
-                      {isAddingKeys && (
-                         <div className="w-full h-1 bg-[#0b0d14] rounded-full overflow-hidden mt-2">
-                           <div className="h-full bg-lime-400 w-full animate-[pulse_0.5s_ease-in-out_infinite] shadow-[0_0_10px_rgba(163,230,53,1)]" />
-                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* List of existing keys styled like Salla inputs */}
-                  {isLoadingKeys ? (
-                    <div className="text-center py-12 text-slate-400 text-xs">
-                      <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#b8f5d5]" />
-                      <span>جارٍ تحميل الأكواد...</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {inventoryKeys.map((keyItem) => (
-                        <div key={keyItem.id} className="bg-[#1a1d22] border border-[#262a33] rounded-md overflow-hidden flex items-center justify-between p-3 gap-4">
-                          <div className="flex-1 text-sm text-white font-mono break-all text-left" dir="ltr">
-                            {keyItem.key}
-                          </div>
-                          <button
-                            onClick={() => handleDeleteKey(keyItem.id)}
-                            className="shrink-0 px-3 py-1.5 border border-rose-500/50 text-rose-500 hover:bg-rose-500/10 rounded-md text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>حذف</span>
+                        <div className="absolute top-0 right-0 p-3">
+                          <button onClick={() => setBulkAddOpen(false)} className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer p-1">
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
-                      ))}
-
-                      {/* Single Add Key Block */}
-                      {singleAddOpen && (
-                        <div className="bg-[#1a1d22] border border-[#262a33] rounded-md p-3 flex gap-2">
-                          <input
-                            type="text"
-                            value={singleKeyText}
-                            onChange={(e) => setSingleKeyText(e.target.value)}
-                            placeholder="أدخل المفتاح هنا..."
-                            className="flex-1 bg-[#1e2329] border border-[#262a33] rounded-md px-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 text-left"
+                        
+                        <div className="flex justify-between items-center pr-2">
+                          <span className="text-xs text-sky-400 font-bold tracking-widest uppercase">Batch Keys</span>
+                          {bulkKeysText.trim() && (
+                            <span className="text-xs font-bold bg-sky-500/20 text-sky-400 px-2 py-1 rounded-md">
+                              {bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0).length} مفاتيح
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="relative">
+                          <textarea
+                            rows={6}
+                            value={bulkKeysText}
+                            onChange={(e) => setBulkKeysText(e.target.value)}
+                            placeholder="الصق المفاتيح هنا...&#10;يمكنك الفصل بينها بمسافة أو فاصلة أو سطر جديد."
+                            className={`w-full bg-[#080a0f] rounded-xl p-4 text-sm font-mono placeholder:text-slate-600 focus:outline-none transition-all resize-y min-h-[120px] ${isAddingKeys ? 'border border-sky-500 shadow-[0_0_15px_rgba(14,165,233,0.2)] text-sky-300' : 'border border-[#1e2330] focus:border-sky-500/50 text-slate-300 hover:border-[#2a3140]'}`}
+                            style={{ lineHeight: '1.8' }}
                             dir="ltr"
                           />
-                          <button
-                            onClick={handleAddSingleKey}
-                            className="px-4 py-2 bg-[#b8f5d5] hover:bg-[#9debc3] text-[#0f1115] font-bold text-sm rounded-md transition-all cursor-pointer whitespace-nowrap"
-                          >
-                            حفظ
-                          </button>
-                          <button
-                            onClick={() => setSingleAddOpen(false)}
-                            className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-sm rounded-md transition-all cursor-pointer whitespace-nowrap"
-                          >
-                            إلغاء
-                          </button>
                         </div>
-                      )}
 
-                      {/* Add New Key Button (+) */}
-                      {!singleAddOpen && (
-                        <button 
-                          onClick={() => setSingleAddOpen(true)}
-                          className="w-full h-12 flex items-center justify-center bg-[#1a1d22] border border-[#262a33] hover:border-white/20 rounded-md text-slate-400 hover:text-white transition-all cursor-pointer"
+                        {bulkMessage && (
+                          <div className="p-3 bg-sky-500/10 text-sky-400 text-xs rounded-xl font-bold text-center border border-sky-500/20 shadow-[0_0_10px_rgba(14,165,233,0.1)]">
+                            {bulkMessage}
+                          </div>
+                        )}
+
+                        <button
+                          onClick={handleBulkAddKeys}
+                          disabled={isAddingKeys || !bulkKeysText.trim()}
+                          className={`w-full py-3.5 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg' : 'bg-[#1a1f2e] text-slate-500 cursor-not-allowed border border-[#2a3140]'}`}
                         >
-                          <span className="text-xl leading-none">+</span>
+                          {isAddingKeys ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              <span>جاري المعالجة الفورية...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>إضافة الأكواد للمخزون</span>
+                            </>
+                          )}
                         </button>
-                      )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Keys List */}
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <h4 className="text-sm font-bold text-slate-200">المفاتيح الحالية</h4>
+                      <div className="text-xs font-semibold text-slate-400 bg-[#1e2330] px-2.5 py-1 rounded-full">
+                        {inventoryKeys.length} مفتاح
+                      </div>
                     </div>
-                  )}
+
+                    {isLoadingKeys ? (
+                      <div className="flex flex-col items-center justify-center py-12 border border-[#1e2330] border-dashed rounded-xl bg-[#080a0f]">
+                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-sky-500" />
+                        <span className="text-xs font-medium text-slate-400">جارٍ جلب المفاتيح بسرعة...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {inventoryKeys.map((keyItem) => (
+                          <div key={keyItem.id} className="group bg-[#080a0f] hover:bg-[#10131a] border border-[#1e2330] hover:border-sky-500/30 rounded-xl overflow-hidden flex items-center justify-between p-3.5 gap-4 transition-all shadow-sm">
+                            <div className="flex-1 text-sm text-slate-300 font-mono break-all text-left select-all group-hover:text-white transition-colors" dir="ltr">
+                              {keyItem.key}
+                            </div>
+                            <button
+                              onClick={() => handleDeleteKey(keyItem.id)}
+                              className="shrink-0 p-2 border border-transparent hover:border-rose-500/30 hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 rounded-lg transition-all cursor-pointer"
+                              title="حذف المفتاح"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {inventoryKeys.length === 0 && !bulkAddOpen && !singleAddOpen && (
+                          <div className="text-center py-10 border border-[#1e2330] border-dashed rounded-xl bg-[#080a0f]">
+                            <Key className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                            <p className="text-xs text-slate-500 font-medium">لا توجد مفاتيح في المخزون حالياً</p>
+                          </div>
+                        )}
+
+                        {/* Single Add Key Block */}
+                        <AnimatePresence>
+                          {singleAddOpen && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="bg-[#080a0f] border border-sky-500/30 rounded-xl p-2.5 flex gap-2 shadow-lg"
+                            >
+                              <input
+                                type="text"
+                                value={singleKeyText}
+                                onChange={(e) => setSingleKeyText(e.target.value)}
+                                placeholder="أدخل المفتاح هنا..."
+                                className="flex-1 bg-[#10131a] border border-[#1e2330] rounded-lg px-4 py-2 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-sky-500/50 text-left transition-colors"
+                                dir="ltr"
+                              />
+                              <button
+                                onClick={handleAddSingleKey}
+                                disabled={!singleKeyText.trim()}
+                                className="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                إضافة
+                              </button>
+                              <button
+                                onClick={() => setSingleAddOpen(false)}
+                                className="px-4 py-2 bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                              >
+                                إلغاء
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Add New Key Button (+) */}
+                        {!singleAddOpen && (
+                          <button 
+                            onClick={() => setSingleAddOpen(true)}
+                            className="w-full py-4 flex items-center justify-center gap-2 bg-[#080a0f] border border-[#1e2330] border-dashed hover:border-sky-500/50 hover:bg-sky-500/5 rounded-xl text-slate-400 hover:text-sky-400 transition-all cursor-pointer mt-2"
+                          >
+                            <span className="text-xl leading-none mb-0.5">+</span>
+                            <span className="text-xs font-bold">إضافة مفتاح فردي</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
                 </div>
               )}
             </div>
