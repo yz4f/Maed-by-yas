@@ -26,8 +26,10 @@ export async function POST(req: Request) {
     );
 
     if (res.success && res.product && discordId) {
-      // Trigger automated Discord roles assignment
-      await DiscordBotService.syncRolesOnProductActivation(discordId, res.product.name);
+      // Trigger automated Discord roles assignment in the background (non-blocking)
+      DiscordBotService.syncRolesOnProductActivation(discordId, res.product.name).catch((err) => {
+        console.error('[Discord Sync Error] Failed to sync roles:', err);
+      });
     }
 
     return NextResponse.json(res, { status: res.success ? 200 : 400 });
