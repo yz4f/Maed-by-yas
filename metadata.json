@@ -1,0 +1,8 @@
+{
+  "name": "متجر تعن",
+  "description": "الموقع الرسمي لمتجر تعن - فك باند فورت نايت والسبوفر الاحترافي مع نظام إدارة المخزون والمفاتيح والربط المباشر بـ ديسكورد",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

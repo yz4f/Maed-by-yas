@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  discordId     String         @unique
+  name          String
+  email         String?
+  image         String?
+  role          String         @default("Member") // Boss, Co-Boss, Admin, Member, Customer
+  discordRoles  String         @default("[]") // JSON string array of Discord Role IDs
+  createdAt     DateTime       @default(now())
+  lastLogin     DateTime       @default(now())
+  lastIp        String?        @default("127.0.0.1")
+  
+  userProducts  UserProduct[]
+  activatedKeys Key[]          @relation("UsedKeys")
+  createdKeys   Key[]          @relation("CreatedKeys")
+  downloads     DownloadLog[]
+  logs          SystemLog[]
+}
+
+model Product {
+  id             String        @id @default(uuid())
+  name           String
+  description    String
+  image          String
+  cardColor      String        @default("blue") // blue, cyan, purple, gold
+  category       String        @default("Spoofer") // Spoofer, Bypass, Key Activation, Utility
+  displayOrder   Int           @default(0)
+  version        String        @default("v1.0.0")
+  fileSize       String        @default("15.4 MB")
+  fileUrl        String        @default("/uploads/t3n-spoofer.exe")
+  videoUrl       String?       @default("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+  guideUrl       String?       @default("https://discord.gg/t3n")
+  downloadsCount Int           @default(0)
+  isVisible      Boolean       @default(true)
+  isDisabled     Boolean       @default(false)
+  isArchived     Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  keys           Key[]
+  userProducts   UserProduct[]
+  downloads      DownloadLog[]
+}
+
+model Key {
+  id           String        @id @default(uuid())
+  key          String        @unique
+  productId    String
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  isUsed       Boolean       @default(false)
+  isDisabled   Boolean       @default(false)
+  isArchived   Boolean       @default(false)
+  duration     String        @default("Lifetime") // Lifetime, 30 Days, 7 Days
+  usedByUserId String?
+  usedByUser   User?         @relation("UsedKeys", fields: [usedByUserId], references: [id])
+  usedAt       DateTime?
+  createdById  String?
+  createdBy    User?         @relation("CreatedKeys", fields: [createdById], references: [id])
+  createdAt    DateTime      @default(now())
+
+  userProduct  UserProduct?
+}
+
+model UserProduct {
+  id                  String    @id @default(uuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  keyId               String?   @unique
+  key                 Key?      @relation(fields: [keyId], references: [id])
+  status              String    @default("Active") // Active, Inactive, Suspended
+  activatedAt         DateTime  @default(now())
+  expiresAt           DateTime?
+  discordRoleGranted  Boolean   @default(true)
+}
+
+model DownloadLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ipAddress   String   @default("127.0.0.1")
+  downloadedAt DateTime @default(now())
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  action    String   // Login, Logout, Key Activation, Key Creation, Product Edit, Role Granted, Download, etc.
+  details   String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  discordId String?
+  userName  String?
+  ipAddress String   @default("127.0.0.1")
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,116 @@
+{
+  "users": [
+    {
+      "id": "owner-seed-id",
+      "google_id": "pending",
+      "name": "ياسر (المالك - Owner)",
+      "email": "yasemoh24@gmail.com",
+      "avatar": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+      "role": "owner",
+      "is_banned": 0,
+      "created_at": "2026-07-28T17:38:22.144Z",
+      "last_login": "2026-07-28T17:38:22.154Z"
+    },
+    {
+      "id": "973e1bc8-88cd-4150-9852-e6767b236493",
+      "google_id": "101303263035537971792",
+      "name": "Yaser 2006",
+      "email": "igu470914@gmail.com",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJiUkbbhTFn8vQ65RFPSnYKZykJzQ006j4liV4PoA_ahMDakmg=s96-c",
+      "role": "user",
+      "is_banned": 0,
+      "ip": "2.91.151.18",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "created_at": "2026-07-28T17:49:45.993Z",
+      "last_login": "2026-07-28T17:49:45.993Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "spoofer-prod-1",
+      "name": "سبوفر تعن (TA3N Spoofer)",
+      "description": "أقوى سبوفر لتخطي الحظر العتادي بالكامل للأجهزة بدون فورمات وبضغطة زر واحدة.",
+      "image": "/spoofer_bg.png",
+      "category": "spoofer",
+      "status": "active",
+      "created_at": "2026-07-28T17:38:22.154Z",
+      "updated_at": "2026-07-28T17:38:22.154Z"
+    },
+    {
+      "id": "unban-prod-2",
+      "name": "فك حظر فورت نايت (Fortnite Unban)",
+      "description": "أداة فك حظر حسابات وأجهزة فورت نايت بسرعة وأمان 100%.",
+      "image": "/fortnite-unban.png",
+      "category": "unban",
+      "status": "active",
+      "created_at": "2026-07-28T17:38:22.154Z",
+      "updated_at": "2026-07-28T17:38:22.154Z"
+    }
+  ],
+  "product_files": [
+    {
+      "id": "file-spoofer-1",
+      "product_id": "spoofer-prod-1",
+      "filename": "discord.gg_t3n.rar",
+      "original_name": "discord.gg_t3n.rar",
+      "size": 100353901,
+      "mime_type": "application/x-rar-compressed",
+      "download_count": 1482,
+      "created_at": "2026-07-28T17:38:22.154Z"
+    },
+    {
+      "id": "file-unban-2",
+      "product_id": "unban-prod-2",
+      "filename": "discord.gg_t3n.rar",
+      "original_name": "discord.gg_t3n.rar",
+      "size": 100353901,
+      "mime_type": "application/x-rar-compressed",
+      "download_count": 1240,
+      "created_at": "2026-07-28T17:38:22.154Z"
+    }
+  ],
+  "product_keys": [
+    {
+      "id": "key-seed-1",
+      "product_id": "spoofer-prod-1",
+      "key_value": "TA3N-SPOOF-2026-VIP-001",
+      "status": "unused",
+      "created_at": "2026-07-28T17:38:22.154Z"
+    },
+    {
+      "id": "key-seed-2",
+      "product_id": "unban-prod-2",
+      "key_value": "TA3N-UNBAN-2026-PRO-001",
+      "status": "unused",
+      "created_at": "2026-07-28T17:38:22.154Z"
+    }
+  ],
+  "user_products": [],
+  "logs": [
+    {
+      "id": "4b5d3748-d59a-4462-934b-af77fc6b4c51",
+      "user_id": "973e1bc8-88cd-4150-9852-e6767b236493",
+      "user_email": "igu470914@gmail.com",
+      "action": "تسجيل دخول Google",
+      "details": "تم تسجيل الدخول بنجاح عبر حساب Google (igu470914@gmail.com)",
+      "ip": "2.91.151.18",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "created_at": "2026-07-28T17:49:45.998Z"
+    }
+  ],
+  "settings": {
+    "site_name": "تـعـن",
+    "discord_webhook_url": "",
+    "admin_emails": "yasemoh24@gmail.com"
+  },
+  "sessions": [
+    {
+      "id": "72b9fa48-b2eb-4e41-878e-deaaf6b18d80",
+      "user_id": "973e1bc8-88cd-4150-9852-e6767b236493",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk3M2UxYmM4LTg4Y2QtNDE1MC05ODUyLWU2NzY3YjIzNjQ5MyIsImlhdCI6MTc4NTI2MDk4NiwiZXhwIjoxNzg3ODUyOTg2fQ.qtzWm07fKimfpATqxTSMo-By727s8djf1M3O9XpW194",
+      "expires_at": "2026-08-27T17:49:46.007Z",
+      "created_at": "2026-07-28T17:49:46.007Z"
+    }
+  ],
+  "tickets": []
+}
