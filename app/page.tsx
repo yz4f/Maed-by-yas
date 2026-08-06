@@ -1,9 +1,10 @@
-'use client';
-
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { initialProducts } from '@/lib/products-data';
 
-const T3NUnifiedPortal = dynamic(
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const T3NUnifiedPortal = dynamicImport(
   () => import('@/components/portal/t3n-unified-portal').then((mod) => mod.T3NUnifiedPortal),
   {
     ssr: false,
