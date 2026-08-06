@@ -842,7 +842,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
                     placeholder="T3N-FORT-99999-PERM"
-                    className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors uppercase font-mono tracking-wider"
+                    className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono tracking-wider"
                   />
                 </div>
 
@@ -1478,7 +1478,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
                     placeholder="KEY-******-******"
-                    className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors uppercase font-mono tracking-wider text-left"
+                    className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono tracking-wider text-left"
                   />
                 </div>
 
