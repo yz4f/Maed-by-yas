@@ -623,7 +623,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     if (!bulkKeysText.trim() || !inventoryProduct) return;
     
     // OPTIMISTIC UI: Instant Zero-Latency Update
-    const rawKeys = bulkKeysText.split('\n').map(k => k.trim()).filter(k => k.length > 3);
+    const rawKeys = bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0);
     const count = rawKeys.length;
     if (count === 0) return;
 
@@ -2465,8 +2465,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
                 </div>
               )}
             </div>
