@@ -15,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SessionProvider session={null} refetchInterval={0} refetchOnWindowFocus={false}>
+    <SessionProvider>
       {children}
     </SessionProvider>
   );

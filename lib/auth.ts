@@ -3,6 +3,10 @@ import DiscordProvider from 'next-auth/providers/discord';
 import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 
+if (!process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = 'https://maed-by-yas.vercel.app';
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     DiscordProvider({
