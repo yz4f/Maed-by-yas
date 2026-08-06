@@ -2,16 +2,21 @@ import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const productId = searchParams.get('productId');
+  try {
+    const { searchParams } = new URL(req.url);
+    const productId = searchParams.get('productId');
 
-  if (productId) {
-    const keys = await StoreDB.getKeysByProduct(productId);
+    if (productId) {
+      const keys = await StoreDB.getKeysByProduct(productId);
+      return NextResponse.json({ success: true, keys });
+    }
+
+    const keys = await StoreDB.getKeys();
     return NextResponse.json({ success: true, keys });
+  } catch (err: any) {
+    console.error("Keys API failed:", err);
+    return NextResponse.json({ success: false, error: err.message, stack: err.stack }, { status: 500 });
   }
-
-  const keys = await StoreDB.getKeys();
-  return NextResponse.json({ success: true, keys });
 }
 
 export async function DELETE(req: Request) {
