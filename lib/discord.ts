@@ -1,4 +1,4 @@
-import { DISCORD_ROLES } from './store-db';
+import { DISCORD_ROLES } from './roles';
 
 interface DiscordRoleResult {
   success: boolean;

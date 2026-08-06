@@ -54,10 +54,8 @@ export function Navbar() {
                 }`}
               >
                 {isActive && (
-                  <motion.div
-                    layoutId="nav-glow"
+                  <div
                     className="absolute inset-0 rounded-xl bg-sky-500/10 border border-sky-500/30"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                   />
                 )}
                 <Icon className="w-4 h-4" />

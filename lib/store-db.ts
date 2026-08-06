@@ -12,8 +12,20 @@ const firebaseConfig = {
   measurementId: "G-R2CHP04HTE"
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+let app: any = null;
+let db: any = null;
+
+function getDb() {
+  if (!db) {
+    try {
+      app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+      db = getFirestore(app);
+    } catch (err) {}
+  }
+  return db;
+}
+
+export { getDb as db };
 
 export const DISCORD_ROLES = {
   BOSS: '1396965033316978839',

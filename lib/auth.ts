@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import DiscordProvider from 'next-auth/providers/discord';
-import { StoreDB, DISCORD_ROLES } from './store-db';
+import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 
 export const authOptions: NextAuthOptions = {
