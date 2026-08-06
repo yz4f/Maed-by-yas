@@ -85,12 +85,12 @@ export const StoreDB = {
   // -------------------------
   async getProducts(): Promise<Product[]> {
     try {
-      const snapshot = await getDocs(collection(db, "products"));
+      const snapshot = await getDocs(collection(getDb(), "products"));
       let products = snapshot.docs.map(doc => doc.data() as Product);
       
       if (products.length === 0) {
         for (const prod of initialProducts) {
-          await setDoc(doc(db, "products", prod.id), prod);
+          await setDoc(doc(getDb(), "products", prod.id), prod);
         }
         products = initialProducts;
       }
@@ -102,14 +102,14 @@ export const StoreDB = {
   },
   
   async getProductById(id: string): Promise<Product | undefined> {
-    const docSnap = await getDoc(doc(db, "products", id));
+    const docSnap = await getDoc(doc(getDb(), "products", id));
     if (docSnap.exists()) return docSnap.data() as Product;
     return undefined;
   },
 
   async createProduct(product: Product): Promise<{success: boolean; message?: string}> {
     try {
-      await setDoc(doc(db, "products", product.id), product);
+      await setDoc(doc(getDb(), "products", product.id), product);
       return { success: true };
     } catch (e: any) {
       return { success: false, message: e.message };
@@ -118,7 +118,7 @@ export const StoreDB = {
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<{success: boolean; message?: string}> {
     try {
-      await updateDoc(doc(db, "products", id), { ...updates, updatedAt: new Date().toISOString() });
+      await updateDoc(doc(getDb(), "products", id), { ...updates, updatedAt: new Date().toISOString() });
       return { success: true };
     } catch (e: any) {
       return { success: false, message: e.message };
@@ -127,7 +127,7 @@ export const StoreDB = {
 
   async deleteProduct(id: string): Promise<{success: boolean; message?: string}> {
     try {
-      await deleteDoc(doc(db, "products", id));
+      await deleteDoc(doc(getDb(), "products", id));
       return { success: true };
     } catch (e: any) {
       return { success: false, message: e.message };
@@ -138,12 +138,12 @@ export const StoreDB = {
   // USERS
   // -------------------------
   async getUsers(): Promise<User[]> {
-    const snapshot = await getDocs(collection(db, "users"));
+    const snapshot = await getDocs(collection(getDb(), "users"));
     return snapshot.docs.map(doc => doc.data() as User);
   },
 
   async getUserByDiscordId(discordId: string): Promise<User | undefined> {
-    const q = query(collection(db, "users"), where("discordId", "==", discordId));
+    const q = query(collection(getDb(), "users"), where("discordId", "==", discordId));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       return snapshot.docs[0].data() as User;
@@ -152,16 +152,16 @@ export const StoreDB = {
   },
 
   async createUser(user: User): Promise<void> {
-    await setDoc(doc(db, "users", user.id), user);
+    await setDoc(doc(getDb(), "users", user.id), user);
   },
 
   async updateUser(id: string, updates: Partial<User>): Promise<void> {
-    await updateDoc(doc(db, "users", id), updates);
+    await updateDoc(doc(getDb(), "users", id), updates);
   },
 
   async deleteUser(id: string): Promise<boolean> {
     try {
-      await deleteDoc(doc(db, "users", id));
+      await deleteDoc(doc(getDb(), "users", id));
       return true;
     } catch {
       return false;
@@ -172,12 +172,12 @@ export const StoreDB = {
   // KEYS
   // -------------------------
   async getKeys(): Promise<Key[]> {
-    const snapshot = await getDocs(collection(db, "keys"));
+    const snapshot = await getDocs(collection(getDb(), "keys"));
     return snapshot.docs.map(doc => doc.data() as Key);
   },
   
   async getKeysByProduct(productId: string): Promise<Key[]> {
-    const q = query(collection(db, "keys"), where("productId", "==", productId));
+    const q = query(collection(getDb(), "keys"), where("productId", "==", productId));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data() as Key);
   },
@@ -202,7 +202,7 @@ export const StoreDB = {
           createdById,
           createdAt: new Date().toISOString()
         };
-        await setDoc(doc(db, "keys", newKey.id), newKey);
+        await setDoc(doc(getDb(), "keys", newKey.id), newKey);
         generatedKeys.push(keyString);
       }
 
@@ -236,7 +236,7 @@ export const StoreDB = {
             createdById,
             createdAt: new Date().toISOString()
           };
-          batch.set(doc(db, "keys", newKey.id), newKey);
+          batch.set(doc(getDb(), "keys", newKey.id), newKey);
           count++;
         }
         await batch.commit();
@@ -250,7 +250,7 @@ export const StoreDB = {
 
   async updateKey(id: string, updates: Partial<Key>): Promise<boolean> {
     try {
-      await updateDoc(doc(db, "keys", id), updates);
+      await updateDoc(doc(getDb(), "keys", id), updates);
       return true;
     } catch {
       return false;
@@ -259,7 +259,7 @@ export const StoreDB = {
 
   async deleteKey(id: string): Promise<boolean> {
     try {
-      await deleteDoc(doc(db, "keys", id));
+      await deleteDoc(doc(getDb(), "keys", id));
       return true;
     } catch {
       return false;
@@ -269,10 +269,10 @@ export const StoreDB = {
   async revokeKey(keyId: string, userId: string): Promise<boolean> {
     try {
       // Delete the key
-      await deleteDoc(doc(db, "keys", keyId));
+      await deleteDoc(doc(getDb(), "keys", keyId));
       
       // Delete the user product association
-      const q = query(collection(db, "userProducts"), where("userId", "==", userId), where("keyId", "==", keyId));
+      const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId), where("keyId", "==", keyId));
       const snapshot = await getDocs(q);
       for (const d of snapshot.docs) {
         await deleteDoc(d.ref);
@@ -287,7 +287,7 @@ export const StoreDB = {
     try {
       const keys = await this.getKeysByProduct(productId);
       for (const k of keys) {
-        await deleteDoc(doc(db, "keys", k.id));
+        await deleteDoc(doc(getDb(), "keys", k.id));
       }
       return true;
     } catch {
@@ -297,7 +297,7 @@ export const StoreDB = {
 
   async activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): Promise<{success: boolean; message: string; product?: Product}> {
     try {
-      const q = query(collection(db, "keys"), where("key", "==", keyString));
+      const q = query(collection(getDb(), "keys"), where("key", "==", keyString));
       const keySnap = await getDocs(q);
       if (keySnap.empty) {
         return { success: false, message: 'المفتاح غير صحيح أو غير موجود' };
@@ -327,13 +327,13 @@ export const StoreDB = {
         };
         await this.createUser(user);
       } else {
-        await updateDoc(doc(db, "users", user.id), { lastLogin: new Date().toISOString(), lastIp: ipAddress });
+        await updateDoc(doc(getDb(), "users", user.id), { lastLogin: new Date().toISOString(), lastIp: ipAddress });
       }
 
       keyObj.isUsed = true;
       keyObj.usedByUserId = user.id;
       keyObj.usedAt = new Date().toISOString();
-      await updateDoc(doc(db, "keys", keyObj.id), { isUsed: true, usedByUserId: user.id, usedAt: keyObj.usedAt });
+      await updateDoc(doc(getDb(), "keys", keyObj.id), { isUsed: true, usedByUserId: user.id, usedAt: keyObj.usedAt });
 
       const userProduct: UserProduct = {
         id: `up-${Date.now()}`,
@@ -344,7 +344,7 @@ export const StoreDB = {
         activatedAt: new Date().toISOString(),
         discordRoleGranted: true
       };
-      await setDoc(doc(db, "userProducts", userProduct.id), userProduct);
+      await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);
 
       await this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
       
@@ -358,7 +358,7 @@ export const StoreDB = {
   // USER PRODUCTS
   // -------------------------
   async getUserDetails(userId: string): Promise<{user: User, products: UserProduct[]} | undefined> {
-    const userDoc = await getDoc(doc(db, "users", userId));
+    const userDoc = await getDoc(doc(getDb(), "users", userId));
     if (!userDoc.exists()) return undefined;
     const user = userDoc.data() as User;
     const products = await this.getUserProducts(userId);
@@ -366,7 +366,7 @@ export const StoreDB = {
   },
 
   async getUserProducts(userId: string): Promise<UserProduct[]> {
-    const q = query(collection(db, "userProducts"), where("userId", "==", userId));
+    const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId));
     const snapshot = await getDocs(q);
     const result: UserProduct[] = [];
     
@@ -383,7 +383,7 @@ export const StoreDB = {
 
   async removeProductFromUser(userId: string, productId: string): Promise<{success: boolean; message?: string}> {
     try {
-      const q = query(collection(db, "userProducts"), where("userId", "==", userId), where("productId", "==", productId));
+      const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId), where("productId", "==", productId));
       const snapshot = await getDocs(q);
       for (const d of snapshot.docs) {
         await deleteDoc(d.ref);
@@ -404,7 +404,7 @@ export const StoreDB = {
         activatedAt: new Date().toISOString(),
         discordRoleGranted: false
       };
-      await setDoc(doc(db, "userProducts", userProduct.id), userProduct);
+      await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);
       return { success: true };
     } catch (e: any) {
       return { success: false, message: e.message };
@@ -413,7 +413,7 @@ export const StoreDB = {
 
   async updateUserProductStatus(userId: string, productId: string, status: ProductStatus): Promise<{success: boolean; message?: string}> {
     try {
-      const q = query(collection(db, "userProducts"), where("userId", "==", userId), where("productId", "==", productId));
+      const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId), where("productId", "==", productId));
       const snapshot = await getDocs(q);
       for (const d of snapshot.docs) {
         await updateDoc(d.ref, { status });
@@ -437,11 +437,11 @@ export const StoreDB = {
       ipAddress,
       createdAt: new Date().toISOString()
     };
-    await setDoc(doc(db, "logs", log.id), log);
+    await setDoc(doc(getDb(), "logs", log.id), log);
   },
 
   async getLogs(): Promise<SystemLog[]> {
-    const snapshot = await getDocs(collection(db, "logs"));
+    const snapshot = await getDocs(collection(getDb(), "logs"));
     const logs = snapshot.docs.map(doc => doc.data() as SystemLog);
     return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
@@ -454,20 +454,20 @@ export const StoreDB = {
       ipAddress,
       downloadedAt: new Date().toISOString()
     };
-    await setDoc(doc(db, "downloads", dLog.id), dLog);
+    await setDoc(doc(getDb(), "downloads", dLog.id), dLog);
 
     const product = await this.getProductById(productId);
     if (product) {
-      await updateDoc(doc(db, "products", productId), { downloadsCount: (product.downloadsCount || 0) + 1 });
+      await updateDoc(doc(getDb(), "products", productId), { downloadsCount: (product.downloadsCount || 0) + 1 });
     }
     return { success: true };
   },
 
   async getStats(): Promise<SystemStats> {
-    const usersSnap = await getDocs(collection(db, "users"));
-    const productsSnap = await getDocs(collection(db, "products"));
-    const keysSnap = await getDocs(collection(db, "keys"));
-    const downloadsSnap = await getDocs(collection(db, "downloads"));
+    const usersSnap = await getDocs(collection(getDb(), "users"));
+    const productsSnap = await getDocs(collection(getDb(), "products"));
+    const keysSnap = await getDocs(collection(getDb(), "keys"));
+    const downloadsSnap = await getDocs(collection(getDb(), "downloads"));
     
     const users = usersSnap.docs.map(d => d.data() as User);
     const keys = keysSnap.docs.map(d => d.data() as Key);

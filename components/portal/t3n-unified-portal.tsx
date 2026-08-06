@@ -253,8 +253,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch('/api/admin/stats');
       if (res.ok) {
         const data = await res.json();
-        setAdminStats(data);
-        setAdminLogs(data.recentLogs || []);
+        if (data.success && data.stats) {
+          setAdminStats(data.stats);
+          setAdminLogs(data.stats.recentLogs || []);
+        } else {
+          // If the API somehow directly returns the stats object instead of {success: true, stats}
+          setAdminStats(data.stats || data);
+          setAdminLogs(data.stats?.recentLogs || data.recentLogs || []);
+        }
       }
     } catch (e) {
       console.error('Failed to load admin stats:', e);
