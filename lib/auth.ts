@@ -50,8 +50,8 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: '/activate',
-    error: '/activate',
+    signIn: '/',
+    error: '/',
   },
   secret: process.env.NEXTAUTH_SECRET || 't3n_super_secret_jwt_key_2026',
 };
