@@ -944,7 +944,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {/* User Keys */}
                 <div>
                   <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                    <Key className="w-4 h-4 text-emerald-400" />
+                    <Key className="w-4 h-4 text-primary" />
                     <span>مفاتيح العميل المستخدمة</span>
                   </h4>
                   <div className="bg-[#08090d] border border-white/5 rounded-xl p-4">
@@ -1053,7 +1053,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
             <div>
               <h2 className="font-black text-white text-base tracking-wider leading-tight">{t.siteTitle}</h2>
-              <p className="text-[10px] text-emerald-400 font-extrabold tracking-widest uppercase">PLATFORM</p>
+              <p className="text-[10px] text-primary font-extrabold tracking-widest uppercase">PLATFORM</p>
             </div>
           </div>
 
@@ -1061,57 +1061,57 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <nav className="space-y-6">
             {/* GENERAL */}
             <div>
-              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
+              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-3">
                 {lang === 'ar' ? 'عام' : 'GENERAL'}
               </div>
               <button
                 onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                   activeTab === 'overview'
-                    ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }`}
               >
                 {activeTab === 'overview' && (
-                  <div className={`absolute top-2 bottom-2 w-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                  <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                 )}
-                <Layers className={`w-4 h-4 transition-colors ${activeTab === 'overview' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                <Layers className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'overview' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                 <span>{t.overview}</span>
               </button>
             </div>
 
             {/* LICENSE */}
             <div>
-              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
+              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-3">
                 {lang === 'ar' ? 'الاشتراكات والمفاتيح' : 'LICENSE'}
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <button
                   onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                  className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                     activeTab === 'my-products'
-                      ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
                   {activeTab === 'my-products' && (
-                    <div className={`absolute top-2 bottom-2 w-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                    <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                   )}
-                  <Package className={`w-4 h-4 transition-colors ${activeTab === 'my-products' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                  <Package className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'my-products' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                   <span>{t.myProducts}</span>
                 </button>
                 <button
                   onClick={() => { setActiveTab('redeem'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                  className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                     activeTab === 'redeem'
-                      ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
                   {activeTab === 'redeem' && (
-                    <div className={`absolute top-2 bottom-2 w-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                    <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                   )}
-                  <Key className={`w-4 h-4 transition-colors ${activeTab === 'redeem' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                  <Key className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'redeem' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                   <span>{t.redeemKey}</span>
                 </button>
               </div>
@@ -1120,79 +1120,80 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* ADMIN SECTION (If admin user) */}
             {isAdmin && (
               <div>
-                <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
+                <div className="text-[10px] font-black text-primary tracking-[0.2em] uppercase px-3 mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-brand-glow animate-pulse" />
                   {lang === 'ar' ? 'الإدارة (Admin)' : 'ADMIN CONTROL'}
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('overview'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                       activeTab === 'admin' && adminSectionTab === 'overview'
-                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                     }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'overview' && (
-                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Activity className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'overview' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Activity className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'overview' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                     <span>{lang === 'ar' ? 'الرئيسية والإحصائيات' : 'Overview & Stats'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('products'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                       activeTab === 'admin' && adminSectionTab === 'products'
-                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                     }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'products' && (
-                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Package className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'products' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Package className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'products' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                     <span>{lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Inventory'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('customers'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                       activeTab === 'admin' && adminSectionTab === 'customers'
-                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                     }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'customers' && (
-                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Users className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'customers' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Users className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'customers' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                     <span>{lang === 'ar' ? 'إدارة العملاء' : 'Customers'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('keys'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                       activeTab === 'admin' && adminSectionTab === 'keys'
-                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                     }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'keys' && (
-                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Key className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'keys' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Key className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'keys' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
                     <span>{lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('logs'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
                       activeTab === 'admin' && adminSectionTab === 'logs'
-                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                     }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'logs' && (
-                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <FileText className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'logs' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
-                    <span>{lang === 'ar' ? 'سجلات النظام (Logs)' : 'System Logs'}</span>
+                    <FileText className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'logs' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
+                    <span>{lang === 'ar' ? 'سجلات النظام' : 'System Logs'}</span>
                   </button>
                 </div>
               </div>
@@ -1200,24 +1201,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* COMMUNITY */}
             <div>
-              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
+              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-3">
                 {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <button
                   onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد بنجاح!' : 'Discord roles synced!')}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] rounded-xl transition-all cursor-pointer group"
+                  className="w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 cursor-pointer group"
                 >
-                  <Bot className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                  <Bot className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors duration-300" />
                   <span>{lang === 'ar' ? 'مزامنة الديسكورد' : 'Sync Discord Roles'}</span>
                 </button>
                 <a
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] rounded-xl transition-all group"
+                  className="w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group"
                 >
-                  <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                  <ExternalLink className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors duration-300" />
                   <span>{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</span>
                 </a>
               </div>
@@ -1226,29 +1227,29 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
 
         {/* Bottom User Card */}
-        <div className="pt-4 border-t border-white/[0.06] mt-6 space-y-3">
-          <div className="bg-[#121520] border border-white/[0.08] rounded-xl p-3 flex items-center gap-3">
+        <div className="pt-4 border-t border-white/[0.04] mt-6 space-y-3">
+          <div className="glass-card rounded-2xl p-3.5 flex items-center gap-3">
             <div className="relative shrink-0">
               <img
                 src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                 alt={currentUser.name}
-                className="w-9 h-9 rounded-xl border border-emerald-500/30 object-cover"
+                className="w-10 h-10 rounded-xl border border-primary/30 object-cover"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#121520]" />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary border-2 border-[#0a0a0a]" />
             </div>
             <div className="overflow-hidden flex-1">
-              <div className="font-bold text-xs text-white truncate">{currentUser.name}</div>
-              <div className="text-[10px] text-slate-400 truncate flex items-center gap-1 font-mono">
-                <span className="text-emerald-400 font-semibold">{currentUser.role}</span>
+              <div className="font-bold text-sm text-white truncate">{currentUser.name}</div>
+              <div className="text-[11px] text-slate-400 truncate flex items-center gap-1 font-mono mt-0.5">
+                <span className="text-primary font-semibold">{currentUser.role}</span>
               </div>
             </div>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-full py-2.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            className="w-full py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm group"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
           </button>
         </div>
@@ -1270,23 +1271,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
 
             {/* Welcome Banner Card (Premium Redesign) */}
-            <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center gap-4">
+            <div className="glass-card rounded-[24px] p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden animate-slide-up">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10" />
+              <div className="flex items-center gap-5 z-10">
                 <img
                   src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                   alt={currentUser.name}
-                  className="w-16 h-16 rounded-[18px] border-2 border-emerald-500/30 object-cover shadow-lg shadow-emerald-500/10"
+                  className="w-16 h-16 rounded-[18px] border border-primary/30 object-cover shadow-brand-glow"
                   onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
                 />
                 <div>
-                  <h2 className="text-xl font-extrabold text-white tracking-wide">
-                    {lang === 'ar' ? (
-                      <>مرحباً بك، <span className="text-emerald-400">{currentUser.name}</span>!</>
-                    ) : (
-                      <>Welcome back, <span className="text-emerald-400">{currentUser.name}</span>!</>
-                    )}
+                  <h2 className="text-2xl font-extrabold text-white tracking-wide flex items-center gap-2">
+                    {lang === 'ar' ? 'مرحباً بك،' : 'Welcome back,'} <span className="text-glow-primary text-primary">{currentUser.name}</span>!
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1.5">
+                  <p className="text-sm text-slate-400 mt-2">
                     {lang === 'ar' ? (
                       <>لديك <span className="text-white font-bold">{userProducts.length}</span> منتج نشط في حسابك.</>
                     ) : (
@@ -1298,7 +1296,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               <button
                 onClick={() => setActiveTab('my-products')}
-                className="py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition-all duration-200 flex items-center gap-2 cursor-pointer hover:scale-[1.02]"
+                className="py-3 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm shadow-brand-glow transition-all duration-300 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-95 z-10"
               >
                 <span>{lang === 'ar' ? 'عرض المنتجات' : 'View Products'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1308,121 +1306,102 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* Grid Layout: Stats Cards & Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left 2 Columns: 4 Stat Cards */}
-              <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+              <div className="lg:col-span-2 grid grid-cols-2 gap-5 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {/* Stat 1: Active Products */}
-                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
-                    <Package className="w-5 h-5" />
+                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
+                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
+                    <Package className="w-6 h-6" />
                   </div>
-                  <div className="text-2xl font-black text-white">{userProducts.length}</div>
-                  <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
+                  <div className="text-3xl font-black text-white mb-1">{userProducts.length}</div>
+                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
                 </div>
 
                 {/* Stat 2: Account Status */}
-                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
-                    <CheckCircle2 className="w-5 h-5" />
+                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
+                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
+                    <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <div className="text-2xl font-black text-emerald-400">{lang === 'ar' ? 'نشط' : 'Active'}</div>
-                  <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
+                  <div className="text-3xl font-black text-primary mb-1">{lang === 'ar' ? 'نشط' : 'Active'}</div>
+                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
                 </div>
 
                 {/* Stat 3: Member Since */}
-                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
-                    <Clock className="w-5 h-5" />
+                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
+                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
+                    <Clock className="w-6 h-6" />
                   </div>
-                  <div className="text-xl font-black text-white" dir="ltr">
+                  <div className="text-2xl font-black text-white mb-1" dir="ltr">
                     {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
+                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
                 </div>
 
                 {/* Stat 4: Total Downloads */}
-                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
-                    <Download className="w-5 h-5" />
+                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
+                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
+                    <Download className="w-6 h-6" />
                   </div>
-                  <div className="text-2xl font-black text-white">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
-                  <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
+                  <div className="text-3xl font-black text-white mb-1">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
+                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
                 </div>
               </div>
 
               {/* Right Column: Quick Actions Card */}
-              <div className="bg-[#0b0d12] border border-white/[0.04] rounded-2xl p-5 space-y-2 shadow-xl">
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">
+              <div className="glass-card rounded-[24px] p-6 space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
 
                 {/* Quick Action 1 */}
                 <button
                   onClick={() => setActiveTab('my-products')}
-                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Package className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                  <div className={`flex items-center gap-4 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
+                      <Package className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
                     </div>
                     <div>
                       <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
                 </button>
 
                 {/* Quick Action 2 */}
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Key className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                  <div className={`flex items-center gap-4 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
+                      <Key className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
                     </div>
                     <div>
                       <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
                 </button>
 
                 {/* Quick Action 3 */}
                 <button
                   onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد!' : 'Discord roles synced!')}
-                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Users className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                  <div className={`flex items-center gap-4 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
+                      <Users className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
                     </div>
                     <div>
                       <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer roles'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
                 </button>
-
-                {/* Quick Action 4 */}
-                <a
-                  href="https://discord.gg/t3n"
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
-                >
-                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Bot className="w-4 h-4 text-slate-400 group-hover:text-[#5865F2] transition-colors" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'للحصول على الدعم والتحديثات' : 'Get support & updates'}</div>
-                    </div>
-                  </div>
-                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-[#5865F2] transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
-                </a>
               </div>
             </div>
           </div>
@@ -1495,99 +1474,85 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {userProducts.map((up) => (
                   <div
                     key={up.id}
-                    className="bg-[#0b0d14] border border-white/[0.08] hover:border-emerald-500/30 rounded-[22px] overflow-hidden transition-all duration-300 shadow-2xl hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] group flex flex-col"
+                    className="glass-card rounded-[24px] overflow-hidden group flex flex-col animate-slide-up hover:-translate-y-1 transition-all duration-300"
                   >
                     {/* Top Image Banner - Full Width */}
-                    <div className="relative h-48 w-full bg-[#07080c] overflow-hidden">
+                    <div className="relative h-48 w-full bg-[#050505] overflow-hidden border-b border-white/[0.04]">
                       <img
                         src={up.product?.image || '/logo.png?v=6'}
                         alt={up.product?.name || 'Product'}
-                        className={`w-full h-full transition-transform duration-500 group-hover:scale-105 ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-80' : 'object-cover'}`}
+                        className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60 group-hover:opacity-100' : 'object-cover'}`}
                         onError={(e) => { 
                           e.currentTarget.src = '/logo.png?v=6'; 
-                          e.currentTarget.className = 'w-full h-full transition-transform duration-500 group-hover:scale-105 object-contain p-8 opacity-80'; 
+                          e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d14] via-[#0b0d14]/30 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
                       
                       {/* Top Category Tag Pill */}
-                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-black text-emerald-400 uppercase tracking-wider shadow-md`}>
+                      <div className={`absolute top-4 ${lang === 'ar' ? 'right-4' : 'left-4'} px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-black text-primary uppercase tracking-wider shadow-lg`}>
                         {up.product?.category || 'SPOOFER'}
                       </div>
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-5 flex-1 flex flex-col">
+                    <div className="p-6 flex-1 flex flex-col">
                       {/* Title & Icon Row */}
-                      <div className="flex items-center gap-3.5 mb-5">
-                        <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
-                          <Package className="w-5.5 h-5.5 text-emerald-400" />
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-extrabold text-white text-lg tracking-wide group-hover:text-primary transition-colors">{up.product?.name || 'Unknown Product'}</h3>
+                        <div className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-slate-300">
+                          {up.product?.version || 'v1.0'}
                         </div>
-                        <div>
-                          <h3 className="font-extrabold text-white text-lg leading-tight tracking-wide">{up.product?.name || 'Unknown Product'}</h3>
-                          <div className={`text-[11px] font-bold text-slate-400 mt-1 flex items-center gap-2 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
-                            <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                              <span className="text-emerald-400 text-[10px]">{lang === 'ar' ? 'فعال' : 'Active'}</span>
-                            </div>
-                            <span className="text-slate-700">•</span>
-                            <div className="flex items-center gap-1 text-slate-400">
-                              <Users className="w-3.5 h-3.5 text-slate-500" />
-                              <span>{up.product?.downloadsCount || 1420} {lang === 'ar' ? 'مستخدم' : 'Users'}</span>
-                            </div>
-                          </div>
+                      </div>
+
+                      {/* Stats Row */}
+                      <div className={`flex items-center gap-3 mb-4 text-xs font-medium text-slate-400 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
+                        <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-brand-glow animate-pulse" />
+                          <span className="text-primary text-[10px] font-bold">{lang === 'ar' ? 'فعال' : 'Active'}</span>
+                        </div>
+                        <span className="text-slate-700">•</span>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>{up.product?.downloadsCount || 1420} {lang === 'ar' ? 'مستخدم' : 'Users'}</span>
                         </div>
                       </div>
 
                       {/* Product Description */}
-                      <div className="mb-4">
-                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                      <div className="mb-5 flex-1">
+                        <p className="text-sm text-slate-400 leading-relaxed line-clamp-2">
                           {up.product?.description || (lang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج حالياً.' : 'No description available for this product at the moment.')}
                         </p>
                       </div>
 
-                      {/* Product Details & Metadata */}
-                      <div className="space-y-2 mb-4 bg-white/[0.02] border border-white/[0.05] rounded-xl p-3 text-xs">
-                        <div className="flex justify-between items-center text-slate-400">
-                          <span className="font-medium">{lang === 'ar' ? 'الإصدار:' : 'Version:'}</span>
-                          <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-500/20">{up.product?.version || 'v1.0.0'}</span>
+                      {/* License Key Box - Premium Redesign */}
+                      <div className="mb-5 relative group/key">
+                        <div className="absolute inset-0 bg-primary/5 rounded-xl blur-md opacity-0 group-hover/key:opacity-100 transition-opacity" />
+                        <div className="bg-[#050505] border border-white/10 hover:border-primary/30 rounded-xl p-1.5 pl-4 flex items-center justify-between gap-3 relative transition-colors shadow-inner">
+                          <div className="flex-1 overflow-hidden flex flex-col justify-center py-1">
+                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
+                            <code dir="ltr" className="text-[13px] font-mono text-slate-200 tracking-widest font-bold truncate block w-full text-left">
+                              {up.keyString || 'KEY-ACTIVATED-OK'}
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
+                            className={`p-3 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-transparent'}`}
+                            title="Copy Key"
+                          >
+                            {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          </button>
                         </div>
-                        <div className="flex justify-between items-center text-slate-400">
-                          <span className="font-medium">{lang === 'ar' ? 'تاريخ التفعيل:' : 'Activated At:'}</span>
-                          <span className="font-mono text-slate-300">
-                            {up.activatedAt ? new Date(up.activatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-slate-400">
-                          <span className="font-medium">{lang === 'ar' ? 'آخر تحديث للمنتج:' : 'Last Updated:'}</span>
-                          <span className="font-mono text-slate-300">
-                            {up.product?.updatedAt ? new Date(up.product.updatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* License Key Box - FULL DISPLAY */}
-                      <div className="bg-[#141620] border border-white/[0.08] rounded-xl p-2.5 flex items-center justify-between gap-2 mb-4 overflow-hidden shadow-inner">
-                        <code dir="ltr" className="text-xs font-mono text-slate-200 tracking-wider font-bold px-2 overflow-x-auto whitespace-nowrap scrollbar-none select-all w-full text-left">
-                          {up.keyString || 'KEY-ACTIVATED-OK'}
-                        </code>
-                        <button
-                          onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                          className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 hover:text-emerald-400 transition-all cursor-pointer shrink-0"
-                          title="Copy Key"
-                        >
-                          {copiedKeyId === up.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
                       </div>
 
                       {/* Action Buttons Row */}
                       <div className="grid grid-cols-2 gap-3 mt-auto">
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="py-2.5 px-4 bg-white hover:bg-slate-100 text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                          className="py-3 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
                         >
                           <Download className="w-4 h-4" />
-                          <span>{lang === 'ar' ? 'تحميل' : 'Download Loader'}</span>
+                          <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
                         </button>
 
                         <button
@@ -1595,7 +1560,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             setGuideModalProduct(up);
                             setGuideView('menu');
                           }}
-                          className="py-2.5 px-4 bg-[#151824] hover:bg-[#1d2132] border border-white/10 rounded-xl text-xs font-bold text-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                          className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
                         >
                           <HelpCircle className="w-4 h-4 text-slate-400" />
                           <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
@@ -1611,23 +1576,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 3: REDEEM KEY */}
         {activeTab === 'redeem' && (
-          <div className="space-y-8 max-w-xl mx-auto py-8">
+          <div className="space-y-8 max-w-xl mx-auto py-8 animate-slide-up">
             <div className="text-center">
-              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 shadow-md">
-                <Key className="w-7 h-7" />
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 shadow-brand-glow">
+                <Key className="w-8 h-8" />
               </div>
-              <h1 className="text-2xl font-black text-white tracking-wide">
+              <h1 className="text-3xl font-black text-white tracking-wide mb-2">
                 {lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}
               </h1>
-              <p className="text-xs text-slate-400 mt-1.5">
+              <p className="text-sm text-slate-400">
                 {lang === 'ar' ? 'أدخل مفتاح الاشتراك الخاص بك لإضافته لحسابك فوراً' : 'Enter your license key to add it to your account instantly'}
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-8 shadow-2xl space-y-6">
-              <form onSubmit={handleRedeemKey} className="space-y-5">
+            <div className="glass-card rounded-[24px] p-8 shadow-2xl space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10 group-hover:bg-primary/10 transition-colors duration-500" />
+              <form onSubmit={handleRedeemKey} className="space-y-5 relative z-10">
                 <div>
-                  <label className={`block text-xs font-bold text-slate-300 mb-2 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <label className={`block text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                     {lang === 'ar' ? 'مفتاح التفعيل (License Key)' : 'License Key'}
                   </label>
                   <input
@@ -1636,43 +1602,44 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
                     placeholder="KEY-T3N-ABCD-1234-EFGH"
-                    className="w-full bg-[#07080c] border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono tracking-wider text-left"
+                    className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 rounded-xl px-5 py-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-mono tracking-widest text-center shadow-inner"
                   />
                 </div>
 
                 {redeemMessage && (
-                  <div className={`p-4 rounded-xl text-xs font-semibold ${redeemMessage.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'}`}>
-                    {redeemMessage.text}
+                  <div className={`p-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 ${redeemMessage.type === 'success' ? 'bg-primary/10 border border-primary/20 text-primary' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                    {redeemMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    <span>{redeemMessage.text}</span>
                   </div>
                 )}
 
                 <button
                   type="submit"
                   disabled={isRedeeming}
-                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.02]"
+                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-xl transition-all shadow-brand-glow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-1 active:translate-y-0"
                 >
-                  {isRedeeming ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {isRedeeming ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                   <span>{lang === 'ar' ? 'تفعيل المفتاح الآن' : 'Redeem Key Now'}</span>
                 </button>
               </form>
 
-              <div className="pt-6 border-t border-white/[0.06] space-y-4">
+              <div className="pt-6 border-t border-white/[0.04] space-y-4 relative z-10">
                 <a
                   href="https://t3nnn.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 rounded-xl p-3 flex items-center justify-between transition-all group"
+                  className="w-full bg-white/5 border border-white/10 hover:border-primary/40 rounded-xl p-4 flex items-center justify-between transition-all group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                       <ShoppingCart className="w-5 h-5" />
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-emerald-100 group-hover:text-emerald-400 transition-colors">لا تملك مفتاح اشتراك؟</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">احصل عليه الآن من متجرنا الرسمي بأسعار وعروض حصرية</div>
+                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">لا تملك مفتاح اشتراك؟</div>
+                      <div className="text-xs text-slate-500 mt-0.5">احصل عليه الآن من متجرنا الرسمي بأسعار حصرية</div>
                     </div>
                   </div>
-                  <div className="bg-emerald-500 text-black text-[10px] font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="bg-primary text-white text-xs font-extrabold px-3 py-2 rounded-lg flex items-center gap-1 shadow-brand-glow shrink-0 group-hover:scale-105 transition-transform">
                     <span>شراء مفتاح</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
@@ -1682,18 +1649,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 rounded-xl p-3 flex items-center justify-between transition-all group mt-3"
+                  className="w-full bg-white/5 border border-white/10 hover:border-primary/40 rounded-xl p-4 flex items-center justify-between transition-all group mt-3"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                       <HelpCircle className="w-5 h-5" />
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-emerald-100 group-hover:text-emerald-400 transition-colors">تحتاج إلى مساعدة؟</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">تواصل مع فريق الدعم الفني عبر خادم ديسكورد الرسمي</div>
+                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">تحتاج إلى مساعدة؟</div>
+                      <div className="text-xs text-slate-500 mt-0.5">تواصل مع فريق الدعم الفني عبر ديسكورد</div>
                     </div>
                   </div>
-                  <div className="bg-emerald-500 text-black text-[10px] font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="bg-white/10 text-white text-xs font-extrabold px-3 py-2 rounded-lg flex items-center gap-1 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
                     <span>الدعم الفني</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
@@ -1714,7 +1681,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'overview' && <Activity className="w-6 h-6 text-sky-400" />}
                     {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-400" />}
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-400" />}
-                    {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-emerald-400" />}
+                    {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-primary" />}
                     {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-400" />}
                   </div>
                   <span>
@@ -1736,8 +1703,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {adminStats && (
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-bold flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="px-4 py-2 bg-primary/10 border border-primary/20 text-primary rounded-xl font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     <span>{adminStats.unusedKeys} مفتاح متاح</span>
                   </span>
                   <span className="px-4 py-2 bg-sky-500/10 border border-sky-500/20 text-sky-400 rounded-xl font-bold">
@@ -1758,49 +1725,49 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <span className="text-xs text-slate-400 font-medium">انقر على أي منتج لفتحه وتعديله وت عبئة مفاتيحه</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
                   {products.map((product) => (
                     <div
                       key={product.id}
-                      className="bg-[#0b0d14] border border-white/[0.08] rounded-[22px] overflow-hidden hover:border-emerald-500/30 transition-all duration-300 shadow-2xl flex flex-col group"
+                      className="glass-card rounded-[24px] overflow-hidden hover:border-primary/40 transition-all duration-300 flex flex-col group"
                     >
                       {/* Top Image Banner - Full Width */}
-                      <div className="relative h-48 w-full bg-[#07080c] overflow-hidden">
+                      <div className="relative h-48 w-full bg-[#050505] overflow-hidden border-b border-white/[0.04]">
                         <img
                           src={product.image || '/logo.png?v=6'}
                           alt={product.name}
-                          className={`w-full h-full transition-transform duration-500 group-hover:scale-105 ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-80' : 'object-cover'}`}
+                          className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60 group-hover:opacity-100' : 'object-cover'}`}
                           onError={(e) => { 
                             e.currentTarget.src = '/logo.png?v=6'; 
-                            e.currentTarget.className = 'w-full h-full transition-transform duration-500 group-hover:scale-105 object-contain p-8 opacity-80'; 
+                            e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d14] via-[#0b0d14]/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
                         
-                        <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
-                          <span className="text-[10px] text-emerald-100 font-bold">المخزون المتاح:</span>
-                          <span className="text-xs font-black text-emerald-400">{product.stockKeysCount || 0}</span>
+                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+                          <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">المخزون المتاح:</span>
+                          <span className="text-xs font-black text-primary">{product.stockKeysCount || 0}</span>
                         </div>
                       </div>
 
                       {/* Content Section */}
-                      <div className="p-5 flex-1 flex flex-col">
+                      <div className="p-6 flex-1 flex flex-col">
                         {/* Title & Icon Row */}
-                        <div className="flex items-center gap-3.5 mb-4">
-                          <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
-                            <Package className="w-5.5 h-5.5 text-emerald-400" />
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-brand-glow">
+                            <Package className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-white text-lg leading-tight tracking-wide">{product.name}</h3>
+                            <h3 className="font-extrabold text-white text-lg leading-tight tracking-wide group-hover:text-primary transition-colors">{product.name}</h3>
                             <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2 font-mono">
-                              <span className="text-emerald-400 font-bold">{product.version}</span>
+                              <span className="text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">{product.version}</span>
                               <span className="text-slate-600">·</span>
-                              <span>{product.category}</span>
+                              <span className="font-bold text-slate-300">{product.category}</span>
                             </div>
                           </div>
                         </div>
 
-                        <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-6 flex-1">
+                        <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 mb-6 flex-1">
                           {product.description}
                         </p>
 
@@ -1808,7 +1775,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="grid grid-cols-2 gap-3 mt-auto">
                           <button
                             onClick={() => openInventoryModal(product, 'codes', true)}
-                            className="py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                            className="py-3 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
                           >
                             <Key className="w-4 h-4" />
                             <span>إضافة مفاتيح</span>
@@ -1816,7 +1783,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                           <button
                             onClick={() => openInventoryModal(product, 'data', false)}
-                            className="py-2.5 px-4 bg-[#151824] hover:bg-[#1d2132] border border-white/10 rounded-xl text-xs font-bold text-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                            className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
                           >
                             <Edit3 className="w-4 h-4 text-slate-400" />
                             <span>تعديل المنتج</span>
@@ -1831,23 +1798,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* ==================== SUB-TAB 2: CUSTOMERS MANAGEMENT ==================== */}
             {adminSectionTab === 'customers' && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-5">
+              <div className="space-y-4 animate-slide-up">
+                <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h3 className="text-lg font-black text-white flex items-center gap-2">
-                      <Users className="w-5 h-5 text-emerald-400" />
+                      <Users className="w-5 h-5 text-primary" />
                       <span>قائمة العملاء وإدارة الاشتراكات</span>
                     </h3>
 
                     {/* Search Bar for Customers */}
                     <div className="relative w-full md:w-80">
-                      <Search className="w-4 h-4 absolute right-3 top-3 text-slate-500" />
+                      <Search className="w-4 h-4 absolute right-4 top-3.5 text-slate-400" />
                       <input
                         type="text"
                         value={searchCustomerQuery}
                         onChange={(e) => setSearchCustomerQuery(e.target.value)}
                         placeholder="ابحث باسم العميل أو إيميله أو Discord ID..."
-                        className="w-full bg-[#07080c] border border-white/[0.08] focus:border-emerald-500/50 rounded-xl pr-9 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 rounded-xl pr-11 pl-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all shadow-inner"
                       />
                     </div>
                   </div>
@@ -1888,7 +1855,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               </td>
                               <td className="py-3.5 text-slate-300">
                                 <div className="font-medium">{customer.email || 'لا يوجد إيميل'}</div>
-                                <div className="text-[10px] text-emerald-400 font-mono">Discord: {customer.discordId}</div>
+                                <div className="text-[10px] text-primary font-mono">Discord: {customer.discordId}</div>
                               </td>
                               <td className="py-3.5">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${customer.role === 'Boss' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}`}>
@@ -1900,7 +1867,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => setSelectedAdminCustomer(customer)}
-                                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-[10px] font-black text-emerald-400 transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02]"
+                                    className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg text-[10px] font-black text-primary transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02]"
                                     title="عرض تفاصيل العميل وإدارة اشتراكاته ومفاتيحه"
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
@@ -1927,23 +1894,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* ==================== SUB-TAB 3: SEARCH ALL KEYS ==================== */}
             {adminSectionTab === 'keys' && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-5">
+              <div className="space-y-4 animate-slide-up">
+                <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h3 className="text-lg font-black text-white flex items-center gap-2">
-                      <Key className="w-5 h-5 text-emerald-400" />
+                      <Key className="w-5 h-5 text-primary" />
                       <span>البحث الشامل وتفتيش المفاتيح في النظام</span>
                     </h3>
 
                     {/* Key Search Input */}
                     <div className="relative w-full md:w-80">
-                      <Search className="w-4 h-4 absolute right-3 top-3 text-slate-500" />
+                      <Search className="w-4 h-4 absolute right-4 top-3.5 text-slate-400" />
                       <input
                         type="text"
                         value={searchKeysQuery}
                         onChange={(e) => setSearchKeysQuery(e.target.value)}
                         placeholder="ابحث بكود المفتاح (e.g. T3N-FORT...)..."
-                        className="w-full bg-[#07080c] border border-white/[0.08] focus:border-emerald-500/50 rounded-xl pr-9 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono"
+                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 rounded-xl pr-11 pl-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-mono shadow-inner"
                       />
                     </div>
                   </div>
@@ -1952,19 +1919,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setKeyStatusFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-primary text-white font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       الكل ({allKeysList.length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('unused')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-primary text-white font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       متاح فقط ({allKeysList.filter((k) => !k.isUsed).length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('used')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-primary text-white font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       مستعمل ({allKeysList.filter((k) => k.isUsed).length})
                     </button>
@@ -1992,7 +1959,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           })
                           .map((keyObj) => (
                             <tr key={keyObj.id} className="text-slate-300 hover:bg-white/[0.03] transition-colors duration-150">
-                              <td className="py-3.5 pr-2 font-bold text-emerald-400 select-all">{keyObj.key}</td>
+                              <td className="py-3.5 pr-2 font-bold text-primary select-all">{keyObj.key}</td>
                               <td className="py-3.5 font-sans text-white font-semibold">
                                 {products.find((p) => p.id === keyObj.productId)?.name || keyObj.productId}
                               </td>
@@ -2002,12 +1969,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                     مستعمل
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-bold">
+                                  <span className="px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded text-[10px] font-bold">
                                     متاح
                                   </span>
                                 )}
                               </td>
-                              <td className="py-3.5 font-sans text-emerald-400 font-semibold text-xs">
+                              <td className="py-3.5 font-sans text-primary font-semibold text-xs">
                                 {keyObj.isUsed ? (
                                   allCustomersList.find((u: any) => u.id === keyObj.usedByUserId)?.name || 
                                   allCustomersList.find((u: any) => u.id === keyObj.usedByUserId)?.discordId || 
@@ -2047,31 +2014,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* ==================== SUB-TAB 4: SYSTEM AUDIT LOGS ==================== */}
             {adminSectionTab === 'logs' && (
-              <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-5">
+              <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6 animate-slide-up">
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-emerald-400" />
+                  <FileText className="w-5 h-5 text-primary" />
                   <span>سجلات الأمان والنشاط المباشرة (System Audit Logs)</span>
                 </h3>
 
                 <div className="overflow-x-auto scrollbar-none">
                   <table className="w-full text-right text-xs">
                     <thead>
-                      <tr className="border-b border-white/[0.06] text-slate-400 font-bold">
-                        <th className="pb-3.5">الحدث</th>
-                        <th className="pb-3.5">التفاصيل</th>
-                        <th className="pb-3.5">المستخدم / Discord</th>
-                        <th className="pb-3.5">عنوان IP</th>
-                        <th className="pb-3.5">التوقيت</th>
+                      <tr className="border-b border-white/10 text-slate-400 font-bold">
+                        <th className="pb-4">الحدث</th>
+                        <th className="pb-4">التفاصيل</th>
+                        <th className="pb-4">المستخدم / Discord</th>
+                        <th className="pb-4">عنوان IP</th>
+                        <th className="pb-4">التوقيت</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.04]">
                       {adminLogs.map((log) => (
-                        <tr key={log.id} className="text-slate-300 hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3.5 font-bold text-white">{log.action}</td>
-                          <td className="py-3.5 max-w-xs truncate">{log.details}</td>
-                          <td className="py-3.5 text-emerald-400 font-semibold">{log.userName || log.discordId || 'زائر'}</td>
-                          <td className="py-3.5 font-mono text-[11px] text-slate-400">{log.ipAddress}</td>
-                          <td className="py-3.5 text-slate-400">{new Date(log.createdAt).toLocaleTimeString('ar-SA')}</td>
+                        <tr key={log.id} className="text-slate-300 hover:bg-white/5 transition-colors duration-200">
+                          <td className="py-4 font-bold text-white">{log.action}</td>
+                          <td className="py-4 max-w-xs truncate">{log.details}</td>
+                          <td className="py-4 text-primary font-semibold">{log.userName || log.discordId || 'زائر'}</td>
+                          <td className="py-4 font-mono text-[11px] text-slate-400">{log.ipAddress}</td>
+                          <td className="py-4 text-slate-400">{new Date(log.createdAt).toLocaleTimeString('ar-SA')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2085,126 +2052,126 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="space-y-6">
                 {/* Primary Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">إجمالي العملاء</div>
                         <div className="text-3xl font-black text-white">{adminStats.totalUsers}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Users className="w-6 h-6 text-emerald-400" />
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
+                        <Users className="w-6 h-6 text-primary" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">المفاتيح المتاحة</div>
-                        <div className="text-3xl font-black text-emerald-400">{adminStats.unusedKeys}</div>
+                        <div className="text-3xl font-black text-primary">{adminStats.unusedKeys}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Key className="w-6 h-6 text-emerald-400" />
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
+                        <Key className="w-6 h-6 text-primary" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">المنتجات النشطة</div>
                         <div className="text-3xl font-black text-white">{adminStats.activeProducts}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Package className="w-6 h-6 text-emerald-400" />
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
+                        <Package className="w-6 h-6 text-primary" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">إجمالي التحميلات</div>
                         <div className="text-3xl font-black text-white">{adminStats.totalDownloads}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Download className="w-6 h-6 text-emerald-400" />
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
+                        <Download className="w-6 h-6 text-primary" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Secondary Row: Recent Activity & Quick Alerts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                   {/* Recent Logs Summary */}
-                  <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-4">
-                    <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+                  <div className="glass-card rounded-[24px] p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
                       <h3 className="font-extrabold text-white flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-emerald-400" />
+                        <Activity className="w-5 h-5 text-primary" />
                         آخر الأنشطة في المنصة
                       </h3>
-                      <button onClick={() => setAdminSectionTab('logs')} className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold transition-colors">
+                      <button onClick={() => setAdminSectionTab('logs')} className="text-[11px] text-primary hover:text-primary-hover font-bold transition-colors uppercase tracking-wider">
                         عرض الكل &rarr;
                       </button>
                     </div>
                     <div className="space-y-3">
                       {adminLogs.slice(0, 4).map((log) => (
-                        <div key={log.id} className="flex items-center gap-3 p-3 bg-[#08090d] rounded-xl border border-white/[0.05]">
-                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                            <UserCheck className="w-4 h-4 text-emerald-400" />
+                        <div key={log.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                            <UserCheck className="w-4 h-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-bold text-slate-200 truncate">{log.action}</div>
-                            <div className="text-[10px] text-slate-400 truncate mt-0.5">{log.details}</div>
+                            <div className="text-xs text-slate-400 truncate mt-0.5">{log.details}</div>
                           </div>
-                          <div className="text-[10px] text-slate-500 font-mono shrink-0">
+                          <div className="text-[10px] text-slate-500 font-mono shrink-0 bg-black/40 px-2 py-1 rounded-md">
                             {new Date(log.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
                       ))}
                       {adminLogs.length === 0 && (
-                        <div className="text-center text-sm text-slate-500 py-4">لا توجد أنشطة مسجلة مؤخراً</div>
+                        <div className="text-center text-sm text-slate-500 py-6">لا توجد أنشطة مسجلة مؤخراً</div>
                       )}
                     </div>
                   </div>
 
                   {/* Quick System Status */}
-                  <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-4">
-                    <div className="border-b border-white/[0.06] pb-4">
+                  <div className="glass-card rounded-[24px] p-6 space-y-6">
+                    <div className="border-b border-white/10 pb-4">
                       <h3 className="font-extrabold text-white flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-emerald-400" />
+                        <Sparkles className="w-5 h-5 text-primary" />
                         حالة النظام والإشعارات
                       </h3>
                     </div>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      <div className="flex items-center justify-between p-4 bg-primary/10 border border-primary/20 rounded-xl group hover:bg-primary/20 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-brand-glow">
+                            <CheckCircle2 className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <div className="text-sm font-extrabold text-emerald-400">النظام يعمل بكفاءة</div>
-                            <div className="text-xs text-slate-300 mt-0.5">لا توجد مشاكل حالية في الخوادم.</div>
+                            <div className="text-sm font-extrabold text-primary">النظام يعمل بكفاءة</div>
+                            <div className="text-xs text-slate-300 mt-1">لا توجد مشاكل حالية في الخوادم.</div>
                           </div>
                         </div>
                       </div>
 
                       {adminStats.unusedKeys < 5 && (
-                        <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                              <HelpCircle className="w-5 h-5 text-amber-400" />
+                        <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl group hover:bg-amber-500/20 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <HelpCircle className="w-6 h-6 text-amber-400" />
                             </div>
                             <div>
                               <div className="text-sm font-extrabold text-amber-400 font-sans">تنبيه: انخفاض المخزون</div>
-                              <div className="text-xs text-slate-300 mt-0.5">بعض المنتجات على وشك النفاد من المفاتيح.</div>
+                              <div className="text-xs text-slate-300 mt-1">بعض المنتجات على وشك النفاد من المفاتيح.</div>
                             </div>
                           </div>
-                          <button onClick={() => setAdminSectionTab('products')} className="px-3 py-1.5 bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 rounded-lg text-xs font-bold transition-all hover:scale-102">
+                          <button onClick={() => setAdminSectionTab('products')} className="px-4 py-2 bg-amber-500/25 hover:bg-amber-500/40 text-amber-300 rounded-lg text-xs font-bold transition-all hover:scale-105">
                             إدارة المخزون
                           </button>
                         </div>
@@ -2224,40 +2191,41 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           Each key as a card with delete button
          ==================================================================== */}
       {inventoryModalOpen && inventoryProduct && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#0c0e14] to-[#07080c] border border-white/[0.08] rounded-[24px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-card rounded-[24px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/10">
             {/* Modal Header (Premium Style) */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#0e1017] border-b border-white/[0.06] shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 bg-black/40 border-b border-white/10 shrink-0 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -z-10" />
               <button
                 onClick={() => setInventoryModalOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/10 text-slate-400 hover:text-red-400 transition-colors cursor-pointer z-10"
               >
                 <X className="w-4 h-4" />
               </button>
-              <h2 className="text-sm font-extrabold text-white text-right flex-1 pr-3">
-                بيانات المنتج ({inventoryProduct.name})
+              <h2 className="text-lg font-extrabold text-white text-right flex-1 pr-3 z-10">
+                إدارة <span className="text-primary">{inventoryProduct.name}</span>
               </h2>
             </div>
 
             {/* Tabs Row */}
-            <div className="flex bg-[#0a0b10] border-b border-white/[0.06] shrink-0 p-4 gap-2">
+            <div className="flex bg-black/20 border-b border-white/10 shrink-0 p-4 gap-2">
               <button
                 onClick={() => setInventoryTab('codes')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer ${inventoryTab === 'codes' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] hover:bg-[#1a1e2e] text-slate-300 border border-white/[0.06]'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'codes' ? 'bg-primary text-white shadow-brand-glow' : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'}`}
               >
                 <span>الأكواد المتاحة</span>
                 <Key className="w-4 h-4 ml-1" />
               </button>
               <button
                 onClick={() => setInventoryTab('custom')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer ${inventoryTab === 'custom' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] hover:bg-[#1a1e2e] text-slate-300 border border-white/[0.06]'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'custom' ? 'bg-primary text-white shadow-brand-glow' : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'}`}
               >
                 <span>الحقول المخصصة</span>
                 <Layers className="w-4 h-4 ml-1" />
               </button>
               <button
                 onClick={() => setInventoryTab('data')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer ${inventoryTab === 'data' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] hover:bg-[#1a1e2e] text-slate-300 border border-white/[0.06]'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'data' ? 'bg-primary text-white shadow-brand-glow' : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'}`}
               >
                 <span>بيانات المنتج</span>
                 <FileText className="w-4 h-4 ml-1" />
@@ -2265,97 +2233,97 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
 
             {/* Modal Content Scrollable */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 scrollbar-thin">
               {/* TAB: بيانات المنتج (Editable) */}
               {inventoryTab === 'data' && (
-                <div className="space-y-4">
+                <div className="space-y-5 animate-slide-up">
                   {productSaveMessage && (
-                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-semibold flex items-center justify-between">
+                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary text-xs rounded-xl font-bold flex items-center justify-between">
                       <span>{productSaveMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">اسم المنتج</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">اسم المنتج</label>
                     <input
                       type="text"
                       value={editProductData.name}
                       onChange={(e) => setEditProductData({ ...editProductData, name: e.target.value })}
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none transition-all font-bold"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all font-bold shadow-inner"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">صورة المنتج (رابط مسار الصورة)</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">صورة المنتج (رابط مسار الصورة)</label>
                     <input
                       type="text"
                       value={editProductData.image}
                       onChange={(e) => setEditProductData({ ...editProductData, image: e.target.value })}
                       placeholder="/products/fortnite-unban.png"
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all font-mono"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all font-mono shadow-inner"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">الوصف الشامل للمنتج</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">الوصف الشامل للمنتج</label>
                     <textarea
                       rows={3}
                       value={editProductData.description}
                       onChange={(e) => setEditProductData({ ...editProductData, description: e.target.value })}
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl p-3.5 text-xs text-white focus:outline-none transition-all leading-relaxed"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl p-4 text-xs text-white focus:outline-none transition-all leading-relaxed shadow-inner"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">الإصدار (Version)</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2">الإصدار (Version)</label>
                       <input
                         type="text"
                         value={editProductData.version}
                         onChange={(e) => setEditProductData({ ...editProductData, version: e.target.value })}
-                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all font-mono"
+                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all font-mono shadow-inner"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">حجم الملف (File Size)</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2">حجم الملف (File Size)</label>
                       <input
                         type="text"
                         value={editProductData.fileSize}
                         onChange={(e) => setEditProductData({ ...editProductData, fileSize: e.target.value })}
-                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all"
+                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all shadow-inner"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">التصنيف (Category)</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2">التصنيف (Category)</label>
                       <input
                         type="text"
                         value={editProductData.category}
                         onChange={(e) => setEditProductData({ ...editProductData, category: e.target.value })}
-                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all"
+                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all shadow-inner"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">عدد التحميلات</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2">عدد التحميلات</label>
                       <input
                         type="number"
                         value={editProductData.downloadsCount}
                         onChange={(e) => setEditProductData({ ...editProductData, downloadsCount: Number(e.target.value) })}
-                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all font-mono"
+                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all font-mono shadow-inner"
                       />
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-4 border-t border-white/10">
                     <button
                       onClick={handleSaveProductChanges}
                       disabled={isSavingProduct}
-                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
+                      className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
                     >
-                      {isSavingProduct ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                       <span>حفظ تغييرات المنتج</span>
                     </button>
                   </div>
@@ -2364,68 +2332,68 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {/* TAB: الحقول المخصصة (Editable) */}
               {inventoryTab === 'custom' && (
-                <div className="space-y-4">
+                <div className="space-y-5 animate-slide-up">
                   {productSaveMessage && (
-                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-semibold flex items-center justify-between">
+                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary text-xs rounded-xl font-bold flex items-center justify-between">
                       <span>{productSaveMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">رابط الشرح / فيديو (YouTube / Stream)</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">رابط الشرح / فيديو (YouTube / Stream)</label>
                     <input
                       type="text"
                       value={editProductData.videoUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, videoUrl: e.target.value })}
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none transition-all"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none transition-all shadow-inner"
                       placeholder="https://www.youtube.com/watch?v=..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">رابط دليل الاستخدام (Discord / Docs)</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">رابط دليل الاستخدام (Discord / Docs)</label>
                     <input
                       type="text"
                       value={editProductData.guideUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, guideUrl: e.target.value })}
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none transition-all"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none transition-all shadow-inner"
                       placeholder="https://discord.gg/t3n"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">رابط تحميل الملف (File Download URL)</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">رابط تحميل الملف (File Download URL)</label>
                     <input
                       type="text"
                       value={editProductData.fileUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, fileUrl: e.target.value })}
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none transition-all"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none transition-all shadow-inner"
                       placeholder="/uploads/spoofer.exe"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">لون البطاقة (Theme Accent)</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">لون البطاقة (Theme Accent)</label>
                     <select
                       value={editProductData.cardColor}
                       onChange={(e) => setEditProductData({ ...editProductData, cardColor: e.target.value })}
-                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all cursor-pointer font-bold"
+                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all cursor-pointer font-bold shadow-inner"
                     >
-                      <option value="blue" className="bg-[#0c0e14] text-white">أزرق سماوي (Blue Glow)</option>
-                      <option value="cyan" className="bg-[#0c0e14] text-white">سيان فائق (Cyan Neon)</option>
-                      <option value="purple" className="bg-[#0c0e14] text-white">بنفسجي تبيان (Purple Spirit)</option>
-                      <option value="gold" className="bg-[#0c0e14] text-white">ذهبي فاخر (Gold Edition)</option>
+                      <option value="blue" className="bg-[#050505] text-white">أزرق سماوي (Blue Glow)</option>
+                      <option value="cyan" className="bg-[#050505] text-white">سيان فائق (Cyan Neon)</option>
+                      <option value="purple" className="bg-[#050505] text-white">بنفسجي تبيان (Purple Spirit)</option>
+                      <option value="gold" className="bg-[#050505] text-white">ذهبي فاخر (Gold Edition)</option>
                     </select>
                   </div>
 
-                  <div className="pt-3 space-y-2">
+                  <div className="pt-4 border-t border-white/10 space-y-3">
                     <button
                       onClick={handleSaveProductChanges}
                       disabled={isSavingProduct}
-                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
+                      className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
                     >
-                      {isSavingProduct ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                       <span>حفظ تغييرات الحقول</span>
                     </button>
 
@@ -2442,24 +2410,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {/* TAB: الأكواد المتاحة (Premium T3N Style) */}
               {inventoryTab === 'codes' && (
-                <div className="space-y-4">
+                <div className="space-y-5 animate-slide-up">
                   
                   {keyActionMessage && (
-                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-semibold flex items-center justify-between shadow-lg">
+                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary text-xs rounded-xl font-bold flex items-center justify-between shadow-brand-glow">
                       <span>{keyActionMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
                   {/* Premium Info Box */}
-                  <div className="bg-[#050609] border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden shadow-lg">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <Layers className="w-4 h-4 text-emerald-400" />
+                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 flex flex-col gap-3 relative overflow-hidden shadow-lg">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-primary shadow-brand-glow"></div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-brand-glow">
+                        <Layers className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1 text-right">
-                        <h4 className="text-sm font-extrabold text-white mb-0.5">إدارة المخزون الذكية</h4>
+                        <h4 className="text-sm font-extrabold text-white mb-1">إدارة المخزون الذكية</h4>
                         <p className="text-xs text-slate-400 leading-relaxed">
                           يمكنك إضافة آلاف المفاتيح دفعة واحدة بدون أي تأخير. النظام سيقوم بمعالجتها في الخلفية.
                         </p>
@@ -2468,7 +2436,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {!bulkAddOpen && (
                       <button 
                         onClick={() => setBulkAddOpen(true)}
-                        className="w-full py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-lg transition-all cursor-pointer mt-1"
+                        className="w-full py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-xs font-bold rounded-xl transition-all cursor-pointer mt-2"
                       >
                         فتح لوحة الإضافة السريعة (Batch Add)
                       </button>
@@ -2482,18 +2450,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         initial={{ opacity: 0, y: -10, height: 0 }}
                         animate={{ opacity: 1, y: 0, height: 'auto' }}
                         exit={{ opacity: 0, y: -10, height: 0 }}
-                        className="bg-[#0a0c12] border border-white/[0.08] rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden"
+                        className="glass-card rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden"
                       >
                         <div className="absolute top-0 right-0 p-3">
-                          <button onClick={() => setBulkAddOpen(false)} className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer p-1">
+                          <button onClick={() => setBulkAddOpen(false)} className="text-slate-500 hover:text-red-400 transition-colors cursor-pointer p-1">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
                         
                         <div className="flex justify-between items-center pr-2">
-                          <span className="text-xs text-emerald-400 font-bold tracking-widest uppercase">Batch Keys</span>
+                          <span className="text-xs text-primary font-bold tracking-widest uppercase">Batch Keys</span>
                           {bulkKeysText.trim() && (
-                            <span className="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md">
+                            <span className="text-xs font-bold bg-primary/20 text-primary px-3 py-1 rounded-lg">
                               {bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0).length} مفاتيح
                             </span>
                           )}
@@ -2505,14 +2473,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             value={bulkKeysText}
                             onChange={(e) => setBulkKeysText(e.target.value)}
                             placeholder="الصق المفاتيح هنا...&#10;يمكنك الفصل بينها بمسافة أو فاصلة أو سطر جديد."
-                            className={`w-full bg-[#050609] rounded-xl p-4 text-sm font-mono placeholder:text-slate-600 focus:outline-none transition-all resize-y min-h-[120px] ${isAddingKeys ? 'border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] text-emerald-300' : 'border border-white/[0.08] focus:border-emerald-500/50 text-slate-300 hover:border-white/[0.12]'}`}
+                            className={`w-full bg-[#050505] rounded-xl p-4 text-sm font-mono placeholder:text-slate-600 focus:outline-none transition-all resize-y min-h-[120px] shadow-inner ${isAddingKeys ? 'border border-primary shadow-brand-glow text-primary/90' : 'border border-white/10 focus:border-primary/50 text-slate-300'}`}
                             style={{ lineHeight: '1.8' }}
                             dir="ltr"
                           />
                         </div>
 
                         {bulkMessage && (
-                          <div className="p-3 bg-emerald-500/10 text-emerald-400 text-xs rounded-xl font-bold text-center border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                          <div className="p-3 bg-primary/10 text-primary text-xs rounded-xl font-bold text-center border border-primary/20 shadow-brand-glow">
                             {bulkMessage}
                           </div>
                         )}
@@ -2520,16 +2488,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <button
                           onClick={handleBulkAddKeys}
                           disabled={isAddingKeys || !bulkKeysText.trim()}
-                          className={`w-full py-3.5 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] text-slate-500 cursor-not-allowed border border-white/[0.06]'}`}
+                          className={`w-full py-4 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-primary hover:bg-primary-hover text-white shadow-brand-glow hover:-translate-y-0.5' : 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/10'}`}
                         >
                           {isAddingKeys ? (
                             <>
-                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              <RefreshCw className="w-5 h-5 animate-spin" />
                               <span>جاري المعالجة الفورية...</span>
                             </>
                           ) : (
                             <>
-                              <CheckCircle2 className="w-4 h-4" />
+                              <CheckCircle2 className="w-5 h-5" />
                               <span>إضافة الأكواد للمخزون</span>
                             </>
                           )}
@@ -2540,28 +2508,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                   {/* Keys List */}
                   <div className="pt-2">
-                    <div className="flex items-center justify-between mb-3 px-1">
-                      <h4 className="text-sm font-bold text-slate-200">المفاتيح الحالية</h4>
-                      <div className="text-xs font-semibold text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                      <h4 className="text-sm font-bold text-white">المفاتيح الحالية</h4>
+                      <div className="text-xs font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full shadow-brand-glow">
                         {inventoryKeys.length} مفتاح
                       </div>
                     </div>
 
                     {isLoadingKeys ? (
-                      <div className="flex flex-col items-center justify-center py-12 border border-white/[0.08] border-dashed rounded-xl bg-[#050609]">
-                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-emerald-500" />
-                        <span className="text-xs font-medium text-slate-400">جارٍ جلب المفاتيح بسرعة...</span>
+                      <div className="flex flex-col items-center justify-center py-12 border border-white/10 border-dashed rounded-xl bg-black/20">
+                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-primary" />
+                        <span className="text-xs font-bold text-slate-400">جارٍ جلب المفاتيح بسرعة...</span>
                       </div>
                     ) : (
-                      <div className="space-y-2.5">
+                      <div className="space-y-3">
                         {inventoryKeys.map((keyItem) => (
-                          <div key={keyItem.id} className="group bg-[#050609] hover:bg-[#0c0e15] border border-white/[0.08] hover:border-emerald-500/30 rounded-xl overflow-hidden flex items-center justify-between p-3.5 gap-4 transition-all shadow-sm">
+                          <div key={keyItem.id} className="group bg-black/40 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-xl overflow-hidden flex items-center justify-between p-4 gap-4 transition-all shadow-md">
                             <div className="flex-1 text-sm text-slate-300 font-mono break-all text-left select-all group-hover:text-white transition-colors" dir="ltr">
                               {keyItem.key}
                             </div>
                             <button
                               onClick={() => handleDeleteKey(keyItem.id)}
-                              className="shrink-0 p-2 border border-transparent hover:border-rose-500/30 hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 rounded-lg transition-all cursor-pointer"
+                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-all cursor-pointer"
                               title="حذف المفتاح"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -2570,9 +2538,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         ))}
 
                         {inventoryKeys.length === 0 && !bulkAddOpen && !singleAddOpen && (
-                          <div className="text-center py-10 border border-white/[0.08] border-dashed rounded-xl bg-[#050609]">
-                            <Key className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
-                            <p className="text-xs text-slate-500 font-medium">لا توجد مفاتيح في المخزون حالياً</p>
+                          <div className="text-center py-10 border border-white/10 border-dashed rounded-xl bg-black/20">
+                            <Key className="w-8 h-8 text-slate-600 mx-auto mb-3 opacity-50" />
+                            <p className="text-xs text-slate-500 font-bold">لا توجد مفاتيح في المخزون حالياً</p>
                           </div>
                         )}
 
@@ -2583,29 +2551,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
-                              className="bg-[#050609] border border-emerald-500/30 rounded-xl p-2.5 flex gap-2 shadow-lg"
+                              className="glass-card border border-primary/30 rounded-xl p-3 flex flex-col sm:flex-row gap-3 shadow-lg"
                             >
                               <input
                                 type="text"
                                 value={singleKeyText}
                                 onChange={(e) => setSingleKeyText(e.target.value)}
                                 placeholder="أدخل المفتاح هنا..."
-                                className="flex-1 bg-[#0c0e15] border border-white/[0.08] rounded-lg px-4 py-2 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 text-left transition-colors"
+                                className="flex-1 bg-[#050505] border border-white/10 rounded-lg px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-primary/50 text-left transition-all shadow-inner"
                                 dir="ltr"
                               />
-                              <button
-                                onClick={handleAddSingleKey}
-                                disabled={!singleKeyText.trim()}
-                                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                إضافة
-                              </button>
-                              <button
-                                onClick={() => setSingleAddOpen(false)}
-                                className="px-4 py-2 bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap"
-                              >
-                                إلغاء
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleAddSingleKey}
+                                  disabled={!singleKeyText.trim()}
+                                  className="px-6 py-3 bg-primary hover:bg-primary-hover text-white font-black text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-brand-glow"
+                                >
+                                  إضافة
+                                </button>
+                                <button
+                                  onClick={() => setSingleAddOpen(false)}
+                                  className="px-5 py-3 bg-white/5 hover:bg-red-500/20 border border-white/10 text-slate-300 hover:text-red-400 font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                                >
+                                  إلغاء
+                                </button>
+                              </div>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -2614,7 +2584,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {!singleAddOpen && (
                           <button 
                             onClick={() => setSingleAddOpen(true)}
-                            className="w-full py-4 flex items-center justify-center gap-2 bg-[#050609] border border-white/[0.08] border-dashed hover:border-emerald-500/50 hover:bg-emerald-500/5 rounded-xl text-slate-400 hover:text-emerald-400 transition-all cursor-pointer mt-2"
+                            className="w-full py-4 flex items-center justify-center gap-2 bg-black/20 border border-white/10 border-dashed hover:border-primary/50 hover:bg-primary/5 rounded-xl text-slate-400 hover:text-primary transition-all cursor-pointer mt-3"
                           >
                             <span className="text-xl leading-none mb-0.5">+</span>
                             <span className="text-xs font-bold">إضافة مفتاح فردي</span>
@@ -2626,18 +2596,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-white/[0.06] bg-[#0a0b10] flex items-center justify-between shrink-0">
+            
+            <div className="p-5 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-center justify-between shrink-0 gap-3">
               <button
                 onClick={() => setInventoryProduct(null)}
-                className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-sm rounded-xl transition-all cursor-pointer hover:scale-[1.01]"
+                className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-sm rounded-xl transition-all cursor-pointer hover:-translate-y-0.5"
               >
                 إلغاء
               </button>
               <button
                 onClick={handleSaveProductChanges}
-                className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer hover:scale-[1.01]"
+                className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-xl shadow-brand-glow transition-all cursor-pointer hover:-translate-y-0.5"
               >
-                حفظ خيارات المنتج
+                حفظ التغييرات
               </button>
             </div>
           </div>
@@ -2649,39 +2620,40 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* ------------------------------------------------------------------------------------------------ */}
       {guideModalProduct && guideView && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
-          <div className="relative bg-gradient-to-br from-[#0c0e14] to-[#07080c] border border-white/[0.08] rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
+          <div className="relative glass-card rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/[0.06] flex items-start justify-between bg-[#0e1017]">
-              <div className="flex flex-col items-end w-full pr-2">
+            <div className="px-6 py-5 border-b border-white/10 flex items-start justify-between bg-black/40 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -z-10" />
+              <div className="flex flex-col items-end w-full pr-2 z-10">
                 <h3 className="text-lg font-black text-white flex items-center gap-2 mb-1 flex-row-reverse">
-                  <HelpCircle className="w-5 h-5 text-emerald-400" />
+                  <HelpCircle className="w-5 h-5 text-primary" />
                   {guideView === 'menu' ? 'قائمة الشروحات والمساعدة' : 
                    guideView === 'full' ? 'شرح خطوات التفعيل والتشغيل' :
                    guideView === 'network' ? 'حل مشكلة إغلاق البرنامج أو خطأ الشبكة' : 'حل مشكلة الوقت (Timer)'}
                 </h3>
-                <p className="text-xs text-slate-400">{guideModalProduct.product?.name || ''}</p>
+                <p className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">{guideModalProduct.product?.name || ''}</p>
               </div>
               <button
                 onClick={() => { setGuideModalProduct(null); setGuideView(null); }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 transition-colors cursor-pointer shrink-0 z-10"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto bg-[#0a0b10]">
+            <div className="p-6 overflow-y-auto scrollbar-thin">
               {guideView === 'menu' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-slide-up">
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
                       setGuideView('full');
                     }}
-                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-[#131622] border border-white/[0.06] hover:border-emerald-500/50 hover:bg-[#1a1e2e] transition-all group cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all group cursor-pointer shadow-lg hover:shadow-brand-glow hover:-translate-y-1"
                   >
-                    <div className="w-16 h-16 rounded-full bg-[#1c2030] flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
                       <ExternalLink className="w-7 h-7" />
                     </div>
                     <div className="text-center">
@@ -2699,9 +2671,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         window.open('https://discord.gg/t3n', '_blank');
                       }
                     }}
-                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-[#131622] border border-white/[0.06] hover:border-emerald-500/50 hover:bg-[#1a1e2e] transition-all group cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all group cursor-pointer shadow-lg hover:shadow-brand-glow hover:-translate-y-1"
                   >
-                    <div className="w-16 h-16 rounded-full bg-[#1c2030] flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
                       <HelpCircle className="w-7 h-7" />
                     </div>
                     <div className="text-center">
@@ -2713,14 +2685,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               )}
 
               {guideView === 'full' && (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center px-1">
-                    <button onClick={() => setGuideView('menu')} className="text-xs text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer font-bold">
-                      <ArrowRight className="w-3 h-3" />
+                <div className="space-y-4 animate-slide-up">
+                  <div className="flex justify-between items-center px-1 border-b border-white/10 pb-4">
+                    <button onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-primary-hover flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 hover:scale-105">
+                      <ArrowRight className="w-4 h-4" />
                       العودة للقائمة السابقة
                     </button>
                   </div>
-                  <div className="aspect-video w-full rounded-xl border border-white/10 overflow-hidden bg-[#11131a] flex flex-col items-center justify-center p-0 text-center relative">
+                  <div className="aspect-video w-full rounded-2xl border border-white/10 overflow-hidden bg-[#050505] flex flex-col items-center justify-center p-0 text-center relative shadow-2xl">
                     {guideModalProduct.product?.videoUrl ? (
                       guideModalProduct.product.videoUrl.includes('youtube.com') || guideModalProduct.product.videoUrl.includes('youtu.be') ? (
                         <iframe 
@@ -2744,10 +2716,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         />
                       )
                     ) : (
-                      <div className="p-6">
-                        <AlertCircle className="w-12 h-12 text-slate-500 mb-3 mx-auto" />
-                        <h3 className="text-white font-bold mb-2">لا يوجد فيديو شرح متاح</h3>
-                        <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                      <div className="p-8">
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10 shadow-inner">
+                          <AlertCircle className="w-10 h-10 text-slate-500" />
+                        </div>
+                        <h3 className="text-white font-extrabold mb-2 text-lg">لا يوجد فيديو شرح متاح</h3>
+                        <p className="text-sm text-slate-400 max-w-md leading-relaxed">
                           لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.
                           <br /><br />
                           الرجاء إبلاغ الدعم الفني أو زيارة سيرفر الديسكورد للمساعدة.
