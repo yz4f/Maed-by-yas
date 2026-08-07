@@ -4,7 +4,7 @@ import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 
 if (!process.env.NEXTAUTH_URL) {
-  process.env.NEXTAUTH_URL = 'https://maed-by-yas.vercel.app';
+  process.env.NEXTAUTH_URL = 'https://t3nnn.wtf';
 }
 
 export const authOptions: NextAuthOptions = {
