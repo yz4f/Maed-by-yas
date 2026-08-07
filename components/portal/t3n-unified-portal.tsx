@@ -856,12 +856,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               className="pt-6 border-t border-white/5 text-xs flex items-center justify-center gap-2"
             >
               <span className="text-brand-muted font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
-              <button
-                onClick={() => setGuestModalOpen(true)}
+              <a
+                href="https://t3nnn.wtf/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="font-bold underline underline-offset-4 text-white hover:text-white/80 transition-colors cursor-pointer"
               >
-                {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
-              </button>
+                {lang === 'ar' ? 'شراء مفتاح جديد' : 'Buy a new key'}
+              </a>
             </motion.div>
           </motion.div>
         </AnimatePresence>
