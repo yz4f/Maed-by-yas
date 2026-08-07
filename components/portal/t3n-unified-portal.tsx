@@ -862,7 +862,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 rel="noopener noreferrer"
                 className="font-bold underline underline-offset-4 text-white hover:text-white/80 transition-colors cursor-pointer"
               >
-                {lang === 'ar' ? 'شراء مفتاح جديد' : 'Buy a new key'}
+                {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
               </a>
             </motion.div>
           </motion.div>
