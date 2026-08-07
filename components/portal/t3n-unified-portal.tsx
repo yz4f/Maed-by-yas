@@ -823,7 +823,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 className="w-full py-3.5 px-6 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_4px_20px_rgba(88,101,242,0.3)] hover:shadow-[0_4px_25px_rgba(88,101,242,0.5)] cursor-pointer hover:scale-[1.02] active:scale-95"
               >
                 <Bot className="w-5 h-5" />
-                <span>تسجيل الدخول عبر ديسكورد</span>
+                <span>{lang === 'ar' ? 'تسجيل الدخول' : 'Login'}</span>
               </button>
             </motion.div>
 
@@ -1349,55 +1349,79 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
 
               {/* Right Column: Quick Actions Card */}
-              <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 space-y-3 shadow-xl">
-                <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+              <div className="bg-[#0b0d12] border border-white/[0.04] rounded-2xl p-5 space-y-2 shadow-xl">
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
 
+                {/* Quick Action 1 */}
                 <button
                   onClick={() => setActiveTab('my-products')}
-                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
+                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Package className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
+                    </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
                 </button>
 
+                {/* Quick Action 2 */}
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
+                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Key className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
+                    </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
                 </button>
 
+                {/* Quick Action 3 */}
                 <button
                   onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد!' : 'Discord roles synced!')}
-                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</div>
+                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</div>
+                    </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
                 </button>
 
+                {/* Quick Action 4 */}
                 <a
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-2.5 rounded-xl hover:bg-white/[0.03] flex items-center justify-between transition-all duration-200 group ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'للحصول على الدعم والتحديثات' : 'Get support & updates'}</div>
+                  <div className={`flex items-center gap-3 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Bot className="w-4 h-4 text-slate-400 group-hover:text-[#5865F2] transition-colors" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{lang === 'ar' ? 'للحصول على الدعم والتحديثات' : 'Get support & updates'}</div>
+                    </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-colors duration-200" />
+                  <ArrowRight className={`w-3.5 h-3.5 text-slate-600 group-hover:text-[#5865F2] transition-transform duration-200 ${lang === 'ar' ? 'rotate-180' : ''}`} />
                 </a>
               </div>
             </div>
