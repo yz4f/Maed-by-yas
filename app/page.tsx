@@ -19,6 +19,17 @@ const T3NUnifiedPortal = dynamicImport(
   }
 );
 
-export default function HomePage() {
-  return <T3NUnifiedPortal initialProducts={initialProducts} />;
+import { StoreDB } from '@/lib/store-db';
+import { Product } from '@/types';
+
+export default async function HomePage() {
+  let products: Product[] = [];
+  try {
+    products = await StoreDB.getProducts();
+  } catch (e) {
+    console.error("Failed to load products on Home server component:", e);
+  }
+  const displayProducts = products && products.length > 0 ? products : initialProducts;
+
+  return <T3NUnifiedPortal initialProducts={displayProducts} />;
 }

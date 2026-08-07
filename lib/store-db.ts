@@ -93,6 +93,23 @@ export const StoreDB = {
           await setDoc(doc(getDb(), "products", prod.id), prod);
         }
         products = initialProducts;
+      } else {
+        for (const initProd of initialProducts) {
+          const existing = products.find(p => p.id === initProd.id);
+          if (existing && (existing.category === 'Unban' || existing.category === 'Utility' || existing.description !== initProd.description)) {
+            try {
+              await updateDoc(doc(getDb(), "products", initProd.id), {
+                category: initProd.category,
+                description: initProd.description,
+                updatedAt: new Date().toISOString()
+              });
+              existing.category = initProd.category;
+              existing.description = initProd.description;
+            } catch (e) {
+              console.error("Auto-sync product failed:", e);
+            }
+          }
+        }
       }
       return products.sort((a, b) => a.displayOrder - b.displayOrder);
     } catch (e) {
@@ -116,9 +133,14 @@ export const StoreDB = {
     }
   },
 
-  async updateProduct(id: string, updates: Partial<Product>): Promise<{success: boolean; message?: string}> {
+  async updateProduct(id: string, updates: Partial<Product>): Promise<{success: boolean; message?: string; product?: Product}> {
     try {
-      await updateDoc(doc(getDb(), "products", id), { ...updates, updatedAt: new Date().toISOString() });
+      const docRef = doc(getDb(), "products", id);
+      await updateDoc(docRef, { ...updates, updatedAt: new Date().toISOString() });
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        return { success: true, product: snap.data() as Product };
+      }
       return { success: true };
     } catch (e: any) {
       return { success: false, message: e.message };
@@ -340,6 +362,7 @@ export const StoreDB = {
         userId: user.id,
         productId: product.id,
         keyId: keyObj.id,
+        keyString: keyObj.key,
         status: 'Active',
         activatedAt: new Date().toISOString(),
         discordRoleGranted: true
@@ -372,6 +395,16 @@ export const StoreDB = {
     
     for (const d of snapshot.docs) {
       const up = d.data() as UserProduct;
+      if (up.keyId && !up.keyString) {
+        try {
+          const keyDoc = await getDoc(doc(getDb(), "keys", up.keyId));
+          if (keyDoc.exists()) {
+            up.keyString = (keyDoc.data() as Key).key;
+          }
+        } catch (e) {
+          console.error("Failed to fetch key for user product:", e);
+        }
+      }
       const p = await this.getProductById(up.productId);
       if (p) {
         up.product = p;

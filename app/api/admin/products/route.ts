@@ -23,8 +23,8 @@ export async function PUT(req: Request) {
     if (!id) {
       return NextResponse.json({ success: false, message: 'معرف المنتج مطلوب' }, { status: 400 });
     }
-    const updated = await StoreDB.updateProduct(id, updates);
-    return NextResponse.json({ success: true, product: updated });
+    const result = await StoreDB.updateProduct(id, updates);
+    return NextResponse.json(result);
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }

@@ -4,7 +4,7 @@ export const initialProducts: Product[] = [
   {
     id: 'prod-fortnite',
     name: 'فك باند فورت نايت',
-    description: 'سبوفر فورت نايت الاحترافي الدائم - فك حظر الهاردوير (HWID) وتخطي أنظمة الحماية Easy Anti-Cheat و BattlEye بسرعة فائقة وبدون إعادة تهيئة النظام.',
+    description: 'يقوم بتغيير معلومات جهازك إلى معلومات جديدة لإلغاء الحظر في لعبة فورت نايت نهائيًا.\n\nالمميزات:\n- فك باند فورت نايت.\n- فك باند البطولات.\n- نسبة نجاح 100%.\n- فك باند دائم.',
     image: '/products/fortnite-unban.png',
     cardColor: 'blue',
     category: 'Spoofer',
@@ -24,10 +24,10 @@ export const initialProducts: Product[] = [
   {
     id: 'prod-hwid-master',
     name: 'سبوفر تعن',
-    description: 'أداة تنظيف مخلفات الألعاب وحظر الحسابات الشاملة (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).',
+    description: '100% مضمون وموثوق\n\nيقوم بتغيير معلومات جهازك إلى معلومات جديدة، لإلغاء الحظر الهاردوير في أي لعبة نهائيًا.\n\nالمميزات:\n- نسبة نجاح 100%.\n- فك باند دائم.',
     image: '/products/spoofer-ta3n.png',
     cardColor: 'purple',
-    category: 'Utility',
+    category: 'PERM',
     displayOrder: 2,
     version: 'v4.1.0',
     fileSize: '100 MB',

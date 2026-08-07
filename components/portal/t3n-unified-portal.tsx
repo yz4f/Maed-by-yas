@@ -55,6 +55,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // Demo Local Authentication for instant local testing
   const [demoUser, setDemoUser] = useState<UserType | null>(null);
 
+  // Dynamic Products State (Firestore-synced)
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
+
+  const loadDbProducts = async () => {
+    try {
+      const res = await fetch('/api/admin/products');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.products) {
+          setProducts(data.products);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load db products:', e);
+    }
+  };
+
   // User Products State
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -198,16 +219,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [keyStatusFilter, setKeyStatusFilter] = useState<'all' | 'unused' | 'used'>('all');
 
   // Current active user (either NextAuth session or Demo User)
-  const currentUser = demoUser || (session?.user ? {
-    id: (session.user as any).id || (session.user as any).discordId || 'user-discord-active',
-    discordId: (session.user as any).discordId || '1396965033316978839',
-    name: session.user.name || 'T3N User',
-    email: session.user.email || 'user@t3n-store.com',
-    image: session.user.image || 'https://cdn.discordapp.com/embed/avatars/0.png',
-    role: ((session.user as any).role || 'Customer') as 'Boss' | 'Co-Boss' | 'Customer',
-    discordRoles: [],
-    createdAt: new Date().toISOString()
-  } : null);
+  const currentUser = React.useMemo(() => {
+    if (demoUser) return demoUser;
+    if (session?.user) {
+      return {
+        id: (session.user as any).id || (session.user as any).discordId || 'user-discord-active',
+        discordId: (session.user as any).discordId || '1396965033316978839',
+        name: session.user.name || 'T3N User',
+        email: session.user.email || 'user@t3n-store.com',
+        image: session.user.image || 'https://cdn.discordapp.com/embed/avatars/0.png',
+        role: ((session.user as any).role || 'Customer') as 'Boss' | 'Co-Boss' | 'Customer',
+        discordRoles: [],
+        createdAt: new Date().toISOString()
+      };
+    }
+    return null;
+  }, [demoUser, session?.user]);
 
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.email === 'boss@t3n-store.com';
@@ -216,6 +243,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   useEffect(() => {
     if (currentUser) {
       loadUserProducts();
+      loadDbProducts();
       if (isAdmin) {
         loadAdminStats();
         loadAdminCustomersList();
@@ -226,6 +254,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   useEffect(() => {
     if (activeTab === 'admin' && isAdmin) {
+      loadDbProducts();
       if (adminSectionTab === 'customers') loadAdminCustomersList();
       if (adminSectionTab === 'keys') loadAllKeysList();
       if (adminSectionTab === 'logs') loadAdminStats();
@@ -481,11 +510,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (data.success && data.product) {
         setInventoryProduct(data.product);
         setProductSaveMessage('تم حفظ تعديلات المنتج بنجاح!');
+        
+        // Update dynamic products state
+        setProducts(prev => prev.map(p => p.id === data.product.id ? data.product : p));
+        
+        // Update in-memory initialProducts fallback
         const idx = initialProducts.findIndex((p) => p.id === data.product.id);
         if (idx !== -1) {
           initialProducts[idx] = { ...initialProducts[idx], ...data.product };
         }
+        
         loadAdminStats();
+        loadUserProducts(); // Refresh user products immediately to sync updated product image
       } else {
         setProductSaveMessage(data.message || 'حدث خطأ أثناء حفظ التعديلات');
       }
@@ -505,6 +541,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         setInventoryKeys(data.keys || []);
         if (inventoryProduct) {
           inventoryProduct.stockKeysCount = (data.keys || []).length;
+          
+          // Update dynamic products state
+          setProducts(prev => prev.map(p => p.id === inventoryProduct.id ? { ...p, stockKeysCount: (data.keys || []).length } : p));
+          
+          // Fallback
           const idx = initialProducts.findIndex((p) => p.id === inventoryProduct.id);
           if (idx !== -1) initialProducts[idx].stockKeysCount = (data.keys || []).length;
         }
@@ -609,10 +650,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch(`/api/admin/products?id=${inventoryProduct.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
+        setProducts(prev => prev.filter(p => p.id !== inventoryProduct.id));
         const idx = initialProducts.findIndex((p) => p.id === inventoryProduct.id);
         if (idx !== -1) initialProducts.splice(idx, 1);
         setInventoryModalOpen(false);
         loadAdminStats();
+        loadUserProducts();
       }
     } catch (e) {
       showToast('حدث خطأ أثناء حذف المنتج.');
@@ -1001,16 +1044,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       </div>
 
       {/* Sidebar Navigation */}
-      <aside className={`w-full md:w-64 bg-[#0d0f16] border-r border-white/5 flex flex-col justify-between p-5 ${mobileMenuOpen ? 'block' : 'hidden md:flex'}`}>
+      <aside className={`w-full md:w-64 bg-[#090b10] border-r border-white/[0.06] flex flex-col justify-between p-4 ${mobileMenuOpen ? 'block' : 'hidden md:flex'}`}>
         <div>
           {/* Top Brand Logo */}
-          <div className="flex items-center gap-3 px-2 py-3 mb-6 border-b border-white/5">
-            <div className="w-11 h-11 rounded-full overflow-hidden shadow-lg shadow-black/30 border border-white/5 shrink-0">
+          <div className="flex items-center gap-3 px-3 py-3 mb-6 border-b border-white/[0.06]">
+            <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-black/40 border border-white/10 shrink-0">
               <img src="/logo.png?v=6" alt="تعن" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h2 className="font-black text-white text-lg tracking-wider leading-tight">{t.siteTitle}</h2>
-              <p className="text-[10px] text-sky-400 font-bold tracking-widest uppercase">PLATFORM</p>
+              <h2 className="font-black text-white text-base tracking-wider leading-tight">{t.siteTitle}</h2>
+              <p className="text-[10px] text-emerald-400 font-extrabold tracking-widest uppercase">PLATFORM</p>
             </div>
           </div>
 
@@ -1018,45 +1061,57 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <nav className="space-y-6">
             {/* GENERAL */}
             <div>
-              <div className="text-[10px] font-bold text-[#60646c] tracking-widest uppercase px-4 mb-3">
+              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
                 {lang === 'ar' ? 'عام' : 'GENERAL'}
               </div>
               <button
                 onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'overview' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                  activeTab === 'overview'
+                    ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                }`}
               >
                 {activeTab === 'overview' && (
-                  <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                  <div className={`absolute top-2 bottom-2 w-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                 )}
-                <Layers className={`w-5 h-5 ${activeTab === 'overview' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                <Layers className={`w-4 h-4 transition-colors ${activeTab === 'overview' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                 <span>{t.overview}</span>
               </button>
             </div>
 
             {/* LICENSE */}
             <div>
-              <div className="text-[10px] font-bold text-[#60646c] tracking-widest uppercase px-4 mb-3">
+              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
                 {lang === 'ar' ? 'الاشتراكات والمفاتيح' : 'LICENSE'}
               </div>
               <div className="space-y-1">
                 <button
                   onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'my-products' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    activeTab === 'my-products'
+                      ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                  }`}
                 >
                   {activeTab === 'my-products' && (
-                    <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                    <div className={`absolute top-2 bottom-2 w-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                   )}
-                  <Package className={`w-5 h-5 ${activeTab === 'my-products' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                  <Package className={`w-4 h-4 transition-colors ${activeTab === 'my-products' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                   <span>{t.myProducts}</span>
                 </button>
                 <button
                   onClick={() => { setActiveTab('redeem'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'redeem' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                    activeTab === 'redeem'
+                      ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                  }`}
                 >
                   {activeTab === 'redeem' && (
-                    <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                    <div className={`absolute top-2 bottom-2 w-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                   )}
-                  <Key className={`w-5 h-5 ${activeTab === 'redeem' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                  <Key className={`w-4 h-4 transition-colors ${activeTab === 'redeem' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                   <span>{t.redeemKey}</span>
                 </button>
               </div>
@@ -1065,58 +1120,78 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* ADMIN SECTION (If admin user) */}
             {isAdmin && (
               <div>
-                <div className="text-[10px] font-bold text-[#60646c] tracking-widest uppercase px-4 mb-3">
+                <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
                   {lang === 'ar' ? 'الإدارة (Admin)' : 'ADMIN CONTROL'}
                 </div>
                 <div className="space-y-1">
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('overview'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'admin' && adminSectionTab === 'overview' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                      activeTab === 'admin' && adminSectionTab === 'overview'
+                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'overview' && (
-                      <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Activity className={`w-5 h-5 ${activeTab === 'admin' && adminSectionTab === 'overview' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Activity className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'overview' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                     <span>{lang === 'ar' ? 'الرئيسية والإحصائيات' : 'Overview & Stats'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('products'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'admin' && adminSectionTab === 'products' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                      activeTab === 'admin' && adminSectionTab === 'products'
+                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'products' && (
-                      <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Package className={`w-5 h-5 ${activeTab === 'admin' && adminSectionTab === 'products' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Package className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'products' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                     <span>{lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Inventory'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('customers'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'admin' && adminSectionTab === 'customers' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                      activeTab === 'admin' && adminSectionTab === 'customers'
+                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'customers' && (
-                      <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Users className={`w-5 h-5 ${activeTab === 'admin' && adminSectionTab === 'customers' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Users className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'customers' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                     <span>{lang === 'ar' ? 'إدارة العملاء' : 'Customers'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('keys'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'admin' && adminSectionTab === 'keys' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                      activeTab === 'admin' && adminSectionTab === 'keys'
+                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'keys' && (
-                      <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <Key className={`w-5 h-5 ${activeTab === 'admin' && adminSectionTab === 'keys' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Key className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'keys' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                     <span>{lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search'}</span>
                   </button>
                   <button
                     onClick={() => { setActiveTab('admin'); setAdminSectionTab('logs'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold transition-all cursor-pointer relative group ${activeTab === 'admin' && adminSectionTab === 'logs' ? 'text-white bg-white/5 rounded-2xl' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer relative group rounded-xl ${
+                      activeTab === 'admin' && adminSectionTab === 'logs'
+                        ? 'text-white bg-[#141722] border border-white/10 shadow-lg shadow-black/40'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
                     {activeTab === 'admin' && adminSectionTab === 'logs' && (
-                      <div className={`absolute top-1/2 -translate-y-1/2 h-1/2 w-1 bg-white rounded-full ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
+                      <div className={`absolute top-2 bottom-2 w-1 bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)] ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
                     )}
-                    <FileText className={`w-5 h-5 ${activeTab === 'admin' && adminSectionTab === 'logs' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <FileText className={`w-4 h-4 transition-colors ${activeTab === 'admin' && adminSectionTab === 'logs' ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                     <span>{lang === 'ar' ? 'سجلات النظام (Logs)' : 'System Logs'}</span>
                   </button>
                 </div>
@@ -1125,24 +1200,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* COMMUNITY */}
             <div>
-              <div className="text-[10px] font-bold text-[#60646c] tracking-widest uppercase px-4 mb-3">
+              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-2.5">
                 {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
               </div>
               <div className="space-y-1">
                 <button
                   onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد بنجاح!' : 'Discord roles synced!')}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-2xl transition-all cursor-pointer group"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] rounded-xl transition-all cursor-pointer group"
                 >
-                  <Bot className="w-5 h-5 text-slate-500 group-hover:text-slate-300" />
+                  <Bot className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
                   <span>{lang === 'ar' ? 'مزامنة الديسكورد' : 'Sync Discord Roles'}</span>
                 </button>
                 <a
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-2xl transition-all group"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] rounded-xl transition-all group"
                 >
-                  <ExternalLink className="w-5 h-5 text-slate-500 group-hover:text-slate-300" />
+                  <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
                   <span>{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</span>
                 </a>
               </div>
@@ -1150,29 +1225,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </nav>
         </div>
 
-        {/* Bottom User Card (Exact SpiritX Design - Screenshot 3 & 4) */}
-        <div className="pt-4 border-t border-white/5 mt-6">
-          <div className="bg-[#121520] border border-white/5 rounded-xl p-3 mb-3 flex items-center gap-3">
-            <img
-              src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-              alt={currentUser.name}
-              className="w-9 h-9 rounded-full border border-sky-500/30 object-cover"
-            />
+        {/* Bottom User Card */}
+        <div className="pt-4 border-t border-white/[0.06] mt-6 space-y-3">
+          <div className="bg-[#121520] border border-white/[0.08] rounded-xl p-3 flex items-center gap-3">
+            <div className="relative shrink-0">
+              <img
+                src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                alt={currentUser.name}
+                className="w-9 h-9 rounded-xl border border-emerald-500/30 object-cover"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#121520]" />
+            </div>
             <div className="overflow-hidden flex-1">
               <div className="font-bold text-xs text-white truncate">{currentUser.name}</div>
-              <div className="text-[10px] text-slate-400 truncate flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                <span>{currentUser.role}</span>
+              <div className="text-[10px] text-slate-400 truncate flex items-center gap-1 font-mono">
+                <span className="text-emerald-400 font-semibold">{currentUser.role}</span>
               </div>
             </div>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-full py-2 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
+            <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
           </button>
         </div>
       </aside>
@@ -1192,28 +1269,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </p>
             </div>
 
-            {/* Welcome Banner Card (Exact Screenshot 3 Design) */}
-            <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+            {/* Welcome Banner Card (Premium Redesign) */}
+            <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
               <div className="flex items-center gap-4">
                 <img
                   src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                   alt={currentUser.name}
-                  className="w-16 h-16 rounded-2xl border border-sky-500/30 object-cover shadow-md shadow-sky-500/20"
+                  className="w-16 h-16 rounded-[18px] border-2 border-emerald-500/30 object-cover shadow-lg shadow-emerald-500/10"
                   onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
                 />
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-extrabold text-white tracking-wide">
                     {lang === 'ar' ? (
-                      <>مرحباً بك، <span className="text-sky-400">{currentUser.name}</span>!</>
+                      <>مرحباً بك، <span className="text-emerald-400">{currentUser.name}</span>!</>
                     ) : (
-                      <>Welcome back, <span className="text-sky-400">{currentUser.name}</span>!</>
+                      <>Welcome back, <span className="text-emerald-400">{currentUser.name}</span>!</>
                     )}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1.5">
                     {lang === 'ar' ? (
-                      <>لديك <span className="text-white font-semibold">{userProducts.length}</span> منتج نشط في حسابك.</>
+                      <>لديك <span className="text-white font-bold">{userProducts.length}</span> منتج نشط في حسابك.</>
                     ) : (
-                      <>You have <span className="text-white font-semibold">{userProducts.length}</span> active product(s) on your account.</>
+                      <>You have <span className="text-white font-bold">{userProducts.length}</span> active product(s) on your account.</>
                     )}
                   </p>
                 </div>
@@ -1221,7 +1298,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               <button
                 onClick={() => setActiveTab('my-products')}
-                className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-medium text-xs shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2 cursor-pointer"
+                className="py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition-all duration-200 flex items-center gap-2 cursor-pointer hover:scale-[1.02]"
               >
                 <span>{lang === 'ar' ? 'عرض المنتجات' : 'View Products'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1233,94 +1310,94 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {/* Left 2 Columns: 4 Stat Cards */}
               <div className="lg:col-span-2 grid grid-cols-2 gap-4">
                 {/* Stat 1: Active Products */}
-                <div className="bg-[#10121a] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
-                  <div className="p-2 bg-sky-500/10 rounded-xl text-sky-400 w-fit mb-3 border border-sky-500/20">
+                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
+                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
                     <Package className="w-5 h-5" />
                   </div>
-                  <div className="text-2xl font-bold text-white">{userProducts.length}</div>
+                  <div className="text-2xl font-black text-white">{userProducts.length}</div>
                   <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
                 </div>
 
                 {/* Stat 2: Account Status */}
-                <div className="bg-[#10121a] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
                   <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
-                  <div className="text-2xl font-bold text-emerald-400">{lang === 'ar' ? 'نشط' : 'Active'}</div>
+                  <div className="text-2xl font-black text-emerald-400">{lang === 'ar' ? 'نشط' : 'Active'}</div>
                   <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
                 </div>
 
                 {/* Stat 3: Member Since */}
-                <div className="bg-[#10121a] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
-                  <div className="p-2 bg-purple-500/10 rounded-xl text-purple-400 w-fit mb-3 border border-purple-500/20">
+                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
+                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
                     <Clock className="w-5 h-5" />
                   </div>
-                  <div className="text-xl font-bold text-white" dir="ltr">
+                  <div className="text-xl font-black text-white" dir="ltr">
                     {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
                   </div>
                   <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
                 </div>
 
                 {/* Stat 4: Total Downloads */}
-                <div className="bg-[#10121a] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
-                  <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 w-fit mb-3 border border-indigo-500/20">
+                <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 relative overflow-hidden shadow-xl hover:border-emerald-500/20 transition-all duration-300">
+                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 w-fit mb-3 border border-emerald-500/20">
                     <Download className="w-5 h-5" />
                   </div>
-                  <div className="text-2xl font-bold text-white">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
+                  <div className="text-2xl font-black text-white">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
                   <div className="text-xs text-slate-400 mt-1 font-medium">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
                 </div>
               </div>
 
-              {/* Right Column: Quick Actions Card (Exact SpiritX Design) */}
-              <div className="bg-[#10121a] border border-white/5 rounded-2xl p-5 space-y-3">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              {/* Right Column: Quick Actions Card */}
+              <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-5 space-y-3 shadow-xl">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
 
                 <button
                   onClick={() => setActiveTab('my-products')}
-                  className={`w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-between transition-all group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div>
-                    <div className="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
-                    <div className="text-[10px] text-slate-400">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-400 group-hover:text-white transition-transform ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                 </button>
 
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className={`w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-between transition-all group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div>
                     <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
-                    <div className="text-[10px] text-slate-400">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-400 group-hover:text-white transition-transform ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                 </button>
 
                 <button
                   onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد!' : 'Discord roles synced!')}
-                  className={`w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-between transition-all group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div>
-                    <div className="text-xs font-bold text-white group-hover:text-purple-400 transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
-                    <div className="text-[10px] text-slate-400">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</div>
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-400 group-hover:text-white transition-transform ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-transform duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                 </button>
 
                 <a
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className={`w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-between transition-all group ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between transition-all duration-200 group ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div>
-                    <div className="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</div>
-                    <div className="text-[10px] text-slate-400">{lang === 'ar' ? 'للحصول على الدعم والتحديثات' : 'Get support & updates'}</div>
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{lang === 'ar' ? 'للحصول على الدعم والتحديثات' : 'Get support & updates'}</div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-white" />
+                  <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-colors duration-200" />
                 </a>
               </div>
             </div>
@@ -1350,7 +1427,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
 
             {/* Products Grid */}
-            {userProducts.length === 0 ? (
+            {isLoadingProducts ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="bg-[#0f1115] border border-white/5 rounded-[20px] overflow-hidden flex flex-col p-5 space-y-4 animate-pulse">
+                    <div className="h-44 bg-white/5 rounded-xl w-full" />
+                    <div className="flex gap-4 items-center">
+                      <div className="w-12 h-12 bg-white/5 rounded-xl shrink-0" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-5 bg-white/5 rounded w-3/4" />
+                        <div className="h-3.5 bg-white/5 rounded w-1/2" />
+                      </div>
+                    </div>
+                    <div className="h-10 bg-white/5 rounded-xl w-full" />
+                    <div className="h-14 bg-white/5 rounded-xl w-full" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-10 bg-white/5 rounded-xl" />
+                      <div className="h-10 bg-white/5 rounded-xl" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : userProducts.length === 0 ? (
               <div className="bg-[#10121a] border border-white/10 rounded-2xl p-12 text-center max-w-lg mx-auto">
                 <div className="w-14 h-14 bg-sky-500/10 text-sky-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-sky-500/20">
                   <Package className="w-7 h-7" />
@@ -1373,49 +1471,85 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {userProducts.map((up) => (
                   <div
                     key={up.id}
-                    className="bg-[#0f1115] border border-white/5 rounded-[20px] overflow-hidden hover:border-white/10 transition-all shadow-xl group flex flex-col"
+                    className="bg-[#0b0d14] border border-white/[0.08] hover:border-emerald-500/30 rounded-[22px] overflow-hidden transition-all duration-300 shadow-2xl hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] group flex flex-col"
                   >
                     {/* Top Image Banner - Full Width */}
-                    <div className="relative h-44 w-full bg-[#08090d]">
+                    <div className="relative h-48 w-full bg-[#07080c] overflow-hidden">
                       <img
                         src={up.product?.image || '/logo.png?v=6'}
                         alt={up.product?.name || 'Product'}
-                        className={`w-full h-full transition-all ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-80' : 'object-cover'}`}
+                        className={`w-full h-full transition-transform duration-500 group-hover:scale-105 ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-80' : 'object-cover'}`}
                         onError={(e) => { 
                           e.currentTarget.src = '/logo.png?v=6'; 
-                          e.currentTarget.className = 'w-full h-full transition-all object-contain p-8 opacity-80'; 
+                          e.currentTarget.className = 'w-full h-full transition-transform duration-500 group-hover:scale-105 object-contain p-8 opacity-80'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0f1115] via-[#0f1115]/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d14] via-[#0b0d14]/30 to-transparent" />
+                      
+                      {/* Top Category Tag Pill */}
+                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-black text-emerald-400 uppercase tracking-wider shadow-md`}>
+                        {up.product?.category || 'SPOOFER'}
+                      </div>
                     </div>
 
                     {/* Content Section */}
                     <div className="p-5 flex-1 flex flex-col">
                       {/* Title & Icon Row */}
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                          <Package className="w-6 h-6 text-slate-300" />
+                      <div className="flex items-center gap-3.5 mb-5">
+                        <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
+                          <Package className="w-5.5 h-5.5 text-emerald-400" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-white text-lg leading-tight">{up.product?.name || 'Unknown Product'}</h3>
-                          <div className={`text-[11px] font-bold text-slate-300 mt-1.5 flex items-center gap-1.5 bg-[#0a0b0e] w-fit px-2.5 py-1 rounded-md shadow-inner ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-                            <span className="text-emerald-400">{lang === 'ar' ? 'فعال' : 'Active'}</span>
-                            <span className="text-slate-600">|</span>
-                            <Users className="w-3.5 h-3.5 text-slate-500" />
-                            <span>{up.product?.downloadsCount || 1420} {lang === 'ar' ? 'مستخدم' : 'Users'}</span>
+                          <h3 className="font-extrabold text-white text-lg leading-tight tracking-wide">{up.product?.name || 'Unknown Product'}</h3>
+                          <div className={`text-[11px] font-bold text-slate-400 mt-1 flex items-center gap-2 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
+                            <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                              <span className="text-emerald-400 text-[10px]">{lang === 'ar' ? 'فعال' : 'Active'}</span>
+                            </div>
+                            <span className="text-slate-700">•</span>
+                            <div className="flex items-center gap-1 text-slate-400">
+                              <Users className="w-3.5 h-3.5 text-slate-500" />
+                              <span>{up.product?.downloadsCount || 1420} {lang === 'ar' ? 'مستخدم' : 'Users'}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* License Key Box */}
-                      <div className="bg-[#16181d] border border-white/5 rounded-xl p-2 flex items-center justify-between mb-4">
-                        <code dir="ltr" className="text-xs font-mono text-slate-300 tracking-[0.2em] font-semibold px-3 truncate w-full text-left">
-                          {up.keyString ? `KEY-${'*'.repeat(16)}` : `KEY-${'*'.repeat(16)}`}
+                      {/* Product Description */}
+                      <div className="mb-4">
+                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                          {up.product?.description || (lang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج حالياً.' : 'No description available for this product at the moment.')}
+                        </p>
+                      </div>
+
+                      {/* Product Details & Metadata */}
+                      <div className="space-y-2 mb-4 bg-white/[0.02] border border-white/[0.05] rounded-xl p-3 text-xs">
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span className="font-medium">{lang === 'ar' ? 'الإصدار:' : 'Version:'}</span>
+                          <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-500/20">{up.product?.version || 'v1.0.0'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span className="font-medium">{lang === 'ar' ? 'تاريخ التفعيل:' : 'Activated At:'}</span>
+                          <span className="font-mono text-slate-300">
+                            {up.activatedAt ? new Date(up.activatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span className="font-medium">{lang === 'ar' ? 'آخر تحديث للمنتج:' : 'Last Updated:'}</span>
+                          <span className="font-mono text-slate-300">
+                            {up.product?.updatedAt ? new Date(up.product.updatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* License Key Box - FULL DISPLAY */}
+                      <div className="bg-[#141620] border border-white/[0.08] rounded-xl p-2.5 flex items-center justify-between gap-2 mb-4 overflow-hidden shadow-inner">
+                        <code dir="ltr" className="text-xs font-mono text-slate-200 tracking-wider font-bold px-2 overflow-x-auto whitespace-nowrap scrollbar-none select-all w-full text-left">
+                          {up.keyString || 'KEY-ACTIVATED-OK'}
                         </code>
                         <button
                           onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                          className="p-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
+                          className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 hover:text-emerald-400 transition-all cursor-pointer shrink-0"
                           title="Copy Key"
                         >
                           {copiedKeyId === up.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -1426,7 +1560,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="grid grid-cols-2 gap-3 mt-auto">
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="py-2.5 px-4 bg-white hover:bg-slate-200 text-black font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          className="py-2.5 px-4 bg-white hover:bg-slate-100 text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
                         >
                           <Download className="w-4 h-4" />
                           <span>{lang === 'ar' ? 'تحميل' : 'Download Loader'}</span>
@@ -1437,9 +1571,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             setGuideModalProduct(up);
                             setGuideView('menu');
                           }}
-                          className="py-2.5 px-4 bg-[#16181d] hover:bg-[#1a1c23] border border-white/5 rounded-xl text-xs font-bold text-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          className="py-2.5 px-4 bg-[#151824] hover:bg-[#1d2132] border border-white/10 rounded-xl text-xs font-bold text-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
                         >
-                          <HelpCircle className="w-4 h-4" />
+                          <HelpCircle className="w-4 h-4 text-slate-400" />
                           <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
                         </button>
                       </div>
@@ -1455,21 +1589,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {activeTab === 'redeem' && (
           <div className="space-y-8 max-w-xl mx-auto py-8">
             <div className="text-center">
-              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/20">
+              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 shadow-md">
                 <Key className="w-7 h-7" />
               </div>
-              <h1 className="text-2xl font-bold text-white tracking-wide">
+              <h1 className="text-2xl font-black text-white tracking-wide">
                 {lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}
               </h1>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1.5">
                 {lang === 'ar' ? 'أدخل مفتاح الاشتراك الخاص بك لإضافته لحسابك فوراً' : 'Enter your license key to add it to your account instantly'}
               </p>
             </div>
 
-            <div className="bg-[#10121a] border border-white/10 rounded-2xl p-8 shadow-2xl space-y-6">
+            <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-8 shadow-2xl space-y-6">
               <form onSubmit={handleRedeemKey} className="space-y-5">
                 <div>
-                  <label className={`block text-xs font-semibold text-slate-300 mb-2 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <label className={`block text-xs font-bold text-slate-300 mb-2 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                     {lang === 'ar' ? 'مفتاح التفعيل (License Key)' : 'License Key'}
                   </label>
                   <input
@@ -1477,13 +1611,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     dir="ltr"
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
-                    placeholder="KEY-******-******"
-                    className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono tracking-wider text-left"
+                    placeholder="KEY-T3N-ABCD-1234-EFGH"
+                    className="w-full bg-[#07080c] border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono tracking-wider text-left"
                   />
                 </div>
 
                 {redeemMessage && (
-                  <div className={`p-4 rounded-xl text-xs font-medium ${redeemMessage.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'}`}>
+                  <div className={`p-4 rounded-xl text-xs font-semibold ${redeemMessage.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'}`}>
                     {redeemMessage.text}
                   </div>
                 )}
@@ -1491,30 +1625,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <button
                   type="submit"
                   disabled={isRedeeming}
-                  className="w-full py-3.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.02]"
                 >
                   {isRedeeming ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  <span>تفعيل المفتاح الآن</span>
+                  <span>{lang === 'ar' ? 'تفعيل المفتاح الآن' : 'Redeem Key Now'}</span>
                 </button>
               </form>
 
-              <div className="pt-6 border-t border-white/5 space-y-4">
+              <div className="pt-6 border-t border-white/[0.06] space-y-4">
                 <a
                   href="https://t3nnn.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-gradient-to-r from-sky-500/10 to-transparent border border-sky-500/20 hover:border-sky-500/40 rounded-xl p-3 flex items-center justify-between transition-all group"
+                  className="w-full bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 rounded-xl p-3 flex items-center justify-between transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
                       <ShoppingCart className="w-5 h-5" />
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-sky-100 group-hover:text-white transition-colors">لا تملك مفتاح اشتراك؟</div>
-                      <div className="text-[10px] text-sky-200/60 mt-0.5">احصل عليه الآن من متجرنا الرسمي بأسعار وعروض حصرية</div>
+                      <div className="text-sm font-bold text-emerald-100 group-hover:text-emerald-400 transition-colors">لا تملك مفتاح اشتراك؟</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">احصل عليه الآن من متجرنا الرسمي بأسعار وعروض حصرية</div>
                     </div>
                   </div>
-                  <div className="bg-sky-500 text-[#08090d] text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-sky-500/20 shrink-0">
+                  <div className="bg-emerald-500 text-black text-[10px] font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform">
                     <span>شراء مفتاح</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
@@ -1531,11 +1665,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <HelpCircle className="w-5 h-5" />
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-emerald-100 group-hover:text-white transition-colors">تحتاج إلى مساعدة؟</div>
-                      <div className="text-[10px] text-emerald-200/60 mt-0.5">تواصل مع فريق الدعم الفني عبر خادم ديسكورد الرسمي</div>
+                      <div className="text-sm font-bold text-emerald-100 group-hover:text-emerald-400 transition-colors">تحتاج إلى مساعدة؟</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">تواصل مع فريق الدعم الفني عبر خادم ديسكورد الرسمي</div>
                     </div>
                   </div>
-                  <div className="bg-emerald-500 text-[#08090d] text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-emerald-500/20 shrink-0">
+                  <div className="bg-emerald-500 text-black text-[10px] font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform">
                     <span>الدعم الفني</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
@@ -1601,42 +1735,42 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {initialProducts.map((product) => (
+                  {products.map((product) => (
                     <div
                       key={product.id}
-                      className="bg-[#0f1115] border border-white/5 rounded-[20px] overflow-hidden hover:border-white/10 transition-all shadow-xl group flex flex-col"
+                      className="bg-[#0b0d14] border border-white/[0.08] rounded-[22px] overflow-hidden hover:border-emerald-500/30 transition-all duration-300 shadow-2xl flex flex-col group"
                     >
                       {/* Top Image Banner - Full Width */}
-                      <div className="relative h-44 w-full bg-[#03040b]">
+                      <div className="relative h-48 w-full bg-[#07080c] overflow-hidden">
                         <img
                           src={product.image || '/logo.png?v=6'}
                           alt={product.name}
-                          className={`w-full h-full transition-all ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-80' : 'object-cover'}`}
+                          className={`w-full h-full transition-transform duration-500 group-hover:scale-105 ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-80' : 'object-cover'}`}
                           onError={(e) => { 
                             e.currentTarget.src = '/logo.png?v=6'; 
-                            e.currentTarget.className = 'w-full h-full transition-all object-contain p-8 opacity-80'; 
+                            e.currentTarget.className = 'w-full h-full transition-transform duration-500 group-hover:scale-105 object-contain p-8 opacity-80'; 
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#03040b] via-[#03040b]/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d14] via-[#0b0d14]/30 to-transparent" />
                         
-                        <div className="absolute top-3 right-3 bg-[#03040b]/60 backdrop-blur-md border border-lime-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[0_0_10px_rgba(163,230,53,0.1)]">
-                          <span className="text-[10px] text-lime-100 font-bold">المخزون المتاح:</span>
-                          <span className="text-xs font-extrabold text-lime-400">{product.stockKeysCount || 0}</span>
+                        <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                          <span className="text-[10px] text-emerald-100 font-bold">المخزون المتاح:</span>
+                          <span className="text-xs font-black text-emerald-400">{product.stockKeysCount || 0}</span>
                         </div>
                       </div>
 
                       {/* Content Section */}
                       <div className="p-5 flex-1 flex flex-col">
                         {/* Title & Icon Row */}
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-[inset_0_0_15px_rgba(255,255,255,0.05)]">
-                            <Package className="w-6 h-6 text-cyan-400" />
+                        <div className="flex items-center gap-3.5 mb-4">
+                          <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
+                            <Package className="w-5.5 h-5.5 text-emerald-400" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-white text-lg leading-tight">{product.name}</h3>
+                            <h3 className="font-extrabold text-white text-lg leading-tight tracking-wide">{product.name}</h3>
                             <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2 font-mono">
-                              <span className="text-cyan-400">{product.version}</span>
-                              <span>·</span>
+                              <span className="text-emerald-400 font-bold">{product.version}</span>
+                              <span className="text-slate-600">·</span>
                               <span>{product.category}</span>
                             </div>
                           </div>
@@ -1650,7 +1784,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="grid grid-cols-2 gap-3 mt-auto">
                           <button
                             onClick={() => openInventoryModal(product, 'codes', true)}
-                            className="py-2.5 px-4 bg-lime-400 hover:bg-lime-300 text-[#03040b] font-extrabold text-xs rounded-xl shadow-[0_0_15px_rgba(163,230,53,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            className="py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
                           >
                             <Key className="w-4 h-4" />
                             <span>إضافة مفاتيح</span>
@@ -1658,9 +1792,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                           <button
                             onClick={() => openInventoryModal(product, 'data', false)}
-                            className="py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            className="py-2.5 px-4 bg-[#151824] hover:bg-[#1d2132] border border-white/10 rounded-xl text-xs font-bold text-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <Edit3 className="w-4 h-4 text-slate-400" />
                             <span>تعديل المنتج</span>
                           </button>
                         </div>
@@ -1674,38 +1808,38 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* ==================== SUB-TAB 2: CUSTOMERS MANAGEMENT ==================== */}
             {adminSectionTab === 'customers' && (
               <div className="space-y-4">
-                <div className="bg-[#10121a] border border-white/10 rounded-2xl p-5 shadow-xl space-y-4">
+                <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-5">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <Users className="w-5 h-5 text-sky-400" />
+                    <h3 className="text-lg font-black text-white flex items-center gap-2">
+                      <Users className="w-5 h-5 text-emerald-400" />
                       <span>قائمة العملاء وإدارة الاشتراكات</span>
                     </h3>
 
                     {/* Search Bar for Customers */}
                     <div className="relative w-full md:w-80">
-                      <Search className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
+                      <Search className="w-4 h-4 absolute right-3 top-3 text-slate-500" />
                       <input
                         type="text"
                         value={searchCustomerQuery}
                         onChange={(e) => setSearchCustomerQuery(e.target.value)}
                         placeholder="ابحث باسم العميل أو إيميله أو Discord ID..."
-                        className="w-full bg-[#08090d] border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
+                        className="w-full bg-[#07080c] border border-white/[0.08] focus:border-emerald-500/50 rounded-xl pr-9 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all"
                       />
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto scrollbar-none">
                     <table className="w-full text-right text-xs">
                       <thead>
-                        <tr className="border-b border-white/10 text-slate-400 font-semibold">
-                          <th className="pb-3 pr-2">العميل</th>
-                          <th className="pb-3">البريد / Discord</th>
-                          <th className="pb-3">الرتبة</th>
-                          <th className="pb-3">عنوان IP</th>
-                          <th className="pb-3">الإجراءات والاشتراكات</th>
+                        <tr className="border-b border-white/[0.06] text-slate-400 font-bold">
+                          <th className="pb-3.5 pr-2">العميل</th>
+                          <th className="pb-3.5">البريد / Discord</th>
+                          <th className="pb-3.5">الرتبة</th>
+                          <th className="pb-3.5">عنوان IP</th>
+                          <th className="pb-3.5">الإجراءات والاشتراكات</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5">
+                      <tbody className="divide-y divide-white/[0.04]">
                         {allCustomersList
                           .filter(
                             (u) =>
@@ -1715,8 +1849,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               u.discordId?.includes(searchCustomerQuery)
                           )
                           .map((customer) => (
-                            <tr key={customer.id} className="text-slate-300 hover:bg-white/[0.02]">
-                              <td className="py-3 pr-2 font-bold text-white flex items-center gap-2">
+                            <tr key={customer.id} className="text-slate-300 hover:bg-white/[0.03] transition-colors duration-150">
+                              <td className="py-3.5 pr-2 font-bold text-white flex items-center gap-2">
                                 <img
                                   src={customer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                                   alt={customer.name}
@@ -1724,25 +1858,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                   onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
                                 />
                                 <div>
-                                  <div>{customer.name}</div>
+                                  <div className="font-extrabold">{customer.name}</div>
                                   <div className="text-[10px] text-slate-500 font-mono">ID: {customer.id}</div>
                                 </div>
                               </td>
-                              <td className="py-3 text-slate-300">
-                                <div>{customer.email || 'لا يوجد إيميل'}</div>
-                                <div className="text-[10px] text-sky-400 font-mono">Discord: {customer.discordId}</div>
+                              <td className="py-3.5 text-slate-300">
+                                <div className="font-medium">{customer.email || 'لا يوجد إيميل'}</div>
+                                <div className="text-[10px] text-emerald-400 font-mono">Discord: {customer.discordId}</div>
                               </td>
-                              <td className="py-3">
+                              <td className="py-3.5">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${customer.role === 'Boss' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}`}>
                                   {customer.role}
                                 </span>
                               </td>
-                              <td className="py-3 font-mono text-[11px] text-slate-400">{customer.lastIp || '127.0.0.1'}</td>
-                              <td className="py-3 space-y-1">
+                              <td className="py-3.5 font-mono text-[11px] text-slate-400">{customer.lastIp || '127.0.0.1'}</td>
+                              <td className="py-3.5 space-y-1">
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => setSelectedAdminCustomer(customer)}
-                                    className="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-[10px] font-bold text-indigo-400 transition-colors cursor-pointer flex items-center gap-1.5"
+                                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-[10px] font-black text-emerald-400 transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02]"
                                     title="عرض تفاصيل العميل وإدارة اشتراكاته ومفاتيحه"
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
@@ -1751,7 +1885,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                                   <button
                                     onClick={() => handleDeleteUserAccount(customer.id, customer.name)}
-                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg transition-colors cursor-pointer hover:scale-[1.02]"
                                     title="حذف العميل نهائياً"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1770,22 +1904,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* ==================== SUB-TAB 3: SEARCH ALL KEYS ==================== */}
             {adminSectionTab === 'keys' && (
               <div className="space-y-4">
-                <div className="bg-[#10121a] border border-white/10 rounded-2xl p-5 shadow-xl space-y-4">
+                <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-5">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <h3 className="text-lg font-black text-white flex items-center gap-2">
                       <Key className="w-5 h-5 text-emerald-400" />
                       <span>البحث الشامل وتفتيش المفاتيح في النظام</span>
                     </h3>
 
                     {/* Key Search Input */}
                     <div className="relative w-full md:w-80">
-                      <Search className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
+                      <Search className="w-4 h-4 absolute right-3 top-3 text-slate-500" />
                       <input
                         type="text"
                         value={searchKeysQuery}
                         onChange={(e) => setSearchKeysQuery(e.target.value)}
                         placeholder="ابحث بكود المفتاح (e.g. T3N-FORT...)..."
-                        className="w-full bg-[#08090d] border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                        className="w-full bg-[#07080c] border border-white/[0.08] focus:border-emerald-500/50 rounded-xl pr-9 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono"
                       />
                     </div>
                   </div>
@@ -1794,37 +1928,37 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setKeyStatusFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${keyStatusFilter === 'all' ? 'bg-sky-500 text-white' : 'bg-white/5 text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       الكل ({allKeysList.length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('unused')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       متاح فقط ({allKeysList.filter((k) => !k.isUsed).length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('used')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${keyStatusFilter === 'used' ? 'bg-purple-500 text-white' : 'bg-white/5 text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       مستعمل ({allKeysList.filter((k) => k.isUsed).length})
                     </button>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto scrollbar-none">
                     <table className="w-full text-right text-xs font-mono">
                       <thead>
-                        <tr className="border-b border-white/10 text-slate-400 font-sans font-semibold">
-                          <th className="pb-3 pr-2">الكود (Key)</th>
-                          <th className="pb-3">المنتج المرتبط</th>
-                          <th className="pb-3">الحالة</th>
-                          <th className="pb-3">المستخدم</th>
-                          <th className="pb-3">تاريخ الإنشاء</th>
-                          <th className="pb-3">الإجراءات</th>
+                        <tr className="border-b border-white/[0.06] text-slate-400 font-sans font-bold">
+                          <th className="pb-3.5 pr-2">الكود (Key)</th>
+                          <th className="pb-3.5">المنتج المرتبط</th>
+                          <th className="pb-3.5">الحالة</th>
+                          <th className="pb-3.5">المستخدم</th>
+                          <th className="pb-3.5">تاريخ الإنشاء</th>
+                          <th className="pb-3.5 text-left pl-2">الإجراءات</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5">
+                      <tbody className="divide-y divide-white/[0.04]">
                         {allKeysList
                           .filter((k) => {
                             if (keyStatusFilter === 'unused' && k.isUsed) return false;
@@ -1833,12 +1967,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             return k.key.toLowerCase().includes(searchKeysQuery.toLowerCase());
                           })
                           .map((keyObj) => (
-                            <tr key={keyObj.id} className="text-slate-300 hover:bg-white/[0.02]">
-                              <td className="py-3 pr-2 font-bold text-emerald-400">{keyObj.key}</td>
-                              <td className="py-3 font-sans text-white">
-                                {initialProducts.find((p) => p.id === keyObj.productId)?.name || keyObj.productId}
+                            <tr key={keyObj.id} className="text-slate-300 hover:bg-white/[0.03] transition-colors duration-150">
+                              <td className="py-3.5 pr-2 font-bold text-emerald-400 select-all">{keyObj.key}</td>
+                              <td className="py-3.5 font-sans text-white font-semibold">
+                                {products.find((p) => p.id === keyObj.productId)?.name || keyObj.productId}
                               </td>
-                              <td className="py-3 font-sans">
+                              <td className="py-3.5 font-sans">
                                 {keyObj.isUsed ? (
                                   <span className="px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-[10px] font-bold">
                                     مستعمل
@@ -1849,23 +1983,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                   </span>
                                 )}
                               </td>
-                              <td className="py-3 font-sans text-sky-400 font-semibold text-xs">
+                              <td className="py-3.5 font-sans text-emerald-400 font-semibold text-xs">
                                 {keyObj.isUsed ? (
                                   allCustomersList.find((u: any) => u.id === keyObj.usedByUserId)?.name || 
                                   allCustomersList.find((u: any) => u.id === keyObj.usedByUserId)?.discordId || 
                                   'مستخدم غير معروف'
                                 ) : (
-                                  <span className="text-slate-600">-</span>
+                                  <span className="text-slate-600 font-mono">-</span>
                                 )}
                               </td>
-                              <td className="py-3 text-slate-400 text-[11px]">
+                              <td className="py-3.5 text-slate-400 text-[11px]">
                                 {new Date(keyObj.createdAt).toLocaleDateString('ar-SA')}
                               </td>
-                              <td className="py-3 font-sans flex items-center justify-end gap-2">
+                              <td className="py-3.5 font-sans flex items-center justify-end gap-2 pl-2">
                                 {keyObj.isUsed && (
                                   <button
                                     onClick={() => handleRevokeAndBan(keyObj.usedByUserId, keyObj.id)}
-                                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-[10px] font-bold transition-colors cursor-pointer"
+                                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-[10px] font-bold transition-all cursor-pointer hover:scale-105"
                                     title="حظر المستخدم وإلغاء المفتاح"
                                   >
                                     إلغاء وحظر
@@ -1873,7 +2007,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                 )}
                                 <button
                                   onClick={() => handleDeleteKey(keyObj.id)}
-                                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded text-[10px] font-bold text-rose-400 transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded text-[10px] font-bold text-rose-400 transition-all cursor-pointer hover:scale-105"
                                 >
                                   حذف
                                 </button>
@@ -1889,31 +2023,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* ==================== SUB-TAB 4: SYSTEM AUDIT LOGS ==================== */}
             {adminSectionTab === 'logs' && (
-              <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-indigo-400" />
+              <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-5">
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-emerald-400" />
                   <span>سجلات الأمان والنشاط المباشرة (System Audit Logs)</span>
                 </h3>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto scrollbar-none">
                   <table className="w-full text-right text-xs">
                     <thead>
-                      <tr className="border-b border-white/10 text-slate-400 font-semibold">
-                        <th className="pb-3">الحدث</th>
-                        <th className="pb-3">التفاصيل</th>
-                        <th className="pb-3">المستخدم / Discord</th>
-                        <th className="pb-3">عنوان IP</th>
-                        <th className="pb-3">التوقيت</th>
+                      <tr className="border-b border-white/[0.06] text-slate-400 font-bold">
+                        <th className="pb-3.5">الحدث</th>
+                        <th className="pb-3.5">التفاصيل</th>
+                        <th className="pb-3.5">المستخدم / Discord</th>
+                        <th className="pb-3.5">عنوان IP</th>
+                        <th className="pb-3.5">التوقيت</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-white/[0.04]">
                       {adminLogs.map((log) => (
-                        <tr key={log.id} className="text-slate-300">
-                          <td className="py-3 font-semibold text-white">{log.action}</td>
-                          <td className="py-3 max-w-xs truncate">{log.details}</td>
-                          <td className="py-3 text-sky-400">{log.userName || log.discordId || 'زائر'}</td>
-                          <td className="py-3 font-mono text-[11px] text-slate-400">{log.ipAddress}</td>
-                          <td className="py-3 text-slate-400">{new Date(log.createdAt).toLocaleTimeString('ar-SA')}</td>
+                        <tr key={log.id} className="text-slate-300 hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3.5 font-bold text-white">{log.action}</td>
+                          <td className="py-3.5 max-w-xs truncate">{log.details}</td>
+                          <td className="py-3.5 text-emerald-400 font-semibold">{log.userName || log.discordId || 'زائر'}</td>
+                          <td className="py-3.5 font-mono text-[11px] text-slate-400">{log.ipAddress}</td>
+                          <td className="py-3.5 text-slate-400">{new Date(log.createdAt).toLocaleTimeString('ar-SA')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1927,20 +2061,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="space-y-6">
                 {/* Primary Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl group-hover:bg-sky-500/20 transition-all" />
+                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">إجمالي العملاء</div>
                         <div className="text-3xl font-black text-white">{adminStats.totalUsers}</div>
                       </div>
                       <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Users className="w-6 h-6 text-sky-400" />
+                        <Users className="w-6 h-6 text-emerald-400" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -1953,28 +2087,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
+                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">المنتجات النشطة</div>
-                        <div className="text-3xl font-black text-indigo-400">{adminStats.activeProducts}</div>
+                        <div className="text-3xl font-black text-white">{adminStats.activeProducts}</div>
                       </div>
                       <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Package className="w-6 h-6 text-indigo-400" />
+                        <Package className="w-6 h-6 text-emerald-400" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all" />
+                  <div className="bg-gradient-to-br from-[#12141c] to-[#0a0b10] border border-white/[0.08] rounded-[20px] p-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
                         <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">إجمالي التحميلات</div>
-                        <div className="text-3xl font-black text-purple-400">{adminStats.totalDownloads}</div>
+                        <div className="text-3xl font-black text-white">{adminStats.totalDownloads}</div>
                       </div>
                       <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                        <Download className="w-6 h-6 text-purple-400" />
+                        <Download className="w-6 h-6 text-emerald-400" />
                       </div>
                     </div>
                   </div>
@@ -1983,25 +2117,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {/* Secondary Row: Recent Activity & Quick Alerts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Recent Logs Summary */}
-                  <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                      <h3 className="font-bold text-white flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-sky-400" />
+                  <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+                      <h3 className="font-extrabold text-white flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-emerald-400" />
                         آخر الأنشطة في المنصة
                       </h3>
-                      <button onClick={() => setAdminSectionTab('logs')} className="text-[11px] text-sky-400 hover:text-sky-300 font-bold">
+                      <button onClick={() => setAdminSectionTab('logs')} className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold transition-colors">
                         عرض الكل &rarr;
                       </button>
                     </div>
                     <div className="space-y-3">
                       {adminLogs.slice(0, 4).map((log) => (
-                        <div key={log.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                          <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
-                            <UserCheck className="w-4 h-4 text-slate-300" />
+                        <div key={log.id} className="flex items-center gap-3 p-3 bg-[#08090d] rounded-xl border border-white/[0.05]">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <UserCheck className="w-4 h-4 text-emerald-400" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-bold text-slate-200 truncate">{log.action}</div>
-                            <div className="text-[10px] text-slate-400 truncate">{log.details}</div>
+                            <div className="text-[10px] text-slate-400 truncate mt-0.5">{log.details}</div>
                           </div>
                           <div className="text-[10px] text-slate-500 font-mono shrink-0">
                             {new Date(log.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
@@ -2015,9 +2149,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
 
                   {/* Quick System Status */}
-                  <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                    <div className="border-b border-white/10 pb-4">
-                      <h3 className="font-bold text-white flex items-center gap-2">
+                  <div className="bg-gradient-to-br from-[#11131b] to-[#090b10] border border-white/[0.08] rounded-[22px] p-6 shadow-2xl space-y-4">
+                    <div className="border-b border-white/[0.06] pb-4">
+                      <h3 className="font-extrabold text-white flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-emerald-400" />
                         حالة النظام والإشعارات
                       </h3>
@@ -2029,8 +2163,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-emerald-400">النظام يعمل بكفاءة</div>
-                            <div className="text-xs text-slate-400">لا توجد مشاكل حالية في الخوادم.</div>
+                            <div className="text-sm font-extrabold text-emerald-400">النظام يعمل بكفاءة</div>
+                            <div className="text-xs text-slate-300 mt-0.5">لا توجد مشاكل حالية في الخوادم.</div>
                           </div>
                         </div>
                       </div>
@@ -2042,11 +2176,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <HelpCircle className="w-5 h-5 text-amber-400" />
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-amber-400">تنبيه: انخفاض المخزون</div>
-                              <div className="text-xs text-slate-400">بعض المنتجات على وشك النفاد من المفاتيح.</div>
+                              <div className="text-sm font-extrabold text-amber-400 font-sans">تنبيه: انخفاض المخزون</div>
+                              <div className="text-xs text-slate-300 mt-0.5">بعض المنتجات على وشك النفاد من المفاتيح.</div>
                             </div>
                           </div>
-                          <button onClick={() => setAdminSectionTab('products')} className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg text-xs font-bold transition-colors">
+                          <button onClick={() => setAdminSectionTab('products')} className="px-3 py-1.5 bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 rounded-lg text-xs font-bold transition-all hover:scale-102">
                             إدارة المخزون
                           </button>
                         </div>
@@ -2066,40 +2200,40 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           Each key as a card with delete button
          ==================================================================== */}
       {inventoryModalOpen && inventoryProduct && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0d1117] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            {/* Modal Header (Salla Style) */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#2b2d31] border-b border-[#262a33] shrink-0">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-[#0c0e14] to-[#07080c] border border-white/[0.08] rounded-[24px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header (Premium Style) */}
+            <div className="flex items-center justify-between px-6 py-4 bg-[#0e1017] border-b border-white/[0.06] shrink-0">
               <button
                 onClick={() => setInventoryModalOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
-              <h2 className="text-sm font-bold text-white text-right flex-1">
+              <h2 className="text-sm font-extrabold text-white text-right flex-1 pr-3">
                 بيانات المنتج ({inventoryProduct.name})
               </h2>
             </div>
 
-            {/* Tabs Row (Salla Style) */}
-            <div className="flex bg-[#1c1f24] border-b border-white/10 shrink-0 p-4 gap-1">
+            {/* Tabs Row */}
+            <div className="flex bg-[#0a0b10] border-b border-white/[0.06] shrink-0 p-4 gap-2">
               <button
                 onClick={() => setInventoryTab('codes')}
-                className={`flex-1 py-3 px-4 text-sm font-bold flex items-center justify-center gap-2 transition-all rounded-md cursor-pointer ${inventoryTab === 'codes' ? 'bg-[#b8f5d5] text-[#0f1115]' : 'bg-[#2b2d31] text-white hover:bg-[#34373c]'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer ${inventoryTab === 'codes' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] hover:bg-[#1a1e2e] text-slate-300 border border-white/[0.06]'}`}
               >
                 <span>الأكواد المتاحة</span>
                 <Key className="w-4 h-4 ml-1" />
               </button>
               <button
                 onClick={() => setInventoryTab('custom')}
-                className={`flex-1 py-3 px-4 text-sm font-bold flex items-center justify-center gap-2 transition-all rounded-md cursor-pointer ${inventoryTab === 'custom' ? 'bg-[#b8f5d5] text-[#0f1115]' : 'bg-[#2b2d31] text-white hover:bg-[#34373c]'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer ${inventoryTab === 'custom' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] hover:bg-[#1a1e2e] text-slate-300 border border-white/[0.06]'}`}
               >
                 <span>الحقول المخصصة</span>
                 <Layers className="w-4 h-4 ml-1" />
               </button>
               <button
                 onClick={() => setInventoryTab('data')}
-                className={`flex-1 py-3 px-4 text-sm font-bold flex items-center justify-center gap-2 transition-all rounded-md cursor-pointer ${inventoryTab === 'data' ? 'bg-[#b8f5d5] text-[#0f1115]' : 'bg-[#2b2d31] text-white hover:bg-[#34373c]'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer ${inventoryTab === 'data' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] hover:bg-[#1a1e2e] text-slate-300 border border-white/[0.06]'}`}
               >
                 <span>بيانات المنتج</span>
                 <FileText className="w-4 h-4 ml-1" />
@@ -2119,74 +2253,74 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">اسم المنتج</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">اسم المنتج</label>
                     <input
                       type="text"
                       value={editProductData.name}
                       onChange={(e) => setEditProductData({ ...editProductData, name: e.target.value })}
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-medium"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none transition-all font-bold"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">صورة المنتج (رابط مسار الصورة)</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">صورة المنتج (رابط مسار الصورة)</label>
                     <input
                       type="text"
                       value={editProductData.image}
                       onChange={(e) => setEditProductData({ ...editProductData, image: e.target.value })}
                       placeholder="/products/fortnite-unban.png"
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500 transition-colors font-mono"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">الوصف الشامل للمنتج</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">الوصف الشامل للمنتج</label>
                     <textarea
                       rows={3}
                       value={editProductData.description}
                       onChange={(e) => setEditProductData({ ...editProductData, description: e.target.value })}
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500 transition-colors leading-relaxed"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl p-3.5 text-xs text-white focus:outline-none transition-all leading-relaxed"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">الإصدار (Version)</label>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">الإصدار (Version)</label>
                       <input
                         type="text"
                         value={editProductData.version}
                         onChange={(e) => setEditProductData({ ...editProductData, version: e.target.value })}
-                        className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500 font-mono"
+                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all font-mono"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">حجم الملف (File Size)</label>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">حجم الملف (File Size)</label>
                       <input
                         type="text"
                         value={editProductData.fileSize}
                         onChange={(e) => setEditProductData({ ...editProductData, fileSize: e.target.value })}
-                        className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">التصنيف (Category)</label>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">التصنيف (Category)</label>
                       <input
                         type="text"
                         value={editProductData.category}
                         onChange={(e) => setEditProductData({ ...editProductData, category: e.target.value })}
-                        className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">عدد التحميلات</label>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">عدد التحميلات</label>
                       <input
                         type="number"
                         value={editProductData.downloadsCount}
                         onChange={(e) => setEditProductData({ ...editProductData, downloadsCount: Number(e.target.value) })}
-                        className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500 font-mono"
+                        className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all font-mono"
                       />
                     </div>
                   </div>
@@ -2195,7 +2329,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <button
                       onClick={handleSaveProductChanges}
                       disabled={isSavingProduct}
-                      className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
                     >
                       {isSavingProduct ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       <span>حفظ تغييرات المنتج</span>
@@ -2215,49 +2349,49 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">رابط الشرح / فيديو (YouTube / Stream)</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">رابط الشرح / فيديو (YouTube / Stream)</label>
                     <input
                       type="text"
                       value={editProductData.videoUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, videoUrl: e.target.value })}
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none transition-all"
                       placeholder="https://www.youtube.com/watch?v=..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">رابط دليل الاستخدام (Discord / Docs)</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">رابط دليل الاستخدام (Discord / Docs)</label>
                     <input
                       type="text"
                       value={editProductData.guideUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, guideUrl: e.target.value })}
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none transition-all"
                       placeholder="https://discord.gg/t3n"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">رابط تحميل الملف (File Download URL)</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">رابط تحميل الملف (File Download URL)</label>
                     <input
                       type="text"
                       value={editProductData.fileUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, fileUrl: e.target.value })}
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none transition-all"
                       placeholder="/uploads/spoofer.exe"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">لون البطاقة (Theme Accent)</label>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">لون البطاقة (Theme Accent)</label>
                     <select
                       value={editProductData.cardColor}
                       onChange={(e) => setEditProductData({ ...editProductData, cardColor: e.target.value })}
-                      className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      className="w-full bg-[#050609] border border-white/[0.08] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none transition-all cursor-pointer font-bold"
                     >
-                      <option value="blue">أزرق سماوي (Blue Glow)</option>
-                      <option value="cyan">سيان فائق (Cyan Neon)</option>
-                      <option value="purple">بنفسجي تبيان (Purple Spirit)</option>
-                      <option value="gold">ذهبي فاخر (Gold Edition)</option>
+                      <option value="blue" className="bg-[#0c0e14] text-white">أزرق سماوي (Blue Glow)</option>
+                      <option value="cyan" className="bg-[#0c0e14] text-white">سيان فائق (Cyan Neon)</option>
+                      <option value="purple" className="bg-[#0c0e14] text-white">بنفسجي تبيان (Purple Spirit)</option>
+                      <option value="gold" className="bg-[#0c0e14] text-white">ذهبي فاخر (Gold Edition)</option>
                     </select>
                   </div>
 
@@ -2265,7 +2399,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <button
                       onClick={handleSaveProductChanges}
                       disabled={isSavingProduct}
-                      className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
                     >
                       {isSavingProduct ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       <span>حفظ تغييرات الحقول</span>
@@ -2273,7 +2407,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                     <button
                       onClick={handleDeleteProductPermanently}
-                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>حذف المنتج نهائياً من النظام</span>
@@ -2294,14 +2428,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   )}
 
                   {/* Premium Info Box */}
-                  <div className="bg-[#080a0f] border border-sky-500/20 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden shadow-lg">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
+                  <div className="bg-[#050609] border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden shadow-lg">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500/30 flex items-center justify-center shrink-0">
-                        <Layers className="w-4 h-4 text-sky-400" />
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                        <Layers className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div className="flex-1 text-right">
-                        <h4 className="text-sm font-bold text-white mb-0.5">إدارة المخزون الذكية</h4>
+                        <h4 className="text-sm font-extrabold text-white mb-0.5">إدارة المخزون الذكية</h4>
                         <p className="text-xs text-slate-400 leading-relaxed">
                           يمكنك إضافة آلاف المفاتيح دفعة واحدة بدون أي تأخير. النظام سيقوم بمعالجتها في الخلفية.
                         </p>
@@ -2310,7 +2444,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {!bulkAddOpen && (
                       <button 
                         onClick={() => setBulkAddOpen(true)}
-                        className="w-full py-2.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 text-xs font-bold rounded-lg transition-all cursor-pointer mt-1"
+                        className="w-full py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-lg transition-all cursor-pointer mt-1"
                       >
                         فتح لوحة الإضافة السريعة (Batch Add)
                       </button>
@@ -2324,7 +2458,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         initial={{ opacity: 0, y: -10, height: 0 }}
                         animate={{ opacity: 1, y: 0, height: 'auto' }}
                         exit={{ opacity: 0, y: -10, height: 0 }}
-                        className="bg-[#10131a] border border-[#1e2330] rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden"
+                        className="bg-[#0a0c12] border border-white/[0.08] rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden"
                       >
                         <div className="absolute top-0 right-0 p-3">
                           <button onClick={() => setBulkAddOpen(false)} className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer p-1">
@@ -2333,9 +2467,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
                         
                         <div className="flex justify-between items-center pr-2">
-                          <span className="text-xs text-sky-400 font-bold tracking-widest uppercase">Batch Keys</span>
+                          <span className="text-xs text-emerald-400 font-bold tracking-widest uppercase">Batch Keys</span>
                           {bulkKeysText.trim() && (
-                            <span className="text-xs font-bold bg-sky-500/20 text-sky-400 px-2 py-1 rounded-md">
+                            <span className="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md">
                               {bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0).length} مفاتيح
                             </span>
                           )}
@@ -2347,14 +2481,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             value={bulkKeysText}
                             onChange={(e) => setBulkKeysText(e.target.value)}
                             placeholder="الصق المفاتيح هنا...&#10;يمكنك الفصل بينها بمسافة أو فاصلة أو سطر جديد."
-                            className={`w-full bg-[#080a0f] rounded-xl p-4 text-sm font-mono placeholder:text-slate-600 focus:outline-none transition-all resize-y min-h-[120px] ${isAddingKeys ? 'border border-sky-500 shadow-[0_0_15px_rgba(14,165,233,0.2)] text-sky-300' : 'border border-[#1e2330] focus:border-sky-500/50 text-slate-300 hover:border-[#2a3140]'}`}
+                            className={`w-full bg-[#050609] rounded-xl p-4 text-sm font-mono placeholder:text-slate-600 focus:outline-none transition-all resize-y min-h-[120px] ${isAddingKeys ? 'border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] text-emerald-300' : 'border border-white/[0.08] focus:border-emerald-500/50 text-slate-300 hover:border-white/[0.12]'}`}
                             style={{ lineHeight: '1.8' }}
                             dir="ltr"
                           />
                         </div>
 
                         {bulkMessage && (
-                          <div className="p-3 bg-sky-500/10 text-sky-400 text-xs rounded-xl font-bold text-center border border-sky-500/20 shadow-[0_0_10px_rgba(14,165,233,0.1)]">
+                          <div className="p-3 bg-emerald-500/10 text-emerald-400 text-xs rounded-xl font-bold text-center border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
                             {bulkMessage}
                           </div>
                         )}
@@ -2362,7 +2496,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <button
                           onClick={handleBulkAddKeys}
                           disabled={isAddingKeys || !bulkKeysText.trim()}
-                          className={`w-full py-3.5 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg' : 'bg-[#1a1f2e] text-slate-500 cursor-not-allowed border border-[#2a3140]'}`}
+                          className={`w-full py-3.5 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#131622] text-slate-500 cursor-not-allowed border border-white/[0.06]'}`}
                         >
                           {isAddingKeys ? (
                             <>
@@ -2384,20 +2518,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-3 px-1">
                       <h4 className="text-sm font-bold text-slate-200">المفاتيح الحالية</h4>
-                      <div className="text-xs font-semibold text-slate-400 bg-[#1e2330] px-2.5 py-1 rounded-full">
+                      <div className="text-xs font-semibold text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
                         {inventoryKeys.length} مفتاح
                       </div>
                     </div>
 
                     {isLoadingKeys ? (
-                      <div className="flex flex-col items-center justify-center py-12 border border-[#1e2330] border-dashed rounded-xl bg-[#080a0f]">
-                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-sky-500" />
+                      <div className="flex flex-col items-center justify-center py-12 border border-white/[0.08] border-dashed rounded-xl bg-[#050609]">
+                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-emerald-500" />
                         <span className="text-xs font-medium text-slate-400">جارٍ جلب المفاتيح بسرعة...</span>
                       </div>
                     ) : (
                       <div className="space-y-2.5">
                         {inventoryKeys.map((keyItem) => (
-                          <div key={keyItem.id} className="group bg-[#080a0f] hover:bg-[#10131a] border border-[#1e2330] hover:border-sky-500/30 rounded-xl overflow-hidden flex items-center justify-between p-3.5 gap-4 transition-all shadow-sm">
+                          <div key={keyItem.id} className="group bg-[#050609] hover:bg-[#0c0e15] border border-white/[0.08] hover:border-emerald-500/30 rounded-xl overflow-hidden flex items-center justify-between p-3.5 gap-4 transition-all shadow-sm">
                             <div className="flex-1 text-sm text-slate-300 font-mono break-all text-left select-all group-hover:text-white transition-colors" dir="ltr">
                               {keyItem.key}
                             </div>
@@ -2412,7 +2546,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         ))}
 
                         {inventoryKeys.length === 0 && !bulkAddOpen && !singleAddOpen && (
-                          <div className="text-center py-10 border border-[#1e2330] border-dashed rounded-xl bg-[#080a0f]">
+                          <div className="text-center py-10 border border-white/[0.08] border-dashed rounded-xl bg-[#050609]">
                             <Key className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
                             <p className="text-xs text-slate-500 font-medium">لا توجد مفاتيح في المخزون حالياً</p>
                           </div>
@@ -2425,20 +2559,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
-                              className="bg-[#080a0f] border border-sky-500/30 rounded-xl p-2.5 flex gap-2 shadow-lg"
+                              className="bg-[#050609] border border-emerald-500/30 rounded-xl p-2.5 flex gap-2 shadow-lg"
                             >
                               <input
                                 type="text"
                                 value={singleKeyText}
                                 onChange={(e) => setSingleKeyText(e.target.value)}
                                 placeholder="أدخل المفتاح هنا..."
-                                className="flex-1 bg-[#10131a] border border-[#1e2330] rounded-lg px-4 py-2 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-sky-500/50 text-left transition-colors"
+                                className="flex-1 bg-[#0c0e15] border border-white/[0.08] rounded-lg px-4 py-2 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 text-left transition-colors"
                                 dir="ltr"
                               />
                               <button
                                 onClick={handleAddSingleKey}
                                 disabled={!singleKeyText.trim()}
-                                className="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 إضافة
                               </button>
@@ -2456,7 +2590,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {!singleAddOpen && (
                           <button 
                             onClick={() => setSingleAddOpen(true)}
-                            className="w-full py-4 flex items-center justify-center gap-2 bg-[#080a0f] border border-[#1e2330] border-dashed hover:border-sky-500/50 hover:bg-sky-500/5 rounded-xl text-slate-400 hover:text-sky-400 transition-all cursor-pointer mt-2"
+                            className="w-full py-4 flex items-center justify-center gap-2 bg-[#050609] border border-white/[0.08] border-dashed hover:border-emerald-500/50 hover:bg-emerald-500/5 rounded-xl text-slate-400 hover:text-emerald-400 transition-all cursor-pointer mt-2"
                           >
                             <span className="text-xl leading-none mb-0.5">+</span>
                             <span className="text-xs font-bold">إضافة مفتاح فردي</span>
@@ -2468,16 +2602,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-[#262a33] bg-[#1a1d22] flex items-center justify-between">
+            <div className="p-4 border-t border-white/[0.06] bg-[#0a0b10] flex items-center justify-between shrink-0">
               <button
                 onClick={() => setInventoryProduct(null)}
-                className="px-6 py-2.5 bg-[#e5e7eb] hover:bg-white text-slate-800 font-bold text-sm rounded-md transition-colors cursor-pointer"
+                className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-sm rounded-xl transition-all cursor-pointer hover:scale-[1.01]"
               >
                 إلغاء
               </button>
               <button
                 onClick={handleSaveProductChanges}
-                className="px-6 py-2.5 bg-[#b8f5d5] hover:bg-[#9debc3] text-[#0f1115] font-bold text-sm rounded-md transition-colors cursor-pointer"
+                className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer hover:scale-[1.01]"
               >
                 حفظ خيارات المنتج
               </button>
@@ -2492,12 +2626,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {guideModalProduct && guideView && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
-          <div className="relative bg-[#0d1117] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative bg-gradient-to-br from-[#0c0e14] to-[#07080c] border border-white/[0.08] rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/5 flex items-start justify-between bg-[#15171e]">
+            <div className="p-6 border-b border-white/[0.06] flex items-start justify-between bg-[#0e1017]">
               <div className="flex flex-col items-end w-full pr-2">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1 flex-row-reverse">
-                  <HelpCircle className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-lg font-black text-white flex items-center gap-2 mb-1 flex-row-reverse">
+                  <HelpCircle className="w-5 h-5 text-emerald-400" />
                   {guideView === 'menu' ? 'قائمة الشروحات والمساعدة' : 
                    guideView === 'full' ? 'شرح خطوات التفعيل والتشغيل' :
                    guideView === 'network' ? 'حل مشكلة إغلاق البرنامج أو خطأ الشبكة' : 'حل مشكلة الوقت (Timer)'}
@@ -2506,14 +2640,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
               <button
                 onClick={() => { setGuideModalProduct(null); setGuideView(null); }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#252833] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto bg-[#15171e]">
+            <div className="p-6 overflow-y-auto bg-[#0a0b10]">
               {guideView === 'menu' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Full Tutorial Button */}
@@ -2521,13 +2655,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     onClick={() => {
                       setGuideView('full');
                     }}
-                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-[#171a24] border border-[#262b3d] hover:border-indigo-500/50 hover:bg-[#1a1d29] transition-all group cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-[#131622] border border-white/[0.06] hover:border-emerald-500/50 hover:bg-[#1a1e2e] transition-all group cursor-pointer"
                   >
-                    <div className="w-16 h-16 rounded-full bg-[#202538] flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 rounded-full bg-[#1c2030] flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
                       <ExternalLink className="w-7 h-7" />
                     </div>
                     <div className="text-center">
-                      <h4 className="font-bold text-white mb-2 text-lg">شرح التفعيل (فيديو)</h4>
+                      <h4 className="font-extrabold text-white mb-2 text-lg">شرح التفعيل (فيديو)</h4>
                       <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.</p>
                     </div>
                   </button>
@@ -2541,13 +2675,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         window.open('https://discord.gg/t3n', '_blank');
                       }
                     }}
-                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-[#171a24] border border-[#262b3d] hover:border-sky-500/50 hover:bg-[#1a1d29] transition-all group cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-[#131622] border border-white/[0.06] hover:border-emerald-500/50 hover:bg-[#1a1e2e] transition-all group cursor-pointer"
                   >
-                    <div className="w-16 h-16 rounded-full bg-[#1e2536] flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 rounded-full bg-[#1c2030] flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
                       <HelpCircle className="w-7 h-7" />
                     </div>
                     <div className="text-center">
-                      <h4 className="font-bold text-white mb-2 text-lg">دعم ومشاكل (ديسكورد)</h4>
+                      <h4 className="font-extrabold text-white mb-2 text-lg">دعم ومشاكل (ديسكورد)</h4>
                       <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">حلول للمشاكل المفاجئة مثل أخطاء الشبكة ومشاكل الوقت.</p>
                     </div>
                   </button>
@@ -2557,7 +2691,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {guideView === 'full' && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center px-1">
-                    <button onClick={() => setGuideView('menu')} className="text-xs text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
+                    <button onClick={() => setGuideView('menu')} className="text-xs text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer font-bold">
                       <ArrowRight className="w-3 h-3" />
                       العودة للقائمة السابقة
                     </button>
