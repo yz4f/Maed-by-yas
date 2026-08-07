@@ -4,66 +4,69 @@
 
 @layer base {
   body {
-    @apply bg-brand-dark text-slate-200 antialiased selection:bg-primary selection:text-white font-sans;
+    @apply bg-brand-dark text-[#FFFFFF] antialiased selection:bg-[#3B82F6] selection:text-white font-sans;
     background-image: 
-      radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.05) 0px, transparent 45%),
-      radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 45%),
-      radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.03) 0px, transparent 45%);
+      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.03) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(148, 163, 184, 0.02) 0px, transparent 50%);
     background-attachment: fixed;
   }
 }
 
-/* SpiritX Grid Background Pattern - More subtle */
+/* Subtle infinite CSS grid background */
 .bg-grid-pattern {
-  background-size: 40px 40px;
+  background-size: 48px 48px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    linear-gradient(to right, rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
 }
 
-/* Custom Glassmorphism Utility - Cleaner, more premium */
+/* Custom premium Card styles */
 .glass-panel {
-  background: rgba(10, 10, 10, 0.85);
+  background: rgba(15, 19, 30, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  border-radius: 18px;
 }
 
 .glass-card {
-  background: #0a0a0a;
-  border: 1px solid #1a1a1a;
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg, #171E2D, #0F131E);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 18px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  border-color: rgba(56, 189, 248, 0.2);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.1);
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(59, 130, 246, 0.05);
 }
 
 /* Glow Texts */
 .text-glow-primary {
-  text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-}
-
-.text-glow-secondary {
   text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
 }
 
+.text-glow-secondary {
+  text-shadow: 0 0 15px rgba(148, 163, 184, 0.3);
+}
+
 .text-glow-blue {
-  text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
 }
 
 .text-glow-cyan {
-  text-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+  text-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
 }
 
 .text-glow-purple {
-  text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
 }
 
 .text-glow-emerald {
-  text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
 /* Scrollbar None */
@@ -81,12 +84,12 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: #070A13;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
+  background: #1E293B;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: #3B82F6;
 }

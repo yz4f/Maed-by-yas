@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
+import { DashboardLayout } from './DashboardLayout';
 
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
@@ -756,7 +757,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* Theme Switcher */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className={`p-2 rounded-full ${isDark ? 'bg-[#10121a]/90 border-white/20 hover:border-sky-400 text-white' : 'bg-white/90 border-slate-200 hover:border-sky-500 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center transition-all hover:scale-105 cursor-pointer`}
+            className={`p-2 rounded-full ${isDark ? 'bg-brand-card/90 border-brand-border hover:border-primary/40 text-white' : 'bg-white/90 border-slate-200 hover:border-sky-500 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center transition-all hover:scale-105 cursor-pointer`}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -765,7 +766,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* Language Switcher */}
           <button
             onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className={`px-3.5 py-2 rounded-full ${isDark ? 'bg-[#10121a]/90 border-white/20 hover:border-sky-400 text-white' : 'bg-white/90 border-slate-200 hover:border-sky-500 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all hover:scale-105 cursor-pointer`}
+            className={`px-3.5 py-2 rounded-full ${isDark ? 'bg-brand-card/90 border-brand-border hover:border-primary/40 text-white' : 'bg-white/90 border-slate-200 hover:border-sky-500 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all hover:scale-105 cursor-pointer`}
             title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
           >
             <span className="text-sm">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
@@ -774,16 +775,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
 
         {/* Subtle Background Glow Spheres */}
-        <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ${isDark ? 'bg-sky-500/10' : 'bg-sky-400/20'} rounded-full blur-[150px] pointer-events-none transition-colors duration-500`} />
-        <div className={`absolute bottom-10 right-10 w-[400px] h-[400px] ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-400/20'} rounded-full blur-[130px] pointer-events-none transition-colors duration-500`} />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] pointer-events-none transition-colors duration-500" />
+        <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[130px] pointer-events-none transition-colors duration-500" />
 
-        {/* Animated Login Glass Card */}
+        {/* Animated Login Card */}
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className={`w-full max-w-[400px] ${isDark ? 'bg-[#101115]/80 border-white/[0.04]' : 'bg-white/90 border-slate-200'} border rounded-[2rem] p-10 shadow-2xl relative z-10 text-center space-y-8 transition-colors duration-500 backdrop-blur-2xl`}
+            className="w-full max-w-[400px] glass-card rounded-[24px] p-10 shadow-2xl relative z-10 text-center space-y-8 backdrop-blur-2xl"
           >
             {/* Logo */}
             <motion.div 
@@ -792,61 +793,79 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
               className="flex justify-center"
             >
-              <div className={`w-[110px] h-[110px] rounded-full overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border ${isDark ? 'border-white/5 bg-[#0a0b0e]' : 'border-slate-200 bg-black shadow-xl'}`}>
-                <img src="/logo.png?v=6" alt="تعن" className="w-full h-full object-cover scale-110 opacity-90 hover:opacity-100 transition-opacity duration-300" />
+              <div className="w-[100px] h-[100px] rounded-2xl overflow-hidden border border-brand-border bg-brand-sidebar shadow-2xl flex items-center justify-center p-2">
+                <img src="/logo.png?v=6" alt="تعن" className="w-full h-full object-contain" />
               </div>
             </motion.div>
-
+ 
             {/* Titles */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="space-y-3"
+              className="space-y-2.5"
             >
-              <h1 className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'} tracking-wide`}>
-                تعن
+              <h1 className="text-3xl font-extrabold text-white tracking-tight">
+                {lang === 'ar' ? 'تعن' : 'TA3N'}
               </h1>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-bold tracking-wide leading-relaxed px-4`}>
-                منصتك الاحترافية والمثالية لتجربة واستعراض الميزات الفريدة لمنتجاتنا المميزة.
+              <p className="text-xs text-brand-muted font-medium leading-relaxed px-4">
+                {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
               </p>
             </motion.div>
-
+ 
             {/* Discord Login */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
+              className="space-y-3"
             >
               <button
                 onClick={() => signIn('discord')}
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#5865F2] via-[#4F5DED] to-[#4552E6] hover:from-[#4F5DED] hover:to-[#3F4CD8] text-white font-black text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(88,101,242,0.4)] hover:shadow-[0_0_30px_rgba(88,101,242,0.6)] cursor-pointer hover:scale-[1.02] active:scale-95"
+                className="w-full h-[52px] rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-[0_4px_20px_rgba(88,101,242,0.3)] cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
               >
                 <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.79-.58,1.56-1.19,2.29-1.82a74.4,74.4,0,0,0,73.4,0c.73.63,1.5,1.24,2.29,1.82a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129.07,50.12,123.2,27.31,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z"/>
+                  <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.79-.58,1.56-1.19,2.29-1.82a74.4,74.4,0,0,0,73.4,0c.73.63,1.5,1.24,2.29,1.82a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,0,0,0,31-18.83C129.07,50.12,123.2,27.31,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z"/>
                 </svg>
                 <span>{lang === 'ar' ? 'تسجيل دخول' : 'Login'}</span>
               </button>
+ 
+              {process.env.NODE_ENV === 'development' && (
+                <div className="flex gap-2 justify-center pt-1">
+                  <button
+                    onClick={loginAsDemoCustomer}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold text-white transition-all cursor-pointer"
+                  >
+                    {lang === 'ar' ? 'دخول كـ عميل' : 'Demo Customer'}
+                  </button>
+                  <button
+                    onClick={loginAsDemoAdmin}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold text-white transition-all cursor-pointer"
+                  >
+                    {lang === 'ar' ? 'دخول كـ أدمن' : 'Demo Admin'}
+                  </button>
+                </div>
+              )}
             </motion.div>
-
+ 
             {/* Bottom Footer Link */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className={`pt-6 border-t ${isDark ? 'border-white/5 text-slate-400' : 'border-slate-200 text-slate-500'} text-xs flex items-center justify-center gap-2`}
+              className="pt-6 border-t border-white/5 text-xs flex items-center justify-center gap-2"
             >
-              <span>عضو جديد؟</span>
+              <span className="text-brand-muted font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
               <button
                 onClick={() => setGuestModalOpen(true)}
-                className={`font-bold underline underline-offset-4 transition-colors cursor-pointer ${isDark ? 'text-sky-500 hover:text-sky-400' : 'text-sky-600 hover:text-sky-500'}`}
+                className="font-bold underline underline-offset-4 text-white hover:text-white/80 transition-colors cursor-pointer"
               >
-                تفعيل مفتاح جديد
+                {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
               </button>
             </motion.div>
           </motion.div>
         </AnimatePresence>
-
+ 
         {/* Copyright Footer */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -857,11 +876,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         >
           © 2026 جميع الحقوق محفوظة لمنصة تعن
         </motion.div>
-
+ 
         {/* Guest Key Redemption Modal */}
         {guestModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 max-w-md w-full relative shadow-2xl">
+            <div className="glass-card border border-brand-border rounded-2xl p-6 max-w-md w-full relative shadow-2xl">
               <button
                 onClick={() => setGuestModalOpen(false)}
                 className="absolute top-4 left-4 text-slate-400 hover:text-white p-1"
@@ -870,12 +889,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </button>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-sky-500/10 rounded-xl border border-sky-500/20 text-sky-400">
+                <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20 text-primary">
                   <Key className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">تفعيل مفتاح جديد</h3>
-                  <p className="text-xs text-slate-400">أدخل مفتاح التفعيل للانضمام التلقائي للموقع والديسكورد</p>
+                  <p className="text-xs text-brand-muted">أدخل مفتاح التفعيل للانضمام التلقائي للموقع والديسكورد</p>
                 </div>
               </div>
 
@@ -887,7 +906,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
                     placeholder="T3N-FORT-99999-PERM"
-                    className="w-full bg-[#08090d] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono tracking-wider"
+                    className="w-full bg-brand-sidebar border border-brand-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary transition-colors font-mono tracking-wider"
                   />
                 </div>
 
@@ -909,106 +928,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
           </div>
         )}
-
-        {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
-        {selectedAdminCustomer && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 max-w-2xl w-full relative shadow-2xl max-h-[90vh] overflow-y-auto">
-              <button
-                onClick={() => setSelectedAdminCustomer(null)}
-                className="absolute top-4 left-4 text-slate-400 hover:text-white p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/5">
-                <img
-                  src={selectedAdminCustomer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                  alt={selectedAdminCustomer.name}
-                  className="w-14 h-14 rounded-full border border-sky-500/30 object-cover"
-                />
-                <div>
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    {selectedAdminCustomer.name}
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAdminCustomer.role === 'Boss' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}`}>
-                      {selectedAdminCustomer.role}
-                    </span>
-                  </h3>
-                  <div className="text-xs text-slate-400 mt-1 flex gap-3">
-                    <span>Discord: <span className="text-sky-400 font-mono">{selectedAdminCustomer.discordId}</span></span>
-                    <span>|</span>
-                    <span>IP: <span className="font-mono text-slate-300">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6">
-                {/* User Keys */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                    <Key className="w-4 h-4 text-primary" />
-                    <span>مفاتيح العميل المستخدمة</span>
-                  </h4>
-                  <div className="bg-[#08090d] border border-white/5 rounded-xl p-4">
-                    {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).length > 0 ? (
-                      <div className="space-y-2">
-                        {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).map(keyObj => (
-                          <div key={keyObj.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-2 bg-white/5 rounded-lg border border-white/10">
-                            <div>
-                              <div className="font-mono text-xs text-emerald-400 tracking-wider">{keyObj.key}</div>
-                              <div className="text-[10px] text-slate-400 mt-0.5">
-                                منتج: <span className="text-slate-200">{keyObj.productName || 'غير محدد'}</span> - المدة: {keyObj.duration}
-                              </div>
-                            </div>
-                            <div className="text-[10px] text-slate-500">
-                              تم التفعيل: {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-slate-500 text-center py-4">لا توجد مفاتيح مستخدمة لهذا العميل حالياً.</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-rose-400" />
-                    <span>إجراءات سريعة</span>
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button
-                      onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, 'prod-fortnite')}
-                      className="py-2.5 px-4 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <UserX className="w-4 h-4" />
-                      <span>تعطيل منتج: فورت نايت</span>
-                    </button>
-                    <button
-                      onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, 'prod-hwid-master')}
-                      className="py-2.5 px-4 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                      <span>تعطيل منتج: سبوفر تعن</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        showToast(`تم حظر العميل ${selectedAdminCustomer.name} من النظام بنجاح!`);
-                        setSelectedAdminCustomer(null);
-                      }}
-                      className="col-span-1 sm:col-span-2 py-2.5 px-4 bg-red-500 hover:bg-red-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
-                    >
-                      <Lock className="w-4 h-4" />
-                      <span>حظر العميل نهائياً (Ban)</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -1017,232 +936,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // RENDER STATE 2: LOGGED IN (SPIRITX DASHBOARD PANEL)
   // ---------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-[#08090d] bg-grid-pattern text-slate-100 flex flex-col md:flex-row selection:bg-sky-500 selection:text-white" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Circular Language Switcher Button */}
-      <button
-        onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-        className="fixed top-4 md:top-5 z-50 px-3.5 py-2 rounded-full bg-[#10121a]/95 border border-white/20 hover:border-sky-400 backdrop-blur-md shadow-2xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer"
-        style={{ [lang === 'ar' ? 'left' : 'right']: '1.25rem' }}
-        title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
-      >
-        <span className="text-sm">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
-        <span>{lang === 'ar' ? 'English' : 'عربي'}</span>
-      </button>
-
-      {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-[#0d0f17] border-b border-white/10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-sky-500/30">
-            <img src="/logo.png?v=5" alt="تعن" className="w-full h-full object-cover" />
-          </div>
-          <span className="font-extrabold text-white text-base tracking-wide">{t.siteTitle}</span>
-        </div>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-slate-300 hover:text-white"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* Sidebar Navigation */}
-      <aside className={`w-full md:w-64 bg-[#090b10] border-r border-white/[0.06] flex flex-col justify-between p-4 ${mobileMenuOpen ? 'block' : 'hidden md:flex'}`}>
-        <div>
-          {/* Top Brand Logo */}
-          <div className="flex items-center gap-3 px-3 py-3 mb-6 border-b border-white/[0.06]">
-            <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-black/40 border border-white/10 shrink-0">
-              <img src="/logo.png?v=6" alt="تعن" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h2 className="font-black text-white text-base tracking-wider leading-tight">{t.siteTitle}</h2>
-              <p className="text-[10px] text-primary font-extrabold tracking-widest uppercase">PLATFORM</p>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="space-y-6">
-            {/* GENERAL */}
-            <div>
-              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-3">
-                {lang === 'ar' ? 'عام' : 'GENERAL'}
-              </div>
-              <button
-                onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                  activeTab === 'overview'
-                    ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                }`}
-              >
-                {activeTab === 'overview' && (
-                  <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                )}
-                <Layers className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'overview' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                <span>{t.overview}</span>
-              </button>
-            </div>
-
-            {/* LICENSE */}
-            <div>
-              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-3">
-                {lang === 'ar' ? 'الاشتراكات والمفاتيح' : 'LICENSE'}
-              </div>
-              <div className="space-y-1.5">
-                <button
-                  onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                    activeTab === 'my-products'
-                      ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                  }`}
-                >
-                  {activeTab === 'my-products' && (
-                    <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                  )}
-                  <Package className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'my-products' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                  <span>{t.myProducts}</span>
-                </button>
-                <button
-                  onClick={() => { setActiveTab('redeem'); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                    activeTab === 'redeem'
-                      ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                  }`}
-                >
-                  {activeTab === 'redeem' && (
-                    <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                  )}
-                  <Key className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'redeem' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                  <span>{t.redeemKey}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* ADMIN SECTION (If admin user) */}
-            {isAdmin && (
-              <div>
-                <div className="text-[10px] font-black text-primary tracking-[0.2em] uppercase px-3 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-brand-glow animate-pulse" />
-                  {lang === 'ar' ? 'الإدارة (Admin)' : 'ADMIN CONTROL'}
-                </div>
-                <div className="space-y-1.5">
-                  <button
-                    onClick={() => { setActiveTab('admin'); setAdminSectionTab('overview'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                      activeTab === 'admin' && adminSectionTab === 'overview'
-                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    {activeTab === 'admin' && adminSectionTab === 'overview' && (
-                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                    )}
-                    <Activity className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'overview' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                    <span>{lang === 'ar' ? 'الرئيسية والإحصائيات' : 'Overview & Stats'}</span>
-                  </button>
-                  <button
-                    onClick={() => { setActiveTab('admin'); setAdminSectionTab('products'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                      activeTab === 'admin' && adminSectionTab === 'products'
-                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    {activeTab === 'admin' && adminSectionTab === 'products' && (
-                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                    )}
-                    <Package className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'products' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                    <span>{lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Inventory'}</span>
-                  </button>
-                  <button
-                    onClick={() => { setActiveTab('admin'); setAdminSectionTab('customers'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                      activeTab === 'admin' && adminSectionTab === 'customers'
-                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    {activeTab === 'admin' && adminSectionTab === 'customers' && (
-                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                    )}
-                    <Users className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'customers' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                    <span>{lang === 'ar' ? 'إدارة العملاء' : 'Customers'}</span>
-                  </button>
-                  <button
-                    onClick={() => { setActiveTab('admin'); setAdminSectionTab('keys'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                      activeTab === 'admin' && adminSectionTab === 'keys'
-                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    {activeTab === 'admin' && adminSectionTab === 'keys' && (
-                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                    )}
-                    <Key className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'keys' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                    <span>{lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search'}</span>
-                  </button>
-                  <button
-                    onClick={() => { setActiveTab('admin'); setAdminSectionTab('logs'); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold transition-all duration-300 cursor-pointer relative group rounded-xl ${
-                      activeTab === 'admin' && adminSectionTab === 'logs'
-                        ? 'text-white bg-white/10 border border-white/10 shadow-lg'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    {activeTab === 'admin' && adminSectionTab === 'logs' && (
-                      <div className={`absolute top-2.5 bottom-2.5 w-1 bg-primary rounded-full shadow-brand-glow ${lang === 'ar' ? 'right-0' : 'left-0'}`} />
-                    )}
-                    <FileText className={`w-5 h-5 transition-colors duration-300 ${activeTab === 'admin' && adminSectionTab === 'logs' ? 'text-primary' : 'text-slate-500 group-hover:text-primary/70'}`} />
-                    <span>{lang === 'ar' ? 'سجلات النظام' : 'System Logs'}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* COMMUNITY */}
-            <div>
-              <div className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase px-3 mb-3">
-                {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
-              </div>
-              <div className="space-y-1.5">
-                <button
-                  onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد بنجاح!' : 'Discord roles synced!')}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 cursor-pointer group"
-                >
-                  <Bot className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors duration-300" />
-                  <span>{lang === 'ar' ? 'مزامنة الديسكورد' : 'Sync Discord Roles'}</span>
-                </button>
-                <a
-                  href="https://discord.gg/t3n"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full flex items-center gap-3.5 px-4 py-3 text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group"
-                >
-                  <ExternalLink className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors duration-300" />
-                  <span>{lang === 'ar' ? 'الانضمام للديسكورد' : 'Join Discord'}</span>
-                </a>
-              </div>
-            </div>
-          </nav>
-        </div>
-
-        {/* Bottom User Card */}
-        <div className="pt-4 border-t border-white/[0.04] mt-6 space-y-3">
-          <div className="glass-card rounded-2xl p-3.5 flex items-center gap-3">
-            <div className="relative shrink-0">
-              <img
-                src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                alt={currentUser.name}
-                className="w-10 h-10 rounded-xl border border-primary/30 object-cover"
               />
-              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary border-2 border-[#0a0a0a]" />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#22C55E] border-2 border-brand-sidebar" />
             </div>
             <div className="overflow-hidden flex-1">
               <div className="font-bold text-sm text-white truncate">{currentUser.name}</div>
-              <div className="text-[11px] text-slate-400 truncate flex items-center gap-1 font-mono mt-0.5">
-                <span className="text-primary font-semibold">{currentUser.role}</span>
+              <div className="text-[11px] text-brand-muted truncate flex items-center gap-1 font-mono mt-0.5">
+                <span className="text-[#E5E5E5] font-semibold">{currentUser.role}</span>
               </div>
             </div>
           </div>
@@ -1258,51 +958,95 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
-        {/* TAB 1: OVERVIEW (Screenshot 3) */}
+      <main className="flex-grow h-full overflow-y-auto p-6 md:p-10 scrollbar-none">
+        {/* TOP BAR */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-brand-border mb-8 gap-4 animate-fade-in">
+          <div>
+            <h1 className="text-3xl font-bold text-[#F5F5F7] tracking-tight">
+              {activeTab === 'overview' && (lang === 'ar' ? 'لوحة التحكم' : 'Overview')}
+              {activeTab === 'my-products' && (lang === 'ar' ? 'المنتجات والاشتراكات' : 'Products & Licenses')}
+              {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل رخصة' : 'Redeem License')}
+              {activeTab === 'admin' && (lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control')}
+            </h1>
+            <p className="text-xs text-[#9CA3AF] mt-1.5 font-medium">
+              {activeTab === 'overview' && (lang === 'ar' ? 'مرحباً بك في لوحة تحكم منصة تعن المتكاملة' : 'Welcome to the TA3N Platform Unified Dashboard')}
+              {activeTab === 'my-products' && (lang === 'ar' ? 'إدارة وتحميل البرامج الفعالة ورموز التفعيل' : 'Manage and download active loaders and license keys')}
+              {activeTab === 'redeem' && (lang === 'ar' ? 'أدخل مفتاح الترخيص الجديد لتفعيله فوراً' : 'Enter your new license key to activate it instantly')}
+              {activeTab === 'admin' && (lang === 'ar' ? 'التحكم الإداري وإحصائيات النظام ومفاتيح العملاء' : 'Administrative controls, statistics, and license management')}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Quick Language Switch */}
+            <button
+              onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+              className="h-10 px-4 rounded-xl bg-[#141822] border border-white/[0.06] hover:border-white/[0.15] text-xs font-bold text-[#F5F5F7] transition-all flex items-center gap-2 cursor-pointer"
+              title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
+            >
+              <span>{lang === 'ar' ? '🇺🇸 English' : '🇸🇦 عربي'}</span>
+            </button>
+
+            {/* Notification Bell */}
+            <button className="h-10 w-10 rounded-xl bg-[#141822] border border-white/[0.06] hover:border-white/[0.15] text-[#9CA3AF] hover:text-[#F5F5F7] transition-all relative flex items-center justify-center cursor-pointer">
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#6366F1] rounded-full animate-pulse" />
+              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+              </svg>
+            </button>
+
+            {/* User Dropdown */}
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#141822] border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer">
+              <img
+                src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                alt="user"
+                className="w-7 h-7 rounded-lg object-cover"
+              />
+              <span className="text-xs font-semibold text-[#F5F5F7] hidden sm:inline">{currentUser.name}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-8 max-w-6xl mx-auto">
-            {/* Page Header */}
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-wide">
-                {lang === 'ar' ? 'النظرة العامة' : 'Overview'}
-              </h1>
-              <p className="text-xs text-slate-400 mt-1">
-                {lang === 'ar' ? 'مرحباً بك في لوحة تحكم T3N STORE المتكاملة' : 'Welcome to the T3N STORE Unified Dashboard'}
-              </p>
-            </div>
-
-            {/* Welcome Banner Card (Premium Redesign) */}
-            <div className="glass-card rounded-[24px] p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden animate-slide-up">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10" />
+            {/* Welcome Banner Card (Premium Navy Redesign) */}
+            <div className="bg-gradient-to-r from-[#141822] to-[#1E2533] border border-brand-border rounded-[20px] p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden transition-all duration-300 shadow-xl group">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#6366F1]/50 to-transparent" />
+              
               <div className="flex items-center gap-5 z-10">
                 <img
                   src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                   alt={currentUser.name}
-                  className="w-16 h-16 rounded-[18px] border border-primary/30 object-cover shadow-brand-glow"
+                  className="w-16 h-16 rounded-xl border border-white/10 object-cover shadow-2xl"
                   onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
                 />
                 <div>
-                  <h2 className="text-2xl font-extrabold text-white tracking-wide flex items-center gap-2">
-                    {lang === 'ar' ? 'مرحباً بك،' : 'Welcome back,'} <span className="text-glow-primary text-primary">{currentUser.name}</span>!
+                  <h2 className="text-2xl font-bold text-white tracking-tight">
+                    {lang === 'ar' ? 'مرحباً بك،' : 'Welcome back,'} <span className="bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] bg-clip-text text-transparent">{currentUser.name}</span>
                   </h2>
-                  <p className="text-sm text-slate-400 mt-2">
+                  <p className="text-xs text-brand-muted mt-1.5 font-medium">
                     {lang === 'ar' ? (
-                      <>لديك <span className="text-white font-bold">{userProducts.length}</span> منتج نشط في حسابك.</>
+                      <>لديك حالياً <span className="text-white font-bold">{userProducts.length}</span> منتج نشط في حسابك.</>
                     ) : (
-                      <>You have <span className="text-white font-bold">{userProducts.length}</span> active product(s) on your account.</>
+                      <>You currently have <span className="text-white font-bold">{userProducts.length}</span> active product(s) on your account.</>
                     )}
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => setActiveTab('my-products')}
-                className="py-3 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm shadow-brand-glow transition-all duration-300 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-95 z-10"
-              >
-                <span>{lang === 'ar' ? 'عرض المنتجات' : 'View Products'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="relative shrink-0 z-10 flex items-center gap-3">
+                <button
+                  onClick={() => setActiveTab('my-products')}
+                  className="h-[42px] px-6 rounded-[12px] bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:from-[#5457e5] hover:to-[#7c4df2] text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <span>{lang === 'ar' ? 'عرض المنتجات' : 'View Products'}</span>
+                  <ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-[#6366F1] opacity-40 group-hover:opacity-80 transition-opacity">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+              </div>
             </div>
 
             {/* Grid Layout: Stats Cards & Quick Actions */}
@@ -1310,121 +1054,127 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {/* Left 2 Columns: 4 Stat Cards */}
               <div className="lg:col-span-2 grid grid-cols-2 gap-5 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {/* Stat 1: Active Products */}
-                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
-                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
-                    <Package className="w-6 h-6" />
+                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(99,102,241,0.08)] transition-all duration-200">
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-full bg-[#6366F1]/10 flex items-center justify-center text-[#6366F1] mb-4 group-hover:scale-105 transition-transform">
+                    <Package className="w-5 h-5" />
                   </div>
-                  <div className="text-3xl font-black text-white mb-1">{userProducts.length}</div>
-                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
+                  <div className="text-3xl font-bold text-white mb-1.5">{userProducts.length}</div>
+                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
                 </div>
 
                 {/* Stat 2: Account Status */}
-                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
-                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
-                    <CheckCircle2 className="w-6 h-6" />
+                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(52,211,153,0.08)] transition-all duration-200">
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-full bg-[#34D399]/10 flex items-center justify-center text-[#34D399] mb-4 group-hover:scale-105 transition-transform">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
-                  <div className="text-3xl font-black text-primary mb-1">{lang === 'ar' ? 'نشط' : 'Active'}</div>
-                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
+                  <div className="text-3xl font-bold text-[#34D399] mb-1.5">{lang === 'ar' ? 'نشط' : 'Active'}</div>
+                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
                 </div>
 
                 {/* Stat 3: Member Since */}
-                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
-                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
-                    <Clock className="w-6 h-6" />
+                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(139,92,246,0.08)] transition-all duration-200">
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-full bg-[#8B5CF6]/10 flex items-center justify-center text-[#8B5CF6] mb-4 group-hover:scale-105 transition-transform">
+                    <Clock className="w-5 h-5" />
                   </div>
-                  <div className="text-2xl font-black text-white mb-1" dir="ltr">
+                  <div className="text-2xl font-bold text-white mb-1.5" dir="ltr">
                     {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
                   </div>
-                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
+                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
                 </div>
 
                 {/* Stat 4: Total Downloads */}
-                <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group">
-                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary w-fit mb-4 border border-primary/20 group-hover:scale-110 transition-transform">
-                    <Download className="w-6 h-6" />
+                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(99,102,241,0.08)] transition-all duration-200">
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-full bg-[#6366F1]/10 flex items-center justify-center text-[#6366F1] mb-4 group-hover:scale-105 transition-transform">
+                    <Download className="w-5 h-5" />
                   </div>
-                  <div className="text-3xl font-black text-white mb-1">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
-                  <div className="text-sm text-slate-400 font-medium">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
+                  <div className="text-3xl font-bold text-white mb-1.5">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
+                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
                 </div>
               </div>
 
               {/* Right Column: Quick Actions Card */}
-              <div className="glass-card rounded-[24px] p-6 space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">
+              <div className="glass-card rounded-[20px] p-6 space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                <div className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-4 px-2">
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
 
                 {/* Quick Action 1 */}
                 <button
                   onClick={() => setActiveTab('my-products')}
-                  className={`w-full p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-[12px] bg-brand-card/30 hover:bg-brand-hover border border-brand-border/30 hover:border-brand-border/60 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div className={`flex items-center gap-4 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
-                      <Package className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                  <div className={`flex items-center gap-3.5 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary group-hover:scale-105 transition-transform">
+                      <Package className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
+                      <div className="text-sm font-bold text-white">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
+                      <div className="text-xs text-brand-muted mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
                 </button>
 
                 {/* Quick Action 2 */}
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className={`w-full p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3 rounded-[12px] bg-brand-card/30 hover:bg-brand-hover border border-brand-border/30 hover:border-brand-border/60 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div className={`flex items-center gap-4 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
-                      <Key className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                  <div className={`flex items-center gap-3.5 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary group-hover:scale-105 transition-transform">
+                      <Key className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
+                      <div className="text-sm font-bold text-white">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
+                      <div className="text-xs text-brand-muted mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
                 </button>
 
                 {/* Quick Action 3 */}
                 <button
-                  onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب الديسكورد!' : 'Discord roles synced!')}
-                  className={`w-full p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!')}
+                  className={`w-full p-3 rounded-[12px] bg-brand-card/30 hover:bg-[#5865F2]/10 border border-brand-border/30 hover:border-[#5865F2]/30 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
-                  <div className={`flex items-center gap-4 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
-                      <Users className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                  <div className={`flex items-center gap-3.5 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 flex items-center justify-center shrink-0 text-[#5865F2] group-hover:scale-105 transition-transform">
+                      <svg className="w-5 h-5 fill-current" viewBox="0 0 127.14 96.36">
+                        <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.87-.64,1.71-1.32,2.51-2a75.76,75.76,0,0,0,75.83,0c.8,1.34,1.64,2,2.51,2a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129,54.65,122.64,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z" />
+                      </svg>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer roles'}</div>
+                      <div className="text-sm font-bold text-white group-hover:text-[#5865F2] transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
+                      <div className="text-xs text-brand-muted mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer roles'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 2: MY PRODUCTS (Exact SpiritX Design - Screenshot 4) */}
+        {/* TAB 2: MY PRODUCTS (SpiritX Design Redesigned) */}
         {activeTab === 'my-products' && (
           <div className="space-y-8 max-w-6xl mx-auto">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-wide">
+                <h1 className="text-3xl font-extrabold text-white tracking-tight">
                   {lang === 'ar' ? 'منتجاتي' : 'My Products'}
                 </h1>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#8D8D8D] mt-1.5 font-medium">
                   {lang === 'ar' ? 'المنتجات المفعلة بحسابك والمفاتيح والتحميلات المتاحة' : 'Your active products, keys, and downloads'}
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveTab('redeem')}
-                className={`py-2.5 px-4 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 text-xs font-medium transition-all flex items-center gap-2 cursor-pointer ${lang === 'ar' ? 'flex-row-reverse' : ''}`}
+                className={`h-[40px] px-4 rounded-[12px] bg-transparent border border-white/10 hover:border-white/20 hover:bg-[#1B1B1B] text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${lang === 'ar' ? 'flex-row-reverse' : ''}`}
               >
                 <Key className="w-4 h-4" />
                 <span>{lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Redeem New Key'}</span>
@@ -1435,7 +1185,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="bg-[#0f1115] border border-white/5 rounded-[20px] overflow-hidden flex flex-col p-5 space-y-4 animate-pulse">
+                  <div key={n} className="bg-[#111111] border border-white/5 rounded-[20px] overflow-hidden flex flex-col p-5 space-y-4 animate-pulse">
                     <div className="h-44 bg-white/5 rounded-xl w-full" />
                     <div className="flex gap-4 items-center">
                       <div className="w-12 h-12 bg-white/5 rounded-xl shrink-0" />
@@ -1454,19 +1204,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 ))}
               </div>
             ) : userProducts.length === 0 ? (
-              <div className="bg-[#10121a] border border-white/10 rounded-2xl p-12 text-center max-w-lg mx-auto">
-                <div className="w-14 h-14 bg-sky-500/10 text-sky-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-sky-500/20">
+              <div className="bg-[#111111] border border-[#262626] rounded-[20px] p-12 text-center max-w-lg mx-auto">
+                <div className="w-14 h-14 bg-white/5 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
                   <Package className="w-7 h-7" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">
                   {lang === 'ar' ? 'لا توجد منتجات مفعلة بحسابك حالياً' : 'No active products in your account'}
                 </h3>
-                <p className="text-xs text-slate-400 mb-6">
+                <p className="text-xs text-[#8D8D8D] mb-6 font-medium">
                   {lang === 'ar' ? 'قم بتفعيل مفتاح الاشتراك الخاص بك للوصول الفوري للملفات والرتب' : 'Activate your license key to instantly access files and roles'}
                 </p>
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className="py-3 px-6 bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-500/20 hover:from-sky-400 hover:to-indigo-500 transition-all cursor-pointer"
+                  className="h-[42px] px-6 bg-white hover:bg-[#E5E5E5] text-black font-bold text-xs rounded-[12px] transition-all cursor-pointer"
                 >
                   {lang === 'ar' ? 'تفعيل مفتاح الآن' : 'Redeem Key Now'}
                 </button>
@@ -1476,10 +1226,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {userProducts.map((up) => (
                   <div
                     key={up.id}
-                    className="glass-card rounded-[24px] overflow-hidden group flex flex-col animate-slide-up hover:-translate-y-1 transition-all duration-300"
+                    className="glass-card rounded-[20px] overflow-hidden group flex flex-col animate-slide-up hover:-translate-y-1 transition-all duration-300"
                   >
                     {/* Top Image Banner - Full Width */}
-                    <div className="relative h-48 w-full bg-[#050505] overflow-hidden border-b border-white/[0.04]">
+                    <div className="relative h-48 w-full bg-[#0B0B0B] overflow-hidden border-b border-[#262626]">
                       <img
                         src={up.product?.image || '/logo.png?v=6'}
                         alt={up.product?.name || 'Product'}
@@ -1489,10 +1239,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#090909] via-transparent to-transparent" />
                       
                       {/* Top Category Tag Pill */}
-                      <div className={`absolute top-4 ${lang === 'ar' ? 'right-4' : 'left-4'} px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-black text-primary uppercase tracking-wider shadow-lg`}>
+                      <div className={`absolute top-4 ${lang === 'ar' ? 'right-4' : 'left-4'} px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-white/5 text-[9px] font-bold text-white uppercase tracking-wider shadow-lg`}>
                         {up.product?.category || 'SPOOFER'}
                       </div>
                     </div>
@@ -1500,46 +1250,52 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {/* Content Section */}
                     <div className="p-6 flex-1 flex flex-col">
                       {/* Title & Icon Row */}
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-extrabold text-white text-lg tracking-wide group-hover:text-primary transition-colors">{up.product?.name || 'Unknown Product'}</h3>
-                        <div className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-slate-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
+                            <Package className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-white text-base tracking-tight leading-tight group-hover:text-white/80 transition-colors">
+                              {up.product?.name || 'Unknown Product'}
+                            </h3>
+                            <p className="text-[10px] text-[#8D8D8D] font-medium mt-0.5">
+                              {up.product?.category || 'SPOOFER'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-white/90">
                           {up.product?.version || 'v1.0'}
                         </div>
                       </div>
 
                       {/* Stats Row */}
                       <div className={`flex items-center gap-3 mb-4 text-xs font-medium text-slate-400 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
-                        <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-brand-glow animate-pulse" />
-                          <span className="text-primary text-[10px] font-bold">{lang === 'ar' ? 'فعال' : 'Active'}</span>
-                        </div>
-                        <span className="text-slate-700">•</span>
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>{up.product?.downloadsCount || 1420} {lang === 'ar' ? 'مستخدم' : 'Users'}</span>
+                        <div className="flex items-center gap-1.5 bg-transparent border border-[#22C55E]/30 px-2.5 py-0.5 rounded-full text-[#22C55E] text-[10px] font-bold shadow-[0_0_10px_rgba(34,197,94,0.15)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
+                          <span>{lang === 'ar' ? 'فعال' : 'Active'}</span>
                         </div>
                       </div>
 
                       {/* Product Description */}
-                      <div className="mb-5 flex-1">
-                        <p className="text-sm text-slate-400 leading-relaxed line-clamp-2">
+                      <div className="mb-4 flex-1">
+                        <p className="text-xs text-[#8D8D8D] leading-relaxed line-clamp-2">
                           {up.product?.description || (lang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج حالياً.' : 'No description available for this product at the moment.')}
                         </p>
                       </div>
 
                       {/* License Key Box - Premium Redesign */}
-                      <div className="mb-5 relative group/key">
-                        <div className="absolute inset-0 bg-primary/5 rounded-xl blur-md opacity-0 group-hover/key:opacity-100 transition-opacity" />
-                        <div className="bg-[#050505] border border-white/10 hover:border-primary/30 rounded-xl p-1.5 pl-4 flex items-center justify-between gap-3 relative transition-colors shadow-inner">
+                      <div className="mb-4 relative group/key">
+                        <div className="bg-[#0B0B0B] border border-[#262626] rounded-xl p-1.5 pl-4 flex items-center justify-between gap-3 relative transition-colors shadow-inner">
                           <div className="flex-1 overflow-hidden flex flex-col justify-center py-1">
-                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
-                            <code dir="ltr" className="text-[13px] font-mono text-slate-200 tracking-widest font-bold truncate block w-full text-left">
+                            <span className="text-[9px] text-[#8D8D8D] font-bold uppercase tracking-wider mb-0.5">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
+                            <code dir="ltr" className="text-[13px] font-mono text-white tracking-widest font-bold truncate block w-full text-left">
                               {up.keyString || 'KEY-ACTIVATED-OK'}
                             </code>
                           </div>
                           <button
                             onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                            className={`p-3 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-transparent'}`}
+                            className={`p-3 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30' : 'bg-white/5 hover:bg-white/10 text-[#8D8D8D] hover:text-white border border-transparent'}`}
                             title="Copy Key"
                           >
                             {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -1551,7 +1307,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="grid grid-cols-2 gap-3 mt-auto">
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="py-3 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                          className="h-10 bg-white hover:bg-[#E5E5E5] text-black font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5"
                         >
                           <Download className="w-4 h-4" />
                           <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
@@ -1562,11 +1318,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             setGuideModalProduct(up);
                             setGuideView('menu');
                           }}
-                          className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                          className="h-10 bg-transparent border border-white/10 hover:border-white/20 hover:bg-[#1B1B1B] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5"
                         >
                           <HelpCircle className="w-4 h-4 text-slate-400" />
                           <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
                         </button>
+                      </div>
+
+                      {/* Footer Metadata */}
+                      <div className="pt-3.5 mt-4 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-[#8D8D8D] font-mono">
+                        <span>{lang === 'ar' ? 'الترخيص: مدى الحياة' : 'License: Lifetime'}</span>
+                        <span>{new Date(up.activatedAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
                       </div>
                     </div>
                   </div>
@@ -1575,27 +1337,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
           </div>
         )}
-
         {/* TAB 3: REDEEM KEY */}
         {activeTab === 'redeem' && (
           <div className="space-y-8 max-w-xl mx-auto py-8 animate-slide-up">
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 shadow-brand-glow">
+              <div className="w-16 h-16 bg-[#1A1A1A] text-white border border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Key className="w-8 h-8" />
               </div>
-              <h1 className="text-3xl font-black text-white tracking-wide mb-2">
+              <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
                 {lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}
               </h1>
-              <p className="text-sm text-slate-400">
+              <p className="text-xs text-[#8D8D8D] font-medium">
                 {lang === 'ar' ? 'أدخل مفتاح الاشتراك الخاص بك لإضافته لحسابك فوراً' : 'Enter your license key to add it to your account instantly'}
               </p>
             </div>
 
-            <div className="glass-card rounded-[24px] p-8 shadow-2xl space-y-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10 group-hover:bg-primary/10 transition-colors duration-500" />
+            <div className="bg-[#111111] border border-[#262626] rounded-[20px] p-8 space-y-6 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
               <form onSubmit={handleRedeemKey} className="space-y-5 relative z-10">
                 <div>
-                  <label className={`block text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <label className={`block text-xs font-bold text-[#8D8D8D] mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                     {lang === 'ar' ? 'مفتاح التفعيل (License Key)' : 'License Key'}
                   </label>
                   <input
@@ -1604,12 +1365,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
                     placeholder="KEY-T3N-ABCD-1234-EFGH"
-                    className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 rounded-xl px-5 py-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-mono tracking-widest text-center shadow-inner"
+                    className="w-full bg-[#0B0B0B] border border-white/10 focus:border-white/20 rounded-xl px-5 py-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-mono tracking-widest text-center shadow-inner"
                   />
                 </div>
 
                 {redeemMessage && (
-                  <div className={`p-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 ${redeemMessage.type === 'success' ? 'bg-primary/10 border border-primary/20 text-primary' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                  <div className={`p-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 ${redeemMessage.type === 'success' ? 'bg-[#22C55E]/10 border border-[#22C55E]/20 text-[#22C55E]' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
                     {redeemMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                     <span>{redeemMessage.text}</span>
                   </div>
@@ -1618,7 +1379,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <button
                   type="submit"
                   disabled={isRedeeming}
-                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-xl transition-all shadow-brand-glow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-1 active:translate-y-0"
+                  className="w-full py-4 bg-white hover:bg-[#E5E5E5] text-black font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
                 >
                   {isRedeeming ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                   <span>{lang === 'ar' ? 'تفعيل المفتاح الآن' : 'Redeem Key Now'}</span>
@@ -1627,22 +1388,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               <div className="pt-6 border-t border-white/[0.04] space-y-4 relative z-10">
                 <a
-                  href="https://t3nnn.com"
+                  href="https://t3nnn.wtf"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-white/5 border border-white/10 hover:border-primary/40 rounded-xl p-4 flex items-center justify-between transition-all group"
+                  className="w-full bg-[#0B0B0B] border border-white/5 hover:border-white/10 rounded-xl p-4 flex items-center justify-between transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
                       <ShoppingCart className="w-5 h-5" />
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">لا تملك مفتاح اشتراك؟</div>
-                      <div className="text-xs text-slate-500 mt-0.5">احصل عليه الآن من متجرنا الرسمي بأسعار حصرية</div>
+                    <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
+                      <div className="text-sm font-bold text-white group-hover:text-white transition-colors">{lang === 'ar' ? 'لا تملك مفتاح اشتراك؟' : "Don't have a license key?"}</div>
+                      <div className="text-xs text-[#8D8D8D] mt-0.5">{lang === 'ar' ? 'احصل عليه الآن من متجرنا الرسمي بأسعار حصرية' : 'Get it now from our official store at exclusive prices'}</div>
                     </div>
                   </div>
-                  <div className="bg-primary text-white text-xs font-extrabold px-3 py-2 rounded-lg flex items-center gap-1 shadow-brand-glow shrink-0 group-hover:scale-105 transition-transform">
-                    <span>شراء مفتاح</span>
+                  <div className="bg-white hover:bg-[#E5E5E5] text-black text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shadow-lg shrink-0 group-hover:scale-105 transition-transform">
+                    <span>{lang === 'ar' ? 'شراء مفتاح' : 'Purchase Key'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
                 </a>
@@ -1651,19 +1412,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-white/5 border border-white/10 hover:border-primary/40 rounded-xl p-4 flex items-center justify-between transition-all group mt-3"
+                  className="w-full bg-[#0B0B0B] border border-white/5 hover:border-white/10 rounded-xl p-4 flex items-center justify-between transition-all group mt-3"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
                       <HelpCircle className="w-5 h-5" />
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">تحتاج إلى مساعدة؟</div>
-                      <div className="text-xs text-slate-500 mt-0.5">تواصل مع فريق الدعم الفني عبر ديسكورد</div>
+                    <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
+                      <div className="text-sm font-bold text-white group-hover:text-white transition-colors">{lang === 'ar' ? 'تحتاج إلى مساعدة؟' : 'Need help?'}</div>
+                      <div className="text-xs text-[#8D8D8D] mt-0.5">{lang === 'ar' ? 'تواصل مع فريق الدعم الفني عبر ديسكورد' : 'Get in touch with support via Discord'}</div>
                     </div>
                   </div>
-                  <div className="bg-white/10 text-white text-xs font-extrabold px-3 py-2 rounded-lg flex items-center gap-1 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-                    <span>الدعم الفني</span>
+                  <div className="bg-transparent border border-white/10 hover:border-white/20 hover:bg-[#1B1B1B] text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 group-hover:scale-105 transition-transform">
+                    <span>{lang === 'ar' ? 'الدعم الفني' : 'Technical Support'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
                 </a>
@@ -1777,7 +1538,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="grid grid-cols-2 gap-3 mt-auto">
                           <button
                             onClick={() => openInventoryModal(product, 'codes', true)}
-                            className="py-3 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
+                            className="py-3 px-4 bg-primary hover:bg-primary-hover text-black font-bold text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
                           >
                             <Key className="w-4 h-4" />
                             <span>إضافة مفاتيح</span>
@@ -1921,19 +1682,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setKeyStatusFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-primary text-white font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-primary text-black font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       الكل ({allKeysList.length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('unused')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-primary text-white font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-primary text-black font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       متاح فقط ({allKeysList.filter((k) => !k.isUsed).length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('used')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-primary text-white font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-primary text-black font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
                     >
                       مستعمل ({allKeysList.filter((k) => k.isUsed).length})
                     </button>
@@ -2733,6 +2494,106 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
+      {selectedAdminCustomer && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 max-w-2xl w-full relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setSelectedAdminCustomer(null)}
+              className="absolute top-4 left-4 text-slate-400 hover:text-white p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/5">
+              <img
+                src={selectedAdminCustomer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                alt={selectedAdminCustomer.name}
+                className="w-14 h-14 rounded-full border border-sky-500/30 object-cover"
+              />
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  {selectedAdminCustomer.name}
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAdminCustomer.role === 'Boss' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}`}>
+                    {selectedAdminCustomer.role}
+                  </span>
+                </h3>
+                <div className="text-xs text-slate-400 mt-1 flex gap-3">
+                  <span>Discord: <span className="text-sky-400 font-mono">{selectedAdminCustomer.discordId}</span></span>
+                  <span>|</span>
+                  <span>IP: <span className="font-mono text-slate-300">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {/* User Keys */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+                  <Key className="w-4 h-4 text-primary" />
+                  <span>مفاتيح العميل المستخدمة</span>
+                </h4>
+                <div className="bg-[#08090d] border border-white/5 rounded-xl p-4">
+                  {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).length > 0 ? (
+                    <div className="space-y-2">
+                      {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).map(keyObj => (
+                        <div key={keyObj.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-2 bg-white/5 rounded-lg border border-white/10">
+                          <div>
+                            <div className="font-mono text-xs text-emerald-400 tracking-wider">{keyObj.key}</div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              منتج: <span className="text-slate-200">{keyObj.productName || 'غير محدد'}</span> - المدة: {keyObj.duration}
+                            </div>
+                          </div>
+                          <div className="text-[10px] text-slate-500">
+                            تم التفعيل: {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-500 text-center py-4">لا توجد مفاتيح مستخدمة لهذا العميل حالياً.</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-rose-400" />
+                  <span>إجراءات سريعة</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, 'prod-fortnite')}
+                    className="py-2.5 px-4 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <UserX className="w-4 h-4" />
+                    <span>تعطيل منتج: فورت نايت</span>
+                  </button>
+                  <button
+                    onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, 'prod-hwid-master')}
+                    className="py-2.5 px-4 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    <span>تعطيل منتج: سبوفر تعن</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      showToast(`تم حظر العميل ${selectedAdminCustomer.name} من النظام بنجاح!`);
+                      setSelectedAdminCustomer(null);
+                    }}
+                    className="col-span-1 sm:col-span-2 py-2.5 px-4 bg-red-500 hover:bg-red-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>حظر العميل نهائياً (Ban)</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

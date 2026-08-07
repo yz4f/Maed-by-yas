@@ -9,40 +9,46 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          dark: '#050505',
-          card: '#0a0a0a',
-          border: '#1a1a1a',
-          hover: '#141414',
+          dark: '#0B0E14', // Deep Navy-black background
+          card: '#141822', // Card background
+          border: 'rgba(255,255,255,0.06)', // Sleek minimal border
+          hover: '#1E2533', // Hover background
+          sidebar: '#0B0E14', // Left sidebar background
+          sidebarBorder: 'rgba(255,255,255,0.06)',
+          text: '#F5F5F7', // Primary light text
+          muted: '#9CA3AF', // Slate Grey secondary text
+          accent: '#6366F1', // Primary indigo accent
+          surface: '#141822',
         },
         primary: {
-          DEFAULT: '#38bdf8', // Neon Sky/Cyan Blue
-          hover: '#0ea5e9', // Deep Sky Blue
-          glow: 'rgba(56, 189, 248, 0.4)',
+          DEFAULT: '#6366F1', // Indigo Accent
+          hover: '#5457e5',
+          glow: 'rgba(99, 102, 241, 0.25)',
         },
         secondary: {
-          DEFAULT: '#3b82f6', // Electric Blue
-          hover: '#2563eb', // Royal Blue
-          glow: 'rgba(59, 130, 246, 0.4)',
+          DEFAULT: '#8B5CF6', // Violet Accent
+          hover: '#7c4df2',
+          glow: 'rgba(139, 92, 246, 0.25)',
         },
         navy: {
-          900: '#0b0f19',
-          800: '#0f172a',
-          700: '#1e293b',
-          600: '#334155',
+          900: '#070A13',
+          800: '#0F131E',
+          700: '#1E293B',
+          600: '#475569',
         },
         neon: {
-          blue: '#38bdf8',
-          cyan: '#22d3ee',
-          indigo: '#6366f1',
-          purple: '#a855f7',
+          blue: '#3B82F6',
+          cyan: '#60A5FA',
+          indigo: '#93C5FD',
+          purple: '#1E293B',
         },
       },
       boxShadow: {
-        'brand-card': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
-        'brand-glow': '0 0 20px rgba(56, 189, 248, 0.35)',
-        'neon-glow': '0 0 25px rgba(56, 189, 248, 0.25)',
-        'neon-hover': '0 0 35px rgba(56, 189, 248, 0.45)',
-        'purple-glow': '0 0 25px rgba(168, 85, 247, 0.25)',
+        'brand-card': '0 4px 20px -2px rgba(0, 0, 0, 0.7)',
+        'brand-glow': '0 0 20px rgba(59, 130, 246, 0.15)',
+        'neon-glow': '0 0 25px rgba(59, 130, 246, 0.15)',
+        'neon-hover': '0 0 35px rgba(59, 130, 246, 0.25)',
+        'purple-glow': '0 0 25px rgba(59, 130, 246, 0.15)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out forwards',
