@@ -9,38 +9,37 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          dark: '#0B0E14', // Deep Navy-black background
-          card: '#141822', // Card background
-          border: 'rgba(255,255,255,0.06)', // Sleek minimal border
-          hover: '#1E2533', // Hover background
-          sidebar: '#0B0E14', // Left sidebar background
-          sidebarBorder: 'rgba(255,255,255,0.06)',
-          text: '#F5F5F7', // Primary light text
+          dark: '#05070B', // Primary near-black background
+          card: '#0A0F18', // Deep navy secondary surface
+          border: 'rgba(255,255,255,0.08)', // Thin elegant border
+          hover: '#0D1420', // Hover surface
+          sidebar: '#05070B', // Left sidebar background
+          sidebarBorder: 'rgba(255,255,255,0.08)',
+          text: '#FFFFFF', // Primary light text
           muted: '#9CA3AF', // Slate Grey secondary text
-          accent: '#6366F1', // Primary indigo accent
-          surface: '#141822',
+          accent: '#3B82F6', // Primary Electric Blue
+          surface: '#0D1420',
         },
         primary: {
-          DEFAULT: '#6366F1', // Indigo Accent
-          hover: '#5457e5',
-          glow: 'rgba(99, 102, 241, 0.25)',
+          DEFAULT: '#3B82F6', // Electric Blue
+          hover: '#2563EB',
+          glow: 'rgba(59, 130, 246, 0.25)',
         },
         secondary: {
-          DEFAULT: '#8B5CF6', // Violet Accent
-          hover: '#7c4df2',
+          DEFAULT: '#8B5CF6', // Violet
+          hover: '#7C3AED',
           glow: 'rgba(139, 92, 246, 0.25)',
         },
-        navy: {
-          900: '#070A13',
-          800: '#0F131E',
-          700: '#1E293B',
-          600: '#475569',
+        success: {
+          DEFAULT: '#10B981', // Emerald/Teal
+          hover: '#059669',
         },
-        neon: {
-          blue: '#3B82F6',
-          cyan: '#60A5FA',
-          indigo: '#93C5FD',
-          purple: '#1E293B',
+        danger: {
+          DEFAULT: '#F43F5E', // Red/Pink
+          hover: '#E11D48',
+        },
+        warning: {
+          DEFAULT: '#F59E0B', // Amber
         },
       },
       boxShadow: {

@@ -962,48 +962,56 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* Main Content Area */}
       <main className="flex-grow h-full overflow-y-auto p-6 md:p-10 scrollbar-none">
         {/* TOP BAR */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-brand-border mb-8 gap-4 animate-fade-in">
+        <header className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-white/[0.04] mb-8 gap-4 animate-fade-in">
           <div>
-            <h1 className="text-3xl font-bold text-[#F5F5F7] tracking-tight">
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">
               {activeTab === 'overview' && (lang === 'ar' ? 'لوحة التحكم' : 'Overview')}
-              {activeTab === 'my-products' && (lang === 'ar' ? 'المنتجات والاشتراكات' : 'Products & Licenses')}
+              {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل رخصة' : 'Redeem License')}
               {activeTab === 'admin' && (lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control')}
             </h1>
-            <p className="text-xs text-[#9CA3AF] mt-1.5 font-medium">
+            <p className="text-xs text-brand-muted mt-1.5 font-medium">
               {activeTab === 'overview' && (lang === 'ar' ? 'مرحباً بك في لوحة تحكم منصة تعن المتكاملة' : 'Welcome to the TA3N Platform Unified Dashboard')}
-              {activeTab === 'my-products' && (lang === 'ar' ? 'إدارة وتحميل البرامج الفعالة ورموز التفعيل' : 'Manage and download active loaders and license keys')}
+              {activeTab === 'my-products' && (lang === 'ar' ? 'إدارة منتجاتك وتراخيصك وتحميلاتك بسهولة' : 'Manage your products, licenses, and downloads easily')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'أدخل مفتاح الترخيص الجديد لتفعيله فوراً' : 'Enter your new license key to activate it instantly')}
               {activeTab === 'admin' && (lang === 'ar' ? 'التحكم الإداري وإحصائيات النظام ومفاتيح العملاء' : 'Administrative controls, statistics, and license management')}
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Quick Language Switch */}
+          <div className="flex items-center gap-3">
+            {activeTab === 'my-products' && (
+              <div className="hidden md:flex items-center gap-2 mr-4">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted" />
+                  <input type="text" placeholder={lang === 'ar' ? 'البحث عن منتج...' : 'Search products...'} className="bg-[#0A0F18] border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white focus:outline-none focus:border-primary/50 transition-colors w-48" />
+                </div>
+                <button className="h-8 px-3 rounded-xl bg-[#0A0F18] border border-white/10 hover:border-white/20 text-xs font-bold text-white transition-all flex items-center gap-2">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>{lang === 'ar' ? 'تصفية' : 'Filter'}</span>
+                </button>
+              </div>
+            )}
+
             <button
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-              className="h-10 px-4 rounded-xl bg-[#141822] border border-white/[0.06] hover:border-white/[0.15] text-xs font-bold text-[#F5F5F7] transition-all flex items-center gap-2 cursor-pointer"
+              className="h-10 px-4 rounded-xl bg-[#0A0F18] border border-white/10 hover:border-white/20 text-xs font-bold text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm"
               title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
             >
               <span>{lang === 'ar' ? '🇺🇸 English' : '🇸🇦 عربي'}</span>
             </button>
 
-            {/* Notification Bell */}
-            <button className="h-10 w-10 rounded-xl bg-[#141822] border border-white/[0.06] hover:border-white/[0.15] text-[#9CA3AF] hover:text-[#F5F5F7] transition-all relative flex items-center justify-center cursor-pointer">
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#6366F1] rounded-full animate-pulse" />
-              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-              </svg>
+            <button className="h-10 w-10 rounded-xl bg-[#0A0F18] border border-white/10 hover:border-white/20 text-brand-muted hover:text-white transition-all relative flex items-center justify-center cursor-pointer shadow-sm">
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full animate-pulse shadow-brand-glow" />
+              <Bell className="w-4.5 h-4.5" />
             </button>
 
-            {/* User Dropdown */}
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#141822] border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer">
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#0A0F18] border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-sm">
               <img
                 src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                 alt="user"
                 className="w-7 h-7 rounded-lg object-cover"
               />
-              <span className="text-xs font-semibold text-[#F5F5F7] hidden sm:inline">{currentUser.name}</span>
+              <span className="text-xs font-semibold text-white hidden sm:inline">{currentUser.name}</span>
             </div>
           </div>
         </header>
@@ -1011,43 +1019,46 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-8 max-w-6xl mx-auto">
-            {/* Welcome Banner Card (Premium Navy Redesign) */}
-            <div className="bg-gradient-to-r from-[#141822] to-[#1E2533] border border-brand-border rounded-[20px] p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden transition-all duration-300 shadow-xl group">
-              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#6366F1]/50 to-transparent" />
-              
-              <div className="flex items-center gap-5 z-10">
-                <img
-                  src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                  alt={currentUser.name}
-                  className="w-16 h-16 rounded-xl border border-white/10 object-cover shadow-2xl"
-                  onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-                />
+            {/* Welcome Banner Card (Premium SaaS Redesign) */}
+            <div className="bg-[#0A0F18] border border-white/[0.05] rounded-[24px] p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.5)] group">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-50 pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+              <div className="flex items-center gap-6 z-10">
+                <div className="relative">
+                  <img
+                    src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                    alt={currentUser.name}
+                    className="w-16 h-16 rounded-2xl border border-white/10 object-cover shadow-2xl"
+                    onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                  />
+                  <div className="absolute -bottom-1.5 -right-1.5 w-5 h-5 bg-[#0A0F18] rounded-full flex items-center justify-center">
+                    <span className="w-3 h-3 bg-emerald-500 rounded-full shadow-glow-emerald" />
+                  </div>
+                </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white tracking-tight">
-                    {lang === 'ar' ? 'مرحباً بك،' : 'Welcome back,'} <span className="bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] bg-clip-text text-transparent">{currentUser.name}</span>
+                  <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                    {lang === 'ar' ? 'مرحباً بعودتك،' : 'Welcome back,'} <span className="bg-gradient-to-r from-white to-brand-muted bg-clip-text text-transparent">{currentUser.name}</span>
                   </h2>
-                  <p className="text-xs text-brand-muted mt-1.5 font-medium">
-                    {lang === 'ar' ? (
-                      <>لديك حالياً <span className="text-white font-bold">{userProducts.length}</span> منتج نشط في حسابك.</>
-                    ) : (
-                      <>You currently have <span className="text-white font-bold">{userProducts.length}</span> active product(s) on your account.</>
-                    )}
-                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                      {lang === 'ar' ? 'حساب نشط' : 'Active Account'}
+                    </span>
+                    <span className="text-xs text-brand-muted font-medium">
+                      {lang === 'ar' ? `لديك ${userProducts.length} منتجات مفعلة بحسابك` : `You have ${userProducts.length} active products`}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="relative shrink-0 z-10 flex items-center gap-3">
+              <div className="relative shrink-0 z-10 flex items-center gap-4">
                 <button
                   onClick={() => setActiveTab('my-products')}
-                  className="h-[42px] px-6 rounded-[12px] bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:from-[#5457e5] hover:to-[#7c4df2] text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] hover:-translate-y-0.5 active:translate-y-0"
+                  className="h-11 px-7 rounded-[14px] bg-primary hover:bg-primary-hover text-white font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-brand-glow hover:-translate-y-0.5 active:translate-y-0"
                 >
-                  <span>{lang === 'ar' ? 'عرض المنتجات' : 'View Products'}</span>
+                  <span>{lang === 'ar' ? 'استعراض المنتجات' : 'View Products'}</span>
                   <ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-[#6366F1] opacity-40 group-hover:opacity-80 transition-opacity">
-                  <Sparkles className="w-5 h-5" />
-                </div>
               </div>
             </div>
 
@@ -1056,105 +1067,106 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {/* Left 2 Columns: 4 Stat Cards */}
               <div className="lg:col-span-2 grid grid-cols-2 gap-5 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {/* Stat 1: Active Products */}
-                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(99,102,241,0.08)] transition-all duration-200">
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-                  <div className="w-10 h-10 rounded-full bg-[#6366F1]/10 flex items-center justify-center text-[#6366F1] mb-4 group-hover:scale-105 transition-transform">
-                    <Package className="w-5 h-5" />
+                <div className="bg-[#0A0F18] border border-white/[0.05] rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:border-primary/30 transition-all duration-300 shadow-inner">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+                    <Package className="w-4.5 h-4.5" />
                   </div>
-                  <div className="text-3xl font-bold text-white mb-1.5">{userProducts.length}</div>
-                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
+                  <div className="text-4xl font-extrabold text-white mb-1.5 tracking-tight">{userProducts.length}</div>
+                  <div className="text-[10px] text-brand-muted font-bold uppercase tracking-widest">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
                 </div>
 
                 {/* Stat 2: Account Status */}
-                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(52,211,153,0.08)] transition-all duration-200">
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-                  <div className="w-10 h-10 rounded-full bg-[#34D399]/10 flex items-center justify-center text-[#34D399] mb-4 group-hover:scale-105 transition-transform">
-                    <CheckCircle2 className="w-5 h-5" />
+                <div className="bg-[#0A0F18] border border-white/[0.05] rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:border-emerald-500/30 transition-all duration-300 shadow-inner">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-5 group-hover:scale-110 transition-transform relative">
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-glow-emerald" />
+                    <CheckCircle2 className="w-4.5 h-4.5" />
                   </div>
-                  <div className="text-3xl font-bold text-[#34D399] mb-1.5">{lang === 'ar' ? 'نشط' : 'Active'}</div>
-                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
+                  <div className="text-3xl font-extrabold text-emerald-400 mb-1.5 tracking-tight">{lang === 'ar' ? 'نشط' : 'Active'}</div>
+                  <div className="text-[10px] text-brand-muted font-bold uppercase tracking-widest">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
                 </div>
 
                 {/* Stat 3: Member Since */}
-                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(139,92,246,0.08)] transition-all duration-200">
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-                  <div className="w-10 h-10 rounded-full bg-[#8B5CF6]/10 flex items-center justify-center text-[#8B5CF6] mb-4 group-hover:scale-105 transition-transform">
-                    <Clock className="w-5 h-5" />
+                <div className="bg-[#0A0F18] border border-white/[0.05] rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:border-secondary/30 transition-all duration-300 shadow-inner">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary mb-5 group-hover:scale-110 transition-transform">
+                    <Clock className="w-4.5 h-4.5" />
                   </div>
-                  <div className="text-2xl font-bold text-white mb-1.5" dir="ltr">
+                  <div className="text-2xl font-extrabold text-white mb-1.5 tracking-tight" dir="ltr">
                     {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
                   </div>
-                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
+                  <div className="text-[10px] text-brand-muted font-bold uppercase tracking-widest">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
                 </div>
 
                 {/* Stat 4: Total Downloads */}
-                <div className="bg-[#141822] border border-brand-border rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(99,102,241,0.08)] transition-all duration-200">
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-                  <div className="w-10 h-10 rounded-full bg-[#6366F1]/10 flex items-center justify-center text-[#6366F1] mb-4 group-hover:scale-105 transition-transform">
-                    <Download className="w-5 h-5" />
+                <div className="bg-[#0A0F18] border border-white/[0.05] rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 hover:border-primary/30 transition-all duration-300 shadow-inner">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.01] to-transparent pointer-events-none" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+                    <Download className="w-4.5 h-4.5" />
                   </div>
-                  <div className="text-3xl font-bold text-white mb-1.5">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
-                  <div className="text-xs text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
+                  <div className="text-4xl font-extrabold text-white mb-1.5 tracking-tight">{userProducts.reduce((sum, up) => sum + (up.product?.downloadsCount || 0), 0) || 12}</div>
+                  <div className="text-[10px] text-brand-muted font-bold uppercase tracking-widest">{lang === 'ar' ? 'عدد التحميلات' : 'Downloads Count'}</div>
                 </div>
               </div>
 
               {/* Right Column: Quick Actions Card */}
-              <div className="glass-card rounded-[20px] p-6 space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                <div className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-4 px-2">
+              <div className="glass-panel p-6 space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                <div className="text-[9px] font-extrabold text-brand-muted uppercase tracking-widest mb-4 px-2">
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
 
                 {/* Quick Action 1 */}
                 <button
                   onClick={() => setActiveTab('my-products')}
-                  className={`w-full p-3 rounded-[12px] bg-brand-card/30 hover:bg-brand-hover border border-brand-border/30 hover:border-brand-border/60 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3.5 rounded-2xl bg-[#0D1420] hover:bg-[#121B2A] border border-white/5 hover:border-white/10 flex items-center justify-between transition-all duration-300 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div className={`flex items-center gap-3.5 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary group-hover:scale-105 transition-transform">
-                      <Package className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary group-hover:scale-110 transition-transform">
+                      <Package className="w-4.5 h-4.5" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-white">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
-                      <div className="text-xs text-brand-muted mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
+                      <div className="text-[13px] font-bold text-white tracking-wide">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</div>
+                      <div className="text-[10px] text-brand-muted mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-brand-muted group-hover:text-primary transition-all duration-300 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                 </button>
 
                 {/* Quick Action 2 */}
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className={`w-full p-3 rounded-[12px] bg-brand-card/30 hover:bg-brand-hover border border-brand-border/30 hover:border-brand-border/60 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3.5 rounded-2xl bg-[#0D1420] hover:bg-[#121B2A] border border-white/5 hover:border-white/10 flex items-center justify-between transition-all duration-300 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div className={`flex items-center gap-3.5 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary group-hover:scale-105 transition-transform">
-                      <Key className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-500 group-hover:scale-110 transition-transform">
+                      <Key className="w-4.5 h-4.5" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-white">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
-                      <div className="text-xs text-brand-muted mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
+                      <div className="text-[13px] font-bold text-white tracking-wide">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</div>
+                      <div className="text-[10px] text-brand-muted mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-brand-muted group-hover:text-emerald-500 transition-all duration-300 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                 </button>
 
                 {/* Quick Action 3 */}
                 <button
                   onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!')}
-                  className={`w-full p-3 rounded-[12px] bg-brand-card/30 hover:bg-[#5865F2]/10 border border-brand-border/30 hover:border-[#5865F2]/30 flex items-center justify-between transition-all duration-200 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
+                  className={`w-full p-3.5 rounded-2xl bg-[#0D1420] hover:bg-[#121B2A] border border-white/5 hover:border-[#5865F2]/30 flex items-center justify-between transition-all duration-300 group cursor-pointer ${lang === 'ar' ? 'text-right flex-row-reverse' : 'text-left flex-row'}`}
                 >
                   <div className={`flex items-center gap-3.5 ${lang === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 flex items-center justify-center shrink-0 text-[#5865F2] group-hover:scale-105 transition-transform">
-                      <svg className="w-5 h-5 fill-current" viewBox="0 0 127.14 96.36">
+                    <div className="w-10 h-10 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/20 flex items-center justify-center shrink-0 text-[#5865F2] group-hover:scale-110 transition-transform">
+                      <svg className="w-4.5 h-4.5 fill-current" viewBox="0 0 127.14 96.36">
                         <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.87-.64,1.71-1.32,2.51-2a75.76,75.76,0,0,0,75.83,0c.8,1.34,1.64,2,2.51,2a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129,54.65,122.64,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z" />
                       </svg>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-white group-hover:text-[#5865F2] transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
-                      <div className="text-xs text-brand-muted mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer roles'}</div>
+                      <div className="text-[13px] font-bold text-white group-hover:text-[#5865F2] transition-colors">{lang === 'ar' ? 'مزامنة رتب الديسكورد' : 'Sync Discord Roles'}</div>
+                      <div className="text-[10px] text-brand-muted mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer roles'}</div>
                     </div>
                   </div>
-                  <ArrowRight className={`w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-brand-muted group-hover:text-[#5865F2] transition-all duration-300 ${lang === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                 </button>
               </div>
             </div>
@@ -1224,95 +1236,101 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {userProducts.map((up) => (
                   <div
                     key={up.id}
-                    className="glass-card rounded-[20px] overflow-hidden group flex flex-col animate-slide-up hover:-translate-y-1 transition-all duration-300"
+                    className="glass-card flex flex-col group animate-slide-up relative"
                   >
-                    {/* Top Image Banner - Full Width */}
-                    <div className="relative h-48 w-full bg-[#0B0B0B] overflow-hidden border-b border-[#262626]">
+                    {/* PRODUCT IMAGE */}
+                    <div className="relative h-40 w-full overflow-hidden rounded-t-[16px] bg-[#05070B] border-b border-white/[0.03]">
                       <img
                         src={up.product?.image || '/logo.png?v=6'}
                         alt={up.product?.name || 'Product'}
-                        className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60 group-hover:opacity-100' : 'object-cover'}`}
+                        className={`w-full h-full transition-transform duration-700 group-hover:scale-105 ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60' : 'object-cover'}`}
                         onError={(e) => { 
                           e.currentTarget.src = '/logo.png?v=6'; 
-                          e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
+                          e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-105 object-contain p-8 opacity-60'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#090909] via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F18] via-transparent to-transparent opacity-90" />
                       
-                      {/* Top Category Tag Pill */}
-                      <div className={`absolute top-4 ${lang === 'ar' ? 'right-4' : 'left-4'} px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-white/5 text-[9px] font-bold text-white uppercase tracking-wider shadow-lg`}>
+                      {/* Optional Status Badge over image */}
+                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-wider shadow-lg flex items-center gap-1.5`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-glow-emerald animate-pulse" />
                         {up.product?.category || 'SPOOFER'}
                       </div>
                     </div>
 
-                    {/* Content Section */}
-                    <div className="p-6 flex-1 flex flex-col">
-                      {/* Title & Icon Row */}
-                      <div className="flex items-center justify-between mb-4">
+                    {/* CONTENT SECTION */}
+                    <div className="p-5 flex-1 flex flex-col">
+                      
+                      {/* PRODUCT HEADER */}
+                      <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
-                            <Package className="w-5 h-5" />
+                          <div className="w-9 h-9 rounded-xl bg-[#0D1420] border border-white/5 flex items-center justify-center shrink-0 text-primary">
+                            <Package className="w-4.5 h-4.5" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-white text-base tracking-tight leading-tight group-hover:text-white/80 transition-colors">
-                              {up.product?.name || 'Unknown Product'}
+                            <h3 className="font-bold text-white text-sm tracking-wide group-hover:text-primary transition-colors">
+                              {up.product?.name || 'Premium Product'}
                             </h3>
-                            <p className="text-[10px] text-[#8D8D8D] font-medium mt-0.5">
-                              {up.product?.category || 'SPOOFER'}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-brand-muted font-medium">
+                              <span className="flex items-center gap-1 text-emerald-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                {lang === 'ar' ? 'فعال' : 'Active'}
+                              </span>
+                              <span className="w-1 h-1 rounded-full bg-white/20" />
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3 opacity-70" />
+                                71 {lang === 'ar' ? 'مستخدم' : 'users'}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-white/90">
-                          {up.product?.version || 'v1.0'}
-                        </div>
                       </div>
 
-                      {/* Stats Row */}
-                      <div className={`flex items-center gap-3 mb-4 text-xs font-medium text-slate-400 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
-                        <div className="flex items-center gap-1.5 bg-transparent border border-[#22C55E]/30 px-2.5 py-0.5 rounded-full text-[#22C55E] text-[10px] font-bold shadow-[0_0_10px_rgba(34,197,94,0.15)]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-                          <span>{lang === 'ar' ? 'فعال' : 'Active'}</span>
-                        </div>
-                      </div>
-
-                      {/* Product Description */}
-                      <div className="mb-4 flex-1">
-                        <p className="text-xs text-[#8D8D8D] leading-relaxed line-clamp-2">
-                          {up.product?.description || (lang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج حالياً.' : 'No description available for this product at the moment.')}
-                        </p>
-                      </div>
-
-                      {/* License Key Box - Premium Redesign */}
-                      <div className="mb-4 relative group/key">
-                        <div className="bg-[#0B0B0B] border border-[#262626] rounded-xl p-1.5 pl-4 flex items-center justify-between gap-3 relative transition-colors shadow-inner">
-                          <div className="flex-1 overflow-hidden flex flex-col justify-center py-1">
-                            <span className="text-[9px] text-[#8D8D8D] font-bold uppercase tracking-wider mb-0.5">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
-                            <code dir="ltr" className="text-[13px] font-mono text-white tracking-widest font-bold truncate block w-full text-left">
-                              {up.keyString || 'KEY-ACTIVATED-OK'}
+                      {/* LICENSE SECTION */}
+                      <div className="mb-5 relative group/key">
+                        <div className="bg-[#05070B] border border-white/[0.05] rounded-xl p-3 flex flex-col gap-2 relative transition-all shadow-inner hover:border-primary/30">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
+                            <span className="text-[9px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              {lang === 'ar' ? 'صالح' : 'Valid'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between gap-3">
+                            <code dir="ltr" className="text-xs font-mono text-white tracking-widest font-semibold truncate flex-1 text-left select-all">
+                              {up.keyString || 'KEY-XXXXXXXX-XXXXXXXX'}
                             </code>
+                            <button
+                              onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
+                              className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 hover:bg-white/10 text-brand-muted hover:text-white border border-transparent'}`}
+                              title="Copy Key"
+                            >
+                              {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
-                          <button
-                            onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                            className={`p-3 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30' : 'bg-white/5 hover:bg-white/10 text-[#8D8D8D] hover:text-white border border-transparent'}`}
-                            title="Copy Key"
-                          >
-                            {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                          </button>
                         </div>
                       </div>
 
-                      {/* Action Buttons Row */}
-                      <div className="grid grid-cols-2 gap-3 mt-auto">
+                      {/* ACTION BUTTONS */}
+                      <div className="grid grid-cols-2 gap-2 mt-auto">
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="h-10 bg-white hover:bg-[#E5E5E5] text-black font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5"
+                          className="col-span-2 h-10 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5 shadow-brand-glow"
                         >
                           <Download className="w-4 h-4" />
                           <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
+                        </button>
+
+                        <button
+                          className="h-9 bg-[#0D1420] border border-white/5 hover:border-white/15 text-white font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                        >
+                          <RefreshCw className="w-3 h-3 text-brand-muted" />
+                          <span>HWID Reset</span>
                         </button>
 
                         <button
@@ -1320,16 +1338,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             setGuideModalProduct(up);
                             setGuideView('menu');
                           }}
-                          className="h-10 bg-transparent border border-white/10 hover:border-white/20 hover:bg-[#1B1B1B] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5"
+                          className="h-9 bg-[#0D1420] border border-white/5 hover:border-white/15 text-white font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                         >
-                          <HelpCircle className="w-4 h-4 text-slate-400" />
+                          <HelpCircle className="w-3 h-3 text-brand-muted" />
                           <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
                         </button>
                       </div>
-
-                      {/* Footer Metadata */}
-                      <div className="pt-3.5 mt-4 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-[#8D8D8D] font-mono">
-                        <span>{lang === 'ar' ? 'الترخيص: مدى الحياة' : 'License: Lifetime'}</span>
+                      
+                      {/* TINY METADATA */}
+                      <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-[9px] text-brand-muted/70 font-mono">
+                        <span>Updated: Today</span>
                         <span>{new Date(up.activatedAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
                       </div>
                     </div>
