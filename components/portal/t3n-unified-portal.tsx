@@ -938,23 +938,140 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // RENDER STATE 2: LOGGED IN (SPIRITX DASHBOARD PANEL)
   // ---------------------------------------------------------------------------
   return (
+    <div className={`flex h-screen overflow-hidden bg-[#05070B] text-white selection:bg-primary selection:text-white transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Ambient Background for Dashboard */}
+      <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0 opacity-10" />
+      <div className="absolute top-0 left-1/4 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* PREMIUM SAAS SIDEBAR */}
+      <aside className="hidden md:flex flex-col w-[260px] bg-[#05070B]/80 backdrop-blur-3xl border-l border-white/[0.04] shrink-0 h-full relative z-20 shadow-[0_0_40px_rgba(0,0,0,0.3)]">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+        
+        {/* BRAND / LOGO */}
+        <div className="p-6 relative z-10 flex items-center justify-center md:justify-start">
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0D1420] to-[#0A0F18] border border-white/10 flex items-center justify-center shadow-brand-glow relative overflow-hidden group shrink-0">
+              <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <img src="/logo.png?v=6" alt="Eon" className="w-6 h-6 object-contain relative z-10 brightness-150" />
+            </div>
+            <span className="text-xl font-extrabold text-white tracking-widest uppercase" style={{ textShadow: '0 0 20px rgba(255,255,255,0.3)' }}>Eon</span>
+          </div>
+        </div>
+
+        {/* NAVIGATION */}
+        <div className="flex-1 overflow-y-auto scrollbar-none px-5 py-2 space-y-6 relative z-10">
+          
+          {/* GENERAL */}
+          <div>
+            <div className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-3 px-2">
+              {lang === 'ar' ? 'عام' : 'GENERAL'}
+            </div>
+            <div className="space-y-1.5">
+              <button 
+                onClick={() => setActiveTab('overview')}
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
+                  activeTab === 'overview' 
+                    ? 'bg-gradient-to-r from-[#0A0F18] to-[#0D1420] border border-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] text-white' 
+                    : 'bg-transparent border border-transparent text-brand-muted hover:bg-white/[0.02] hover:text-white'
+                }`}
+              >
+                <LayoutDashboard className={`w-4.5 h-4.5 transition-all duration-300 ${activeTab === 'overview' ? 'text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'group-hover:text-primary group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]'}`} />
+                <span className={`text-sm tracking-wide ${activeTab === 'overview' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'لوحة التحكم' : 'Overview'}</span>
+                {activeTab === 'overview' && <div className="absolute w-[3px] h-5 bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]" style={{ left: lang === 'ar' ? 'auto' : '0px', right: lang === 'ar' ? '0px' : 'auto', [lang === 'ar' ? 'marginRight' : 'marginLeft']: '-2px' }} />}
+              </button>
+            </div>
+          </div>
+
+          {/* LICENSE */}
+          <div>
+            <div className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-3 px-2">
+              {lang === 'ar' ? 'الاشتراكات والمفاتيح' : 'LICENSE'}
+            </div>
+            <div className="space-y-1.5">
+              <button 
+                onClick={() => setActiveTab('my-products')}
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
+                  activeTab === 'my-products' 
+                    ? 'bg-gradient-to-r from-[#0A0F18] to-[#0D1420] border border-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] text-white' 
+                    : 'bg-transparent border border-transparent text-brand-muted hover:bg-white/[0.02] hover:text-white'
+                }`}
+              >
+                <Package className={`w-4.5 h-4.5 transition-all duration-300 ${activeTab === 'my-products' ? 'text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'group-hover:text-primary group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]'}`} />
+                <span className={`text-sm tracking-wide ${activeTab === 'my-products' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
+                {activeTab === 'my-products' && <div className="absolute w-[3px] h-5 bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]" style={{ left: lang === 'ar' ? 'auto' : '0px', right: lang === 'ar' ? '0px' : 'auto', [lang === 'ar' ? 'marginRight' : 'marginLeft']: '-2px' }} />}
+              </button>
+            </div>
+          </div>
+
+          {/* COMMUNITY */}
+          <div>
+            <div className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-3 px-2">
+              {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
+            </div>
+            <div className="space-y-1.5">
+              <a 
+                href="https://discord.gg/t3n"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] bg-transparent border border-transparent text-brand-muted hover:bg-white/[0.02] hover:text-white transition-all duration-300 group cursor-pointer relative"
+              >
+                <MessageSquare className="w-4.5 h-4.5 transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]" />
+                <span className="text-sm font-medium tracking-wide">{lang === 'ar' ? 'المنتدى (ديسكورد)' : 'Forum (Discord)'}</span>
+              </a>
+            </div>
+          </div>
+
+          {/* ACCOUNT */}
+          <div>
+            <div className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-3 px-2">
+              {lang === 'ar' ? 'الإدارة' : 'ACCOUNT'}
+            </div>
+            <div className="space-y-1.5">
+              <button 
+                onClick={() => setActiveTab('profile')}
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
+                  activeTab === 'profile' 
+                    ? 'bg-gradient-to-r from-[#0A0F18] to-[#0D1420] border border-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] text-white' 
+                    : 'bg-transparent border border-transparent text-brand-muted hover:bg-white/[0.02] hover:text-white'
+                }`}
+              >
+                <User className={`w-4.5 h-4.5 transition-all duration-300 ${activeTab === 'profile' ? 'text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'group-hover:text-primary group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]'}`} />
+                <span className={`text-sm tracking-wide ${activeTab === 'profile' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                {activeTab === 'profile' && <div className="absolute w-[3px] h-5 bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]" style={{ left: lang === 'ar' ? 'auto' : '0px', right: lang === 'ar' ? '0px' : 'auto', [lang === 'ar' ? 'marginRight' : 'marginLeft']: '-2px' }} />}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* BOTTOM USER AREA */}
+        <div className="p-5 relative z-10 space-y-3 mb-2 border-t border-white/[0.04]">
+          {/* Glass Profile Card */}
+          <div className="bg-[#0A0F18]/80 backdrop-blur-xl border border-white/5 rounded-2xl p-3 flex items-center gap-3.5 shadow-inner hover:border-white/10 transition-colors cursor-pointer group">
+            <div className="relative shrink-0">
+              <img
+                src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                alt="Avatar"
+                className="w-10 h-10 rounded-xl object-cover border border-white/10 group-hover:border-primary/50 transition-colors"
+                onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
               />
-              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#22C55E] border-2 border-brand-sidebar" />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-[2.5px] border-[#0A0F18] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             </div>
             <div className="overflow-hidden flex-1">
-              <div className="font-bold text-sm text-white truncate">{currentUser.name}</div>
-              <div className="text-[11px] text-brand-muted truncate flex items-center gap-1 font-mono mt-0.5">
-                <span className="text-[#E5E5E5] font-semibold">{currentUser.role}</span>
+              <div className="font-bold text-sm text-white truncate group-hover:text-primary transition-colors tracking-wide">{currentUser.name}</div>
+              <div className="text-[10px] text-brand-muted truncate flex items-center gap-1 font-mono mt-0.5">
+                <span className="text-[#5865F2] font-bold tracking-wider">Discord</span>
               </div>
             </div>
           </div>
 
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm group"
+            className="w-full h-10 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/30 text-red-500/80 hover:text-red-400 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm group"
           >
             <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+            <span className="tracking-widest uppercase">{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
           </button>
         </div>
       </aside>
