@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
   providers: [
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID || '1421920616382205962',
-      clientSecret: process.env.DISCORD_CLIENT_SECRET || 'KNHfJmq4fcYqfH_kR2aPuJnq3-unMMBk',
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || '5VeEEtlWsgSBIRXnVS765rGOMP7dAcvV',
       authorization: { params: { scope: 'identify email guilds' } },
     }),
   ],
