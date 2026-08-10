@@ -753,14 +753,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   if (!isLoggedIn) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-[#06080d] text-slate-100' : 'bg-slate-50 text-slate-900'} bg-grid-pattern flex flex-col items-center justify-center p-4 relative overflow-hidden select-none transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className={`min-h-screen ${isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]'} flex flex-col items-center justify-center p-4 relative overflow-hidden select-none transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         
+        {/* Ambient Premium Grid Backdrop */}
+        <div className={`absolute inset-0 bg-[linear-gradient(to_right,${isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'}_1px,transparent_1px),linear-gradient(to_bottom,${isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'}_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] ${isDark ? 'opacity-70' : 'opacity-100'} pointer-events-none`} />
+        
+        {/* Interactive Radial Glowing Mesh */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-indigo-500/10 via-purple-500/5 to-transparent rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] bg-violet-600/5 rounded-full blur-[90px] pointer-events-none" />
+
         {/* Floating Controls Container */}
         <div className="fixed top-5 z-50 flex items-center gap-3 transition-all" style={{ [lang === 'ar' ? 'left' : 'right']: '1.25rem' }}>
           {/* Theme Switcher */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className={`p-2 rounded-full ${isDark ? 'bg-brand-card/90 border-brand-border hover:border-primary/40 text-white' : 'bg-white/90 border-slate-200 hover:border-sky-500 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center transition-all hover:scale-105 cursor-pointer`}
+            className={`p-2.5 rounded-full ${isDark ? 'bg-[#09090B]/85 border-white/[0.06] hover:border-white/20 text-white' : 'bg-white/85 border-slate-200 hover:border-slate-350 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center transition-all hover:scale-105 cursor-pointer`}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -769,7 +776,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* Language Switcher */}
           <button
             onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className={`px-3.5 py-2 rounded-full ${isDark ? 'bg-brand-card/90 border-brand-border hover:border-primary/40 text-white' : 'bg-white/90 border-slate-200 hover:border-sky-500 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all hover:scale-105 cursor-pointer`}
+            className={`px-4 py-2 rounded-full ${isDark ? 'bg-[#09090B]/85 border-white/[0.06] hover:border-white/20 text-white' : 'bg-white/85 border-slate-200 hover:border-slate-350 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide transition-all hover:scale-105 cursor-pointer`}
             title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
           >
             <span className="text-sm">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
@@ -777,93 +784,105 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </button>
         </div>
 
-        {/* Subtle Background Glow Spheres */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] pointer-events-none transition-colors duration-500" />
-        <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[130px] pointer-events-none transition-colors duration-500" />
-
         {/* Animated Login Card */}
         <AnimatePresence>
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            initial={{ opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-[400px] glass-card rounded-[24px] p-10 shadow-2xl relative z-10 text-center space-y-8 backdrop-blur-2xl"
+            className={`w-full max-w-[390px] ${isDark ? 'bg-[#0A0A0B]/90 border-white/[0.06]' : 'bg-white/95 border-black/[0.06]'} border rounded-[28px] p-9 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.8)] relative z-10 text-center space-y-8 backdrop-blur-3xl`}
           >
-            {/* Logo */}
+            {/* Logo Section */}
             <motion.div 
-              initial={{ scale: 0, rotate: -20 }}
+              initial={{ scale: 0, rotate: -10 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
+              transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.15 }}
               className="flex justify-center"
             >
-              <div className="w-[100px] h-[100px] rounded-2xl overflow-hidden border border-brand-border bg-brand-sidebar shadow-2xl flex items-center justify-center p-2">
-                <img src="/logo.png?v=6" alt="تعن" className="w-full h-full object-contain" />
+              <div className="relative group cursor-pointer">
+                {/* Outer pulsing gradient glow ring */}
+                <div className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-indigo-500/25 via-purple-500/20 to-pink-500/25 blur-md opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
+                
+                {/* Perfect Circle frame */}
+                <div className={`w-24 h-24 rounded-full overflow-hidden border ${isDark ? 'border-white/[0.08] bg-[#0A0A0C]' : 'border-black/[0.08] bg-white'} shadow-2xl flex items-center justify-center p-1.5 relative z-10 transition-transform duration-500 group-hover:scale-[1.03]`}>
+                  {/* Inner gradient mask */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" />
+                  
+                  {/* Circle image */}
+                  <img 
+                    src="/logo.png?v=6" 
+                    alt="تعن" 
+                    className="w-full h-full rounded-full object-cover select-none" 
+                    onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                  />
+                </div>
               </div>
             </motion.div>
- 
+
             {/* Titles */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.25 }}
               className="space-y-2.5"
             >
-              <h1 className="text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl font-bold text-white tracking-wide">
                 {lang === 'ar' ? 'تعن' : 'TA3N'}
               </h1>
-              <p className="text-xs text-brand-muted font-medium leading-relaxed px-4">
+              <p className="text-[12.5px] text-[#A1A1AA] font-medium leading-relaxed max-w-[290px] mx-auto">
                 {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
               </p>
             </motion.div>
- 
+
             {/* Discord Login */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="space-y-3"
+              transition={{ delay: 0.35 }}
+              className="space-y-4"
             >
               <button
                 onClick={() => signIn('discord')}
-                className="w-full h-[52px] rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-[0_4px_20px_rgba(88,101,242,0.3)] cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full h-12 rounded-xl bg-[#5865F2] hover:bg-[#4E5DFF] text-white font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_8px_30px_rgba(88,101,242,0.25)] hover:shadow-[0_12px_40px_rgba(88,101,242,0.35)] cursor-pointer hover:-translate-y-0.5 active:translate-y-0 relative overflow-hidden group"
               >
-                <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.79-.58,1.56-1.19,2.29-1.82a74.4,74.4,0,0,0,73.4,0c.73.63,1.5,1.24,2.29,1.82a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,0,0,0,31-18.83C129.07,50.12,123.2,27.31,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z"/>
+                {/* Centered official Discord logo with fixed aspect ratio */}
+                <svg className="w-5 h-5 fill-current shrink-0 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
                 </svg>
-                <span>{lang === 'ar' ? 'تسجيل دخول' : 'Login'}</span>
+                <span className="tracking-wide font-medium">{lang === 'ar' ? 'تسجيل دخول' : 'Login'}</span>
               </button>
- 
+
               {process.env.NODE_ENV === 'development' && (
-                <div className="flex gap-2 justify-center pt-1">
+                <div className="flex gap-2 justify-center pt-1.5">
                   <button
                     onClick={loginAsDemoCustomer}
-                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold text-white transition-all cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-[#5865F2]/10 text-[10px] font-bold text-[#A1A1AA] hover:text-white transition-all cursor-pointer"
                   >
                     {lang === 'ar' ? 'دخول كـ عميل' : 'Demo Customer'}
                   </button>
                   <button
                     onClick={loginAsDemoAdmin}
-                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold text-white transition-all cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-[#5865F2]/10 text-[10px] font-bold text-[#A1A1AA] hover:text-white transition-all cursor-pointer"
                   >
                     {lang === 'ar' ? 'دخول كـ أدمن' : 'Demo Admin'}
                   </button>
                 </div>
               )}
             </motion.div>
- 
+
             {/* Bottom Footer Link */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="pt-6 border-t border-white/5 text-xs flex items-center justify-center gap-2"
+              transition={{ delay: 0.45 }}
+              className="pt-6 border-t border-white/[0.04] text-xs flex items-center justify-center gap-2"
             >
-              <span className="text-brand-muted font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
+              <span className="text-[#71717A] font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
               <a
                 href="https://t3nnn.wtf/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold underline underline-offset-4 text-white hover:text-white/80 transition-colors cursor-pointer"
+                className="font-bold text-white hover:text-indigo-400 transition-colors cursor-pointer"
               >
                 {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
               </a>
