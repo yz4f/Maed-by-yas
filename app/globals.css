@@ -8,7 +8,7 @@
     background-image: 
       radial-gradient(circle at 15% 10%, rgba(59, 130, 246, 0.04) 0px, transparent 40%),
       radial-gradient(circle at 85% 80%, rgba(139, 92, 246, 0.03) 0px, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(10, 15, 24, 1) 0px, transparent 100%);
+      radial-gradient(circle at 50% 50%, rgba(5, 5, 5, 1) 0px, transparent 100%);
     background-attachment: fixed;
   }
 }
@@ -23,7 +23,7 @@
 
 /* Premium Card Styles */
 .glass-panel {
-  background: rgba(10, 15, 24, 0.85);
+  background: rgba(15, 15, 17, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -32,7 +32,7 @@
 }
 
 .glass-card {
-  background: #0A0F18;
+  background: #0F0F11;
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.5);
@@ -41,7 +41,7 @@
 
 .glass-card:hover {
   transform: translateY(-2px);
-  background: #0D1420;
+  background: #17171A;
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7), 0 0 20px rgba(59, 130, 246, 0.05);
 }
@@ -86,7 +86,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #070A13;
+  background: #050505;
 }
 ::-webkit-scrollbar-thumb {
   background: #1E293B;

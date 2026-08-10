@@ -9,16 +9,16 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          dark: '#05070B', // Primary near-black background
-          card: '#0A0F18', // Deep navy secondary surface
-          border: 'rgba(255,255,255,0.08)', // Thin elegant border
-          hover: '#0D1420', // Hover surface
-          sidebar: '#05070B', // Left sidebar background
-          sidebarBorder: 'rgba(255,255,255,0.08)',
-          text: '#FFFFFF', // Primary light text
-          muted: '#9CA3AF', // Slate Grey secondary text
+          dark: '#050505', // True black background
+          card: '#0F0F11', // Very dark gray for cards
+          border: 'rgba(255,255,255,0.06)', // Lighter elegant border
+          hover: '#17171A', // Hover surface
+          sidebar: '#0A0A0B', // Sidebar background
+          sidebarBorder: 'rgba(255,255,255,0.05)',
+          text: '#FAFAFA', // Primary light text
+          muted: '#8D8D8D', // Neutral Slate Grey
           accent: '#3B82F6', // Primary Electric Blue
-          surface: '#0D1420',
+          surface: '#121214',
         },
         primary: {
           DEFAULT: '#3B82F6', // Electric Blue
