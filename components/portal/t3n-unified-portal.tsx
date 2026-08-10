@@ -1047,7 +1047,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <div className="bg-[#111111] border border-white/[0.05] rounded-xl p-2.5 flex items-center justify-between shadow-sm">
             <div className="flex flex-col text-left pl-1.5">
               <span className="text-[13px] font-bold text-white tracking-wide">{currentUser.name}</span>
-              <span className="text-[11px] text-[#A1A1AA] font-medium">{currentUser.role === 'admin' ? 'Boss' : 'Discord'}</span>
+              <span className="text-[11px] text-[#A1A1AA] font-medium">{(currentUser.role === 'Boss' || currentUser.role === 'Admin' || currentUser.role === 'Co-Boss') ? 'Boss' : 'Discord'}</span>
             </div>
             <img
               src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
