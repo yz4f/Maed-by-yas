@@ -35,7 +35,10 @@ import {
   ShoppingCart,
   AlertCircle,
   Moon,
-  Sun
+  Sun,
+  LayoutDashboard,
+  MessageSquare,
+  User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
