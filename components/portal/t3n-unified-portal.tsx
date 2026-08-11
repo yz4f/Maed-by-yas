@@ -38,7 +38,8 @@ import {
   Sun,
   LayoutDashboard,
   MessageSquare,
-  User
+  User,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
@@ -55,6 +56,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'admin' | 'profile'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   // Demo Local Authentication for instant local testing
   const [demoUser, setDemoUser] = useState<UserType | null>(null);
@@ -751,6 +760,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // ---------------------------------------------------------------------------
   const isDark = theme === 'dark';
 
+  // Dynamic Theme Styling Object
+  const styles = {
+    bgApp: isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]',
+    bgPanel: isDark ? 'bg-[#0A0A0C]/90 border-white/[0.06]' : 'bg-white border-black/[0.06] shadow-sm',
+    bgCard: isDark ? 'bg-[#0E0E10] border-white/[0.04]' : 'bg-white border-black/[0.05] shadow-sm',
+    bgSidebar: isDark ? 'bg-[#0A0A0C]/40 border-white/[0.05]' : 'bg-white border-black/[0.05] shadow-[2px_0_10px_rgba(0,0,0,0.01)]',
+    bgInput: isDark ? 'bg-[#050505] border-white/10 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400',
+    bgInnerCard: isDark ? 'bg-[#05070B] border-white/[0.05]' : 'bg-slate-50 border-slate-200/[0.8]',
+    bgInnerCardDarkOnly: isDark ? 'bg-[#05070B] border-white/[0.05]' : 'bg-slate-100 border-slate-200',
+    textTitle: isDark ? 'text-white' : 'text-slate-950',
+    textBody: isDark ? 'text-[#F4F4F5]' : 'text-slate-800',
+    textMuted: isDark ? 'text-[#A1A1AA]' : 'text-slate-500',
+    textLightMuted: isDark ? 'text-[#71717A]' : 'text-slate-450',
+    borderSubtle: isDark ? 'border-white/[0.04]' : 'border-slate-100',
+    borderNormal: isDark ? 'border-white/10' : 'border-slate-200',
+    sidebarActive: isDark ? 'border-white/20 text-white bg-white/[0.02]' : 'border-black/10 text-slate-950 bg-black/[0.02] shadow-sm',
+    sidebarInactive: isDark ? 'text-[#A1A1AA] hover:text-white' : 'text-slate-500 hover:text-slate-950',
+    btnSecondary: isDark ? 'border-white/[0.05] hover:border-white/20 hover:bg-white/5 text-[#A1A1AA] hover:text-white' : 'border-slate-200 hover:border-slate-350 hover:bg-black/[0.02] text-slate-700 hover:text-slate-950',
+    btnPrimary: 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg shadow-sky-500/10',
+    borderHover: isDark ? 'border-indigo-500/50' : 'border-indigo-600/50'
+  };
+
   if (!isLoggedIn) {
     return (
       <div className={`min-h-screen ${isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]'} flex flex-col items-center justify-center p-4 relative overflow-hidden select-none transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -826,10 +857,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               transition={{ delay: 0.25 }}
               className="space-y-2.5"
             >
-              <h1 className="text-2xl font-bold text-white tracking-wide">
+              <h1 className={`text-2xl font-bold ${styles.textTitle} tracking-wide`}>
                 {lang === 'ar' ? 'تعن' : 'TA3N'}
               </h1>
-              <p className="text-[12.5px] text-[#A1A1AA] font-medium leading-relaxed max-w-[290px] mx-auto">
+              <p className={`text-[12.5px] ${styles.textMuted} font-medium leading-relaxed max-w-[290px] mx-auto`}>
                 {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
               </p>
             </motion.div>
@@ -856,13 +887,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <div className="flex gap-2 justify-center pt-1.5">
                   <button
                     onClick={loginAsDemoCustomer}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-[#5865F2]/10 text-[10px] font-bold text-[#A1A1AA] hover:text-white transition-all cursor-pointer"
+                    className={`px-3.5 py-1.5 rounded-xl ${isDark ? 'bg-white/[0.03] border-white/[0.06] hover:bg-[#5865F2]/10 text-[#A1A1AA]' : 'bg-black/[0.03] border-black/[0.06] hover:bg-black/[0.06] text-slate-650'} border text-[10px] font-bold hover:text-indigo-650 transition-all cursor-pointer`}
                   >
                     {lang === 'ar' ? 'دخول كـ عميل' : 'Demo Customer'}
                   </button>
                   <button
                     onClick={loginAsDemoAdmin}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-[#5865F2]/10 text-[10px] font-bold text-[#A1A1AA] hover:text-white transition-all cursor-pointer"
+                    className={`px-3.5 py-1.5 rounded-xl ${isDark ? 'bg-white/[0.03] border-white/[0.06] hover:bg-[#5865F2]/10 text-[#A1A1AA]' : 'bg-black/[0.03] border-black/[0.06] hover:bg-black/[0.06] text-slate-655'} border text-[10px] font-bold hover:text-indigo-650 transition-all cursor-pointer`}
                   >
                     {lang === 'ar' ? 'دخول كـ أدمن' : 'Demo Admin'}
                   </button>
@@ -875,14 +906,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.45 }}
-              className="pt-6 border-t border-white/[0.04] text-xs flex items-center justify-center gap-2"
+              className={`pt-6 border-t ${styles.borderSubtle} text-xs flex items-center justify-center gap-2`}
             >
               <span className="text-[#71717A] font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
               <a
                 href="https://t3nnn.wtf/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-white hover:text-indigo-400 transition-colors cursor-pointer"
+                className={`font-bold ${isDark ? 'text-white hover:text-indigo-400' : 'text-indigo-600 hover:text-indigo-500'} transition-colors cursor-pointer`}
               >
                 {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
               </a>
@@ -960,20 +991,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // RENDER STATE 2: LOGGED IN (SPIRITX DASHBOARD PANEL)
   // ---------------------------------------------------------------------------
   return (
-    <div className={`flex h-screen overflow-hidden bg-[#0A0A0A] text-white selection:bg-white/10 selection:text-white transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className={`flex h-screen overflow-hidden ${styles.bgApp} selection:bg-indigo-500/20 transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Ambient Background for Dashboard */}
-      <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0 opacity-5" />
+      <div className={`absolute inset-0 bg-grid-pattern pointer-events-none z-0 ${isDark ? 'opacity-5' : 'opacity-[0.03]'}`} />
 
       {/* PREMIUM SAAS SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-transparent border-white/[0.05] shrink-0 h-full relative z-20" style={{ borderLeftWidth: lang === 'ar' ? '1px' : '0', borderRightWidth: lang === 'ar' ? '0' : '1px' }}>
+      <aside className={`hidden md:flex flex-col w-[260px] ${styles.bgSidebar} shrink-0 h-full relative z-20`} style={{ borderLeftWidth: lang === 'ar' ? '1px' : '0', borderRightWidth: lang === 'ar' ? '0' : '1px' }}>
         
         {/* BRAND / LOGO */}
         <div className="p-6 relative z-10 flex items-center justify-center md:justify-start">
           <div className="flex items-center gap-3 w-full">
-            <div className="w-8 h-8 rounded-lg bg-transparent border border-white/10 flex items-center justify-center shrink-0">
-              <img src="/logo.png?v=6" alt="Eon" className="w-5 h-5 object-contain grayscale brightness-200" />
+            <div className={`w-8 h-8 rounded-lg bg-transparent border ${styles.borderNormal} flex items-center justify-center shrink-0`}>
+              <img src="/logo.png?v=6" alt="Eon" className={`w-5 h-5 object-contain ${isDark ? 'grayscale brightness-200' : ''}`} />
             </div>
-            <span className="text-[15px] font-extrabold text-white tracking-wide uppercase">Eon</span>
+            <span className={`text-[15px] font-extrabold ${styles.textTitle} tracking-wide uppercase`}>Eon</span>
           </div>
         </div>
 
@@ -982,7 +1013,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           
           {/* GENERAL */}
           <div>
-            <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-3 px-2">
+            <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
               {lang === 'ar' ? 'عام' : 'GENERAL'}
             </div>
             <div className="space-y-1">
@@ -990,8 +1021,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 onClick={() => setActiveTab('overview')}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
                   activeTab === 'overview' 
-                    ? 'border border-white/20 text-white shadow-sm bg-white/[0.02]' 
-                    : 'border border-transparent text-[#A1A1AA] hover:text-white'
+                    ? styles.sidebarActive 
+                    : styles.sidebarInactive
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 transition-colors" />
@@ -1002,7 +1033,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
           {/* LICENSE */}
           <div>
-            <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-3 px-2">
+            <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
               {lang === 'ar' ? 'الاشتراكات والمفاتيح' : 'LICENSE'}
             </div>
             <div className="space-y-1">
@@ -1010,8 +1041,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 onClick={() => setActiveTab('my-products')}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
                   activeTab === 'my-products' 
-                    ? 'border border-white/20 text-white shadow-sm bg-white/[0.02]' 
-                    : 'border border-transparent text-[#A1A1AA] hover:text-white'
+                    ? styles.sidebarActive 
+                    : styles.sidebarInactive
                 }`}
               >
                 <Package className="w-4 h-4 transition-colors" />
@@ -1022,7 +1053,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
           {/* COMMUNITY */}
           <div>
-            <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-3 px-2">
+            <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
               {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
             </div>
             <div className="space-y-1">
@@ -1030,7 +1061,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 href="https://discord.gg/t3n"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] bg-transparent border border-transparent text-[#A1A1AA] hover:text-white transition-all duration-300 group cursor-pointer relative"
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] bg-transparent border border-transparent ${styles.sidebarInactive} transition-all duration-300 group cursor-pointer relative`}
               >
                 <MessageSquare className="w-4 h-4 transition-colors" />
                 <span className="text-sm font-medium tracking-wide">{lang === 'ar' ? 'المنتدى (ديسكورد)' : 'Forum'}</span>
@@ -1040,7 +1071,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
           {/* ACCOUNT */}
           <div>
-            <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-3 px-2">
+            <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
               {lang === 'ar' ? 'الإدارة' : 'ACCOUNT'}
             </div>
             <div className="space-y-1">
@@ -1048,30 +1079,44 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 onClick={() => setActiveTab('profile')}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
                   activeTab === 'profile' 
-                    ? 'border border-white/20 text-white shadow-sm bg-white/[0.02]' 
-                    : 'border border-transparent text-[#A1A1AA] hover:text-white'
+                    ? styles.sidebarActive 
+                    : styles.sidebarInactive
                 }`}
               >
                 <User className="w-4 h-4 transition-colors" />
                 <span className={`text-sm tracking-wide ${activeTab === 'profile' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
               </button>
+
+              {isAdmin && (
+                <button 
+                  onClick={() => setActiveTab('admin')}
+                  className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
+                    activeTab === 'admin' 
+                      ? styles.sidebarActive 
+                      : styles.sidebarInactive
+                  }`}
+                >
+                  <Shield className="w-4 h-4 transition-colors" />
+                  <span className={`text-sm tracking-wide ${activeTab === 'admin' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control'}</span>
+                </button>
+              )}
             </div>
           </div>
 
         </div>
 
         {/* BOTTOM USER AREA */}
-        <div className="p-4 relative z-10 border-t border-white/[0.04] mt-auto w-full flex flex-col gap-2">
+        <div className={`p-4 relative z-10 border-t ${styles.borderSubtle} mt-auto w-full flex flex-col gap-2`}>
           {/* Profile Card */}
-          <div className="bg-[#111111] border border-white/[0.05] rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+          <div className={`${styles.bgInnerCard} rounded-xl p-2.5 flex items-center justify-between shadow-sm`}>
             <div className="flex flex-col text-left pl-1.5">
-              <span className="text-[13px] font-bold text-white tracking-wide">{currentUser.name}</span>
-              <span className="text-[11px] text-[#A1A1AA] font-medium">{(currentUser.role === 'Boss' || currentUser.role === 'Admin' || currentUser.role === 'Co-Boss') ? 'Boss' : 'Discord'}</span>
+              <span className={`text-[13px] font-bold ${styles.textTitle} tracking-wide`}>{currentUser.name}</span>
+              <span className={`text-[11px] ${styles.textMuted} font-medium`}>{(currentUser.role === 'Boss' || currentUser.role === 'Admin' || currentUser.role === 'Co-Boss') ? 'Boss' : 'Discord'}</span>
             </div>
             <img
               src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
               alt="Avatar"
-              className="w-8 h-8 rounded-lg object-cover grayscale opacity-90"
+              className={`w-8 h-8 rounded-lg object-cover ${isDark ? 'grayscale opacity-90' : ''}`}
               onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
             />
           </div>
@@ -1079,7 +1124,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full h-9 rounded-xl bg-transparent border border-white/[0.05] hover:border-white/20 hover:bg-white/5 text-[#A1A1AA] hover:text-white text-[11px] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className={`w-full h-9 rounded-xl bg-transparent border ${styles.btnSecondary} text-[11px] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer`}
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="tracking-wide">{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
@@ -1091,7 +1136,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <main className="flex-grow h-full overflow-y-auto p-6 md:p-10 scrollbar-none">
         {/* TOP BAR */}
         <header className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 gap-4 animate-fade-in">
-          <h1 className="text-[22px] font-bold text-white tracking-tight">
+          <h1 className={`text-[22px] font-bold ${styles.textTitle} tracking-tight`}>
             {activeTab === 'overview' && (lang === 'ar' ? 'لوحة التحكم' : 'Overview')}
             {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
             {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل رخصة' : 'Redeem License')}
@@ -1103,18 +1148,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {activeTab === 'overview' && (
           <div className="space-y-6 max-w-6xl mx-auto">
             {/* Welcome Banner Card */}
-            <div className="bg-[#111111] border border-white/[0.03] rounded-[16px] p-6 flex items-center gap-5 relative overflow-hidden transition-all duration-300 shadow-sm">
+            <div className={`${styles.bgCard} rounded-[16px] p-6 flex items-center gap-5 relative overflow-hidden transition-all duration-300 shadow-sm`}>
               <img
                 src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                 alt={currentUser.name}
-                className="w-14 h-14 rounded-full object-cover grayscale opacity-90"
+                className={`w-14 h-14 rounded-full object-cover ${isDark ? 'grayscale opacity-90' : ''}`}
                 onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
               />
               <div className="flex flex-col text-left">
-                <h2 className="text-[16px] font-bold text-white tracking-wide">
-                  {lang === 'ar' ? 'مرحباً بعودتك،' : 'Welcome back,'} ^{currentUser.name}^!
+                <h2 className={`text-[16px] font-bold ${styles.textTitle} tracking-wide`}>
+                  {lang === 'ar' ? 'مرحباً بعودتك،' : 'Welcome back,'} {currentUser.name}!
                 </h2>
-                <p className="text-[12px] text-[#A1A1AA] mt-0.5">
+                <p className={`text-[12px] ${styles.textMuted} mt-0.5`}>
                   {lang === 'ar' ? `لديك ${userProducts.length} منتجات مفعلة بحسابك.` : `You have ${userProducts.length} active product(s) on your account.`}
                 </p>
               </div>
@@ -1125,37 +1170,37 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {/* Left 2 Columns: 4 Stat Cards */}
               <div className="lg:col-span-2 grid grid-cols-2 gap-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {/* Stat 1: Active Products */}
-                <div className="bg-[#111111] border border-white/[0.03] rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col">
-                  <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center text-[#A1A1AA] mb-6">
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
+                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
                     <Package className="w-4 h-4" />
                   </div>
-                  <div className="text-[28px] font-bold text-white mb-0.5 tracking-tight">{userProducts.length}</div>
-                  <div className="text-[11px] text-[#A1A1AA] font-medium">{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
+                  <div className={`text-[28px] font-bold ${styles.textTitle} mb-0.5 tracking-tight`}>{userProducts.length}</div>
+                  <div className={`text-[11px] ${styles.textMuted} font-medium`}>{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
                 </div>
 
                 {/* Stat 2: Account Status */}
-                <div className="bg-[#111111] border border-white/[0.03] rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col">
-                  <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center text-[#A1A1AA] mb-6">
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
+                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
-                  <div className="text-[22px] font-bold text-white mb-0.5 tracking-tight mt-1">{lang === 'ar' ? 'نشط' : 'Active'}</div>
-                  <div className="text-[11px] text-[#A1A1AA] font-medium mt-1.5">{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
+                  <div className={`text-[22px] font-bold ${styles.textTitle} mb-0.5 tracking-tight mt-1`}>{lang === 'ar' ? 'نشط' : 'Active'}</div>
+                  <div className={`text-[11px] ${styles.textMuted} font-medium mt-1.5`}>{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
                 </div>
 
                 {/* Stat 3: Member Since */}
-                <div className="bg-[#111111] border border-white/[0.03] rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col">
-                  <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center text-[#A1A1AA] mb-6">
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
+                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
                     <Clock className="w-4 h-4" />
                   </div>
-                  <div className="text-[18px] font-bold text-white mb-0.5 tracking-tight mt-1.5" dir="ltr">
+                  <div className={`text-[18px] font-bold ${styles.textTitle} mb-0.5 tracking-tight mt-1.5`} dir="ltr">
                     {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
                   </div>
-                  <div className="text-[11px] text-[#A1A1AA] font-medium mt-1.5">{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
+                  <div className={`text-[11px] ${styles.textMuted} font-medium mt-1.5`}>{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
                 </div>
 
                 {/* Stat 4: Forum Posts (Total Downloads) */}
-                <div className="bg-[#111111] border border-white/[0.03] rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col">
-                  <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center text-[#A1A1AA] mb-6">
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
+                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
                     <MessageSquare className="w-4 h-4" />
                   </div>
                   <div className="text-[28px] font-bold text-white mb-0.5 tracking-tight">0</div>
@@ -1164,8 +1209,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
 
               {/* Right Column: Quick Actions Card */}
-              <div className="bg-[#111111] border border-white/[0.03] rounded-[16px] p-4 animate-slide-up h-fit" style={{ animationDelay: '0.2s' }}>
-                <div className="text-[10px] font-bold text-[#666666] uppercase tracking-widest mb-3 px-2">
+              <div className={`${styles.bgCard} rounded-[16px] p-4 animate-slide-up h-fit`} style={{ animationDelay: '0.2s' }}>
+                <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
                 
@@ -1173,52 +1218,52 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {/* Quick Action 1 */}
                   <button
                     onClick={() => setActiveTab('my-products')}
-                    className="w-full p-3 rounded-xl hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b border-white/[0.03] last:border-0"
+                    className={`w-full p-3 rounded-xl hover:bg-black/[0.02] dark:hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b ${styles.borderSubtle} last:border-0`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center shrink-0 text-[#A1A1AA]">
+                      <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <Package className="w-4 h-4" />
                       </div>
                       <div className="text-left flex flex-col">
-                        <span className="text-[12px] font-bold text-white tracking-wide">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
-                        <span className="text-[10px] text-[#777777] mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</span>
+                        <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
+                        <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</span>
                       </div>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#444444] group-hover:text-[#A1A1AA] transition-colors" />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
                   </button>
 
                   {/* Quick Action 2 */}
                   <button
                     onClick={() => setActiveTab('redeem')}
-                    className="w-full p-3 rounded-xl hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b border-white/[0.03] last:border-0"
+                    className={`w-full p-3 rounded-xl hover:bg-black/[0.02] dark:hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b ${styles.borderSubtle} last:border-0`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center shrink-0 text-[#A1A1AA]">
+                      <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <Key className="w-4 h-4" />
                       </div>
                       <div className="text-left flex flex-col">
-                        <span className="text-[12px] font-bold text-white tracking-wide">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
-                        <span className="text-[10px] text-[#777777] mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</span>
+                        <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
+                        <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</span>
                       </div>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#444444] group-hover:text-[#A1A1AA] transition-colors" />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
                   </button>
 
                   {/* Quick Action 3 */}
                   <button
                     onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!')}
-                    className="w-full p-3 rounded-xl hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b border-white/[0.03] last:border-0"
+                    className={`w-full p-3 rounded-xl hover:bg-black/[0.02] dark:hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b ${styles.borderSubtle} last:border-0`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center shrink-0 text-[#A1A1AA]">
+                      <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <User className="w-4 h-4" />
                       </div>
                       <div className="text-left flex flex-col">
-                        <span className="text-[12px] font-bold text-white tracking-wide">{lang === 'ar' ? 'مزامنة الرتب' : 'Sync Discord Roles'}</span>
-                        <span className="text-[10px] text-[#777777] mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer & product roles'}</span>
+                        <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'مزامنة الرتب' : 'Sync Discord Roles'}</span>
+                        <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer & product roles'}</span>
                       </div>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#444444] group-hover:text-[#A1A1AA] transition-colors" />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
                   </button>
                   
                   {/* Quick Action 4 */}
@@ -1226,18 +1271,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     href="https://discord.gg/t3n"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full p-3 rounded-xl hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b border-white/[0.03] last:border-0"
+                    className={`w-full p-3 rounded-xl hover:bg-black/[0.02] dark:hover:bg-white/[0.02] flex items-center justify-between transition-all duration-300 group cursor-pointer border-b ${styles.borderSubtle} last:border-0`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl border border-white/[0.05] bg-transparent flex items-center justify-center shrink-0 text-[#A1A1AA]">
+                      <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <MessageSquare className="w-4 h-4" />
                       </div>
                       <div className="text-left flex flex-col">
-                        <span className="text-[12px] font-bold text-white tracking-wide">{lang === 'ar' ? 'ديسكورد' : 'Join Discord'}</span>
-                        <span className="text-[10px] text-[#777777] mt-0.5">{lang === 'ar' ? 'الدعم والتحديثات' : 'Get support & updates'}</span>
+                        <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'ديسكورد' : 'Join Discord'}</span>
+                        <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'الدعم والتحديثات' : 'Get support & updates'}</span>
                       </div>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#444444] group-hover:text-[#A1A1AA] transition-colors" />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
                   </a>
                 </div>
               </div>
@@ -1250,17 +1295,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <div className="space-y-8 max-w-6xl mx-auto">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-extrabold text-white tracking-tight">
+                <h1 className={`text-3xl font-extrabold ${styles.textTitle} tracking-tight`}>
                   {lang === 'ar' ? 'منتجاتي' : 'My Products'}
                 </h1>
-                <p className="text-xs text-[#8D8D8D] mt-1.5 font-medium">
+                <p className={`text-xs ${styles.textMuted} mt-1.5 font-medium`}>
                   {lang === 'ar' ? 'المنتجات المفعلة بحسابك والمفاتيح والتحميلات المتاحة' : 'Your active products, keys, and downloads'}
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveTab('redeem')}
-                className={`h-[40px] px-4 rounded-[12px] bg-transparent border border-white/10 hover:border-white/20 hover:bg-[#1B1B1B] text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${lang === 'ar' ? 'flex-row-reverse' : ''}`}
+                className={`h-[40px] px-4 rounded-[12px] bg-transparent border ${styles.borderNormal} hover:bg-black/5 dark:hover:bg-white/5 ${styles.textTitle} text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${lang === 'ar' ? 'flex-row-reverse' : ''}`}
               >
                 <Key className="w-4 h-4" />
                 <span>{lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Redeem New Key'}</span>
@@ -1271,38 +1316,38 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="bg-[#111111] border border-white/5 rounded-[20px] overflow-hidden flex flex-col p-5 space-y-4 animate-pulse">
-                    <div className="h-44 bg-white/5 rounded-xl w-full" />
+                  <div key={n} className={`${styles.bgCard} rounded-[20px] overflow-hidden flex flex-col p-5 space-y-4 animate-pulse`}>
+                    <div className="h-44 bg-black/5 dark:bg-white/5 rounded-xl w-full" />
                     <div className="flex gap-4 items-center">
-                      <div className="w-12 h-12 bg-white/5 rounded-xl shrink-0" />
+                      <div className="w-12 h-12 bg-black/5 dark:bg-white/5 rounded-xl shrink-0" />
                       <div className="space-y-2 flex-1">
-                        <div className="h-5 bg-white/5 rounded w-3/4" />
-                        <div className="h-3.5 bg-white/5 rounded w-1/2" />
+                        <div className="h-5 bg-black/5 dark:bg-white/5 rounded w-3/4" />
+                        <div className="h-3.5 bg-black/5 dark:bg-white/5 rounded w-1/2" />
                       </div>
                     </div>
-                    <div className="h-10 bg-white/5 rounded-xl w-full" />
-                    <div className="h-14 bg-white/5 rounded-xl w-full" />
+                    <div className="h-10 bg-black/5 dark:bg-white/5 rounded-xl w-full" />
+                    <div className="h-14 bg-black/5 dark:bg-white/5 rounded-xl w-full" />
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="h-10 bg-white/5 rounded-xl" />
-                      <div className="h-10 bg-white/5 rounded-xl" />
+                      <div className="h-10 bg-black/5 dark:bg-white/5 rounded-xl" />
+                      <div className="h-10 bg-black/5 dark:bg-white/5 rounded-xl" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : userProducts.length === 0 ? (
-              <div className="bg-[#111111] border border-[#262626] rounded-[20px] p-12 text-center max-w-lg mx-auto">
-                <div className="w-14 h-14 bg-white/5 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
+              <div className={`${styles.bgCard} rounded-[20px] p-12 text-center max-w-lg mx-auto shadow-sm`}>
+                <div className={`w-14 h-14 ${styles.bgInnerCard} ${styles.textTitle} rounded-2xl flex items-center justify-center mx-auto mb-4 border ${styles.borderNormal}`}>
                   <Package className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">
+                <h3 className={`text-lg font-bold ${styles.textTitle} mb-2`}>
                   {lang === 'ar' ? 'لا توجد منتجات مفعلة بحسابك حالياً' : 'No active products in your account'}
                 </h3>
-                <p className="text-xs text-[#8D8D8D] mb-6 font-medium">
+                <p className={`text-xs ${styles.textMuted} mb-6 font-medium`}>
                   {lang === 'ar' ? 'قم بتفعيل مفتاح الاشتراك الخاص بك للوصول الفوري للملفات والرتب' : 'Activate your license key to instantly access files and roles'}
                 </p>
                 <button
                   onClick={() => setActiveTab('redeem')}
-                  className="h-[42px] px-6 bg-white hover:bg-[#E5E5E5] text-black font-bold text-xs rounded-[12px] transition-all cursor-pointer"
+                  className="h-[42px] px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-[12px] transition-all cursor-pointer shadow-lg shadow-indigo-500/20"
                 >
                   {lang === 'ar' ? 'تفعيل مفتاح الآن' : 'Redeem Key Now'}
                 </button>
@@ -1315,7 +1360,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     className="glass-card flex flex-col group animate-slide-up relative"
                   >
                     {/* PRODUCT IMAGE */}
-                    <div className="relative h-40 w-full overflow-hidden rounded-t-[16px] bg-[#05070B] border-b border-white/[0.03]">
+                    <div className={`relative h-40 w-full overflow-hidden rounded-t-[16px] bg-black/[0.02] dark:bg-[#05070B] border-b ${styles.borderSubtle}`}>
                       <img
                         src={up.product?.image || '/logo.png?v=6'}
                         alt={up.product?.name || 'Product'}
@@ -1325,7 +1370,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-105 object-contain p-8 opacity-60'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F18] via-transparent to-transparent opacity-90" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0A0F18] via-transparent to-transparent opacity-90" />
                       
                       {/* Optional Status Badge over image */}
                       <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-wider shadow-lg flex items-center gap-1.5`}>
@@ -1340,19 +1385,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       {/* PRODUCT HEADER */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-[#0D1420] border border-white/5 flex items-center justify-center shrink-0 text-primary">
+                          <div className={`w-9 h-9 rounded-xl ${styles.bgInnerCard} border ${styles.borderSubtle} flex items-center justify-center shrink-0 text-indigo-500 dark:text-primary`}>
                             <Package className="w-4.5 h-4.5" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-white text-sm tracking-wide group-hover:text-primary transition-colors">
+                            <h3 className={`font-bold ${styles.textTitle} text-sm tracking-wide group-hover:text-indigo-650 dark:group-hover:text-primary transition-colors`}>
                               {up.product?.name || 'Premium Product'}
                             </h3>
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-brand-muted font-medium">
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 dark:text-brand-muted font-medium">
                               <span className="flex items-center gap-1 text-emerald-400">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                 {lang === 'ar' ? 'فعال' : 'Active'}
                               </span>
-                              <span className="w-1 h-1 rounded-full bg-white/20" />
+                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
                               <span className="flex items-center gap-1">
                                 <Users className="w-3 h-3 opacity-70" />
                                 71 {lang === 'ar' ? 'مستخدم' : 'users'}
@@ -1364,9 +1409,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                       {/* LICENSE SECTION */}
                       <div className="mb-5 relative group/key">
-                        <div className="bg-[#05070B] border border-white/[0.05] rounded-xl p-3 flex flex-col gap-2 relative transition-all shadow-inner hover:border-primary/30">
+                        <div className={`bg-slate-50 dark:bg-[#05070B] border ${styles.borderSubtle} rounded-xl p-3 flex flex-col gap-2 relative transition-all shadow-inner hover:border-indigo-500/30 dark:hover:border-primary/30`}>
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-brand-muted font-bold uppercase tracking-wider">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
+                            <span className={`text-[10px] ${styles.textMuted} font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
                             <span className="text-[9px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
                               <CheckCircle2 className="w-2.5 h-2.5" />
                               {lang === 'ar' ? 'صالح' : 'Valid'}
@@ -1374,12 +1419,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           </div>
                           
                           <div className="flex items-center justify-between gap-3">
-                            <code dir="ltr" className="text-xs font-mono text-white tracking-widest font-semibold truncate flex-1 text-left select-all">
+                            <code dir="ltr" className={`text-xs font-mono ${styles.textTitle} tracking-widest font-semibold truncate flex-1 text-left select-all`}>
                               {up.keyString || 'KEY-XXXXXXXX-XXXXXXXX'}
                             </code>
                             <button
                               onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                              className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 hover:bg-white/10 text-brand-muted hover:text-white border border-transparent'}`}
+                              className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : `bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 ${styles.textMuted} hover:${styles.textTitle} border border-transparent`}`}
                               title="Copy Key"
                             >
                               {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1392,16 +1437,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="grid grid-cols-2 gap-2 mt-auto">
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="col-span-2 h-10 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5 shadow-brand-glow"
+                          className="col-span-2 h-10 bg-indigo-600 hover:bg-indigo-500 dark:bg-primary dark:hover:bg-primary-hover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-500/10 dark:shadow-brand-glow"
                         >
                           <Download className="w-4 h-4" />
                           <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
                         </button>
 
                         <button
-                          className="h-9 bg-[#0D1420] border border-white/5 hover:border-white/15 text-white font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                          className={`h-9 bg-transparent dark:bg-[#0D1420] border ${styles.borderNormal} hover:${styles.borderHover} ${styles.textTitle} font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all`}
                         >
-                          <RefreshCw className="w-3 h-3 text-brand-muted" />
+                          <RefreshCw className={`w-3 h-3 ${styles.textMuted}`} />
                           <span>HWID Reset</span>
                         </button>
 
@@ -1410,15 +1455,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             setGuideModalProduct(up);
                             setGuideView('menu');
                           }}
-                          className="h-9 bg-[#0D1420] border border-white/5 hover:border-white/15 text-white font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                          className={`h-9 bg-transparent dark:bg-[#0D1420] border ${styles.borderNormal} hover:${styles.borderHover} ${styles.textTitle} font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all`}
                         >
-                          <HelpCircle className="w-3 h-3 text-brand-muted" />
+                          <HelpCircle className={`w-3 h-3 ${styles.textMuted}`} />
                           <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
                         </button>
                       </div>
                       
                       {/* TINY METADATA */}
-                      <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-[9px] text-brand-muted/70 font-mono">
+                      <div className={`mt-4 pt-3 border-t ${styles.borderSubtle} flex items-center justify-between text-[9px] ${styles.textLightMuted} font-mono`}>
                         <span>Updated: Today</span>
                         <span>{new Date(up.activatedAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
                       </div>
@@ -1433,22 +1478,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {activeTab === 'redeem' && (
           <div className="space-y-8 max-w-xl mx-auto py-8 animate-slide-up">
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#1A1A1A] text-white border border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className={`w-16 h-16 ${styles.bgInnerCard} ${styles.textTitle} border ${styles.borderNormal} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm`}>
                 <Key className="w-8 h-8" />
               </div>
-              <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+              <h1 className={`text-3xl font-extrabold ${styles.textTitle} tracking-tight mb-2`}>
                 {lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}
               </h1>
-              <p className="text-xs text-[#8D8D8D] font-medium">
+              <p className={`text-xs ${styles.textMuted} font-medium`}>
                 {lang === 'ar' ? 'أدخل مفتاح الاشتراك الخاص بك لإضافته لحسابك فوراً' : 'Enter your license key to add it to your account instantly'}
               </p>
             </div>
 
-            <div className="bg-[#111111] border border-[#262626] rounded-[20px] p-8 space-y-6 relative overflow-hidden group">
+            <div className={`${styles.bgCard} rounded-[20px] p-8 space-y-6 relative overflow-hidden group shadow-sm`}>
               <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
               <form onSubmit={handleRedeemKey} className="space-y-5 relative z-10">
                 <div>
-                  <label className={`block text-xs font-bold text-[#8D8D8D] mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <label className={`block text-xs font-bold ${styles.textMuted} mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                     {lang === 'ar' ? 'مفتاح التفعيل (License Key)' : 'License Key'}
                   </label>
                   <input
@@ -1457,7 +1502,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
                     placeholder="KEY-T3N-ABCD-1234-EFGH"
-                    className="w-full bg-[#0B0B0B] border border-white/10 focus:border-white/20 rounded-xl px-5 py-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-mono tracking-widest text-center shadow-inner"
+                    className={`w-full ${styles.bgInnerCard} border ${styles.borderNormal} focus:border-indigo-500/50 dark:focus:border-white/20 rounded-xl px-5 py-4 text-sm ${styles.textTitle} focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:focus:ring-white/10 transition-all font-mono tracking-widest text-center shadow-inner`}
                   />
                 </div>
 
@@ -1471,30 +1516,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <button
                   type="submit"
                   disabled={isRedeeming}
-                  className="w-full py-4 bg-white hover:bg-[#E5E5E5] text-black font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
+                  className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-indigo-500/20"
                 >
                   {isRedeeming ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                   <span>{lang === 'ar' ? 'تفعيل المفتاح الآن' : 'Redeem Key Now'}</span>
                 </button>
               </form>
 
-              <div className="pt-6 border-t border-white/[0.04] space-y-4 relative z-10">
+              <div className={`pt-6 border-t ${styles.borderSubtle} space-y-4 relative z-10`}>
                 <a
                   href="https://t3nnn.wtf"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-[#0B0B0B] border border-white/5 hover:border-white/10 rounded-xl p-4 flex items-center justify-between transition-all group"
+                  className={`w-full ${styles.bgInnerCard} border ${styles.borderSubtle} hover:${styles.borderNormal} rounded-xl p-4 flex items-center justify-between transition-all group`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                    <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'} flex items-center justify-center ${styles.textTitle} group-hover:scale-110 transition-transform`}>
                       <ShoppingCart className="w-5 h-5" />
                     </div>
                     <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
-                      <div className="text-sm font-bold text-white group-hover:text-white transition-colors">{lang === 'ar' ? 'لا تملك مفتاح اشتراك؟' : "Don't have a license key?"}</div>
-                      <div className="text-xs text-[#8D8D8D] mt-0.5">{lang === 'ar' ? 'احصل عليه الآن من متجرنا الرسمي بأسعار حصرية' : 'Get it now from our official store at exclusive prices'}</div>
+                      <div className={`text-sm font-bold ${styles.textTitle} transition-colors`}>{lang === 'ar' ? 'لا تملك مفتاح اشتراك؟' : "Don't have a license key?"}</div>
+                      <div className={`text-xs ${styles.textMuted} mt-0.5`}>{lang === 'ar' ? 'احصل عليه الآن من متجرنا الرسمي بأسعار حصرية' : 'Get it now from our official store at exclusive prices'}</div>
                     </div>
                   </div>
-                  <div className="bg-white hover:bg-[#E5E5E5] text-black text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shadow-lg shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shadow-lg shrink-0 group-hover:scale-105 transition-transform">
                     <span>{lang === 'ar' ? 'شراء مفتاح' : 'Purchase Key'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
@@ -1504,18 +1549,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   href="https://discord.gg/t3n"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-[#0B0B0B] border border-white/5 hover:border-white/10 rounded-xl p-4 flex items-center justify-between transition-all group mt-3"
+                  className={`w-full ${styles.bgInnerCard} border ${styles.borderSubtle} hover:${styles.borderNormal} rounded-xl p-4 flex items-center justify-between transition-all group mt-3`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                    <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'} flex items-center justify-center ${styles.textTitle} group-hover:scale-110 transition-transform`}>
                       <HelpCircle className="w-5 h-5" />
                     </div>
                     <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
-                      <div className="text-sm font-bold text-white group-hover:text-white transition-colors">{lang === 'ar' ? 'تحتاج إلى مساعدة؟' : 'Need help?'}</div>
-                      <div className="text-xs text-[#8D8D8D] mt-0.5">{lang === 'ar' ? 'تواصل مع فريق الدعم الفني عبر ديسكورد' : 'Get in touch with support via Discord'}</div>
+                      <div className={`text-sm font-bold ${styles.textTitle} transition-colors`}>{lang === 'ar' ? 'تحتاج إلى مساعدة؟' : 'Need help?'}</div>
+                      <div className={`text-xs ${styles.textMuted} mt-0.5`}>{lang === 'ar' ? 'تواصل مع فريق الدعم الفني عبر ديسكورد' : 'Get in touch with support via Discord'}</div>
                     </div>
                   </div>
-                  <div className="bg-transparent border border-white/10 hover:border-white/20 hover:bg-[#1B1B1B] text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 group-hover:scale-105 transition-transform">
+                  <div className={`bg-transparent border ${styles.borderNormal} hover:bg-black/5 dark:hover:bg-white/5 ${styles.textTitle} text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 group-hover:scale-105 transition-transform`}>
                     <span>{lang === 'ar' ? 'الدعم الفني' : 'Technical Support'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </div>
@@ -1525,19 +1570,151 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         )}
 
+        {/* TAB 5: PROFILE */}
+        {activeTab === 'profile' && (
+          <div className="space-y-8 max-w-2xl mx-auto py-6 animate-slide-up">
+            <div>
+              <h1 className={`text-3xl font-extrabold ${styles.textTitle} tracking-tight`}>
+                {lang === 'ar' ? 'الملف الشخصي' : 'My Profile'}
+              </h1>
+              <p className={`text-xs ${styles.textMuted} mt-1.5 font-medium`}>
+                {lang === 'ar' ? 'إدارة بيانات حسابك وتفضيلات المظهر واللغة' : 'Manage your account details, appearance, and language preferences'}
+              </p>
+            </div>
+
+            {/* Profile Info Card */}
+            <div className={`${styles.bgCard} rounded-[20px] p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm`}>
+              <div className="relative group">
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 blur opacity-30 group-hover:opacity-50 transition duration-500" />
+                <img
+                  src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                  alt={currentUser.name}
+                  className={`w-20 h-20 rounded-full object-cover relative z-10 border-2 border-indigo-500/20 shadow-md ${isDark ? 'grayscale opacity-90' : ''}`}
+                  onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 justify-center sm:justify-start">
+                  <h2 className={`text-xl font-bold ${styles.textTitle}`}>{currentUser.name}</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 w-fit mx-auto sm:mx-0">
+                    {(currentUser.role === 'Boss' || currentUser.role === 'Admin' || currentUser.role === 'Co-Boss') ? (lang === 'ar' ? 'مسؤول النظام' : 'Administrator') : (lang === 'ar' ? 'عميل' : 'Customer')}
+                  </span>
+                </div>
+                <p className={`text-xs ${styles.textMuted} mt-1 font-mono`}>
+                  Discord ID: {currentUser.id || 'N/A'}
+                </p>
+                <p className={`text-[11px] ${styles.textLightMuted} mt-3`}>
+                  {lang === 'ar' ? 'تاريخ الانضمام:' : 'Joined:'} {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'long' })}
+                </p>
+              </div>
+            </div>
+
+            {/* Preferences & Settings */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Appearance Setting */}
+              <div className={`${styles.bgCard} rounded-[20px] p-6 shadow-sm flex flex-col justify-between`}>
+                <div>
+                  <h3 className={`text-sm font-bold ${styles.textTitle} mb-1 flex items-center gap-2`}>
+                    <Sparkles className="w-4 h-4 text-indigo-500" />
+                    <span>{lang === 'ar' ? 'المظهر والمرئيات' : 'Appearance & Theme'}</span>
+                  </h3>
+                  <p className={`text-[11px] ${styles.textMuted} mb-5`}>
+                    {lang === 'ar' ? 'اختر الوضع المفضل لديك لتصفح مريح' : 'Choose your preferred color theme for the portal'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      !isDark 
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/15' 
+                        : `${styles.bgInnerCard} ${styles.borderNormal} ${styles.textMuted} hover:${styles.textTitle}`
+                    }`}
+                  >
+                    {lang === 'ar' ? 'فاتح' : 'Light Mode'}
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      isDark 
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/15' 
+                        : `${styles.bgInnerCard} ${styles.borderNormal} ${styles.textMuted} hover:${styles.textTitle}`
+                    }`}
+                  >
+                    {lang === 'ar' ? 'داكن' : 'Dark Mode'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Language Setting */}
+              <div className={`${styles.bgCard} rounded-[20px] p-6 shadow-sm flex flex-col justify-between`}>
+                <div>
+                  <h3 className={`text-sm font-bold ${styles.textTitle} mb-1 flex items-center gap-2`}>
+                    <Globe className="w-4 h-4 text-indigo-500" />
+                    <span>{lang === 'ar' ? 'لغة المنصة' : 'Language Settings'}</span>
+                  </h3>
+                  <p className={`text-[11px] ${styles.textMuted} mb-5`}>
+                    {lang === 'ar' ? 'تغيير لغة عرض الواجهة والتقارير' : 'Switch the display language for portal elements'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLang('ar')}
+                    className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      lang === 'ar' 
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/15' 
+                        : `${styles.bgInnerCard} ${styles.borderNormal} ${styles.textMuted} hover:${styles.textTitle}`
+                    }`}
+                  >
+                    العربية
+                  </button>
+                  <button
+                    onClick={() => setLang('en')}
+                    className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      lang === 'en' 
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/15' 
+                        : `${styles.bgInnerCard} ${styles.borderNormal} ${styles.textMuted} hover:${styles.textTitle}`
+                    }`}
+                  >
+                    English
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Support Box */}
+            <div className={`${styles.bgCard} rounded-[20px] p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 border-l-4 border-l-indigo-500`}>
+              <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
+                <h4 className={`text-sm font-bold ${styles.textTitle}`}>{lang === 'ar' ? 'هل تحتاج إلى تحديث بياناتك؟' : 'Need to update details?'}</h4>
+                <p className={`text-[11px] ${styles.textMuted} mt-1`}>
+                  {lang === 'ar' ? 'تواصل مع الدعم الفني لمزامنة الرتب أو حل مشكلات الحساب.' : 'Connect with our Discord support team to resolve billing or access issues.'}
+                </p>
+              </div>
+              <a
+                href="https://discord.gg/t3n"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/10 cursor-pointer shrink-0"
+              >
+                {lang === 'ar' ? 'تواصل مع الدعم' : 'Contact Support'}
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
           <div className="space-y-6 max-w-6xl mx-auto">
             {/* Top Admin Header */}
-            <div className="bg-[#10121a] border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className={`${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
               <div>
-                <h1 className="text-2xl font-extrabold text-white tracking-wide flex items-center gap-3">
-                  <div className="p-2 bg-white/5 rounded-xl border border-white/10">
-                    {adminSectionTab === 'overview' && <Activity className="w-6 h-6 text-sky-400" />}
-                    {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-400" />}
-                    {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-400" />}
-                    {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-primary" />}
-                    {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-400" />}
+                <h1 className={`text-2xl font-extrabold ${styles.textTitle} tracking-wide flex items-center gap-3`}>
+                  <div className={`p-2 bg-black/5 dark:bg-white/5 rounded-xl border ${styles.borderSubtle}`}>
+                    {adminSectionTab === 'overview' && <Activity className="w-6 h-6 text-sky-500 dark:text-sky-400" />}
+                    {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />}
+                    {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
+                    {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-indigo-600 dark:text-primary" />}
+                    {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
                   </div>
                   <span>
                     {adminSectionTab === 'overview' && (lang === 'ar' ? 'نظرة عامة وإحصائيات' : 'Overview & Stats')}
@@ -1547,7 +1724,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'logs' && (lang === 'ar' ? 'سجلات النظام' : 'System Logs')}
                   </span>
                 </h1>
-                <p className="text-xs text-slate-400 mt-2">
+                <p className={`text-xs ${styles.textMuted} mt-2`}>
                   {adminSectionTab === 'overview' && 'إحصائيات شاملة ومباشرة لمنصة تعن الرقمية.'}
                   {adminSectionTab === 'products' && 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.'}
                   {adminSectionTab === 'customers' && 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.'}
@@ -1558,36 +1735,64 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {adminStats && (
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="px-4 py-2 bg-primary/10 border border-primary/20 text-primary rounded-xl font-bold flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span>{adminStats.unusedKeys} مفتاح متاح</span>
+                  <span className="px-4 py-2 bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 text-indigo-650 dark:text-primary rounded-xl font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-primary animate-pulse" />
+                    <span>{adminStats.unusedKeys} {lang === 'ar' ? 'مفتاح متاح' : 'keys available'}</span>
                   </span>
-                  <span className="px-4 py-2 bg-sky-500/10 border border-sky-500/20 text-sky-400 rounded-xl font-bold">
-                    {adminStats.totalUsers} عميل مسجل
+                  <span className="px-4 py-2 bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl font-bold">
+                    {adminStats.totalUsers} {lang === 'ar' ? 'عميل مسجل' : 'registered users'}
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* Admin Sub-Tabs Navigation */}
+            <div className={`flex flex-wrap items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-fit`}>
+              {[
+                { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
+                { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
+                { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
+                { id: 'keys', label: lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search', icon: Key },
+                { id: 'logs', label: lang === 'ar' ? 'سجلات النظام' : 'System Logs', icon: FileText },
+              ].map((tab) => {
+                const IconComponent = tab.icon;
+                const isActive = adminSectionTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setAdminSectionTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isActive 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/15' 
+                        : `${styles.textMuted} hover:${styles.textTitle} hover:bg-black/5 dark:hover:bg-white/5`
+                    }`}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* ==================== SUB-TAB 1: PRODUCTS & INVENTORY ==================== */}
             {adminSectionTab === 'products' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Package className="w-5 h-5 text-sky-400" />
-                    <span>منتجات المتجر والمخزون المتاح</span>
+                  <h3 className={`text-lg font-bold ${styles.textTitle} flex items-center gap-2`}>
+                    <Package className="w-5 h-5 text-indigo-500 dark:text-sky-400" />
+                    <span>{lang === 'ar' ? 'منتجات المتجر والمخزون المتاح' : 'Store Products & Available Stock'}</span>
                   </h3>
-                  <span className="text-xs text-slate-400 font-medium">انقر على أي منتج لفتحه وتعديله وت عبئة مفاتيحه</span>
+                  <span className={`text-xs ${styles.textMuted} font-medium`}>{lang === 'ar' ? 'انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه' : 'Click on any product to modify or add license keys'}</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
                   {products.map((product) => (
                     <div
                       key={product.id}
-                      className="glass-card rounded-[24px] overflow-hidden hover:border-primary/40 transition-all duration-300 flex flex-col group"
+                      className="glass-card rounded-[24px] overflow-hidden hover:border-indigo-500/40 dark:hover:border-primary/40 transition-all duration-300 flex flex-col group"
                     >
                       {/* Top Image Banner - Full Width */}
-                      <div className="relative h-48 w-full bg-[#050505] overflow-hidden border-b border-white/[0.04]">
+                      <div className={`relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
                         <img
                           src={product.image || '/logo.png?v=6'}
                           alt={product.name}
@@ -1597,11 +1802,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0a0a0a] via-transparent to-transparent" />
                         
-                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
-                          <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">المخزون المتاح:</span>
-                          <span className="text-xs font-black text-primary">{product.stockKeysCount || 0}</span>
+                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+                          <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{lang === 'ar' ? 'المخزون المتاح:' : 'Stock:'}</span>
+                          <span className="text-xs font-black text-indigo-400 dark:text-primary">{product.stockKeysCount || 0}</span>
                         </div>
                       </div>
 
@@ -1609,20 +1814,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="p-6 flex-1 flex flex-col">
                         {/* Title & Icon Row */}
                         <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-brand-glow">
-                            <Package className="w-6 h-6 text-primary" />
+                          <div className={`w-12 h-12 rounded-xl bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 flex items-center justify-center shrink-0 shadow-sm`}>
+                            <Package className="w-6 h-6 text-indigo-650 dark:text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-white text-lg leading-tight tracking-wide group-hover:text-primary transition-colors">{product.name}</h3>
-                            <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2 font-mono">
-                              <span className="text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">{product.version}</span>
-                              <span className="text-slate-600">·</span>
-                              <span className="font-bold text-slate-300">{product.category}</span>
+                            <h3 className={`font-extrabold ${styles.textTitle} text-lg leading-tight tracking-wide group-hover:text-indigo-650 dark:group-hover:text-primary transition-colors`}>{product.name}</h3>
+                            <div className={`text-[11px] ${styles.textMuted} mt-1 flex items-center gap-2 font-mono`}>
+                              <span className="text-indigo-600 dark:text-primary font-bold bg-indigo-500/10 dark:bg-primary/10 px-2 py-0.5 rounded-md border border-indigo-500/20 dark:border-primary/20">{product.version}</span>
+                              <span className="text-slate-400">·</span>
+                              <span className={`font-bold ${styles.textTitle}`}>{product.category}</span>
                             </div>
                           </div>
                         </div>
 
-                        <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 mb-6 flex-1">
+                        <p className={`text-sm ${styles.textMuted} leading-relaxed line-clamp-2 mb-6 flex-1`}>
                           {product.description}
                         </p>
 
@@ -1630,18 +1835,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="grid grid-cols-2 gap-3 mt-auto">
                           <button
                             onClick={() => openInventoryModal(product, 'codes', true)}
-                            className="py-3 px-4 bg-primary hover:bg-primary-hover text-black font-bold text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
+                            className="py-3 px-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white dark:text-black font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5 shadow-md shadow-indigo-500/20"
                           >
                             <Key className="w-4 h-4" />
-                            <span>إضافة مفاتيح</span>
+                            <span>{lang === 'ar' ? 'إضافة مفاتيح' : 'Add Keys'}</span>
                           </button>
 
                           <button
                             onClick={() => openInventoryModal(product, 'data', false)}
-                            className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
+                            className={`py-3 px-4 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border ${styles.borderNormal} rounded-xl text-xs font-bold ${styles.textTitle} transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5`}
                           >
-                            <Edit3 className="w-4 h-4 text-slate-400" />
-                            <span>تعديل المنتج</span>
+                            <Edit3 className={`w-4 h-4 ${styles.textMuted}`} />
+                            <span>{lang === 'ar' ? 'تعديل المنتج' : 'Edit Product'}</span>
                           </button>
                         </div>
                       </div>
@@ -1656,20 +1861,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="space-y-4 animate-slide-up">
                 <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-black text-white flex items-center gap-2">
-                      <Users className="w-5 h-5 text-primary" />
-                      <span>قائمة العملاء وإدارة الاشتراكات</span>
+                    <h3 className={`text-lg font-black ${styles.textTitle} flex items-center gap-2`}>
+                      <Users className="w-5 h-5 text-indigo-500 dark:text-primary" />
+                      <span>{lang === 'ar' ? 'قائمة العملاء وإدارة الاشتراكات' : 'Customers list & subscriptions'}</span>
                     </h3>
 
                     {/* Search Bar for Customers */}
                     <div className="relative w-full md:w-80">
-                      <Search className="w-4 h-4 absolute right-4 top-3.5 text-slate-400" />
+                      <Search className={`w-4 h-4 absolute ${lang === 'ar' ? 'right-4' : 'left-4'} top-3.5 ${styles.textMuted}`} />
                       <input
                         type="text"
                         value={searchCustomerQuery}
                         onChange={(e) => setSearchCustomerQuery(e.target.value)}
-                        placeholder="ابحث باسم العميل أو إيميله أو Discord ID..."
-                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 rounded-xl pr-11 pl-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all shadow-inner"
+                        placeholder={lang === 'ar' ? 'ابحث باسم العميل أو إيميله أو Discord ID...' : 'Search by name, email, or Discord ID...'}
+                        className={`w-full ${styles.bgInnerCard} border ${styles.borderNormal} focus:border-indigo-500/50 dark:focus:border-primary/50 rounded-xl ${lang === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 text-xs ${styles.textTitle} placeholder:${styles.textLightMuted} focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:focus:ring-primary/30 transition-all shadow-inner`}
                       />
                     </div>
                   </div>
@@ -1677,15 +1882,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="overflow-x-auto scrollbar-none">
                     <table className="w-full text-right text-xs">
                       <thead>
-                        <tr className="border-b border-white/[0.06] text-slate-400 font-bold">
-                          <th className="pb-3.5 pr-2">العميل</th>
-                          <th className="pb-3.5">البريد / Discord</th>
-                          <th className="pb-3.5">الرتبة</th>
-                          <th className="pb-3.5">عنوان IP</th>
-                          <th className="pb-3.5">الإجراءات والاشتراكات</th>
+                        <tr className={`border-b ${styles.borderNormal} ${styles.textMuted} font-bold`}>
+                          <th className="pb-3.5 pr-2">{lang === 'ar' ? 'العميل' : 'Customer'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'البريد / Discord' : 'Email / Discord'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'الرتبة' : 'Role'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'عنوان IP' : 'IP Address'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'الإجراءات والاشتراكات' : 'Actions & Licenses'}</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.04]">
+                      <tbody className={`divide-y ${styles.borderSubtle}`}>
                         {allCustomersList
                           .filter(
                             (u) =>
@@ -1695,44 +1900,44 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               u.discordId?.includes(searchCustomerQuery)
                           )
                           .map((customer) => (
-                            <tr key={customer.id} className="text-slate-300 hover:bg-white/[0.03] transition-colors duration-150">
-                              <td className="py-3.5 pr-2 font-bold text-white flex items-center gap-2">
+                            <tr key={customer.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors duration-150`}>
+                              <td className="py-3.5 pr-2 font-bold flex items-center gap-2">
                                 <img
                                   src={customer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                                   alt={customer.name}
-                                  className="w-8 h-8 rounded-full border border-white/10"
+                                  className={`w-8 h-8 rounded-full border ${styles.borderNormal} ${isDark ? 'grayscale' : ''}`}
                                   onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
                                 />
                                 <div>
                                   <div className="font-extrabold">{customer.name}</div>
-                                  <div className="text-[10px] text-slate-500 font-mono">ID: {customer.id}</div>
+                                  <div className={`text-[10px] ${styles.textLightMuted} font-mono`}>ID: {customer.id}</div>
                                 </div>
                               </td>
-                              <td className="py-3.5 text-slate-300">
-                                <div className="font-medium">{customer.email || 'لا يوجد إيميل'}</div>
-                                <div className="text-[10px] text-primary font-mono">Discord: {customer.discordId}</div>
+                              <td className={`py-3.5 ${styles.textTitle}`}>
+                                <div className="font-medium">{customer.email || (lang === 'ar' ? 'لا يوجد إيميل' : 'No email')}</div>
+                                <div className="text-[10px] text-indigo-500 dark:text-primary font-mono">Discord: {customer.discordId}</div>
                               </td>
                               <td className="py-3.5">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${customer.role === 'Boss' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${customer.role === 'Boss' ? 'bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-transparent'}`}>
                                   {customer.role}
                                 </span>
                               </td>
-                              <td className="py-3.5 font-mono text-[11px] text-slate-400">{customer.lastIp || '127.0.0.1'}</td>
+                              <td className={`py-3.5 font-mono text-[11px] ${styles.textMuted}`}>{customer.lastIp || '127.0.0.1'}</td>
                               <td className="py-3.5 space-y-1">
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => setSelectedAdminCustomer(customer)}
-                                    className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg text-[10px] font-black text-primary transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02]"
-                                    title="عرض تفاصيل العميل وإدارة اشتراكاته ومفاتيحه"
+                                    className="px-3 py-1.5 bg-indigo-500/10 dark:bg-primary/10 hover:bg-indigo-500/25 dark:hover:bg-primary/20 border border-indigo-500/30 dark:border-primary/30 rounded-lg text-[10px] font-black text-indigo-600 dark:text-primary transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02]"
+                                    title={lang === 'ar' ? 'عرض تفاصيل العميل وإدارة اشتراكاته ومفاتيحه' : 'View customer profile and manage licenses'}
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
-                                    <span>إدارة العميل</span>
+                                    <span>{lang === 'ar' ? 'إدارة العميل' : 'Manage'}</span>
                                   </button>
 
                                   <button
                                     onClick={() => handleDeleteUserAccount(customer.id, customer.name)}
-                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg transition-colors cursor-pointer hover:scale-[1.02]"
-                                    title="حذف العميل نهائياً"
+                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 rounded-lg transition-colors cursor-pointer hover:scale-[1.02]"
+                                    title={lang === 'ar' ? 'حذف العميل نهائياً' : 'Delete user permanently'}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -1752,20 +1957,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="space-y-4 animate-slide-up">
                 <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-black text-white flex items-center gap-2">
-                      <Key className="w-5 h-5 text-primary" />
-                      <span>البحث الشامل وتفتيش المفاتيح في النظام</span>
+                    <h3 className={`text-lg font-black ${styles.textTitle} flex items-center gap-2`}>
+                      <Key className="w-5 h-5 text-indigo-500 dark:text-primary" />
+                      <span>{lang === 'ar' ? 'البحث الشامل وتفتيش المفاتيح في النظام' : 'Global system keys audit'}</span>
                     </h3>
 
                     {/* Key Search Input */}
                     <div className="relative w-full md:w-80">
-                      <Search className="w-4 h-4 absolute right-4 top-3.5 text-slate-400" />
+                      <Search className={`w-4 h-4 absolute ${lang === 'ar' ? 'right-4' : 'left-4'} top-3.5 ${styles.textMuted}`} />
                       <input
                         type="text"
                         value={searchKeysQuery}
                         onChange={(e) => setSearchKeysQuery(e.target.value)}
-                        placeholder="ابحث بكود المفتاح (e.g. T3N-FORT...)..."
-                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 rounded-xl pr-11 pl-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-mono shadow-inner"
+                        placeholder={lang === 'ar' ? 'ابحث بكود المفتاح (e.g. T3N-FORT...)...' : 'Search key code...'}
+                        className={`w-full ${styles.bgInnerCard} border ${styles.borderNormal} focus:border-indigo-500/50 dark:focus:border-primary/50 rounded-xl ${lang === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 text-xs ${styles.textTitle} placeholder:${styles.textLightMuted} focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:focus:ring-primary/30 transition-all font-mono shadow-inner`}
                       />
                     </div>
                   </div>
@@ -1774,37 +1979,37 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setKeyStatusFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-primary text-black font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'all' ? 'bg-indigo-600 text-white dark:bg-primary dark:text-black font-extrabold shadow-sm' : `bg-black/5 dark:bg-white/5 border ${styles.borderNormal} ${styles.textMuted} hover:bg-black/10 dark:hover:bg-white/10`}`}
                     >
-                      الكل ({allKeysList.length})
+                      {lang === 'ar' ? 'الكل' : 'All'} ({allKeysList.length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('unused')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-primary text-black font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'unused' ? 'bg-indigo-600 text-white dark:bg-primary dark:text-black font-extrabold shadow-sm' : `bg-black/5 dark:bg-white/5 border ${styles.borderNormal} ${styles.textMuted} hover:bg-black/10 dark:hover:bg-white/10`}`}
                     >
-                      متاح فقط ({allKeysList.filter((k) => !k.isUsed).length})
+                      {lang === 'ar' ? 'متاح فقط' : 'Available only'} ({allKeysList.filter((k) => !k.isUsed).length})
                     </button>
                     <button
                       onClick={() => setKeyStatusFilter('used')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-primary text-black font-extrabold shadow-brand-glow' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${keyStatusFilter === 'used' ? 'bg-indigo-600 text-white dark:bg-primary dark:text-black font-extrabold shadow-sm' : `bg-black/5 dark:bg-white/5 border ${styles.borderNormal} ${styles.textMuted} hover:bg-black/10 dark:hover:bg-white/10`}`}
                     >
-                      مستعمل ({allKeysList.filter((k) => k.isUsed).length})
+                      {lang === 'ar' ? 'مستعمل' : 'Used'} ({allKeysList.filter((k) => k.isUsed).length})
                     </button>
                   </div>
 
                   <div className="overflow-x-auto scrollbar-none">
                     <table className="w-full text-right text-xs font-mono">
                       <thead>
-                        <tr className="border-b border-white/[0.06] text-slate-400 font-sans font-bold">
-                          <th className="pb-3.5 pr-2">الكود (Key)</th>
-                          <th className="pb-3.5">المنتج المرتبط</th>
-                          <th className="pb-3.5">الحالة</th>
-                          <th className="pb-3.5">المستخدم</th>
-                          <th className="pb-3.5">تاريخ الإنشاء</th>
-                          <th className="pb-3.5 text-left pl-2">الإجراءات</th>
+                        <tr className={`border-b ${styles.borderNormal} ${styles.textMuted} font-sans font-bold`}>
+                          <th className="pb-3.5 pr-2">{lang === 'ar' ? 'الكود (Key)' : 'Key'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'المنتج المرتبط' : 'Associated Product'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'المستخدم' : 'Used By'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'تاريخ الإنشاء' : 'Created At'}</th>
+                          <th className={`pb-3.5 ${lang === 'ar' ? 'text-left pl-2' : 'text-right pr-2'}`}>{lang === 'ar' ? 'الإجراءات' : 'Actions'}</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.04]">
+                      <tbody className={`divide-y ${styles.borderSubtle}`}>
                         {allKeysList
                           .filter((k) => {
                             if (keyStatusFilter === 'unused' && k.isUsed) return false;
@@ -1813,49 +2018,49 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             return k.key.toLowerCase().includes(searchKeysQuery.toLowerCase());
                           })
                           .map((keyObj) => (
-                            <tr key={keyObj.id} className="text-slate-300 hover:bg-white/[0.03] transition-colors duration-150">
-                              <td className="py-3.5 pr-2 font-bold text-primary select-all">{keyObj.key}</td>
-                              <td className="py-3.5 font-sans text-white font-semibold">
+                            <tr key={keyObj.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors duration-150`}>
+                              <td className="py-3.5 pr-2 font-bold text-indigo-500 dark:text-primary select-all">{keyObj.key}</td>
+                              <td className={`py-3.5 font-sans ${styles.textTitle} font-semibold`}>
                                 {products.find((p) => p.id === keyObj.productId)?.name || keyObj.productId}
                               </td>
                               <td className="py-3.5 font-sans">
                                 {keyObj.isUsed ? (
-                                  <span className="px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-[10px] font-bold">
-                                    مستعمل
+                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded text-[10px] font-bold border border-slate-200 dark:border-transparent">
+                                    {lang === 'ar' ? 'مستعمل' : 'Used'}
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded text-[10px] font-bold">
-                                    متاح
+                                  <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded text-[10px] font-bold">
+                                    {lang === 'ar' ? 'متاح' : 'Available'}
                                   </span>
                                 )}
                               </td>
-                              <td className="py-3.5 font-sans text-primary font-semibold text-xs">
+                              <td className="py-3.5 font-sans text-indigo-600 dark:text-primary font-semibold text-xs">
                                 {keyObj.isUsed ? (
                                   allCustomersList.find((u: any) => u.id === keyObj.usedByUserId)?.name || 
                                   allCustomersList.find((u: any) => u.id === keyObj.usedByUserId)?.discordId || 
-                                  'مستخدم غير معروف'
+                                  (lang === 'ar' ? 'مستخدم غير معروف' : 'Unknown User')
                                 ) : (
-                                  <span className="text-slate-600 font-mono">-</span>
+                                  <span className={`${styles.textLightMuted} font-mono`}>-</span>
                                 )}
                               </td>
-                              <td className="py-3.5 text-slate-400 text-[11px]">
-                                {new Date(keyObj.createdAt).toLocaleDateString('ar-SA')}
+                              <td className={`py-3.5 ${styles.textMuted} text-[11px]`}>
+                                {new Date(keyObj.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}
                               </td>
-                              <td className="py-3.5 font-sans flex items-center justify-end gap-2 pl-2">
+                              <td className={`py-3.5 font-sans flex items-center ${lang === 'ar' ? 'justify-end pl-2' : 'justify-start pr-2'} gap-2`}>
                                 {keyObj.isUsed && (
                                   <button
                                     onClick={() => handleRevokeAndBan(keyObj.usedByUserId, keyObj.id)}
                                     className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-[10px] font-bold transition-all cursor-pointer hover:scale-105"
-                                    title="حظر المستخدم وإلغاء المفتاح"
+                                    title={lang === 'ar' ? 'حظر المستخدم وإلغاء المفتاح' : 'Revoke key and ban user'}
                                   >
-                                    إلغاء وحظر
+                                    {lang === 'ar' ? 'إلغاء وحظر' : 'Revoke & Ban'}
                                   </button>
                                 )}
                                 <button
                                   onClick={() => handleDeleteKey(keyObj.id)}
-                                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded text-[10px] font-bold text-rose-400 transition-all cursor-pointer hover:scale-105"
+                                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded text-[10px] font-bold text-rose-500 transition-all cursor-pointer hover:scale-105"
                                 >
-                                  حذف
+                                  {lang === 'ar' ? 'حذف' : 'Delete'}
                                 </button>
                               </td>
                             </tr>
@@ -1870,30 +2075,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* ==================== SUB-TAB 4: SYSTEM AUDIT LOGS ==================== */}
             {adminSectionTab === 'logs' && (
               <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6 animate-slide-up">
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <span>سجلات الأمان والنشاط المباشرة (System Audit Logs)</span>
+                <h3 className={`text-lg font-black ${styles.textTitle} flex items-center gap-2`}>
+                  <FileText className="w-5 h-5 text-indigo-500 dark:text-primary" />
+                  <span>{lang === 'ar' ? 'سجلات الأمان والنشاط المباشرة (System Audit Logs)' : 'Live security audit logs'}</span>
                 </h3>
 
                 <div className="overflow-x-auto scrollbar-none">
                   <table className="w-full text-right text-xs">
                     <thead>
-                      <tr className="border-b border-white/10 text-slate-400 font-bold">
-                        <th className="pb-4">الحدث</th>
-                        <th className="pb-4">التفاصيل</th>
-                        <th className="pb-4">المستخدم / Discord</th>
-                        <th className="pb-4">عنوان IP</th>
-                        <th className="pb-4">التوقيت</th>
+                      <tr className={`border-b ${styles.borderNormal} ${styles.textMuted} font-bold`}>
+                        <th className="pb-4">{lang === 'ar' ? 'الحدث' : 'Action'}</th>
+                        <th className="pb-4">{lang === 'ar' ? 'التفاصيل' : 'Details'}</th>
+                        <th className="pb-4">{lang === 'ar' ? 'المستخدم / Discord' : 'User / Discord'}</th>
+                        <th className="pb-4">{lang === 'ar' ? 'عنوان IP' : 'IP Address'}</th>
+                        <th className="pb-4">{lang === 'ar' ? 'التوقيت' : 'Time'}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04]">
+                    <tbody className={`divide-y ${styles.borderSubtle}`}>
                       {adminLogs.map((log) => (
-                        <tr key={log.id} className="text-slate-300 hover:bg-white/5 transition-colors duration-200">
-                          <td className="py-4 font-bold text-white">{log.action}</td>
+                        <tr key={log.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/5 transition-colors duration-200`}>
+                          <td className="py-4 font-bold">{log.action}</td>
                           <td className="py-4 max-w-xs truncate">{log.details}</td>
-                          <td className="py-4 text-primary font-semibold">{log.userName || log.discordId || 'زائر'}</td>
-                          <td className="py-4 font-mono text-[11px] text-slate-400">{log.ipAddress}</td>
-                          <td className="py-4 text-slate-400">{new Date(log.createdAt).toLocaleTimeString('ar-SA')}</td>
+                          <td className="py-4 text-indigo-650 dark:text-primary font-semibold">{log.userName || log.discordId || (lang === 'ar' ? 'زائر' : 'Guest')}</td>
+                          <td className={`py-4 font-mono text-[11px] ${styles.textMuted}`}>{log.ipAddress}</td>
+                          <td className={`py-4 ${styles.textMuted}`}>{new Date(log.createdAt).toLocaleTimeString(lang === 'ar' ? 'ar-SA' : 'en-US')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1908,53 +2113,53 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {/* Primary Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
-                        <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">إجمالي العملاء</div>
-                        <div className="text-3xl font-black text-white">{adminStats.totalUsers}</div>
+                        <div className={`text-xs ${styles.textMuted} mb-2 font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'إجمالي العملاء' : 'Total Customers'}</div>
+                        <div className={`text-3xl font-black ${styles.textTitle}`}>{adminStats.totalUsers}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
-                        <Users className="w-6 h-6 text-primary" />
+                      <div className={`p-3 ${styles.bgInnerCard} rounded-xl border ${styles.borderNormal} group-hover:scale-110 transition-transform`}>
+                        <Users className="w-6 h-6 text-indigo-500 dark:text-primary" />
                       </div>
                     </div>
                   </div>
 
                   <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
-                        <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">المفاتيح المتاحة</div>
-                        <div className="text-3xl font-black text-primary">{adminStats.unusedKeys}</div>
+                        <div className={`text-xs ${styles.textMuted} mb-2 font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'المفاتيح المتاحة' : 'Available Keys'}</div>
+                        <div className="text-3xl font-black text-indigo-500 dark:text-primary">{adminStats.unusedKeys}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
-                        <Key className="w-6 h-6 text-primary" />
+                      <div className={`p-3 ${styles.bgInnerCard} rounded-xl border ${styles.borderNormal} group-hover:scale-110 transition-transform`}>
+                        <Key className="w-6 h-6 text-indigo-500 dark:text-primary" />
                       </div>
                     </div>
                   </div>
 
                   <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
-                        <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">المنتجات النشطة</div>
-                        <div className="text-3xl font-black text-white">{adminStats.activeProducts}</div>
+                        <div className={`text-xs ${styles.textMuted} mb-2 font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
+                        <div className={`text-3xl font-black ${styles.textTitle}`}>{adminStats.activeProducts}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
-                        <Package className="w-6 h-6 text-primary" />
+                      <div className={`p-3 ${styles.bgInnerCard} rounded-xl border ${styles.borderNormal} group-hover:scale-110 transition-transform`}>
+                        <Package className="w-6 h-6 text-indigo-500 dark:text-primary" />
                       </div>
                     </div>
                   </div>
 
                   <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
-                        <div className="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">إجمالي التحميلات</div>
-                        <div className="text-3xl font-black text-white">{adminStats.totalDownloads}</div>
+                        <div className={`text-xs ${styles.textMuted} mb-2 font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'إجمالي التحميلات' : 'Total Downloads'}</div>
+                        <div className={`text-3xl font-black ${styles.textTitle}`}>{adminStats.totalDownloads}</div>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
-                        <Download className="w-6 h-6 text-primary" />
+                      <div className={`p-3 ${styles.bgInnerCard} rounded-xl border ${styles.borderNormal} group-hover:scale-110 transition-transform`}>
+                        <Download className="w-6 h-6 text-indigo-500 dark:text-primary" />
                       </div>
                     </div>
                   </div>
@@ -1964,53 +2169,53 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                   {/* Recent Logs Summary */}
                   <div className="glass-card rounded-[24px] p-6 space-y-6">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                      <h3 className="font-extrabold text-white flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-primary" />
-                        آخر الأنشطة في المنصة
+                    <div className={`flex items-center justify-between border-b ${styles.borderNormal} pb-4`}>
+                      <h3 className={`font-extrabold ${styles.textTitle} flex items-center gap-2`}>
+                        <Activity className="w-5 h-5 text-indigo-500 dark:text-primary" />
+                        {lang === 'ar' ? 'آخر الأنشطة في المنصة' : 'Recent platform activity'}
                       </h3>
-                      <button onClick={() => setAdminSectionTab('logs')} className="text-[11px] text-primary hover:text-primary-hover font-bold transition-colors uppercase tracking-wider">
-                        عرض الكل &rarr;
+                      <button onClick={() => setAdminSectionTab('logs')} className="text-[11px] text-indigo-650 dark:text-primary hover:text-indigo-500 dark:hover:text-primary-hover font-bold transition-colors uppercase tracking-wider cursor-pointer">
+                        {lang === 'ar' ? 'عرض الكل' : 'View all'} &rarr;
                       </button>
                     </div>
                     <div className="space-y-3">
                       {adminLogs.slice(0, 4).map((log) => (
-                        <div key={log.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                            <UserCheck className="w-4 h-4 text-primary" />
+                        <div key={log.id} className={`flex items-center gap-4 p-3 ${styles.bgInnerCard} rounded-xl border ${styles.borderSubtle} hover:bg-black/5 dark:hover:bg-white/10 transition-colors`}>
+                          <div className="w-10 h-10 rounded-full bg-indigo-500/10 dark:bg-primary/10 flex items-center justify-center shrink-0 border border-indigo-500/20 dark:border-primary/20">
+                            <UserCheck className="w-4 h-4 text-indigo-500 dark:text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-slate-200 truncate">{log.action}</div>
-                            <div className="text-xs text-slate-400 truncate mt-0.5">{log.details}</div>
+                            <div className={`text-sm font-bold ${styles.textTitle} truncate`}>{log.action}</div>
+                            <div className={`text-xs ${styles.textMuted} truncate mt-0.5`}>{log.details}</div>
                           </div>
-                          <div className="text-[10px] text-slate-500 font-mono shrink-0 bg-black/40 px-2 py-1 rounded-md">
-                            {new Date(log.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                          <div className={`text-[10px] ${styles.textMuted} font-mono shrink-0 bg-black/5 dark:bg-black/40 px-2 py-1 rounded-md`}>
+                            {new Date(log.createdAt).toLocaleTimeString(lang === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
                       ))}
                       {adminLogs.length === 0 && (
-                        <div className="text-center text-sm text-slate-500 py-6">لا توجد أنشطة مسجلة مؤخراً</div>
+                        <div className={`text-center text-sm ${styles.textMuted} py-6`}>{lang === 'ar' ? 'لا توجد أنشطة مسجلة مؤخراً' : 'No recent activities'}</div>
                       )}
                     </div>
                   </div>
 
                   {/* Quick System Status */}
                   <div className="glass-card rounded-[24px] p-6 space-y-6">
-                    <div className="border-b border-white/10 pb-4">
-                      <h3 className="font-extrabold text-white flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-primary" />
-                        حالة النظام والإشعارات
+                    <div className={`border-b ${styles.borderNormal} pb-4`}>
+                      <h3 className={`font-extrabold ${styles.textTitle} flex items-center gap-2`}>
+                        <Sparkles className="w-5 h-5 text-indigo-500 dark:text-primary" />
+                        {lang === 'ar' ? 'حالة النظام والإشعارات' : 'System status & notifications'}
                       </h3>
                     </div>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-primary/10 border border-primary/20 rounded-xl group hover:bg-primary/20 transition-colors">
+                      <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl group hover:bg-emerald-500/20 transition-colors text-emerald-600 dark:text-emerald-500">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-brand-glow">
-                            <CheckCircle2 className="w-6 h-6 text-primary" />
+                          <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <CheckCircle2 className="w-6 h-6" />
                           </div>
                           <div>
-                            <div className="text-sm font-extrabold text-primary">النظام يعمل بكفاءة</div>
-                            <div className="text-xs text-slate-300 mt-1">لا توجد مشاكل حالية في الخوادم.</div>
+                            <div className="text-sm font-extrabold">{lang === 'ar' ? 'النظام يعمل بكفاءة' : 'System Operational'}</div>
+                            <div className="text-xs text-emerald-800 dark:text-emerald-300 mt-1">{lang === 'ar' ? 'لا توجد مشاكل حالية في الخوادم.' : 'All servers are running smoothly.'}</div>
                           </div>
                         </div>
                       </div>
@@ -2019,15 +2224,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl group hover:bg-amber-500/20 transition-colors">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <HelpCircle className="w-6 h-6 text-amber-400" />
+                              <HelpCircle className="w-6 h-6 text-amber-500 dark:text-amber-400" />
                             </div>
                             <div>
-                              <div className="text-sm font-extrabold text-amber-400 font-sans">تنبيه: انخفاض المخزون</div>
-                              <div className="text-xs text-slate-300 mt-1">بعض المنتجات على وشك النفاد من المفاتيح.</div>
+                              <div className="text-sm font-extrabold text-amber-600 dark:text-amber-400 font-sans">{lang === 'ar' ? 'تنبيه: انخفاض المخزون' : 'Warning: Low Stock'}</div>
+                              <div className={`text-xs ${styles.textMuted} mt-1`}>{lang === 'ar' ? 'بعض المنتجات على وشك النفاد من المفاتيح.' : 'Some products are running out of keys.'}</div>
                             </div>
                           </div>
-                          <button onClick={() => setAdminSectionTab('products')} className="px-4 py-2 bg-amber-500/25 hover:bg-amber-500/40 text-amber-300 rounded-lg text-xs font-bold transition-all hover:scale-105">
-                            إدارة المخزون
+                          <button onClick={() => setAdminSectionTab('products')} className="px-4 py-2 bg-amber-500/25 hover:bg-amber-500/40 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-bold transition-all hover:scale-105 cursor-pointer">
+                            {lang === 'ar' ? 'إدارة المخزون' : 'Manage stock'}
                           </button>
                         </div>
                       )}
