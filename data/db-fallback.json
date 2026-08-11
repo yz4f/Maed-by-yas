@@ -39,6 +39,21 @@
       "isArchived": false,
       "createdAt": "2026-03-01T00:00:00.000Z",
       "updatedAt": "2026-08-11T11:40:27.374Z"
+    },
+    {
+      "id": "prod-1786487944141",
+      "name": "سبوفر تعن برو",
+      "description": "النسخة المدفوعة الفاخرة لتخطي الباند نهائياً",
+      "version": "v1.0.0",
+      "fileSize": "12 MB",
+      "category": "Spoofer",
+      "downloadsCount": 0,
+      "image": "/products/spoofer-ta3n.png",
+      "videoUrl": "",
+      "guideUrl": "",
+      "fileUrl": "",
+      "cardColor": "blue",
+      "updatedAt": "2026-08-11T22:45:56.346Z"
     }
   ],
   "users": [
@@ -107,6 +122,28 @@
       "usedByUserName": null,
       "usedAt": null,
       "createdAt": "2026-08-11T11:40:27.961Z"
+    },
+    {
+      "id": "key-1786488297856-0",
+      "key": "KEY-T3N-NEWPRO-7777",
+      "productId": "prod-1786487944141",
+      "isUsed": false,
+      "isDisabled": false,
+      "isArchived": false,
+      "duration": "Lifetime",
+      "createdById": "Admin",
+      "createdAt": "2026-08-11T22:44:57.856Z"
+    },
+    {
+      "id": "key-1786488297856-1",
+      "key": "KEY-T3N-NEWPRO-8888",
+      "productId": "prod-1786487944141",
+      "isUsed": false,
+      "isDisabled": false,
+      "isArchived": false,
+      "duration": "Lifetime",
+      "createdById": "Admin",
+      "createdAt": "2026-08-11T22:44:57.856Z"
     }
   ],
   "logs": [

@@ -16,6 +16,7 @@ import {
   Activity,
   Layers,
   Sparkles,
+  Plus,
   Search,
   UserCheck,
   UserX,
@@ -707,7 +708,34 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setBulkKeysText('');
     setSingleKeyText('');
     setBulkMessage(null);
-    await loadInventoryKeys(product.id);
+    if (product.id !== 'new') {
+      await loadInventoryKeys(product.id);
+    } else {
+      setInventoryKeys([]);
+    }
+  };
+
+  const openAddProductModal = () => {
+    const blankProduct: Product = {
+      id: 'new',
+      name: '',
+      description: '',
+      version: 'v1.0.0',
+      fileSize: '10 MB',
+      category: 'Spoofer',
+      downloadsCount: 0,
+      image: '/products/fortnite-unban.png',
+      videoUrl: '',
+      guideUrl: '',
+      fileUrl: '',
+      cardColor: 'blue',
+      isVisible: true,
+      isDisabled: false,
+      isArchived: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    openInventoryModal(blankProduct, 'data', false);
   };
 
   const handleSaveProductChanges = async () => {
@@ -715,30 +743,33 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setIsSavingProduct(true);
     setProductSaveMessage(null);
     try {
+      const isNew = inventoryProduct.id === 'new';
+      const newId = isNew ? `prod-${Date.now()}` : inventoryProduct.id;
       const res = await fetch('/api/admin/products', {
-        method: 'PUT',
+        method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: inventoryProduct.id,
-          ...editProductData
-        })
+        body: JSON.stringify(isNew ? { id: newId, ...editProductData } : { id: inventoryProduct.id, ...editProductData })
       });
       const data = await res.json();
       if (data.success && data.product) {
         setInventoryProduct(data.product);
-        setProductSaveMessage('تم حفظ تعديلات المنتج بنجاح!');
+        setProductSaveMessage(isNew ? 'تم إضافة المنتج الجديد بنجاح!' : 'تم حفظ تعديلات المنتج بنجاح!');
         
-        // Update dynamic products state
-        setProducts(prev => prev.map(p => p.id === data.product.id ? data.product : p));
+        if (isNew) {
+          setProducts(prev => [...prev, data.product]);
+        } else {
+          setProducts(prev => prev.map(p => p.id === data.product.id ? data.product : p));
+        }
         
-        // Update in-memory initialProducts fallback
         const idx = initialProducts.findIndex((p) => p.id === data.product.id);
         if (idx !== -1) {
           initialProducts[idx] = { ...initialProducts[idx], ...data.product };
+        } else if (isNew) {
+          initialProducts.push(data.product);
         }
         
         loadAdminStats();
-        loadUserProducts(); // Refresh user products immediately to sync updated product image
+        loadUserProducts();
       } else {
         setProductSaveMessage(data.message || 'حدث خطأ أثناء حفظ التعديلات');
       }
@@ -1061,7 +1092,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               transition={{ delay: 0.25 }}
               className="space-y-2.5"
             >
-              <h1 className={`text-2xl font-bold ${styles.textTitle} tracking-wide`}>
+              <h1 className={`text-2xl font-bold ${styles.textTitle} tracking-wide notranslate`} translate="no">
                 {lang === 'ar' ? 'تعن' : 'TA3N'}
               </h1>
               <p className={`text-[12.5px] ${styles.textMuted} font-medium leading-relaxed max-w-[290px] mx-auto`}>
@@ -1266,7 +1297,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 p-0.5 shadow-lg flex items-center justify-center shrink-0">
               <img src="/logo.png?v=6" alt="تعن" className="w-full h-full rounded-full object-cover select-none" onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
             </div>
-            <span className={`text-[17px] font-black tracking-wider bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent`}>
+            <span className={`text-[17px] font-black tracking-wider bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent notranslate`} translate="no">
               {lang === 'ar' ? 'تعن' : 'TA3N'}
             </span>
           </div>
@@ -2069,12 +2100,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* ==================== SUB-TAB 1: PRODUCTS & INVENTORY ==================== */}
             {adminSectionTab === 'products' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className={`text-lg font-bold ${styles.textTitle} flex items-center gap-2`}>
-                    <Package className="w-5 h-5 text-indigo-500 dark:text-sky-400" />
-                    <span>{lang === 'ar' ? 'منتجات المتجر والمخزون المتاح' : 'Store Products & Available Stock'}</span>
-                  </h3>
-                  <span className={`text-xs ${styles.textMuted} font-medium`}>{lang === 'ar' ? 'انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه' : 'Click on any product to modify or add license keys'}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className={`text-lg font-bold ${styles.textTitle} flex items-center gap-2`}>
+                      <Package className="w-5 h-5 text-indigo-500 dark:text-sky-400" />
+                      <span>{lang === 'ar' ? 'منتجات المتجر والمخزون المتاح' : 'Store Products & Available Stock'}</span>
+                    </h3>
+                    <div className={`text-xs ${styles.textMuted} font-medium`}>{lang === 'ar' ? 'انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه' : 'Click on any product to modify or add license keys'}</div>
+                  </div>
+                  <button
+                    onClick={openAddProductModal}
+                    className="py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-650 hover:to-purple-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/10 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer self-start sm:self-center"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{lang === 'ar' ? 'إضافة منتج جديد' : 'Add Product'}</span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
@@ -2601,19 +2641,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <X className="w-4 h-4" />
               </button>
               <h2 className={`text-lg font-extrabold ${styles.textTitle} text-right flex-1 pr-3 z-10`}>
-                إدارة <span className="text-indigo-500 dark:text-primary">{inventoryProduct.name}</span>
+                {inventoryProduct.id === 'new' ? (
+                  <span>إضافة منتج جديد</span>
+                ) : (
+                  <span>إدارة <span className="text-indigo-500 dark:text-primary">{inventoryProduct.name}</span></span>
+                )}
               </h2>
             </div>
 
             {/* Tabs Row */}
             <div className={`flex ${isDark ? 'bg-black/20 border-white/10' : 'bg-slate-100/50 border-slate-200'} border-b shrink-0 p-4 gap-2`}>
-              <button
-                onClick={() => setInventoryTab('codes')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'codes' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
-              >
-                <span>الأكواد المتاحة</span>
-                <Key className="w-4 h-4 ml-1" />
-              </button>
+              {inventoryProduct.id !== 'new' && (
+                <button
+                  onClick={() => setInventoryTab('codes')}
+                  className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'codes' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
+                >
+                  <span>الأكواد المتاحة</span>
+                  <Key className="w-4 h-4 ml-1" />
+                </button>
+              )}
               <button
                 onClick={() => setInventoryTab('custom')}
                 className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'custom' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
@@ -2722,7 +2768,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
                     >
                       {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                      <span>حفظ تغييرات المنتج</span>
+                      <span>{inventoryProduct.id === 'new' ? 'إضافة المنتج الجديد' : 'حفظ تغييرات المنتج'}</span>
                     </button>
                   </div>
                 </div>
@@ -2792,16 +2838,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
                     >
                       {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                      <span>حفظ تغييرات الحقول</span>
+                      <span>{inventoryProduct.id === 'new' ? 'إضافة المنتج الجديد' : 'حفظ تغييرات الحقول'}</span>
                     </button>
 
-                    <button
-                      onClick={handleDeleteProductPermanently}
-                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 dark:text-rose-450 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>حذف المنتج نهائياً من النظام</span>
-                    </button>
+                    {inventoryProduct.id !== 'new' && (
+                      <button
+                        onClick={handleDeleteProductPermanently}
+                        className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 dark:text-rose-450 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>حذف المنتج نهائياً من النظام</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

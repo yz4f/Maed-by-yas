@@ -226,13 +226,13 @@ const LocalDB = {
     const d = getFallbackData();
     return d.products.find((p: any) => p.id === id);
   },
-  createProduct(product: Product): {success: boolean} {
+  createProduct(product: Product): {success: boolean; product?: Product} {
     const d = getFallbackData();
     if (!d.products.some((p: any) => p.id === product.id)) {
       d.products.push(product);
       saveFallbackData(d);
     }
-    return { success: true };
+    return { success: true, product };
   },
   updateProduct(id: string, updates: Partial<Product>): {success: boolean, product?: Product} {
     const d = getFallbackData();
@@ -605,13 +605,16 @@ export const StoreDB = {
     );
   },
 
-  async createProduct(product: Product): Promise<{success: boolean; message?: string}> {
+  async createProduct(product: Product): Promise<{success: boolean; message?: string; product?: Product}> {
     return runDbOp(
       async () => {
         await setDoc(doc(getDb(), "products", product.id), product);
-        return { success: true };
+        return { success: true, product };
       },
-      () => LocalDB.createProduct(product)
+      () => {
+        const res = LocalDB.createProduct(product);
+        return { success: res.success, product: res.product };
+      }
     );
   },
 

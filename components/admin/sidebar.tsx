@@ -27,8 +27,8 @@ export function AdminSidebar() {
             </div>
           </div>
           <div>
-            <h3 className="text-base font-black text-white font-mono tracking-wider">T3N ADMIN</h3>
-            <p className="text-[10px] text-amber-400 font-semibold uppercase">Discord Master Panel</p>
+            <h3 className="text-base font-black text-white font-mono tracking-wider notranslate" translate="no">T3N ADMIN</h3>
+            <p className="text-[10px] text-amber-400 font-semibold uppercase notranslate" translate="no">Discord Master Panel</p>
           </div>
         </div>
 

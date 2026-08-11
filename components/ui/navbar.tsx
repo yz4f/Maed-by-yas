@@ -30,7 +30,7 @@ export function Navbar() {
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 font-mono">
+            <span className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 font-mono notranslate" translate="no">
               T3N STORE
             </span>
             <span className="text-[10px] text-slate-400 tracking-widest uppercase font-semibold">
