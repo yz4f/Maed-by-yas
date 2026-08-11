@@ -2,6 +2,6 @@
   "framework": "nextjs",
   "env": {
     "NEXTAUTH_SECRET": "t3n_super_secret_jwt_key_2026",
-    "NEXTAUTH_URL": "https://t3nnn.wtf"
+    "NEXTAUTH_URL": "https://t3n-store-production.up.railway.app"
   }
 }

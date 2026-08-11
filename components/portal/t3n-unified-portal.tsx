@@ -910,7 +910,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             >
               <span className="text-[#71717A] font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
               <a
-                href="https://t3nnn.wtf/"
+                href="https://t3n-store-production.up.railway.app/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`font-bold ${isDark ? 'text-white hover:text-indigo-400' : 'text-indigo-600 hover:text-indigo-500'} transition-colors cursor-pointer`}
@@ -1525,7 +1525,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               <div className={`pt-6 border-t ${styles.borderSubtle} space-y-4 relative z-10`}>
                 <a
-                  href="https://t3nnn.wtf"
+                  href="https://t3n-store-production.up.railway.app"
                   target="_blank"
                   rel="noreferrer"
                   className={`w-full ${styles.bgInnerCard} border ${styles.borderSubtle} hover:${styles.borderNormal} rounded-xl p-4 flex items-center justify-between transition-all group`}
