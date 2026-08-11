@@ -1,0 +1,132 @@
+{
+  "products": [
+    {
+      "id": "prod-fortnite",
+      "name": "فك باند فورت نايت",
+      "description": "سبوفر فورت نايت الاحترافي الدائم - فك حظر الهاردوير (HWID) وتخطي أنظمة الحماية Easy Anti-Cheat و BattlEye بسرعة فائقة وبدون إعادة تهيئة النظام.",
+      "image": "/products/fortnite-unban.png",
+      "cardColor": "blue",
+      "category": "Spoofer",
+      "displayOrder": 1,
+      "version": "v3.5.2",
+      "fileSize": "24.8 MB",
+      "fileUrl": "/discord.gg_t3n.rar",
+      "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "guideUrl": "https://discord.gg/t3n",
+      "downloadsCount": 1420,
+      "isVisible": true,
+      "isDisabled": false,
+      "isArchived": false,
+      "createdAt": "2026-01-15T00:00:00.000Z",
+      "updatedAt": "2026-08-11T11:40:27.374Z"
+    },
+    {
+      "id": "prod-hwid-master",
+      "name": "سبوفر تعن",
+      "description": "أداة تنظيف مخلفات الألعاب وحظر الحسابات الشاملة (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).",
+      "image": "/products/spoofer-ta3n.png",
+      "cardColor": "purple",
+      "category": "Utility",
+      "displayOrder": 2,
+      "version": "v4.1.0",
+      "fileSize": "100 MB",
+      "fileUrl": "/discord.gg_t3n.rar",
+      "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "guideUrl": "https://discord.gg/t3n",
+      "downloadsCount": 2310,
+      "isVisible": true,
+      "isDisabled": false,
+      "isArchived": false,
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "updatedAt": "2026-08-11T11:40:27.374Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-demo-customer",
+      "discordId": "1397221350095192074",
+      "name": "Demo Customer",
+      "email": "customer@t3n-store.com",
+      "image": "https://cdn.discordapp.com/embed/avatars/1.png",
+      "role": "Customer",
+      "discordRoles": [],
+      "createdAt": "2026-08-11T11:40:27.961Z",
+      "lastLogin": "2026-08-11T11:40:27.961Z",
+      "lastIp": "127.0.0.1",
+      "isBanned": false,
+      "warningCount": 1,
+      "warningMessage": "الرجاء الالتزام بالقوانين"
+    },
+    {
+      "id": "user-demo-admin",
+      "discordId": "1396965033316978839",
+      "name": "Demo Admin",
+      "email": "boss@t3n-store.com",
+      "image": "https://cdn.discordapp.com/embed/avatars/2.png",
+      "role": "Boss",
+      "discordRoles": [],
+      "createdAt": "2026-08-11T11:40:27.961Z",
+      "lastLogin": "2026-08-11T11:40:27.961Z",
+      "lastIp": "127.0.0.1",
+      "isBanned": false,
+      "warningCount": 0,
+      "warningMessage": null
+    }
+  ],
+  "userProducts": [
+    {
+      "id": "up-demo-1",
+      "userId": "user-demo-customer",
+      "productId": "prod-fortnite",
+      "status": "active",
+      "activatedAt": "2026-08-11T11:40:27.961Z",
+      "expiresAt": null
+    }
+  ],
+  "keys": [
+    {
+      "id": "key-demo-1",
+      "key": "KEY-T3N-FORT-DEMO-PERM",
+      "productId": "prod-fortnite",
+      "productName": "فك باند فورت نايت",
+      "duration": "permanent",
+      "isUsed": false,
+      "usedByUserId": null,
+      "usedByUserName": null,
+      "usedAt": null,
+      "createdAt": "2026-08-11T11:40:27.961Z"
+    },
+    {
+      "id": "key-demo-2",
+      "key": "KEY-T3N-SPOOF-DEMO-PERM",
+      "productId": "prod-hwid-master",
+      "productName": "سبوفر تعن",
+      "duration": "permanent",
+      "isUsed": false,
+      "usedByUserId": null,
+      "usedByUserName": null,
+      "usedAt": null,
+      "createdAt": "2026-08-11T11:40:27.961Z"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1",
+      "action": "System Initialized",
+      "details": "تم بدء تشغيل نظام قاعدة البيانات الاحتياطية بنجاح.",
+      "userId": "system",
+      "userName": "T3N System",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-08-11T11:40:27.961Z"
+    },
+    {
+      "id": "log-1786451635047-363",
+      "action": "User Warned",
+      "details": "قام المشرف T3N Owner بتحذير العميل Demo Customer. السبب: الرجاء الالتزام بالقوانين",
+      "userId": "user-admin-1",
+      "userName": "T3N Owner",
+      "ipAddress": "::1",
+      "createdAt": "2026-08-11T12:33:55.047Z"
+    }
+  ]
+}

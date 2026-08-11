@@ -55,6 +55,7 @@ module.exports = {
         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'pulse-glow': 'pulseGlow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 6s ease-in-out infinite',
+        'shine': 'shine 0.8s ease-in-out',
       },
       keyframes: {
         fadeIn: {
@@ -72,6 +73,9 @@ module.exports = {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },
+        },
+        shine: {
+          '100%': { transform: 'translateX(200%)' },
         },
       },
     },

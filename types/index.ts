@@ -13,6 +13,12 @@ export interface User {
   createdAt: string;
   lastLogin?: string;
   lastIp?: string;
+  isBanned?: boolean;
+  banReason?: string | null;
+  banType?: 'temporary' | 'permanent' | null;
+  banExpiresAt?: string | null;
+  warningMessage?: string | null;
+  warningCount?: number;
 }
 
 export interface Product {

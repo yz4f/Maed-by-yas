@@ -39,7 +39,9 @@ import {
   LayoutDashboard,
   MessageSquare,
   User,
-  Globe
+  Globe,
+  AlertTriangle,
+  Unlock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
@@ -227,6 +229,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
+  const [selectedCustomerProducts, setSelectedCustomerProducts] = useState<any[]>([]);
+  const [selectedProductToGrant, setSelectedProductToGrant] = useState('');
+  const [banReasonInput, setBanReasonInput] = useState('');
+  const [banTypeInput, setBanTypeInput] = useState<'temporary' | 'permanent'>('permanent');
+  const [banExpiresAtInput, setBanExpiresAtInput] = useState('');
+  const [warningMessageInput, setWarningMessageInput] = useState('');
+  const [isProcessingAdminAction, setIsProcessingAdminAction] = useState(false);
   const [allKeysList, setAllKeysList] = useState<KeyType[]>([]);
   const [searchKeysQuery, setSearchKeysQuery] = useState('');
   const [keyStatusFilter, setKeyStatusFilter] = useState<'all' | 'unused' | 'used'>('all');
@@ -321,6 +330,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
+  const openCustomerModal = async (customer: any) => {
+    setSelectedAdminCustomer(customer);
+    setSelectedCustomerProducts([]);
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setSelectedAdminCustomer(data.user);
+        }
+        if (data.products) {
+          setSelectedCustomerProducts(data.products);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load customer details:", e);
+    }
+  };
+
   const loadAllKeysList = async () => {
     try {
       const res = await fetch('/api/keys');
@@ -334,16 +362,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   const handleRevokeUserProduct = async (userId: string, productId: string) => {
-    if (!confirm('هل أنت تأكد من سحب وتعطيل هذا المنتج عن العميل؟')) return;
+    if (!confirm('هل أنت متأكد من سحب هذا المنتج من حساب المشترك؟')) return;
     try {
       const res = await fetch('/api/admin/customers/manage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'remove_product', userId, productId })
+        body: JSON.stringify({
+          action: 'remove_product',
+          userId,
+          productId,
+          adminName: currentUser?.name || 'Admin',
+          adminId: currentUser?.id || 'admin-system'
+        })
       });
       const data = await res.json();
       if (data.success) {
         showToast(data.message || 'تم تعطيل المنتج عن العميل بنجاح');
+        // Refresh customer details if open
+        if (selectedAdminCustomer && selectedAdminCustomer.id === userId) {
+          const detailRes = await fetch(`/api/admin/customers/${userId}`);
+          if (detailRes.ok) {
+            const detailData = await detailRes.json();
+            setSelectedAdminCustomer(detailData.user || detailData);
+          }
+        }
         loadAdminCustomersList();
         loadAdminStats();
       }
@@ -352,13 +394,175 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
+  const handleGrantProduct = async (userId: string) => {
+    if (!selectedProductToGrant) {
+      showToast('يرجى تحديد منتج أولاً');
+      return;
+    }
+    setIsProcessingAdminAction(true);
+    try {
+      const res = await fetch('/api/admin/customers/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_product',
+          userId,
+          productId: selectedProductToGrant,
+          adminName: currentUser?.name || 'Admin',
+          adminId: currentUser?.id || 'admin-system'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('تم منح المنتج للعميل بنجاح');
+        setSelectedProductToGrant('');
+        // Refresh detail view
+        const detailRes = await fetch(`/api/admin/customers/${userId}`);
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          setSelectedAdminCustomer(detailData.user || detailData);
+        }
+        loadAdminCustomersList();
+        loadAdminStats();
+      } else {
+        showToast(data.message || 'فشل منح المنتج');
+      }
+    } catch (e) {
+      showToast('حدث خطأ أثناء منح المنتج.');
+    } finally {
+      setIsProcessingAdminAction(false);
+    }
+  };
+
+  const handleWarnUser = async (userId: string) => {
+    if (!warningMessageInput.trim()) {
+      showToast('يرجى كتابة رسالة التحذير');
+      return;
+    }
+    setIsProcessingAdminAction(true);
+    try {
+      const res = await fetch('/api/admin/customers/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'warn_user',
+          userId,
+          warningMessage: warningMessageInput,
+          adminName: currentUser?.name || 'Admin',
+          adminId: currentUser?.id || 'admin-system'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('تم إرسال التحذير بنجاح');
+        setWarningMessageInput('');
+        // Refresh detail view
+        const detailRes = await fetch(`/api/admin/customers/${userId}`);
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          setSelectedAdminCustomer(detailData.user || detailData);
+        }
+        loadAdminCustomersList();
+        loadAdminStats();
+      } else {
+        showToast(data.message || 'فشل إرسال التحذير');
+      }
+    } catch (e) {
+      showToast('حدث خطأ أثناء إرسال التحذير.');
+    } finally {
+      setIsProcessingAdminAction(false);
+    }
+  };
+
+  const handleBanUser = async (userId: string) => {
+    if (!banReasonInput.trim()) {
+      showToast('يرجى كتابة سبب الحظر');
+      return;
+    }
+    if (banTypeInput === 'temporary' && !banExpiresAtInput) {
+      showToast('يرجى تحديد تاريخ انتهاء الحظر المؤقت');
+      return;
+    }
+    setIsProcessingAdminAction(true);
+    try {
+      const res = await fetch('/api/admin/customers/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ban_user',
+          userId,
+          banReason: banReasonInput,
+          banType: banTypeInput,
+          banExpiresAt: banTypeInput === 'temporary' ? new Date(banExpiresAtInput).toISOString() : null,
+          adminName: currentUser?.name || 'Admin',
+          adminId: currentUser?.id || 'admin-system'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('تم حظر العميل بنجاح');
+        setBanReasonInput('');
+        setBanExpiresAtInput('');
+        // Refresh detail view
+        const detailRes = await fetch(`/api/admin/customers/${userId}`);
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          setSelectedAdminCustomer(detailData.user || detailData);
+        }
+        loadAdminCustomersList();
+        loadAdminStats();
+      } else {
+        showToast(data.message || 'فشل فرض الحظر');
+      }
+    } catch (e) {
+      showToast('حدث خطأ أثناء فرض الحظر.');
+    } finally {
+      setIsProcessingAdminAction(false);
+    }
+  };
+
+  const handleUnbanUser = async (userId: string) => {
+    setIsProcessingAdminAction(true);
+    try {
+      const res = await fetch('/api/admin/customers/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'unban_user',
+          userId,
+          adminName: currentUser?.name || 'Admin',
+          adminId: currentUser?.id || 'admin-system'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('تم إلغاء حظر العميل بنجاح');
+        // Refresh detail view
+        const detailRes = await fetch(`/api/admin/customers/${userId}`);
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          setSelectedAdminCustomer(detailData.user || detailData);
+        }
+        loadAdminCustomersList();
+        loadAdminStats();
+      } else {
+        showToast(data.message || 'فشل إلغاء الحظر');
+      }
+    } catch (e) {
+      showToast('حدث خطأ أثناء إلغاء الحظر.');
+    } finally {
+      setIsProcessingAdminAction(false);
+    }
+  };
+
   const handleDeleteUserAccount = async (userId: string, userName: string) => {
-    if (!confirm(`هل أنت تأكد من حذف حساب العميل ${userName} نهائياً؟`)) return;
+    if (!confirm(`هل أنت متأكد من حذف حساب العميل ${userName} نهائياً؟`)) return;
     try {
       const res = await fetch(`/api/admin/customers/${userId}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         showToast(data.message || 'تم حذف العميل بنجاح.');
+        setSelectedAdminCustomer(null);
         loadAdminCustomersList();
         loadAdminStats();
       }
@@ -763,22 +967,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // Dynamic Theme Styling Object
   const styles = {
     bgApp: isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]',
-    bgPanel: isDark ? 'bg-[#0A0A0C]/90 border-white/[0.06]' : 'bg-white border-black/[0.06] shadow-sm',
-    bgCard: isDark ? 'bg-[#0E0E10] border-white/[0.04]' : 'bg-white border-black/[0.05] shadow-sm',
-    bgSidebar: isDark ? 'bg-[#0A0A0C]/40 border-white/[0.05]' : 'bg-white border-black/[0.05] shadow-[2px_0_10px_rgba(0,0,0,0.01)]',
-    bgInput: isDark ? 'bg-[#050505] border-white/10 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400',
-    bgInnerCard: isDark ? 'bg-[#05070B] border-white/[0.05]' : 'bg-slate-50 border-slate-200/[0.8]',
-    bgInnerCardDarkOnly: isDark ? 'bg-[#05070B] border-white/[0.05]' : 'bg-slate-100 border-slate-200',
+    bgPanel: isDark ? 'bg-[#08080A]/95 border-white/[0.06] backdrop-blur-xl' : 'bg-white border-black/[0.06] shadow-sm backdrop-blur-xl',
+    bgCard: isDark ? 'bg-[#0C0C0F]/90 border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md hover:border-indigo-500/20 transition-all duration-300' : 'bg-white border-slate-200 shadow-[0_8px_24px_rgba(0,0,0,0.02)] hover:border-indigo-500/20 transition-all duration-300',
+    bgSidebar: isDark ? 'bg-[#070709]/80 border-white/[0.05]' : 'bg-white border-slate-200 shadow-[2px_0_10px_rgba(0,0,0,0.01)]',
+    bgInput: isDark ? 'bg-[#040406] border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500/40 transition-all duration-300' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500/40 transition-all duration-300',
+    bgInnerCard: isDark ? 'bg-[#050608] border-white/[0.04]' : 'bg-slate-50 border-slate-200/[0.6]',
+    bgInnerCardDarkOnly: isDark ? 'bg-[#050608] border-white/[0.04]' : 'bg-slate-100 border-slate-200',
     textTitle: isDark ? 'text-white' : 'text-slate-950',
     textBody: isDark ? 'text-[#F4F4F5]' : 'text-slate-800',
     textMuted: isDark ? 'text-[#A1A1AA]' : 'text-slate-500',
     textLightMuted: isDark ? 'text-[#71717A]' : 'text-slate-450',
     borderSubtle: isDark ? 'border-white/[0.04]' : 'border-slate-100',
     borderNormal: isDark ? 'border-white/10' : 'border-slate-200',
-    sidebarActive: isDark ? 'border-white/20 text-white bg-white/[0.02]' : 'border-black/10 text-slate-950 bg-black/[0.02] shadow-sm',
-    sidebarInactive: isDark ? 'text-[#A1A1AA] hover:text-white' : 'text-slate-500 hover:text-slate-950',
+    sidebarActive: isDark ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.1)] font-bold' : 'bg-indigo-50/80 border border-indigo-500/10 text-indigo-600 shadow-sm font-bold',
+    sidebarInactive: isDark ? 'text-[#A1A1AA] hover:text-white hover:bg-white/[0.01]' : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50',
     btnSecondary: isDark ? 'border-white/[0.05] hover:border-white/20 hover:bg-white/5 text-[#A1A1AA] hover:text-white' : 'border-slate-200 hover:border-slate-350 hover:bg-black/[0.02] text-slate-700 hover:text-slate-950',
-    btnPrimary: 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg shadow-sky-500/10',
+    btnPrimary: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 text-white shadow-lg shadow-indigo-500/15 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0',
     borderHover: isDark ? 'border-indigo-500/50' : 'border-indigo-600/50'
   };
 
@@ -821,7 +1025,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             initial={{ opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className={`w-full max-w-[390px] ${isDark ? 'bg-[#0A0A0B]/90 border-white/[0.06]' : 'bg-white/95 border-black/[0.06]'} border rounded-[28px] p-9 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.8)] relative z-10 text-center space-y-8 backdrop-blur-3xl`}
+            className={`w-full max-w-[400px] ${isDark ? 'bg-[#090A0E]/85 border-indigo-500/10 shadow-[0_0_50px_rgba(99,102,241,0.15)] shadow-[0_24px_80px_rgba(0,0,0,0.9)]' : 'bg-white/95 border-slate-250 shadow-[0_24px_80px_rgba(0,0,0,0.06)]'} border rounded-[32px] p-10 relative z-10 text-center space-y-8 backdrop-blur-2xl`}
           >
             {/* Logo Section */}
             <motion.div 
@@ -874,31 +1078,32 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             >
               <button
                 onClick={() => signIn('discord')}
-                className="w-full h-12 rounded-xl bg-[#5865F2] hover:bg-[#4E5DFF] text-white font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_8px_30px_rgba(88,101,242,0.25)] hover:shadow-[0_12px_40px_rgba(88,101,242,0.35)] cursor-pointer hover:-translate-y-0.5 active:translate-y-0 relative overflow-hidden group"
+                className="w-full h-13 rounded-2xl bg-gradient-to-r from-[#5865F2] to-[#404EED] hover:from-[#4E5DFF] hover:to-[#3b47c4] text-white font-bold text-[15px] transition-all duration-300 flex items-center justify-center gap-3.5 shadow-[0_8px_30px_rgba(88,101,242,0.3)] hover:shadow-[0_12px_40px_rgba(88,101,242,0.45)] cursor-pointer hover:-translate-y-0.5 active:translate-y-0 relative overflow-hidden group border border-white/10"
               >
-                {/* Centered official Discord logo with fixed aspect ratio */}
-                <svg className="w-5 h-5 fill-current shrink-0 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                {/* Glow sweep effect */}
+                <div className="absolute inset-0 w-1/2 h-full bg-white/15 skew-x-[-25deg] -translate-x-full group-hover:animate-shine pointer-events-none" />
+                
+                {/* Centered official Discord logo */}
+                <svg className="w-5.5 h-5.5 fill-current shrink-0 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
                 </svg>
-                <span className="tracking-wide font-medium">{lang === 'ar' ? 'تسجيل دخول' : 'Login'}</span>
+                <span className="tracking-wide font-extrabold">{lang === 'ar' ? 'تسجيل دخول عبر ديسكورد' : 'Login with Discord'}</span>
               </button>
 
-              {process.env.NODE_ENV === 'development' && (
-                <div className="flex gap-2 justify-center pt-1.5">
-                  <button
-                    onClick={loginAsDemoCustomer}
-                    className={`px-3.5 py-1.5 rounded-xl ${isDark ? 'bg-white/[0.03] border-white/[0.06] hover:bg-[#5865F2]/10 text-[#A1A1AA]' : 'bg-black/[0.03] border-black/[0.06] hover:bg-black/[0.06] text-slate-650'} border text-[10px] font-bold hover:text-indigo-650 transition-all cursor-pointer`}
-                  >
-                    {lang === 'ar' ? 'دخول كـ عميل' : 'Demo Customer'}
-                  </button>
-                  <button
-                    onClick={loginAsDemoAdmin}
-                    className={`px-3.5 py-1.5 rounded-xl ${isDark ? 'bg-white/[0.03] border-white/[0.06] hover:bg-[#5865F2]/10 text-[#A1A1AA]' : 'bg-black/[0.03] border-black/[0.06] hover:bg-black/[0.06] text-slate-655'} border text-[10px] font-bold hover:text-indigo-650 transition-all cursor-pointer`}
-                  >
-                    {lang === 'ar' ? 'دخول كـ أدمن' : 'Demo Admin'}
-                  </button>
-                </div>
-              )}
+              <div className="flex gap-2.5 justify-center pt-2">
+                <button
+                  onClick={loginAsDemoCustomer}
+                  className={`px-4 py-2 rounded-xl ${isDark ? 'bg-white/[0.02] border-white/[0.05] hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400' : 'bg-slate-50 border-slate-200 hover:bg-indigo-50 text-slate-650 hover:text-indigo-600'} border text-[11px] font-extrabold transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-sm`}
+                >
+                  {lang === 'ar' ? 'دخول كـ عميل' : 'Demo Customer'}
+                </button>
+                <button
+                  onClick={loginAsDemoAdmin}
+                  className={`px-4 py-2 rounded-xl ${isDark ? 'bg-white/[0.02] border-white/[0.05] hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400' : 'bg-slate-50 border-slate-200 hover:bg-indigo-50 text-slate-650 hover:text-indigo-600'} border text-[11px] font-extrabold transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-sm`}
+                >
+                  {lang === 'ar' ? 'دخول كـ أدمن' : 'Demo Admin'}
+                </button>
+              </div>
             </motion.div>
 
             {/* Bottom Footer Link */}
@@ -990,6 +1195,63 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // ---------------------------------------------------------------------------
   // RENDER STATE 2: LOGGED IN (SPIRITX DASHBOARD PANEL)
   // ---------------------------------------------------------------------------
+  if (currentUser?.isBanned) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]'} flex flex-col items-center justify-center p-4 relative overflow-hidden select-none`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(239,68,68,0.15),transparent_100%)] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-rose-500/10 via-purple-500/5 to-transparent rounded-full blur-[120px] pointer-events-none" />
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`w-full max-w-md ${isDark ? 'bg-[#0A0707]/90 border-red-500/25 shadow-[0_0_50px_rgba(239,68,68,0.15)] backdrop-blur-xl' : 'bg-red-55/90 border-red-200 shadow-xl'} border rounded-[32px] p-8 text-center space-y-6 relative z-10`}
+        >
+          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/35 flex items-center justify-center mx-auto text-red-500 animate-pulse">
+            <Lock className="w-8 h-8" />
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-[20px] font-black text-red-500">
+              {lang === 'ar' ? 'تم حظر حسابك' : 'Your Account is Banned'}
+            </h2>
+            <p className={`text-xs ${styles.textMuted} leading-relaxed px-2`}>
+              {lang === 'ar' ? 'عذراً، لقد تم تقييد وصولك إلى هذه المنصة بسبب مخالفة شروط الاستخدام أو بطلب من الإدارة.' : 'Your access to this platform has been restricted due to terms violation or administrative block.'}
+            </p>
+          </div>
+
+          <div className={`p-5 rounded-2xl ${isDark ? 'bg-black/50 border-white/5' : 'bg-white border-slate-200'} border text-right space-y-3.5`}>
+            <div>
+              <span className={`text-[10px] font-bold ${styles.textLightMuted} block mb-0.5`}>{lang === 'ar' ? 'سبب الحظر' : 'Ban Reason'}</span>
+              <span className={`text-xs font-extrabold ${styles.textTitle}`}>{currentUser.banReason || (lang === 'ar' ? 'غير محدد' : 'Not specified')}</span>
+            </div>
+            <div>
+              <span className={`text-[10px] font-bold ${styles.textLightMuted} block mb-0.5`}>{lang === 'ar' ? 'نوع الحظر' : 'Ban Type'}</span>
+              <span className={`text-xs font-extrabold ${styles.textTitle}`}>
+                {currentUser.banType === 'temporary' ? (lang === 'ar' ? 'مؤقت' : 'Temporary') : (lang === 'ar' ? 'دائم' : 'Permanent')}
+              </span>
+            </div>
+            {currentUser.banType === 'temporary' && currentUser.banExpiresAt && (
+              <div>
+                <span className={`text-[10px] font-bold ${styles.textLightMuted} block mb-0.5`}>{lang === 'ar' ? 'تاريخ انتهاء الحظر' : 'Ban Expiration'}</span>
+                <span className="text-xs font-mono font-extrabold text-red-500">
+                  {new Date(currentUser.banExpiresAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US')}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full py-3 bg-red-600 hover:bg-red-550 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-red-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Log Out'}</span>
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex h-screen overflow-hidden ${styles.bgApp} selection:bg-indigo-500/20 transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Ambient Background for Dashboard */}
@@ -1000,11 +1262,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         
         {/* BRAND / LOGO */}
         <div className="p-6 relative z-10 flex items-center justify-center md:justify-start">
-          <div className="flex items-center gap-3 w-full">
-            <div className={`w-8 h-8 rounded-lg bg-transparent border ${styles.borderNormal} flex items-center justify-center shrink-0`}>
-              <img src="/logo.png?v=6" alt="Eon" className={`w-5 h-5 object-contain ${isDark ? 'grayscale brightness-200' : ''}`} />
+          <div className="flex items-center gap-3.5 w-full">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 p-0.5 shadow-lg flex items-center justify-center shrink-0">
+              <img src="/logo.png?v=6" alt="تعن" className="w-full h-full rounded-full object-cover select-none" onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
             </div>
-            <span className={`text-[15px] font-extrabold ${styles.textTitle} tracking-wide uppercase`}>Eon</span>
+            <span className={`text-[17px] font-black tracking-wider bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent`}>
+              {lang === 'ar' ? 'تعن' : 'TA3N'}
+            </span>
           </div>
         </div>
 
@@ -1134,6 +1398,34 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {/* Main Content Area */}
       <main className="flex-grow h-full overflow-y-auto p-6 md:p-10 scrollbar-none">
+        {currentUser?.warningMessage && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-500 shrink-0">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div className="text-right">
+                <div className="text-xs font-black">{lang === 'ar' ? 'تنبيه إداري رسمي لحسابك' : 'Official System Warning'}</div>
+                <div className="text-xs mt-0.5 font-medium">{currentUser.warningMessage}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setDemoUser(prev => prev ? { ...prev, warningMessage: null } : null);
+                // Try to dismiss on backend silently
+                fetch('/api/admin/customers/manage', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'warn_user', userId: currentUser.id, warningMessage: '' })
+                }).catch(() => {});
+              }}
+              className="px-3.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 text-[10px] font-black rounded-lg transition-all cursor-pointer whitespace-nowrap"
+            >
+              {lang === 'ar' ? 'لقد فهمت' : 'I Understand'}
+            </button>
+          </div>
+        )}
+
         {/* TOP BAR */}
         <header className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 gap-4 animate-fade-in">
           <h1 className={`text-[22px] font-bold ${styles.textTitle} tracking-tight`}>
@@ -1926,7 +2218,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <td className="py-3.5 space-y-1">
                                 <div className="flex items-center gap-2">
                                   <button
-                                    onClick={() => setSelectedAdminCustomer(customer)}
+                                    onClick={() => openCustomerModal(customer)}
                                     className="px-3 py-1.5 bg-indigo-500/10 dark:bg-primary/10 hover:bg-indigo-500/25 dark:hover:bg-primary/20 border border-indigo-500/30 dark:border-primary/30 rounded-lg text-[10px] font-black text-indigo-600 dark:text-primary transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02]"
                                     title={lang === 'ar' ? 'عرض تفاصيل العميل وإدارة اشتراكاته ومفاتيحه' : 'View customer profile and manage licenses'}
                                   >
@@ -2092,15 +2384,61 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${styles.borderSubtle}`}>
-                      {adminLogs.map((log) => (
-                        <tr key={log.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/5 transition-colors duration-200`}>
-                          <td className="py-4 font-bold">{log.action}</td>
-                          <td className="py-4 max-w-xs truncate">{log.details}</td>
-                          <td className="py-4 text-indigo-650 dark:text-primary font-semibold">{log.userName || log.discordId || (lang === 'ar' ? 'زائر' : 'Guest')}</td>
-                          <td className={`py-4 font-mono text-[11px] ${styles.textMuted}`}>{log.ipAddress}</td>
-                          <td className={`py-4 ${styles.textMuted}`}>{new Date(log.createdAt).toLocaleTimeString(lang === 'ar' ? 'ar-SA' : 'en-US')}</td>
-                        </tr>
-                      ))}
+                      {adminLogs.map((log) => {
+                        const logUser = allCustomersList.find(c => c.id === log.userId || c.discordId === log.discordId);
+                        const logAvatar = logUser?.image || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                        const logRole = logUser?.role || 'Guest';
+                        
+                        // Custom Action Badge Style
+                        let actionBadgeClass = 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+                        if (log.action.includes('Register') || log.action.includes('Activation') || log.action.includes('Login')) {
+                          actionBadgeClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                        } else if (log.action.includes('Grant') || log.action.includes('Add')) {
+                          actionBadgeClass = 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
+                        } else if (log.action.includes('Warn') || log.action.includes('Update')) {
+                          actionBadgeClass = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+                        } else if (log.action.includes('Ban') || log.action.includes('Revoke') || log.action.includes('Delete')) {
+                          actionBadgeClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                        }
+
+                        return (
+                          <tr key={log.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/5 transition-colors duration-200`}>
+                            <td className="py-4 font-extrabold pr-2">
+                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide ${actionBadgeClass}`}>
+                                {log.action}
+                              </span>
+                            </td>
+                            <td className="py-4 font-medium text-slate-350 max-w-xs truncate" title={log.details}>
+                              {log.details}
+                            </td>
+                            <td className="py-4">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={logAvatar}
+                                  alt={log.userName || 'User'}
+                                  className="w-7 h-7 rounded-full border border-white/5 object-cover"
+                                  onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                                />
+                                <div>
+                                  <div className="font-extrabold text-[12px] flex items-center gap-1.5">
+                                    <span>{log.userName || logUser?.name || (lang === 'ar' ? 'زائر' : 'Guest')}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${logRole === 'Boss' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/20' : 'bg-slate-800 text-slate-400 border border-white/5'}`}>
+                                      {logRole}
+                                    </span>
+                                  </div>
+                                  {logUser?.discordId && (
+                                    <div className="text-[9px] text-slate-500 font-mono">ID: {logUser.discordId}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className={`py-4 font-mono text-[11px] ${styles.textMuted}`}>{log.ipAddress}</td>
+                            <td className={`py-4 ${styles.textMuted} font-medium`}>
+                              {new Date(log.createdAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -2251,41 +2589,41 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           Each key as a card with delete button
          ==================================================================== */}
       {inventoryModalOpen && inventoryProduct && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-card rounded-[24px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/10">
+        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className={`${styles.bgPanel} rounded-[28px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border`} style={{ borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
             {/* Modal Header (Premium Style) */}
-            <div className="flex items-center justify-between px-6 py-5 bg-black/40 border-b border-white/10 shrink-0 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -z-10" />
+            <div className={`flex items-center justify-between px-6 py-5 ${isDark ? 'bg-black/40 border-white/10' : 'bg-slate-50 border-slate-200'} border-b shrink-0 relative overflow-hidden`}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[50px] -z-10" />
               <button
                 onClick={() => setInventoryModalOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/10 text-slate-400 hover:text-red-400 transition-colors cursor-pointer z-10"
+                className={`w-8 h-8 flex items-center justify-center rounded-lg ${isDark ? 'bg-white/5 hover:bg-red-500/20 border-white/10 text-slate-400' : 'bg-slate-100 hover:bg-red-500/10 border-slate-200 text-slate-650'} hover:text-red-500 border transition-all cursor-pointer z-10`}
               >
                 <X className="w-4 h-4" />
               </button>
-              <h2 className="text-lg font-extrabold text-white text-right flex-1 pr-3 z-10">
-                إدارة <span className="text-primary">{inventoryProduct.name}</span>
+              <h2 className={`text-lg font-extrabold ${styles.textTitle} text-right flex-1 pr-3 z-10`}>
+                إدارة <span className="text-indigo-500 dark:text-primary">{inventoryProduct.name}</span>
               </h2>
             </div>
 
             {/* Tabs Row */}
-            <div className="flex bg-black/20 border-b border-white/10 shrink-0 p-4 gap-2">
+            <div className={`flex ${isDark ? 'bg-black/20 border-white/10' : 'bg-slate-100/50 border-slate-200'} border-b shrink-0 p-4 gap-2`}>
               <button
                 onClick={() => setInventoryTab('codes')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'codes' ? 'bg-primary text-white shadow-brand-glow' : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'codes' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
               >
                 <span>الأكواد المتاحة</span>
                 <Key className="w-4 h-4 ml-1" />
               </button>
               <button
                 onClick={() => setInventoryTab('custom')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'custom' ? 'bg-primary text-white shadow-brand-glow' : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'custom' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
               >
                 <span>الحقول المخصصة</span>
                 <Layers className="w-4 h-4 ml-1" />
               </button>
               <button
                 onClick={() => setInventoryTab('data')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'data' ? 'bg-primary text-white shadow-brand-glow' : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'}`}
+                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'data' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
               >
                 <span>بيانات المنتج</span>
                 <FileText className="w-4 h-4 ml-1" />
@@ -2298,90 +2636,90 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {inventoryTab === 'data' && (
                 <div className="space-y-5 animate-slide-up">
                   {productSaveMessage && (
-                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary text-xs rounded-xl font-bold flex items-center justify-between">
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl font-bold flex items-center justify-between">
                       <span>{productSaveMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">اسم المنتج</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>اسم المنتج</label>
                     <input
                       type="text"
                       value={editProductData.name}
                       onChange={(e) => setEditProductData({ ...editProductData, name: e.target.value })}
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all font-bold shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all font-bold shadow-inner`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">صورة المنتج (رابط مسار الصورة)</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>صورة المنتج (رابط مسار الصورة)</label>
                     <input
                       type="text"
                       value={editProductData.image}
                       onChange={(e) => setEditProductData({ ...editProductData, image: e.target.value })}
                       placeholder="/products/fortnite-unban.png"
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all font-mono shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">الوصف الشامل للمنتج</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>الوصف الشامل للمنتج</label>
                     <textarea
                       rows={3}
                       value={editProductData.description}
                       onChange={(e) => setEditProductData({ ...editProductData, description: e.target.value })}
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl p-4 text-xs text-white focus:outline-none transition-all leading-relaxed shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl p-4 text-xs focus:outline-none transition-all leading-relaxed shadow-inner`}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2">الإصدار (Version)</label>
+                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>الإصدار (Version)</label>
                       <input
                         type="text"
                         value={editProductData.version}
                         onChange={(e) => setEditProductData({ ...editProductData, version: e.target.value })}
-                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all font-mono shadow-inner"
+                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2">حجم الملف (File Size)</label>
+                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>حجم الملف (File Size)</label>
                       <input
                         type="text"
                         value={editProductData.fileSize}
                         onChange={(e) => setEditProductData({ ...editProductData, fileSize: e.target.value })}
-                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all shadow-inner"
+                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs focus:outline-none transition-all shadow-inner`}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2">التصنيف (Category)</label>
+                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>التصنيف (Category)</label>
                       <input
                         type="text"
                         value={editProductData.category}
                         onChange={(e) => setEditProductData({ ...editProductData, category: e.target.value })}
-                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all shadow-inner"
+                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs focus:outline-none transition-all shadow-inner`}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2">عدد التحميلات</label>
+                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>عدد التحميلات</label>
                       <input
                         type="number"
                         value={editProductData.downloadsCount}
                         onChange={(e) => setEditProductData({ ...editProductData, downloadsCount: Number(e.target.value) })}
-                        className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all font-mono shadow-inner"
+                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
+                  <div className={`pt-4 border-t ${styles.borderNormal}`}>
                     <button
                       onClick={handleSaveProductChanges}
                       disabled={isSavingProduct}
-                      className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
+                      className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
                     >
                       {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                       <span>حفظ تغييرات المنتج</span>
@@ -2394,64 +2732,64 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {inventoryTab === 'custom' && (
                 <div className="space-y-5 animate-slide-up">
                   {productSaveMessage && (
-                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary text-xs rounded-xl font-bold flex items-center justify-between">
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl font-bold flex items-center justify-between">
                       <span>{productSaveMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">رابط الشرح / فيديو (YouTube / Stream)</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>رابط الشرح / فيديو (YouTube / Stream)</label>
                     <input
                       type="text"
                       value={editProductData.videoUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, videoUrl: e.target.value })}
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none transition-all shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
                       placeholder="https://www.youtube.com/watch?v=..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">رابط دليل الاستخدام (Discord / Docs)</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>رابط دليل الاستخدام (Discord / Docs)</label>
                     <input
                       type="text"
                       value={editProductData.guideUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, guideUrl: e.target.value })}
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none transition-all shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
                       placeholder="https://discord.gg/t3n"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">رابط تحميل الملف (File Download URL)</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>رابط تحميل الملف (File Download URL)</label>
                     <input
                       type="text"
                       value={editProductData.fileUrl}
                       onChange={(e) => setEditProductData({ ...editProductData, fileUrl: e.target.value })}
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none transition-all shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
                       placeholder="/uploads/spoofer.exe"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2">لون البطاقة (Theme Accent)</label>
+                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>لون البطاقة (Theme Accent)</label>
                     <select
                       value={editProductData.cardColor}
                       onChange={(e) => setEditProductData({ ...editProductData, cardColor: e.target.value })}
-                      className="w-full bg-[#050505] border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-xl px-4 py-3 text-xs text-white focus:outline-none transition-all cursor-pointer font-bold shadow-inner"
+                      className={`w-full ${styles.bgInput} focus:border-indigo-500/40 rounded-xl px-4 py-3 text-xs focus:outline-none transition-all cursor-pointer font-bold shadow-inner`}
                     >
-                      <option value="blue" className="bg-[#050505] text-white">أزرق سماوي (Blue Glow)</option>
-                      <option value="cyan" className="bg-[#050505] text-white">سيان فائق (Cyan Neon)</option>
-                      <option value="purple" className="bg-[#050505] text-white">بنفسجي تبيان (Purple Spirit)</option>
-                      <option value="gold" className="bg-[#050505] text-white">ذهبي فاخر (Gold Edition)</option>
+                      <option value="blue" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>أزرق سماوي (Blue Glow)</option>
+                      <option value="cyan" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>سيان فائق (Cyan Neon)</option>
+                      <option value="purple" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>بنفسجي تبيان (Purple Spirit)</option>
+                      <option value="gold" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>ذهبي فاخر (Gold Edition)</option>
                     </select>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10 space-y-3">
+                  <div className={`pt-4 border-t ${styles.borderNormal} space-y-3`}>
                     <button
                       onClick={handleSaveProductChanges}
                       disabled={isSavingProduct}
-                      className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-brand-glow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
+                      className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
                     >
                       {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                       <span>حفظ تغييرات الحقول</span>
@@ -2459,7 +2797,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                     <button
                       onClick={handleDeleteProductPermanently}
-                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
+                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 dark:text-rose-450 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>حذف المنتج نهائياً من النظام</span>
@@ -2473,22 +2811,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <div className="space-y-5 animate-slide-up">
                   
                   {keyActionMessage && (
-                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary text-xs rounded-xl font-bold flex items-center justify-between shadow-brand-glow">
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl font-bold flex items-center justify-between shadow-sm">
                       <span>{keyActionMessage}</span>
                       <Check className="w-4 h-4" />
                     </div>
                   )}
 
                   {/* Premium Info Box */}
-                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 flex flex-col gap-3 relative overflow-hidden shadow-lg">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-primary shadow-brand-glow"></div>
+                  <div className={`bg-indigo-500/5 dark:bg-primary/5 border border-indigo-500/10 dark:border-primary/20 rounded-xl p-5 flex flex-col gap-3 relative overflow-hidden shadow-sm`}>
+                    <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 dark:bg-primary"></div>
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-brand-glow">
-                        <Layers className="w-5 h-5 text-primary" />
+                      <div className="w-10 h-10 rounded-full bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/25 dark:border-primary/30 flex items-center justify-center shrink-0">
+                        <Layers className="w-5 h-5 text-indigo-500 dark:text-primary" />
                       </div>
                       <div className="flex-1 text-right">
-                        <h4 className="text-sm font-extrabold text-white mb-1">إدارة المخزون الذكية</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed">
+                        <h4 className={`text-sm font-extrabold ${styles.textTitle} mb-1`}>إدارة المخزون الذكية</h4>
+                        <p className={`text-xs ${styles.textMuted} leading-relaxed`}>
                           يمكنك إضافة آلاف المفاتيح دفعة واحدة بدون أي تأخير. النظام سيقوم بمعالجتها في الخلفية.
                         </p>
                       </div>
@@ -2496,7 +2834,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {!bulkAddOpen && (
                       <button 
                         onClick={() => setBulkAddOpen(true)}
-                        className="w-full py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-xs font-bold rounded-xl transition-all cursor-pointer mt-2"
+                        className="w-full py-3 bg-indigo-500/10 hover:bg-indigo-500/20 dark:bg-primary/10 dark:hover:bg-primary/20 border border-indigo-500/20 dark:border-primary/30 text-indigo-600 dark:text-primary text-xs font-bold rounded-xl transition-all cursor-pointer mt-2"
                       >
                         فتح لوحة الإضافة السريعة (Batch Add)
                       </button>
@@ -2510,18 +2848,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         initial={{ opacity: 0, y: -10, height: 0 }}
                         animate={{ opacity: 1, y: 0, height: 'auto' }}
                         exit={{ opacity: 0, y: -10, height: 0 }}
-                        className="glass-card rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden"
+                        className={`${styles.bgCard} rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden border border-indigo-500/10`}
                       >
                         <div className="absolute top-0 right-0 p-3">
-                          <button onClick={() => setBulkAddOpen(false)} className="text-slate-500 hover:text-red-400 transition-colors cursor-pointer p-1">
+                          <button onClick={() => setBulkAddOpen(false)} className={`text-slate-500 hover:text-red-500 transition-colors cursor-pointer p-1`}>
                             <X className="w-4 h-4" />
                           </button>
                         </div>
                         
                         <div className="flex justify-between items-center pr-2">
-                          <span className="text-xs text-primary font-bold tracking-widest uppercase">Batch Keys</span>
+                          <span className="text-xs text-indigo-500 dark:text-primary font-bold tracking-widest uppercase">Batch Keys</span>
                           {bulkKeysText.trim() && (
-                            <span className="text-xs font-bold bg-primary/20 text-primary px-3 py-1 rounded-lg">
+                            <span className="text-xs font-bold bg-indigo-500/20 text-indigo-500 dark:text-primary px-3 py-1 rounded-lg">
                               {bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0).length} مفاتيح
                             </span>
                           )}
@@ -2533,14 +2871,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             value={bulkKeysText}
                             onChange={(e) => setBulkKeysText(e.target.value)}
                             placeholder="الصق المفاتيح هنا...&#10;يمكنك الفصل بينها بمسافة أو فاصلة أو سطر جديد."
-                            className={`w-full bg-[#050505] rounded-xl p-4 text-sm font-mono placeholder:text-slate-600 focus:outline-none transition-all resize-y min-h-[120px] shadow-inner ${isAddingKeys ? 'border border-primary shadow-brand-glow text-primary/90' : 'border border-white/10 focus:border-primary/50 text-slate-300'}`}
+                            className={`w-full ${styles.bgInput} rounded-xl p-4 text-sm font-mono placeholder:text-slate-550 focus:outline-none transition-all resize-y min-h-[120px] shadow-inner ${isAddingKeys ? 'border border-indigo-500 shadow-md text-indigo-500' : `border ${styles.borderNormal} focus:border-indigo-500/50 ${styles.textTitle}`}`}
                             style={{ lineHeight: '1.8' }}
                             dir="ltr"
                           />
                         </div>
 
                         {bulkMessage && (
-                          <div className="p-3 bg-primary/10 text-primary text-xs rounded-xl font-bold text-center border border-primary/20 shadow-brand-glow">
+                          <div className="p-3 bg-indigo-500/10 text-indigo-500 dark:text-primary text-xs rounded-xl font-bold text-center border border-indigo-500/25 shadow-sm">
                             {bulkMessage}
                           </div>
                         )}
@@ -2548,7 +2886,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <button
                           onClick={handleBulkAddKeys}
                           disabled={isAddingKeys || !bulkKeysText.trim()}
-                          className={`w-full py-4 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-primary hover:bg-primary-hover text-white shadow-brand-glow hover:-translate-y-0.5' : 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/10'}`}
+                          className={`w-full py-4 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-indigo-600 dark:bg-primary hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/15 hover:-translate-y-0.5' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed border'}`}
                         >
                           {isAddingKeys ? (
                             <>
@@ -2569,27 +2907,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {/* Keys List */}
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-4 px-1">
-                      <h4 className="text-sm font-bold text-white">المفاتيح الحالية</h4>
-                      <div className="text-xs font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full shadow-brand-glow">
+                      <h4 className={`text-sm font-bold ${styles.textTitle}`}>المفاتيح الحالية</h4>
+                      <div className="text-xs font-bold text-indigo-650 dark:text-primary bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full shadow-sm">
                         {inventoryKeys.length} مفتاح
                       </div>
                     </div>
 
                     {isLoadingKeys ? (
-                      <div className="flex flex-col items-center justify-center py-12 border border-white/10 border-dashed rounded-xl bg-black/20">
-                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-primary" />
+                      <div className={`flex flex-col items-center justify-center py-12 border ${styles.borderNormal} border-dashed rounded-xl ${isDark ? 'bg-black/20' : 'bg-slate-50'}`}>
+                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-indigo-500 dark:text-primary" />
                         <span className="text-xs font-bold text-slate-400">جارٍ جلب المفاتيح بسرعة...</span>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {inventoryKeys.map((keyItem) => (
-                          <div key={keyItem.id} className="group bg-black/40 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-xl overflow-hidden flex items-center justify-between p-4 gap-4 transition-all shadow-md">
-                            <div className="flex-1 text-sm text-slate-300 font-mono break-all text-left select-all group-hover:text-white transition-colors" dir="ltr">
+                          <div key={keyItem.id} className={`group ${isDark ? 'bg-black/40 hover:bg-white/5 border-white/10' : 'bg-slate-50 hover:bg-slate-100 border-slate-200'} border hover:border-indigo-500/30 rounded-xl overflow-hidden flex items-center justify-between p-4 gap-4 transition-all shadow-sm`}>
+                            <div className={`flex-1 text-sm ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-black'} font-mono break-all text-left select-all transition-colors`} dir="ltr">
                               {keyItem.key}
                             </div>
                             <button
                               onClick={() => handleDeleteKey(keyItem.id)}
-                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-all cursor-pointer"
+                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer"
                               title="حذف المفتاح"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -2598,9 +2936,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         ))}
 
                         {inventoryKeys.length === 0 && !bulkAddOpen && !singleAddOpen && (
-                          <div className="text-center py-10 border border-white/10 border-dashed rounded-xl bg-black/20">
-                            <Key className="w-8 h-8 text-slate-600 mx-auto mb-3 opacity-50" />
-                            <p className="text-xs text-slate-500 font-bold">لا توجد مفاتيح في المخزون حالياً</p>
+                          <div className={`text-center py-10 border ${styles.borderNormal} border-dashed rounded-xl ${isDark ? 'bg-black/20' : 'bg-slate-50'}`}>
+                            <Key className="w-8 h-8 text-slate-450 mx-auto mb-3 opacity-50" />
+                            <p className={`text-xs ${styles.textMuted} font-bold`}>لا توجد مفاتيح في المخزون حالياً</p>
                           </div>
                         )}
 
@@ -2611,27 +2949,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
-                              className="glass-card border border-primary/30 rounded-xl p-3 flex flex-col sm:flex-row gap-3 shadow-lg"
+                              className={`border ${styles.borderNormal} rounded-xl p-3 flex flex-col sm:flex-row gap-3 shadow-lg ${isDark ? 'bg-black/40' : 'bg-slate-50'}`}
                             >
                               <input
                                 type="text"
                                 value={singleKeyText}
                                 onChange={(e) => setSingleKeyText(e.target.value)}
                                 placeholder="أدخل المفتاح هنا..."
-                                className="flex-1 bg-[#050505] border border-white/10 rounded-lg px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-primary/50 text-left transition-all shadow-inner"
+                                className={`flex-1 ${styles.bgInput} rounded-lg px-4 py-3 text-sm font-mono placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 text-left transition-all shadow-inner`}
                                 dir="ltr"
                               />
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleAddSingleKey}
                                   disabled={!singleKeyText.trim()}
-                                  className="px-6 py-3 bg-primary hover:bg-primary-hover text-white font-black text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-brand-glow"
+                                  className="px-6 py-3 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
                                 >
                                   إضافة
                                 </button>
                                 <button
                                   onClick={() => setSingleAddOpen(false)}
-                                  className="px-5 py-3 bg-white/5 hover:bg-red-500/20 border border-white/10 text-slate-300 hover:text-red-400 font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                                  className={`px-5 py-3 ${isDark ? 'bg-white/5 hover:bg-red-500/20 border-white/10' : 'bg-slate-100 hover:bg-red-500/10 border-slate-200'} border text-slate-650 hover:text-red-500 font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap`}
                                 >
                                   إلغاء
                                 </button>
@@ -2644,7 +2982,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {!singleAddOpen && (
                           <button 
                             onClick={() => setSingleAddOpen(true)}
-                            className="w-full py-4 flex items-center justify-center gap-2 bg-black/20 border border-white/10 border-dashed hover:border-primary/50 hover:bg-primary/5 rounded-xl text-slate-400 hover:text-primary transition-all cursor-pointer mt-3"
+                            className={`w-full py-4 flex items-center justify-center gap-2 border border-dashed rounded-xl transition-all cursor-pointer mt-3 ${isDark ? 'bg-black/20 border-white/10 hover:border-primary/50 hover:bg-primary/5 text-slate-400 hover:text-primary' : 'bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-500 hover:text-indigo-600'}`}
                           >
                             <span className="text-xl leading-none mb-0.5">+</span>
                             <span className="text-xs font-bold">إضافة مفتاح فردي</span>
@@ -2657,16 +2995,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               )}
             </div>
             
-            <div className="p-5 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-center justify-between shrink-0 gap-3">
+            <div className={`p-5 border-t ${styles.borderNormal} ${isDark ? 'bg-black/40' : 'bg-slate-50'} flex flex-col sm:flex-row items-center justify-between shrink-0 gap-3`}>
               <button
                 onClick={() => setInventoryProduct(null)}
-                className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-sm rounded-xl transition-all cursor-pointer hover:-translate-y-0.5"
+                className={`w-full sm:w-auto px-6 py-3 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-slate-100 hover:bg-slate-200 border-slate-250'} border ${styles.textTitle} font-bold text-sm rounded-xl transition-all cursor-pointer hover:-translate-y-0.5`}
               >
                 إلغاء
               </button>
               <button
                 onClick={handleSaveProductChanges}
-                className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-xl shadow-brand-glow transition-all cursor-pointer hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-6 py-3 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-sm rounded-xl shadow-lg shadow-indigo-500/15 transition-all cursor-pointer hover:-translate-y-0.5"
               >
                 حفظ التغييرات
               </button>
@@ -2798,99 +3136,290 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
       {selectedAdminCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#10121a] border border-white/10 rounded-2xl p-6 max-w-2xl w-full relative shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className={`${styles.bgPanel} rounded-[28px] p-6 md:p-8 max-w-2xl w-full relative shadow-2xl max-h-[92vh] overflow-y-auto border scrollbar-none space-y-6`}>
+            
+            {/* Close Button */}
             <button
-              onClick={() => setSelectedAdminCustomer(null)}
-              className="absolute top-4 left-4 text-slate-400 hover:text-white p-1"
+              onClick={() => {
+                setSelectedAdminCustomer(null);
+                setSelectedCustomerProducts([]);
+              }}
+              className={`absolute top-5 ${lang === 'ar' ? 'left-5' : 'right-5'} p-2 rounded-full ${styles.btnSecondary} border transition-all hover:scale-105 cursor-pointer`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/5">
+            {/* Modal Header */}
+            <div className="flex items-center gap-4.5 pb-5 border-b border-white/5">
               <img
                 src={selectedAdminCustomer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                 alt={selectedAdminCustomer.name}
-                className="w-14 h-14 rounded-full border border-sky-500/30 object-cover"
+                className="w-14 h-14 rounded-2xl border border-indigo-500/20 object-cover shadow-lg"
+                onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
               />
-              <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  {selectedAdminCustomer.name}
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAdminCustomer.role === 'Boss' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}`}>
-                    {selectedAdminCustomer.role}
+              <div className="text-right">
+                <h3 className={`text-[17px] font-black ${styles.textTitle} flex items-center gap-2`}>
+                  <span>{selectedAdminCustomer.name}</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                    selectedAdminCustomer.role === 'Boss' 
+                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                      : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                  }`}>
+                    {selectedAdminCustomer.role || 'Customer'}
                   </span>
+                  {selectedAdminCustomer.isBanned && (
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                      {lang === 'ar' ? 'محظور' : 'Banned'}
+                    </span>
+                  )}
                 </h3>
-                <div className="text-xs text-slate-400 mt-1 flex gap-3">
-                  <span>Discord: <span className="text-sky-400 font-mono">{selectedAdminCustomer.discordId}</span></span>
-                  <span>|</span>
-                  <span>IP: <span className="font-mono text-slate-300">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span></span>
+                <div className="text-[11px] ${styles.textMuted} mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-medium">
+                  <span className="flex items-center gap-1">
+                    <span className={styles.textLightMuted}>Discord ID:</span>
+                    <span className="font-mono text-indigo-400 font-bold">{selectedAdminCustomer.discordId || 'N/A'}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className={styles.textLightMuted}>IP:</span>
+                    <span className="font-mono text-slate-350 font-bold">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className={styles.textLightMuted}>{lang === 'ar' ? 'التحذيرات:' : 'Warnings:'}</span>
+                    <span className="text-amber-500 font-bold">{selectedAdminCustomer.warningCount || 0}</span>
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
-              {/* User Keys */}
-              <div>
-                <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                  <Key className="w-4 h-4 text-primary" />
-                  <span>مفاتيح العميل المستخدمة</span>
+            {/* Modal Body grid */}
+            <div className="space-y-6 text-right">
+
+              {/* SECTION 1: ACTIVE PRODUCTS / SUBSCRIPTIONS */}
+              <div className="space-y-3">
+                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
+                  <Sparkles className="w-4 h-4 text-indigo-500" />
+                  <span>{lang === 'ar' ? 'الاشتراكات والمنتجات النشطة' : 'Active Products & Subscriptions'}</span>
                 </h4>
-                <div className="bg-[#08090d] border border-white/5 rounded-xl p-4">
+                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border`}>
+                  {selectedCustomerProducts.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedCustomerProducts.map((userProd) => {
+                        const originalProd = products.find(p => p.id === userProd.productId);
+                        return (
+                          <div key={userProd.id} className="flex items-center justify-between p-3 bg-black/10 dark:bg-white/[0.02] border border-white/5 rounded-xl">
+                            <div>
+                              <div className={`text-xs font-black ${styles.textTitle}`}>
+                                {originalProd?.name || userProd.productId}
+                              </div>
+                              <div className="text-[10px] text-slate-500 mt-1 flex gap-3 font-medium">
+                                <span>{lang === 'ar' ? 'تاريخ التفعيل:' : 'Active since:'} {new Date(userProd.activatedAt).toLocaleDateString('ar-SA')}</span>
+                                <span>•</span>
+                                <span className={userProd.status === 'active' ? 'text-emerald-400 font-bold' : 'text-slate-400 font-bold'}>
+                                  {userProd.status === 'active' ? (lang === 'ar' ? 'نشط' : 'Active') : userProd.status}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, userProd.productId)}
+                              className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-[10px] font-black rounded-lg transition-all cursor-pointer"
+                            >
+                              {lang === 'ar' ? 'سحب وتعطيل' : 'Revoke Product'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-500 text-center py-4 font-medium">
+                      {lang === 'ar' ? 'لا توجد منتجات نشطة حالياً لهذا العميل.' : 'No active products found.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 2: GRANT NEW PRODUCT */}
+              <div className="space-y-3">
+                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
+                  <Key className="w-4 h-4 text-emerald-500" />
+                  <span>{lang === 'ar' ? 'منح منتج جديد مباشرة' : 'Grant New Product'}</span>
+                </h4>
+                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border flex flex-col sm:flex-row gap-3 items-end sm:items-center`}>
+                  <div className="flex-1 w-full text-right">
+                    <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'اختر المنتج من المتجر' : 'Select Product'}</label>
+                    <select
+                      value={selectedProductToGrant}
+                      onChange={(e) => setSelectedProductToGrant(e.target.value)}
+                      className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-bold focus:outline-none`}
+                    >
+                      <option value="">{lang === 'ar' ? '-- اختر منتجاً --' : '-- Choose Product --'}</option>
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => handleGrantProduct(selectedAdminCustomer.id)}
+                    disabled={isProcessingAdminAction}
+                    className="h-11 px-5 bg-emerald-600 hover:bg-emerald-550 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-600/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{lang === 'ar' ? 'منح المنتج الآن' : 'Grant Product'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* SECTION 3: WARNING MANAGEMENT */}
+              <div className="space-y-3">
+                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <span>{lang === 'ar' ? 'توجيه تحذير للعميل' : 'Warn Customer'}</span>
+                </h4>
+                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border space-y-4`}>
+                  {selectedAdminCustomer.warningMessage && (
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs rounded-xl font-medium">
+                      <span className="font-bold block mb-1">{lang === 'ar' ? 'التحذير النشط حالياً:' : 'Active Warning:'}</span>
+                      <span>{selectedAdminCustomer.warningMessage}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 items-end">
+                    <div className="flex-grow w-full">
+                      <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'اكتب رسالة التحذير للعميل' : 'Warning Message'}</label>
+                      <input
+                        type="text"
+                        value={warningMessageInput}
+                        onChange={(e) => setWarningMessageInput(e.target.value)}
+                        placeholder={lang === 'ar' ? 'مثال: الرجاء الالتزام بشروط الاستخدام...' : 'Enter warning...'}
+                        className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-semibold focus:outline-none`}
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleWarnUser(selectedAdminCustomer.id)}
+                      disabled={isProcessingAdminAction}
+                      className="h-11 px-5 bg-amber-500 hover:bg-amber-450 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg shadow-amber-500/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
+                    >
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>{lang === 'ar' ? 'إرسال تحذير' : 'Send Warning'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: BAN/RESTRICTION MANAGEMENT */}
+              <div className="space-y-3">
+                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
+                  <Lock className="w-4 h-4 text-rose-500" />
+                  <span>{lang === 'ar' ? 'إدارة حظر العميل (Ban Controls)' : 'Ban Restrictions'}</span>
+                </h4>
+                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border`}>
+                  {selectedAdminCustomer.isBanned ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl space-y-2">
+                        <div className="font-black text-sm">{lang === 'ar' ? 'حساب العميل محظور حالياً' : 'Customer Account is Banned'}</div>
+                        <div>
+                          <span className="font-bold">{lang === 'ar' ? 'السبب:' : 'Reason:'}</span> {selectedAdminCustomer.banReason || 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-bold">{lang === 'ar' ? 'النوع:' : 'Type:'}</span> {selectedAdminCustomer.banType === 'temporary' ? (lang === 'ar' ? 'مؤقت' : 'Temporary') : (lang === 'ar' ? 'دائم' : 'Permanent')}
+                        </div>
+                        {selectedAdminCustomer.banType === 'temporary' && selectedAdminCustomer.banExpiresAt && (
+                          <div>
+                            <span className="font-bold">{lang === 'ar' ? 'ينتهي في:' : 'Expires:'}</span> {new Date(selectedAdminCustomer.banExpiresAt).toLocaleString('ar-SA')}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleUnbanUser(selectedAdminCustomer.id)}
+                        disabled={isProcessingAdminAction}
+                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-550 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Unlock className="w-4 h-4" />
+                        <span>{lang === 'ar' ? 'إلغاء الحظر وتفعيل الحساب' : 'Unban Account'}</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="text-right">
+                          <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'سبب الحظر' : 'Ban Reason'}</label>
+                          <input
+                            type="text"
+                            value={banReasonInput}
+                            onChange={(e) => setBanReasonInput(e.target.value)}
+                            placeholder={lang === 'ar' ? 'مخالفة شروط متجر تعن...' : 'Reason...'}
+                            className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-semibold focus:outline-none`}
+                          />
+                        </div>
+                        <div className="text-right">
+                          <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'نوع الحظر' : 'Ban Type'}</label>
+                          <select
+                            value={banTypeInput}
+                            onChange={(e) => setBanTypeInput(e.target.value as 'temporary' | 'permanent')}
+                            className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-bold focus:outline-none`}
+                          >
+                            <option value="permanent">{lang === 'ar' ? 'دائم (Permanent)' : 'Permanent'}</option>
+                            <option value="temporary">{lang === 'ar' ? 'مؤقت (Temporary)' : 'Temporary'}</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {banTypeInput === 'temporary' && (
+                        <div className="text-right animate-slide-up">
+                          <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'تاريخ ووقت انتهاء الحظر المؤقت' : 'Ban Expiration Date & Time'}</label>
+                          <input
+                            type="datetime-local"
+                            value={banExpiresAtInput}
+                            onChange={(e) => setBanExpiresAtInput(e.target.value)}
+                            className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-bold focus:outline-none`}
+                          />
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => handleBanUser(selectedAdminCustomer.id)}
+                        disabled={isProcessingAdminAction}
+                        className="w-full py-3 bg-red-650 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Lock className="w-4 h-4" />
+                        <span>{lang === 'ar' ? 'تأكيد فرض الحظر' : 'Apply Ban'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 5: ACTIVATED LICENSE KEYS */}
+              <div className="space-y-3">
+                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
+                  <FileText className="w-4 h-4 text-sky-500" />
+                  <span>{lang === 'ar' ? 'المفاتيح المفعلة بالحساب' : 'Redeemed License Keys'}</span>
+                </h4>
+                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border max-h-48 overflow-y-auto scrollbar-none`}>
                   {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).length > 0 ? (
                     <div className="space-y-2">
                       {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).map(keyObj => (
-                        <div key={keyObj.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-2 bg-white/5 rounded-lg border border-white/10">
+                        <div key={keyObj.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-2.5 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-white/5">
                           <div>
-                            <div className="font-mono text-xs text-emerald-400 tracking-wider">{keyObj.key}</div>
-                            <div className="text-[10px] text-slate-400 mt-0.5">
-                              منتج: <span className="text-slate-200">{keyObj.productName || 'غير محدد'}</span> - المدة: {keyObj.duration}
+                            <div className="font-mono text-xs text-emerald-400 font-bold tracking-wider">{keyObj.key}</div>
+                            <div className="text-[10px] text-slate-500 mt-1 font-medium">
+                              {lang === 'ar' ? 'المنتج:' : 'Product:'} <span className={styles.textTitle}>{keyObj.productName || 'N/A'}</span> — {lang === 'ar' ? 'المدة:' : 'Duration:'} <span className={styles.textTitle}>{keyObj.duration}</span>
                             </div>
                           </div>
-                          <div className="text-[10px] text-slate-500">
-                            تم التفعيل: {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
+                          <div className="text-[9px] text-slate-500 font-mono">
+                            {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-xs text-slate-500 text-center py-4">لا توجد مفاتيح مستخدمة لهذا العميل حالياً.</div>
+                    <div className="text-xs text-slate-500 text-center py-4 font-medium">
+                      {lang === 'ar' ? 'لم يقم هذا العميل بتفعيل أي مفاتيح حتى الآن.' : 'No keys activated.'}
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div>
-                <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-rose-400" />
-                  <span>إجراءات سريعة</span>
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, 'prod-fortnite')}
-                    className="py-2.5 px-4 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <UserX className="w-4 h-4" />
-                    <span>تعطيل منتج: فورت نايت</span>
-                  </button>
-                  <button
-                    onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, 'prod-hwid-master')}
-                    className="py-2.5 px-4 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                    <span>تعطيل منتج: سبوفر تعن</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      showToast(`تم حظر العميل ${selectedAdminCustomer.name} من النظام بنجاح!`);
-                      setSelectedAdminCustomer(null);
-                    }}
-                    className="col-span-1 sm:col-span-2 py-2.5 px-4 bg-red-500 hover:bg-red-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
-                  >
-                    <Lock className="w-4 h-4" />
-                    <span>حظر العميل نهائياً (Ban)</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
