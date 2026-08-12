@@ -31,6 +31,8 @@ import {
   X,
   Bot,
   Edit3,
+  Eye,
+  EyeOff,
   Save,
   Trash2,
   ShoppingCart,
@@ -55,8 +57,25 @@ interface T3NUnifiedPortalProps {
 export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const { data: session, status } = useSession();
 
+  // Helper to split brand names to prevent browser translation tools from altering them to EON
+  const renderBrandText = (text: string) => {
+    return (
+      <span className="notranslate inline-flex" translate="no" style={{ unicodeBidi: 'isolate' }}>
+        {text.split('').map((char, idx) => (
+          <span key={idx} className="notranslate" translate="no" style={{ display: 'inline-block' }}>
+            {char === ' ' ? '\u00A0' : char}
+          </span>
+        ))}
+      </span>
+    );
+  };
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'admin' | 'profile'>('overview');
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
+  const toggleKeyReveal = (id: string) => {
+    setRevealedKeys(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
@@ -278,6 +297,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   useEffect(() => {
     if (activeTab === 'admin' && isAdmin) {
       loadDbProducts();
+      if (adminSectionTab === 'overview') loadAdminStats();
       if (adminSectionTab === 'customers') loadAdminCustomersList();
       if (adminSectionTab === 'keys') loadAllKeysList();
       if (adminSectionTab === 'logs') loadAdminStats();
@@ -997,24 +1017,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Dynamic Theme Styling Object
   const styles = {
-    bgApp: isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]',
-    bgPanel: isDark ? 'bg-[#08080A]/95 border-white/[0.06] backdrop-blur-xl' : 'bg-white border-black/[0.06] shadow-sm backdrop-blur-xl',
-    bgCard: isDark ? 'bg-[#0C0C0F]/90 border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md hover:border-indigo-500/20 transition-all duration-300' : 'bg-white border-slate-200 shadow-[0_8px_24px_rgba(0,0,0,0.02)] hover:border-indigo-500/20 transition-all duration-300',
-    bgSidebar: isDark ? 'bg-[#070709]/80 border-white/[0.05]' : 'bg-white border-slate-200 shadow-[2px_0_10px_rgba(0,0,0,0.01)]',
-    bgInput: isDark ? 'bg-[#040406] border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500/40 transition-all duration-300' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500/40 transition-all duration-300',
-    bgInnerCard: isDark ? 'bg-[#050608] border-white/[0.04]' : 'bg-slate-50 border-slate-200/[0.6]',
-    bgInnerCardDarkOnly: isDark ? 'bg-[#050608] border-white/[0.04]' : 'bg-slate-100 border-slate-200',
+    bgApp: isDark ? 'bg-[#050505] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]',
+    bgPanel: isDark ? 'bg-[#0D0D0F]/95 border-white/[0.06] backdrop-blur-xl' : 'bg-white border-black/[0.06] shadow-sm backdrop-blur-xl',
+    bgCard: isDark ? 'bg-[#111113] border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md hover:border-purple-500/20 transition-all duration-300' : 'bg-white border-slate-200 shadow-[0_8px_24px_rgba(0,0,0,0.02)] hover:border-purple-500/20 transition-all duration-300',
+    bgSidebar: isDark ? 'bg-[#0D0D0F]/95 border-white/[0.06]' : 'bg-white border-slate-200 shadow-[2px_0_10px_rgba(0,0,0,0.01)]',
+    bgInput: isDark ? 'bg-[#050505] border-white/[0.08] text-white placeholder:text-slate-500 focus:border-purple-500/40 transition-all duration-300' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-purple-500/40 transition-all duration-300',
+    bgInnerCard: isDark ? 'bg-[#08080A] border-white/[0.05]' : 'bg-slate-50 border-slate-200/[0.6]',
+    bgInnerCardDarkOnly: isDark ? 'bg-[#08080A] border-white/[0.05]' : 'bg-slate-100 border-slate-200',
     textTitle: isDark ? 'text-white' : 'text-slate-950',
     textBody: isDark ? 'text-[#F4F4F5]' : 'text-slate-800',
     textMuted: isDark ? 'text-[#A1A1AA]' : 'text-slate-500',
     textLightMuted: isDark ? 'text-[#71717A]' : 'text-slate-450',
     borderSubtle: isDark ? 'border-white/[0.04]' : 'border-slate-100',
     borderNormal: isDark ? 'border-white/10' : 'border-slate-200',
-    sidebarActive: isDark ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.1)] font-bold' : 'bg-indigo-50/80 border border-indigo-500/10 text-indigo-600 shadow-sm font-bold',
+    sidebarActive: isDark ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)] font-bold' : 'bg-purple-50/80 border border-purple-500/10 text-purple-650 shadow-sm font-bold',
     sidebarInactive: isDark ? 'text-[#A1A1AA] hover:text-white hover:bg-white/[0.01]' : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50',
     btnSecondary: isDark ? 'border-white/[0.05] hover:border-white/20 hover:bg-white/5 text-[#A1A1AA] hover:text-white' : 'border-slate-200 hover:border-slate-350 hover:bg-black/[0.02] text-slate-700 hover:text-slate-950',
-    btnPrimary: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 text-white shadow-lg shadow-indigo-500/15 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0',
-    borderHover: isDark ? 'border-indigo-500/50' : 'border-indigo-600/50'
+    btnPrimary: 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-500 hover:via-fuchsia-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/15 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0',
+    borderHover: isDark ? 'border-purple-500/50' : 'border-purple-650/50'
   };
 
   if (!isLoggedIn) {
@@ -1093,7 +1113,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               className="space-y-2.5"
             >
               <h1 className={`text-2xl font-bold ${styles.textTitle} tracking-wide notranslate`} translate="no">
-                {lang === 'ar' ? 'تعن' : 'TA3N'}
+                {renderBrandText(lang === 'ar' ? 'تعن' : 'TA3N')}
               </h1>
               <p className={`text-[12.5px] ${styles.textMuted} font-medium leading-relaxed max-w-[290px] mx-auto`}>
                 {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
@@ -1165,7 +1185,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           className={`absolute bottom-6 left-8 text-xs font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'} tracking-wide`}
           dir="rtl"
         >
-          © 2026 جميع الحقوق محفوظة لمنصة تعن
+          © 2026 جميع الحقوق محفوظة لمنصة {renderBrandText('تعن')}
         </motion.div>
  
         {/* Guest Key Redemption Modal */}
@@ -1298,7 +1318,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <img src="/logo.png?v=6" alt="تعن" className="w-full h-full rounded-full object-cover select-none" onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
             </div>
             <span className={`text-[17px] font-black tracking-wider bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent notranslate`} translate="no">
-              {lang === 'ar' ? 'تعن' : 'TA3N'}
+              {renderBrandText(lang === 'ar' ? 'تعن' : 'TA3N')}
             </span>
           </div>
         </div>
@@ -1342,6 +1362,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               >
                 <Package className="w-4 h-4 transition-colors" />
                 <span className={`text-sm tracking-wide ${activeTab === 'my-products' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('redeem')}
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
+                  activeTab === 'redeem' 
+                    ? styles.sidebarActive 
+                    : styles.sidebarInactive
+                }`}
+              >
+                <Key className="w-4 h-4 transition-colors" />
+                <span className={`text-sm tracking-wide ${activeTab === 'redeem' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
               </button>
             </div>
           </div>
@@ -1478,9 +1509,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 className={`w-14 h-14 rounded-full object-cover ${isDark ? 'grayscale opacity-90' : ''}`}
                 onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
               />
-              <div className="flex flex-col text-left">
+              <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                 <h2 className={`text-[16px] font-bold ${styles.textTitle} tracking-wide`}>
-                  {lang === 'ar' ? 'مرحباً بعودتك،' : 'Welcome back,'} {currentUser.name}!
+                  {lang === 'ar' ? `مرحباً بعودتك، ${currentUser.name}!` : `Welcome back, ${currentUser.name}!`}
                 </h2>
                 <p className={`text-[12px] ${styles.textMuted} mt-0.5`}>
                   {lang === 'ar' ? `لديك ${userProducts.length} منتجات مفعلة بحسابك.` : `You have ${userProducts.length} active product(s) on your account.`}
@@ -1533,7 +1564,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {/* Right Column: Quick Actions Card */}
               <div className={`${styles.bgCard} rounded-[16px] p-4 animate-slide-up h-fit`} style={{ animationDelay: '0.2s' }}>
-                <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
+                <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                   {lang === 'ar' ? 'إجراءات سريعة' : 'QUICK ACTIONS'}
                 </div>
                 
@@ -1547,12 +1578,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <Package className="w-4 h-4" />
                       </div>
-                      <div className="text-left flex flex-col">
+                      <div className={`${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col`}>
                         <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
                         <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</span>
                       </div>
                     </div>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-all duration-300 transform ${lang === 'ar' ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Quick Action 2 */}
@@ -1564,12 +1595,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <Key className="w-4 h-4" />
                       </div>
-                      <div className="text-left flex flex-col">
+                      <div className={`${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col`}>
                         <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
                         <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</span>
                       </div>
                     </div>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-all duration-300 transform ${lang === 'ar' ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Quick Action 3 */}
@@ -1581,12 +1612,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <User className="w-4 h-4" />
                       </div>
-                      <div className="text-left flex flex-col">
+                      <div className={`${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col`}>
                         <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'مزامنة الرتب' : 'Sync Discord Roles'}</span>
                         <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer & product roles'}</span>
                       </div>
                     </div>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-all duration-300 transform ${lang === 'ar' ? 'rotate-180' : ''}`} />
                   </button>
                   
                   {/* Quick Action 4 */}
@@ -1600,12 +1631,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center shrink-0 ${styles.textMuted}`}>
                         <MessageSquare className="w-4 h-4" />
                       </div>
-                      <div className="text-left flex flex-col">
+                      <div className={`${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col`}>
                         <span className={`text-[12px] font-bold ${styles.textTitle} tracking-wide`}>{lang === 'ar' ? 'ديسكورد' : 'Join Discord'}</span>
                         <span className={`text-[10px] ${styles.textLightMuted} mt-0.5`}>{lang === 'ar' ? 'الدعم والتحديثات' : 'Get support & updates'}</span>
                       </div>
                     </div>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-colors`} />
+                    <ArrowRight className={`w-3.5 h-3.5 ${isDark ? 'text-[#444444] group-hover:text-[#A1A1AA]' : 'text-slate-400 group-hover:text-slate-600'} transition-all duration-300 transform ${lang === 'ar' ? 'rotate-180' : ''}`} />
                   </a>
                 </div>
               </div>
@@ -1732,7 +1763,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                       {/* LICENSE SECTION */}
                       <div className="mb-5 relative group/key">
-                        <div className={`bg-slate-50 dark:bg-[#05070B] border ${styles.borderSubtle} rounded-xl p-3 flex flex-col gap-2 relative transition-all shadow-inner hover:border-indigo-500/30 dark:hover:border-primary/30`}>
+                        <div className={`bg-slate-50 dark:bg-[#05070B] border ${styles.borderSubtle} rounded-xl p-3 flex flex-col gap-2 relative transition-all shadow-inner hover:border-purple-500/30 dark:hover:border-purple-500/20`}>
                           <div className="flex items-center justify-between">
                             <span className={`text-[10px] ${styles.textMuted} font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
                             <span className="text-[9px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
@@ -1743,15 +1774,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           
                           <div className="flex items-center justify-between gap-3">
                             <code dir="ltr" className={`text-xs font-mono ${styles.textTitle} tracking-widest font-semibold truncate flex-1 text-left select-all`}>
-                              {up.keyString || 'KEY-XXXXXXXX-XXXXXXXX'}
+                              {(() => {
+                                const rawKey = up.keyString || 'KEY-ACTIVATED';
+                                const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
+                                return revealedKeys[up.id]
+                                  ? fullKey
+                                  : `${fullKey.substring(0, 8)}••••-••••`;
+                              })()}
                             </code>
-                            <button
-                              onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                              className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : `bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 ${styles.textMuted} hover:${styles.textTitle} border border-transparent`}`}
-                              title="Copy Key"
-                            >
-                              {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => toggleKeyReveal(up.id)}
+                                className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${styles.textMuted} hover:${styles.textTitle} bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10`}
+                                title={revealedKeys[up.id] ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'إظهار' : 'Show')}
+                              >
+                                {revealedKeys[up.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
+                                className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : `bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 ${styles.textMuted} hover:${styles.textTitle} border border-transparent`}`}
+                                title="Copy Key"
+                              >
+                                {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2048,7 +2094,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </span>
                 </h1>
                 <p className={`text-xs ${styles.textMuted} mt-2`}>
-                  {adminSectionTab === 'overview' && 'إحصائيات شاملة ومباشرة لمنصة تعن الرقمية.'}
+                  {adminSectionTab === 'overview' && (lang === 'ar' ? <>إحصائيات شاملة ومباشرة لمنصة {renderBrandText('تعن')} الرقمية.</> : 'Comprehensive live stats for the TA3N portal.')}
                   {adminSectionTab === 'products' && 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.'}
                   {adminSectionTab === 'customers' && 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.'}
                   {adminSectionTab === 'keys' && 'تتبع سريع للمفاتيح المباعة والمتاحة في النظام.'}
@@ -2117,74 +2163,99 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
-                  {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="glass-card rounded-[24px] overflow-hidden hover:border-indigo-500/40 dark:hover:border-primary/40 transition-all duration-300 flex flex-col group"
+                {products.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-16 border border-dashed border-indigo-500/20 dark:border-primary/20 bg-black/40 backdrop-blur-md rounded-[24px] text-center space-y-6 animate-slide-up">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 flex items-center justify-center text-indigo-500 dark:text-primary shadow-lg shadow-indigo-500/5">
+                      <Package className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-2 max-w-md mx-auto">
+                      <h4 className={`text-base font-extrabold ${styles.textTitle}`}>
+                        {lang === 'ar' ? 'لا توجد منتجات مضافة حتى الآن' : 'No Products Added Yet'}
+                      </h4>
+                      <p className={`text-xs ${styles.textMuted} leading-relaxed`}>
+                        {lang === 'ar' 
+                          ? 'ابدأ بإضافة منتجك الأول لربط مفاتيح التراخيص، وإدارة التحميلات والشروحات، وتفعيل رتب ديسكورد للعملاء تلقائياً.' 
+                          : 'Add your first product to link license keys, manage downloads and guides, and auto-assign Discord roles.'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={openAddProductModal}
+                      className="py-3 px-6 bg-gradient-to-r from-indigo-500 to-purple-650 hover:from-indigo-650 hover:to-purple-700 text-white font-extrabold text-xs rounded-xl shadow-xl shadow-indigo-500/10 flex items-center gap-2.5 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
                     >
-                      {/* Top Image Banner - Full Width */}
-                      <div className={`relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
-                        <img
-                          src={product.image || '/logo.png?v=6'}
-                          alt={product.name}
-                          className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60 group-hover:opacity-100' : 'object-cover'}`}
-                          onError={(e) => { 
-                            e.currentTarget.src = '/logo.png?v=6'; 
-                            e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0a0a0a] via-transparent to-transparent" />
-                        
-                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
-                          <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{lang === 'ar' ? 'المخزون المتاح:' : 'Stock:'}</span>
-                          <span className="text-xs font-black text-indigo-400 dark:text-primary">{product.stockKeysCount || 0}</span>
-                        </div>
-                      </div>
-
-                      {/* Content Section */}
-                      <div className="p-6 flex-1 flex flex-col">
-                        {/* Title & Icon Row */}
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className={`w-12 h-12 rounded-xl bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 flex items-center justify-center shrink-0 shadow-sm`}>
-                            <Package className="w-6 h-6 text-indigo-650 dark:text-primary" />
+                      <Plus className="w-4 h-4" />
+                      <span>{lang === 'ar' ? 'إضافة منتج جديد الآن' : 'Add First Product'}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
+                    {products.map((product) => (
+                      <div
+                        key={product.id}
+                        className="glass-card rounded-[24px] overflow-hidden hover:border-indigo-500/40 dark:hover:border-primary/40 transition-all duration-300 flex flex-col group"
+                      >
+                        {/* Top Image Banner - Full Width */}
+                        <div className={`relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
+                          <img
+                            src={product.image || '/logo.png?v=6'}
+                            alt={product.name}
+                            className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60 group-hover:opacity-100' : 'object-cover'}`}
+                            onError={(e) => { 
+                              e.currentTarget.src = '/logo.png?v=6'; 
+                              e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0a0a0a] via-transparent to-transparent" />
+                          
+                          <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{lang === 'ar' ? 'المخزون المتاح:' : 'Stock:'}</span>
+                            <span className="text-xs font-black text-indigo-400 dark:text-primary">{product.stockKeysCount || 0}</span>
                           </div>
-                          <div>
-                            <h3 className={`font-extrabold ${styles.textTitle} text-lg leading-tight tracking-wide group-hover:text-indigo-650 dark:group-hover:text-primary transition-colors`}>{product.name}</h3>
-                            <div className={`text-[11px] ${styles.textMuted} mt-1 flex items-center gap-2 font-mono`}>
-                              <span className="text-indigo-600 dark:text-primary font-bold bg-indigo-500/10 dark:bg-primary/10 px-2 py-0.5 rounded-md border border-indigo-500/20 dark:border-primary/20">{product.version}</span>
-                              <span className="text-slate-400">·</span>
-                              <span className={`font-bold ${styles.textTitle}`}>{product.category}</span>
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="p-6 flex-1 flex flex-col">
+                          {/* Title & Icon Row */}
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className={`w-12 h-12 rounded-xl bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 flex items-center justify-center shrink-0 shadow-sm`}>
+                              <Package className="w-6 h-6 text-indigo-650 dark:text-primary" />
+                            </div>
+                            <div>
+                              <h3 className={`font-extrabold ${styles.textTitle} text-lg leading-tight tracking-wide group-hover:text-indigo-650 dark:group-hover:text-primary transition-colors`}>{product.name}</h3>
+                              <div className={`text-[11px] ${styles.textMuted} mt-1 flex items-center gap-2 font-mono`}>
+                                <span className="text-indigo-600 dark:text-primary font-bold bg-indigo-500/10 dark:bg-primary/10 px-2 py-0.5 rounded-md border border-indigo-500/20 dark:border-primary/20">{product.version}</span>
+                                <span className="text-slate-400">·</span>
+                                <span className={`font-bold ${styles.textTitle}`}>{product.category}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <p className={`text-sm ${styles.textMuted} leading-relaxed line-clamp-2 mb-6 flex-1`}>
-                          {product.description}
-                        </p>
+                          <p className={`text-sm ${styles.textMuted} leading-relaxed line-clamp-2 mb-6 flex-1`}>
+                            {product.description}
+                          </p>
 
-                        {/* Action Buttons Row */}
-                        <div className="grid grid-cols-2 gap-3 mt-auto">
-                          <button
-                            onClick={() => openInventoryModal(product, 'codes', true)}
-                            className="py-3 px-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white dark:text-black font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5 shadow-md shadow-indigo-500/20"
-                          >
-                            <Key className="w-4 h-4" />
-                            <span>{lang === 'ar' ? 'إضافة مفاتيح' : 'Add Keys'}</span>
-                          </button>
+                          {/* Action Buttons Row */}
+                          <div className="grid grid-cols-2 gap-3 mt-auto">
+                            <button
+                              onClick={() => openInventoryModal(product, 'codes', true)}
+                              className="py-3 px-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white dark:text-black font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5 shadow-md shadow-indigo-500/20"
+                            >
+                              <Key className="w-4 h-4" />
+                              <span>{lang === 'ar' ? 'إضافة مفاتيح' : 'Add Keys'}</span>
+                            </button>
 
-                          <button
-                            onClick={() => openInventoryModal(product, 'data', false)}
-                            className={`py-3 px-4 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border ${styles.borderNormal} rounded-xl text-xs font-bold ${styles.textTitle} transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5`}
-                          >
-                            <Edit3 className={`w-4 h-4 ${styles.textMuted}`} />
-                            <span>{lang === 'ar' ? 'تعديل المنتج' : 'Edit Product'}</span>
-                          </button>
+                            <button
+                              onClick={() => openInventoryModal(product, 'data', false)}
+                              className={`py-3 px-4 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border ${styles.borderNormal} rounded-xl text-xs font-bold ${styles.textTitle} transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5`}
+                            >
+                              <Edit3 className={`w-4 h-4 ${styles.textMuted}`} />
+                              <span>{lang === 'ar' ? 'تعديل المنتج' : 'Edit Product'}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

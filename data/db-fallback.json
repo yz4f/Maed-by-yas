@@ -81,8 +81,25 @@
       "role": "Boss",
       "discordRoles": [],
       "createdAt": "2026-08-11T11:40:27.961Z",
-      "lastLogin": "2026-08-11T11:40:27.961Z",
-      "lastIp": "127.0.0.1",
+      "lastLogin": "2026-08-12T09:12:33.703Z",
+      "lastIp": "::1",
+      "isBanned": false,
+      "warningCount": 0,
+      "warningMessage": null
+    },
+    {
+      "id": "user-1786526030386",
+      "discordId": "1422761753573593088",
+      "name": "^Y a S e R^",
+      "email": "yaser@t3n-store.com",
+      "image": "https://cdn.discordapp.com/embed/avatars/1.png",
+      "role": "Customer",
+      "discordRoles": [
+        "1397221350095192074"
+      ],
+      "createdAt": "2026-08-12T09:13:50.386Z",
+      "lastLogin": "2026-08-12T09:13:50.386Z",
+      "lastIp": "::1",
       "isBanned": false,
       "warningCount": 0,
       "warningMessage": null
@@ -96,6 +113,26 @@
       "status": "active",
       "activatedAt": "2026-08-11T11:40:27.961Z",
       "expiresAt": null
+    },
+    {
+      "id": "up-1786525953703",
+      "userId": "user-demo-admin",
+      "productId": "prod-fortnite",
+      "keyId": "key-demo-1",
+      "keyString": "KEY-T3N-FORT-DEMO-PERM",
+      "status": "Active",
+      "activatedAt": "2026-08-12T09:12:33.703Z",
+      "discordRoleGranted": true
+    },
+    {
+      "id": "up-1786526030386",
+      "userId": "user-1786526030386",
+      "productId": "prod-1786487944141",
+      "keyId": "key-1786488297856-0",
+      "keyString": "KEY-T3N-NEWPRO-7777",
+      "status": "Active",
+      "activatedAt": "2026-08-12T09:13:50.386Z",
+      "discordRoleGranted": true
     }
   ],
   "keys": [
@@ -105,10 +142,10 @@
       "productId": "prod-fortnite",
       "productName": "فك باند فورت نايت",
       "duration": "permanent",
-      "isUsed": false,
-      "usedByUserId": null,
+      "isUsed": true,
+      "usedByUserId": "user-demo-admin",
       "usedByUserName": null,
-      "usedAt": null,
+      "usedAt": "2026-08-12T09:12:33.703Z",
       "createdAt": "2026-08-11T11:40:27.961Z"
     },
     {
@@ -127,12 +164,14 @@
       "id": "key-1786488297856-0",
       "key": "KEY-T3N-NEWPRO-7777",
       "productId": "prod-1786487944141",
-      "isUsed": false,
+      "isUsed": true,
       "isDisabled": false,
       "isArchived": false,
       "duration": "Lifetime",
       "createdById": "Admin",
-      "createdAt": "2026-08-11T22:44:57.856Z"
+      "createdAt": "2026-08-11T22:44:57.856Z",
+      "usedByUserId": "user-1786526030386",
+      "usedAt": "2026-08-12T09:13:50.386Z"
     },
     {
       "id": "key-1786488297856-1",
@@ -164,6 +203,24 @@
       "userName": "T3N Owner",
       "ipAddress": "::1",
       "createdAt": "2026-08-11T12:33:55.047Z"
+    },
+    {
+      "id": "log-1786525953705-917",
+      "action": "Key Activation",
+      "details": "تم تفعيل مفتاح فك باند فورت نايت",
+      "userId": "user-demo-admin",
+      "userName": "Demo Admin",
+      "ipAddress": "::1",
+      "createdAt": "2026-08-12T09:12:33.705Z"
+    },
+    {
+      "id": "log-1786526030388-482",
+      "action": "Key Activation",
+      "details": "تم تفعيل مفتاح سبوفر تعن برو",
+      "userId": "user-1786526030386",
+      "userName": "^Y a S e R^",
+      "ipAddress": "::1",
+      "createdAt": "2026-08-12T09:13:50.388Z"
     }
   ]
 }
