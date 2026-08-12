@@ -1751,38 +1751,38 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {userProducts.map((up) => (
                   <div
                     key={up.id}
-                    className="bg-[#0d0f14] border border-white/10 rounded-2xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col group relative"
+                    className="bg-[#0a0c10] border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl shadow-black/80 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-200 ease-out flex flex-col group relative"
                   >
-                    {/* PRODUCT IMAGE BANNER */}
-                    <div className="relative h-44 w-full overflow-hidden bg-black/40 border-b border-white/10">
+                    {/* 1. HEADER / BANNER */}
+                    <div className="relative h-44 w-full overflow-hidden bg-black/40 border-b border-white/[0.08]">
                       <img
                         src={getProductImage(up.product)}
                         alt={up.product?.name || 'Product'}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                         onError={(e) => { 
                           e.currentTarget.src = '/logo.png'; 
-                          e.currentTarget.className = 'w-full h-full object-contain p-6 opacity-80 transition-transform duration-700 group-hover:scale-105'; 
+                          e.currentTarget.className = 'w-full h-full object-contain p-6 opacity-80 transition-transform duration-500 ease-out group-hover:scale-105'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0d0f14] via-transparent to-transparent opacity-85" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c10] via-transparent to-transparent opacity-90" />
                       
-                      {/* Category Badge over image */}
-                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-lg flex items-center gap-1.5`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-glow-emerald animate-pulse" />
-                        {up.product?.category || 'SPOOFER'}
+                      {/* Top Category Badge */}
+                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-md flex items-center gap-1.5`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>{up.product?.category || 'SPOOFER'}</span>
                       </div>
                     </div>
 
-                    {/* CONTENT SECTION */}
+                    {/* CONTENT BODY */}
                     <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                       
-                      {/* PRODUCT HEADER */}
+                      {/* 2 & 3. PRODUCT NAME & SUBLINE */}
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-slate-300 shadow-inner">
+                        <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 text-blue-400 shadow-inner">
                           <Package className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col overflow-hidden">
-                          <h3 className="font-extrabold text-white text-base tracking-wide truncate">
+                          <h3 className="font-extrabold text-white text-base tracking-tight truncate">
                             {up.product?.name || 'فك باند فورت نايت'}
                           </h3>
                           <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400 font-medium">
@@ -1790,68 +1790,83 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                               {lang === 'ar' ? 'فعال' : 'Active'}
                             </span>
-                            <span className="w-1 h-1 rounded-full bg-slate-600" />
-                            <span className="flex items-center gap-1">
-                              <Users className="w-3.5 h-3.5 opacity-70" />
-                              71 {lang === 'ar' ? 'مستخدم' : 'users'}
-                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* LICENSE KEY BOX (UNMASKED FULL KEY DISPLAY AS IN REFERENCE SCREENSHOTS) */}
-                      <div className="bg-black/50 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-2 shadow-inner">
-                        <code dir="ltr" className="text-xs sm:text-sm font-mono text-white font-bold tracking-wider truncate flex-1 text-left select-all">
-                          {(() => {
-                            const rawKey = up.keyString || 'KEY-ACTIVATED';
-                            return rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
-                          })()}
-                        </code>
-                        <button
-                          onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all shrink-0 cursor-pointer ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white'}`}
-                          title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy Key'}
-                        >
-                          {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        </button>
+                      {/* 4. MASKED LICENSE KEY BOX WITH REVEAL TOGGLE & COPY */}
+                      <div className="bg-[#050608] border border-white/[0.08] rounded-xl p-3 flex flex-col gap-2 relative transition-all duration-200 hover:border-white/15 shadow-inner">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            {lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}
+                          </span>
+                          <span className="text-[9px] text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded-md flex items-center gap-1 border border-emerald-400/20">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            {lang === 'ar' ? 'صالح' : 'Valid'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                          <code dir="ltr" className="text-xs sm:text-sm font-mono text-white font-bold tracking-wider truncate flex-1 text-left select-all">
+                            {(() => {
+                              const rawKey = up.keyString || 'KEY-ACTIVATED';
+                              const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
+                              return revealedKeys[up.id]
+                                ? fullKey
+                                : `${fullKey.substring(0, 5)}••••-••••`;
+                            })()}
+                          </code>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => toggleKeyReveal(up.id)}
+                              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95"
+                              title={revealedKeys[up.id] ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'إظهار' : 'Show')}
+                            >
+                              {revealedKeys[up.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+
+                            <button
+                              onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 active:scale-95 ${
+                                copiedKeyId === up.id
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-400 hover:text-white'
+                              }`}
+                              title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy Key'}
+                            >
+                              {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* ACTION BUTTONS */}
+                      {/* 5. ACTION BUTTONS (PRIMARY BLUE + SECONDARY GUIDE ONLY - NO HWID RESET) */}
                       <div className="space-y-2 pt-1">
-                        {/* Download Loader Button (Solid White Button as in EON Reference) */}
+                        {/* Primary Download Button */}
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="w-full h-11 rounded-xl bg-white hover:bg-slate-200 text-black font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-white/10"
+                          className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-600/25 hover:shadow-blue-500/35 active:scale-[0.98]"
                         >
                           <Download className="w-4 h-4" />
                           <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
                         </button>
 
-                        {/* HWID Reset & Guide Buttons Row */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => showToast(lang === 'ar' ? 'تمت إعادة تعيين HWID بنجاح!' : 'HWID Reset successfully!')}
-                            className="h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
-                            <span>HWID Reset</span>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setGuideModalProduct(up);
-                              setGuideView('menu');
-                            }}
-                            className="h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
-                          </button>
-                        </div>
+                        {/* Secondary Guide / Documentation Button */}
+                        <button
+                          onClick={() => {
+                            setGuideModalProduct(up);
+                            setGuideView('menu');
+                          }}
+                          className="w-full h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-slate-200 font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                        >
+                          <HelpCircle className="w-4 h-4 text-slate-400" />
+                          <span>{lang === 'ar' ? 'الشروحات والتعليمات' : 'Guide & Documentation'}</span>
+                        </button>
                       </div>
 
-                      {/* FOOTER METADATA (MATCHING SCREENSHOT 2) */}
-                      <div className="mt-2 pt-2.5 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                      {/* 6. FOOTER METADATA */}
+                      <div className="mt-2 pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[10px] text-slate-500 font-mono">
                         <span>{new Date(up.activatedAt || Date.now()).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' })}</span>
                         <span>Updated: Today</span>
                       </div>
