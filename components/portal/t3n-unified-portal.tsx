@@ -1751,131 +1751,111 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {userProducts.map((up) => (
                   <div
                     key={up.id}
-                    className="glass-card flex flex-col group animate-slide-up relative"
+                    className="bg-[#0d0f14] border border-white/10 rounded-2xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col group relative"
                   >
-                    {/* PRODUCT IMAGE */}
-                    <div className={`relative h-40 w-full overflow-hidden rounded-t-[16px] bg-black/[0.02] dark:bg-[#05070B] border-b ${styles.borderSubtle}`}>
+                    {/* PRODUCT IMAGE BANNER */}
+                    <div className="relative h-44 w-full overflow-hidden bg-black/40 border-b border-white/10">
                       <img
                         src={getProductImage(up.product)}
                         alt={up.product?.name || 'Product'}
-                        className="w-full h-full transition-transform duration-700 group-hover:scale-105 object-cover"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         onError={(e) => { 
                           e.currentTarget.src = '/logo.png'; 
-                          e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-105 object-contain p-6 opacity-80'; 
+                          e.currentTarget.className = 'w-full h-full object-contain p-6 opacity-80 transition-transform duration-700 group-hover:scale-105'; 
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0A0F18] via-transparent to-transparent opacity-90" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0d0f14] via-transparent to-transparent opacity-85" />
                       
-                      {/* Optional Status Badge over image */}
-                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-wider shadow-lg flex items-center gap-1.5`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-glow-emerald animate-pulse" />
+                      {/* Category Badge over image */}
+                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-lg flex items-center gap-1.5`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-glow-emerald animate-pulse" />
                         {up.product?.category || 'SPOOFER'}
                       </div>
                     </div>
 
                     {/* CONTENT SECTION */}
-                    <div className="p-5 flex-1 flex flex-col">
+                    <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                       
                       {/* PRODUCT HEADER */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl ${styles.bgInnerCard} border ${styles.borderSubtle} flex items-center justify-center shrink-0 text-indigo-500 dark:text-primary`}>
-                            <Package className="w-4.5 h-4.5" />
-                          </div>
-                          <div>
-                            <h3 className={`font-bold ${styles.textTitle} text-sm tracking-wide group-hover:text-indigo-650 dark:group-hover:text-primary transition-colors`}>
-                              {up.product?.name || 'Premium Product'}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 dark:text-brand-muted font-medium">
-                              <span className="flex items-center gap-1 text-emerald-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                {lang === 'ar' ? 'فعال' : 'Active'}
-                              </span>
-                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3 h-3 opacity-70" />
-                                71 {lang === 'ar' ? 'مستخدم' : 'users'}
-                              </span>
-                            </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-slate-300 shadow-inner">
+                          <Package className="w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                          <h3 className="font-extrabold text-white text-base tracking-wide truncate">
+                            {up.product?.name || 'فك باند فورت نايت'}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400 font-medium">
+                            <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              {lang === 'ar' ? 'فعال' : 'Active'}
+                            </span>
+                            <span className="w-1 h-1 rounded-full bg-slate-600" />
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5 opacity-70" />
+                              71 {lang === 'ar' ? 'مستخدم' : 'users'}
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* LICENSE SECTION */}
-                      <div className="mb-5 relative group/key">
-                        <div className={`bg-slate-50 dark:bg-[#05070B] border ${styles.borderSubtle} rounded-xl p-3 flex flex-col gap-2 relative transition-all shadow-inner hover:border-purple-500/30 dark:hover:border-purple-500/20`}>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-[10px] ${styles.textMuted} font-bold uppercase tracking-wider`}>{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</span>
-                            <span className="text-[9px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
-                              <CheckCircle2 className="w-2.5 h-2.5" />
-                              {lang === 'ar' ? 'صالح' : 'Valid'}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center justify-between gap-3">
-                            <code dir="ltr" className={`text-xs font-mono ${styles.textTitle} tracking-widest font-semibold truncate flex-1 text-left select-all`}>
-                              {(() => {
-                                const rawKey = up.keyString || 'KEY-ACTIVATED';
-                                const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
-                                return revealedKeys[up.id]
-                                  ? fullKey
-                                  : `${fullKey.substring(0, 8)}••••-••••`;
-                              })()}
-                            </code>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <button
-                                onClick={() => toggleKeyReveal(up.id)}
-                                className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${styles.textMuted} hover:${styles.textTitle} bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10`}
-                                title={revealedKeys[up.id] ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'إظهار' : 'Show')}
-                              >
-                                {revealedKeys[up.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                              </button>
-                              <button
-                                onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED-OK', up.id)}
-                                className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : `bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 ${styles.textMuted} hover:${styles.textTitle} border border-transparent`}`}
-                                title="Copy Key"
-                              >
-                                {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
+                      {/* LICENSE KEY BOX (UNMASKED FULL KEY DISPLAY AS IN REFERENCE SCREENSHOTS) */}
+                      <div className="bg-black/50 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-2 shadow-inner">
+                        <code dir="ltr" className="text-xs sm:text-sm font-mono text-white font-bold tracking-wider truncate flex-1 text-left select-all">
+                          {(() => {
+                            const rawKey = up.keyString || 'KEY-ACTIVATED';
+                            return rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
+                          })()}
+                        </code>
+                        <button
+                          onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all shrink-0 cursor-pointer ${copiedKeyId === up.id ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white'}`}
+                          title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy Key'}
+                        >
+                          {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        </button>
                       </div>
 
                       {/* ACTION BUTTONS */}
-                      <div className="grid grid-cols-2 gap-2 mt-auto">
+                      <div className="space-y-2 pt-1">
+                        {/* Download Loader Button (Solid White Button as in EON Reference) */}
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="col-span-2 h-10 bg-indigo-600 hover:bg-indigo-500 dark:bg-primary dark:hover:bg-primary-hover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-500/10 dark:shadow-brand-glow"
+                          className="w-full h-11 rounded-xl bg-white hover:bg-slate-200 text-black font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-white/10"
                         >
                           <Download className="w-4 h-4" />
                           <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
                         </button>
 
-                        <button
-                          className={`h-9 bg-transparent dark:bg-[#0D1420] border ${styles.borderNormal} hover:${styles.borderHover} ${styles.textTitle} font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all`}
-                        >
-                          <RefreshCw className={`w-3 h-3 ${styles.textMuted}`} />
-                          <span>HWID Reset</span>
-                        </button>
+                        {/* HWID Reset & Guide Buttons Row */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => showToast(lang === 'ar' ? 'تمت إعادة تعيين HWID بنجاح!' : 'HWID Reset successfully!')}
+                            className="h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+                            <span>HWID Reset</span>
+                          </button>
 
-                        <button
-                          onClick={() => {
-                            setGuideModalProduct(up);
-                            setGuideView('menu');
-                          }}
-                          className={`h-9 bg-transparent dark:bg-[#0D1420] border ${styles.borderNormal} hover:${styles.borderHover} ${styles.textTitle} font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all`}
-                        >
-                          <HelpCircle className={`w-3 h-3 ${styles.textMuted}`} />
-                          <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
-                        </button>
+                          <button
+                            onClick={() => {
+                              setGuideModalProduct(up);
+                              setGuideView('menu');
+                            }}
+                            className="h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{lang === 'ar' ? 'الشروحات' : 'Guide'}</span>
+                          </button>
+                        </div>
                       </div>
-                      
-                      {/* TINY METADATA */}
-                      <div className={`mt-4 pt-3 border-t ${styles.borderSubtle} flex items-center justify-between text-[9px] ${styles.textLightMuted} font-mono`}>
+
+                      {/* FOOTER METADATA (MATCHING SCREENSHOT 2) */}
+                      <div className="mt-2 pt-2.5 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                        <span>{new Date(up.activatedAt || Date.now()).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' })}</span>
                         <span>Updated: Today</span>
-                        <span>{new Date(up.activatedAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
                       </div>
+
                     </div>
                   </div>
                 ))}
