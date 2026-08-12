@@ -261,7 +261,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [keyStatusFilter, setKeyStatusFilter] = useState<'all' | 'unused' | 'used'>('all');
 
   // Current active user (either NextAuth session or Demo User)
-  const currentUser = React.useMemo(() => {
+  const currentUser = React.useMemo<UserType | null>(() => {
     if (demoUser) return demoUser;
     if (session?.user) {
       return {
@@ -273,7 +273,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         role: ((session.user as any).role || 'Customer') as 'Boss' | 'Co-Boss' | 'Customer',
         discordRoles: [],
         createdAt: new Date().toISOString()
-      };
+      } as UserType;
     }
     return null;
   }, [demoUser, session?.user]);
@@ -749,6 +749,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       guideUrl: '',
       fileUrl: '',
       cardColor: 'blue',
+      displayOrder: 0,
       isVisible: true,
       isDisabled: false,
       isArchived: false,
