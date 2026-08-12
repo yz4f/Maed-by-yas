@@ -70,6 +70,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     );
   };
 
+  // Helper to get exact user-provided product image
+  const getProductImage = (product?: Partial<Product> | null): string => {
+    if (!product) return '/logo.png';
+    if (product.image && product.image !== '/logo.png?v=6' && product.image !== '/logo.png' && product.image !== '') {
+      return product.image;
+    }
+    const name = (product.name || '').toLowerCase();
+    if (name.includes('فورت') || name.includes('fortnite') || name.includes('فك باند')) {
+      return '/fortnite-unban-logo.png';
+    }
+    if (name.includes('سبوفر') || name.includes('spoofer')) {
+      return '/spoofer-logo.png';
+    }
+    return '/logo.png';
+  };
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'admin' | 'profile'>('overview');
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
@@ -1699,12 +1715,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {/* PRODUCT IMAGE */}
                     <div className={`relative h-40 w-full overflow-hidden rounded-t-[16px] bg-black/[0.02] dark:bg-[#05070B] border-b ${styles.borderSubtle}`}>
                       <img
-                        src={up.product?.image || '/logo.png?v=6'}
+                        src={getProductImage(up.product)}
                         alt={up.product?.name || 'Product'}
-                        className={`w-full h-full transition-transform duration-700 group-hover:scale-105 ${!up.product?.image || up.product?.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60' : 'object-cover'}`}
+                        className="w-full h-full transition-transform duration-700 group-hover:scale-105 object-cover"
                         onError={(e) => { 
-                          e.currentTarget.src = '/logo.png?v=6'; 
-                          e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-105 object-contain p-8 opacity-60'; 
+                          e.currentTarget.src = '/logo.png'; 
+                          e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-105 object-contain p-6 opacity-80'; 
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0A0F18] via-transparent to-transparent opacity-90" />
@@ -2135,12 +2151,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {/* Top Image Banner - Full Width */}
                         <div className={`relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
                           <img
-                            src={product.image || '/logo.png?v=6'}
+                            src={getProductImage(product)}
                             alt={product.name}
-                            className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${!product.image || product.image === '/logo.png?v=6' ? 'object-contain p-8 opacity-60 group-hover:opacity-100' : 'object-cover'}`}
+                            className="w-full h-full transition-transform duration-700 group-hover:scale-110 object-cover"
                             onError={(e) => { 
-                              e.currentTarget.src = '/logo.png?v=6'; 
-                              e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-8 opacity-60 group-hover:opacity-100'; 
+                              e.currentTarget.src = '/logo.png'; 
+                              e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-6 opacity-80'; 
                             }}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0a0a0a] via-transparent to-transparent" />
