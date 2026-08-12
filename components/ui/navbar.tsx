@@ -24,13 +24,11 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between" dir="rtl">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-purple-600 p-0.5 shadow-neon-glow group-hover:scale-105 transition-transform duration-300 overflow-hidden">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center overflow-hidden">
-              <img src="/logo.png?v=6" alt="تعن" className="w-full h-full rounded-[14px] object-cover select-none" />
-            </div>
+          <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-300">
+            <img src="/logo.png" alt="تعن" className="w-full h-full rounded-full object-cover select-none" />
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 font-bold notranslate" translate="no">
+            <span className="text-2xl font-extrabold tracking-wider text-white font-bold notranslate" translate="no">
               تعن
             </span>
           </div>
