@@ -4,92 +4,46 @@
 
 @layer base {
   body {
-    @apply bg-brand-dark text-[#FFFFFF] antialiased selection:bg-[#3B82F6] selection:text-white font-sans;
+    @apply bg-[#070709] text-[#FFFFFF] antialiased selection:bg-white selection:text-black font-sans;
     background-image: 
-      radial-gradient(circle at 15% 10%, rgba(59, 130, 246, 0.04) 0px, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(139, 92, 246, 0.03) 0px, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(5, 5, 5, 1) 0px, transparent 100%);
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
+      radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 1) 0%, transparent 100%);
     background-attachment: fixed;
   }
 }
 
-/* Subtle infinite CSS grid background - extremely minimal */
+/* Subtle infinite CSS grid background matching reference screenshot */
 .bg-grid-pattern {
-  background-size: 64px 64px;
+  background-size: 40px 40px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 /* Premium Card Styles */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  border-radius: 20px;
-}
-
-.dark .glass-panel {
-  background: rgba(15, 15, 17, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  background: rgba(14, 14, 17, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.9);
+  border-radius: 16px;
 }
 
 .glass-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.02);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #0e0e11;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease-out;
   overflow: hidden;
 }
 
 .glass-card:hover {
-  transform: translateY(-5px);
-  background: #ffffff;
-  border-color: rgba(99, 102, 241, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04), 0 0 25px rgba(99, 102, 241, 0.05);
-}
-
-.dark .glass-card {
-  background: rgba(13, 14, 18, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  border-radius: 24px;
-  overflow: hidden;
-}
-
-.dark .glass-card:hover {
-  background: rgba(18, 19, 26, 0.95);
-  border-color: rgba(99, 102, 241, 0.25);
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(99, 102, 241, 0.15);
-}
-
-/* Glow Texts */
-.text-glow-primary {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-}
-
-.text-glow-secondary {
-  text-shadow: 0 0 15px rgba(148, 163, 184, 0.3);
-}
-
-.text-glow-blue {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-}
-
-.text-glow-cyan {
-  text-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
-}
-
-.text-glow-purple {
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
-}
-
-.text-glow-emerald {
-  text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  background: #111115;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
 }
 
 /* Scrollbar None */
@@ -103,16 +57,17 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: #050507;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: #1f1f24;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3B82F6;
+  background: #ffffff;
 }
+
