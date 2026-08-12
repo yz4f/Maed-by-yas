@@ -1142,20 +1142,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <span className="tracking-wide font-extrabold">{lang === 'ar' ? 'تسجيل دخول عبر ديسكورد' : 'Login with Discord'}</span>
               </button>
 
-              <div className="flex gap-2.5 justify-center pt-2">
-                <button
-                  onClick={loginAsDemoCustomer}
-                  className={`px-4 py-2 rounded-xl ${isDark ? 'bg-white/[0.02] border-white/[0.05] hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400' : 'bg-slate-50 border-slate-200 hover:bg-indigo-50 text-slate-650 hover:text-indigo-600'} border text-[11px] font-extrabold transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-sm`}
-                >
-                  {lang === 'ar' ? 'دخول كـ عميل' : 'Demo Customer'}
-                </button>
-                <button
-                  onClick={loginAsDemoAdmin}
-                  className={`px-4 py-2 rounded-xl ${isDark ? 'bg-white/[0.02] border-white/[0.05] hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400' : 'bg-slate-50 border-slate-200 hover:bg-indigo-50 text-slate-650 hover:text-indigo-600'} border text-[11px] font-extrabold transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-sm`}
-                >
-                  {lang === 'ar' ? 'دخول كـ أدمن' : 'Demo Admin'}
-                </button>
-              </div>
+
             </motion.div>
 
             {/* Bottom Footer Link */}
@@ -1344,15 +1331,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <LayoutDashboard className="w-4 h-4 transition-colors" />
                 <span className={`text-sm tracking-wide ${activeTab === 'overview' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'لوحة التحكم' : 'Overview'}</span>
               </button>
-            </div>
-          </div>
-
-          {/* LICENSE */}
-          <div>
-            <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
-              {lang === 'ar' ? 'الاشتراكات والمفاتيح' : 'LICENSE'}
-            </div>
-            <div className="space-y-1">
+              
               <button 
                 onClick={() => setActiveTab('my-products')}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
@@ -1364,6 +1343,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <Package className="w-4 h-4 transition-colors" />
                 <span className={`text-sm tracking-wide ${activeTab === 'my-products' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
               </button>
+
               <button 
                 onClick={() => setActiveTab('redeem')}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] transition-all duration-300 group relative ${
@@ -1399,7 +1379,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* ACCOUNT */}
           <div>
             <div className={`text-[10px] font-bold ${styles.textLightMuted} uppercase tracking-widest mb-3 px-2`}>
-              {lang === 'ar' ? 'الإدارة' : 'ACCOUNT'}
+              {lang === 'ar' ? 'الإدارة' : 'ADMINISTRATION'}
             </div>
             <div className="space-y-1">
               <button 
@@ -1433,17 +1413,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
 
         {/* BOTTOM USER AREA */}
-        <div className={`p-4 relative z-10 border-t ${styles.borderSubtle} mt-auto w-full flex flex-col gap-2`}>
+        <div className={`p-4 relative z-10 border-t ${styles.borderSubtle} mt-auto w-full flex flex-col gap-2.5`}>
           {/* Profile Card */}
-          <div className={`${styles.bgInnerCard} rounded-xl p-2.5 flex items-center justify-between shadow-sm`}>
-            <div className="flex flex-col text-left pl-1.5">
-              <span className={`text-[13px] font-bold ${styles.textTitle} tracking-wide`}>{currentUser.name}</span>
-              <span className={`text-[11px] ${styles.textMuted} font-medium`}>{(currentUser.role === 'Boss' || currentUser.role === 'Admin' || currentUser.role === 'Co-Boss') ? 'Boss' : 'Discord'}</span>
+          <div 
+            onClick={() => setActiveTab('profile')}
+            className={`${styles.bgInnerCard} rounded-xl p-2.5 flex items-center justify-between shadow-sm cursor-pointer hover:bg-white/[0.04] dark:hover:bg-white/[0.04] hover:bg-black/[0.02] border ${styles.borderSubtle} transition-all duration-300 group`}
+          >
+            <div className={`flex flex-col text-${lang === 'ar' ? 'right' : 'left'} pr-1`}>
+              <span className={`text-[13px] font-extrabold ${styles.textTitle} tracking-wide group-hover:text-indigo-400 dark:group-hover:text-primary transition-colors`}>{currentUser.name}</span>
+              <span className={`text-[10px] ${styles.textMuted} font-bold uppercase tracking-wider`}>
+                {currentUser.role === 'Boss' ? (lang === 'ar' ? 'المالك' : 'Owner') : currentUser.role === 'Co-Boss' ? (lang === 'ar' ? 'شريك' : 'Co-Owner') : currentUser.role === 'Admin' ? (lang === 'ar' ? 'مشرف' : 'Admin') : (lang === 'ar' ? 'مشترك' : 'Member')}
+              </span>
             </div>
             <img
               src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
               alt="Avatar"
-              className={`w-8 h-8 rounded-lg object-cover ${isDark ? 'grayscale opacity-90' : ''}`}
+              className="w-9 h-9 rounded-xl object-cover border border-white/10 shadow-sm"
               onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
             />
           </div>
@@ -1451,9 +1436,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className={`w-full h-9 rounded-xl bg-transparent border ${styles.btnSecondary} text-[11px] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer`}
+            className="w-full h-10 rounded-xl bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-500 hover:text-white text-[12px] font-extrabold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-[0_2px_10px_rgba(239,68,68,0.1)] hover:shadow-[0_4px_15px_rgba(239,68,68,0.3)] hover:-translate-y-0.5 active:translate-y-0"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-4 h-4" />
             <span className="tracking-wide">{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
           </button>
         </div>
@@ -1522,44 +1507,41 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* Grid Layout: Stats Cards & Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Left 2 Columns: 4 Stat Cards */}
-              <div className="lg:col-span-2 grid grid-cols-2 gap-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              {/* Left 2 Columns: 3 Stat Cards */}
+              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {/* Stat 1: Active Products */}
-                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
-                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
-                    <Package className="w-4 h-4" />
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col justify-between`}>
+                  <div>
+                    <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
+                      <Package className="w-4 h-4" />
+                    </div>
+                    <div className={`text-[28px] font-bold ${styles.textTitle} mb-0.5 tracking-tight`}>{userProducts.length}</div>
                   </div>
-                  <div className={`text-[28px] font-bold ${styles.textTitle} mb-0.5 tracking-tight`}>{userProducts.length}</div>
                   <div className={`text-[11px] ${styles.textMuted} font-medium`}>{lang === 'ar' ? 'المنتجات النشطة' : 'Active Products'}</div>
                 </div>
 
                 {/* Stat 2: Account Status */}
-                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
-                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
-                    <CheckCircle2 className="w-4 h-4" />
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col justify-between`}>
+                  <div>
+                    <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div className={`text-[22px] font-bold ${styles.textTitle} mb-0.5 tracking-tight mt-1`}>{lang === 'ar' ? 'نشط' : 'Active'}</div>
                   </div>
-                  <div className={`text-[22px] font-bold ${styles.textTitle} mb-0.5 tracking-tight mt-1`}>{lang === 'ar' ? 'نشط' : 'Active'}</div>
                   <div className={`text-[11px] ${styles.textMuted} font-medium mt-1.5`}>{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
                 </div>
 
                 {/* Stat 3: Member Since */}
-                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
-                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div className={`text-[18px] font-bold ${styles.textTitle} mb-0.5 tracking-tight mt-1.5`} dir="ltr">
-                    {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
+                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col justify-between`}>
+                  <div>
+                    <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div className={`text-[18px] font-bold ${styles.textTitle} mb-0.5 tracking-tight mt-1.5`} dir="ltr">
+                      {new Date(currentUser.createdAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', year: 'numeric' })}
+                    </div>
                   </div>
                   <div className={`text-[11px] ${styles.textMuted} font-medium mt-1.5`}>{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</div>
-                </div>
-
-                {/* Stat 4: Forum Posts (Total Downloads) */}
-                <div className={`${styles.bgCard} rounded-[16px] p-5 relative overflow-hidden group shadow-sm flex flex-col`}>
-                  <div className={`w-8 h-8 rounded-xl border ${styles.borderNormal} bg-transparent flex items-center justify-center ${styles.textMuted} mb-6`}>
-                    <MessageSquare className="w-4 h-4" />
-                  </div>
-                  <div className="text-[28px] font-bold text-white mb-0.5 tracking-tight">0</div>
-                  <div className="text-[11px] text-[#A1A1AA] font-medium">{lang === 'ar' ? 'المشاركات' : 'Forum Posts'}</div>
                 </div>
               </div>
 
@@ -1846,16 +1828,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         )}
         {/* TAB 3: REDEEM KEY */}
         {activeTab === 'redeem' && (
-          <div className="space-y-8 max-w-xl mx-auto py-8 animate-slide-up">
+          <div className="space-y-8 max-w-md mx-auto py-12 animate-slide-up">
             <div className="text-center">
               <div className={`w-16 h-16 ${styles.bgInnerCard} ${styles.textTitle} border ${styles.borderNormal} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm`}>
-                <Key className="w-8 h-8" />
+                <Key className="w-8 h-8 text-indigo-500 dark:text-primary" />
               </div>
               <h1 className={`text-3xl font-extrabold ${styles.textTitle} tracking-tight mb-2`}>
                 {lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}
               </h1>
               <p className={`text-xs ${styles.textMuted} font-medium`}>
-                {lang === 'ar' ? 'أدخل مفتاح الاشتراك الخاص بك لإضافته لحسابك فوراً' : 'Enter your license key to add it to your account instantly'}
+                {lang === 'ar' ? 'أدخل مفتاح التفعيل لإضافته لحسابك فوراً' : 'Enter your activation key to add it to your account instantly'}
               </p>
             </div>
 
@@ -1864,15 +1846,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <form onSubmit={handleRedeemKey} className="space-y-5 relative z-10">
                 <div>
                   <label className={`block text-xs font-bold ${styles.textMuted} mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    {lang === 'ar' ? 'مفتاح التفعيل (License Key)' : 'License Key'}
+                    {lang === 'ar' ? 'المفتاح' : 'KEY'}
                   </label>
                   <input
                     type="text"
                     dir="ltr"
                     value={keyInput}
                     onChange={(e) => setKeyInput(e.target.value)}
-                    placeholder="KEY-T3N-ABCD-1234-EFGH"
-                    className={`w-full ${styles.bgInnerCard} border ${styles.borderNormal} focus:border-indigo-500/50 dark:focus:border-white/20 rounded-xl px-5 py-4 text-sm ${styles.textTitle} focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:focus:ring-white/10 transition-all font-mono tracking-widest text-center shadow-inner`}
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                    className={`w-full ${styles.bgInnerCard} border ${styles.borderNormal} focus:border-indigo-500/50 dark:focus:border-white/20 rounded-xl px-5 py-4 text-lg font-bold ${styles.textTitle} focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:focus:ring-white/10 transition-all font-mono tracking-widest text-center shadow-inner`}
                   />
                 </div>
 
@@ -1889,53 +1871,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-indigo-500/20"
                 >
                   {isRedeeming ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                  <span>{lang === 'ar' ? 'تفعيل المفتاح الآن' : 'Redeem Key Now'}</span>
+                  <span>{lang === 'ar' ? 'تفعيل المفتاح' : 'Activate Key'}</span>
                 </button>
               </form>
-
-              <div className={`pt-6 border-t ${styles.borderSubtle} space-y-4 relative z-10`}>
-                <a
-                  href="https://t3n-store-production.up.railway.app"
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`w-full ${styles.bgInnerCard} border ${styles.borderSubtle} hover:${styles.borderNormal} rounded-xl p-4 flex items-center justify-between transition-all group`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'} flex items-center justify-center ${styles.textTitle} group-hover:scale-110 transition-transform`}>
-                      <ShoppingCart className="w-5 h-5" />
-                    </div>
-                    <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
-                      <div className={`text-sm font-bold ${styles.textTitle} transition-colors`}>{lang === 'ar' ? 'لا تملك مفتاح اشتراك؟' : "Don't have a license key?"}</div>
-                      <div className={`text-xs ${styles.textMuted} mt-0.5`}>{lang === 'ar' ? 'احصل عليه الآن من متجرنا الرسمي بأسعار حصرية' : 'Get it now from our official store at exclusive prices'}</div>
-                    </div>
-                  </div>
-                  <div className="bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shadow-lg shrink-0 group-hover:scale-105 transition-transform">
-                    <span>{lang === 'ar' ? 'شراء مفتاح' : 'Purchase Key'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </div>
-                </a>
-
-                <a
-                  href="https://discord.gg/t3n"
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`w-full ${styles.bgInnerCard} border ${styles.borderSubtle} hover:${styles.borderNormal} rounded-xl p-4 flex items-center justify-between transition-all group mt-3`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'} flex items-center justify-center ${styles.textTitle} group-hover:scale-110 transition-transform`}>
-                      <HelpCircle className="w-5 h-5" />
-                    </div>
-                    <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
-                      <div className={`text-sm font-bold ${styles.textTitle} transition-colors`}>{lang === 'ar' ? 'تحتاج إلى مساعدة؟' : 'Need help?'}</div>
-                      <div className={`text-xs ${styles.textMuted} mt-0.5`}>{lang === 'ar' ? 'تواصل مع فريق الدعم الفني عبر ديسكورد' : 'Get in touch with support via Discord'}</div>
-                    </div>
-                  </div>
-                  <div className={`bg-transparent border ${styles.borderNormal} hover:bg-black/5 dark:hover:bg-white/5 ${styles.textTitle} text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 group-hover:scale-105 transition-transform`}>
-                    <span>{lang === 'ar' ? 'الدعم الفني' : 'Technical Support'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </div>
-                </a>
-              </div>
             </div>
           </div>
         )}
