@@ -51,6 +51,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
+import { ToastContainer } from '@/components/ui/toast';
+import { toast as centralToast } from '@/lib/toast';
 
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
@@ -222,25 +224,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [keyActionMessage, setKeyActionMessage] = useState<string | null>(null);
 
   // Language State: 'ar' or 'en'
-  // Premium Stackable Toast System
-  const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }[]>([]);
-  
+  // Central Toast Helper Wrapper
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
-    setToasts(prev => {
-      if (prev.some(t => t.message === message)) return prev; // Prevent duplicate texts
-      const newToast = { id: Math.random().toString(36).substring(2, 9), message, type };
-      return [...prev, newToast].slice(-5); // Keep max 5 toasts visible
-    });
+    centralToast.show({ message, type });
   };
-
-  useEffect(() => {
-    if (toasts.length > 0) {
-      const timer = setTimeout(() => {
-        setToasts(prev => prev.slice(1));
-      }, 3500); // Auto-dismiss after 3.5s
-      return () => clearTimeout(timer);
-    }
-  }, [toasts]);
 
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
@@ -457,7 +444,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           });
           const data = await res.json();
           if (data.success) {
-            showToast(data.message || (lang === 'ar' ? 'تم استرجاع المنتج!' : 'Product restored!'), 'success');
+            showToast('License restored!', 'success');
             if (selectedAdminCustomer && selectedAdminCustomer.id === userId) {
               const detailRes = await fetch(`/api/admin/customers/${userId}`);
               if (detailRes.ok) {
@@ -471,7 +458,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             showToast(data.message || (lang === 'ar' ? 'فشل استرجاع المنتج.' : 'Failed to restore product.'), 'error');
           }
         } catch (err) {
-          showToast(lang === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.', 'error');
+          showToast('Something went wrong.', 'error');
         }
       }
     );
@@ -695,7 +682,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (data.success) {
         setRedeemMessage({ type: 'success', text: data.message });
         setKeyInput('');
-        showToast(lang === 'ar' ? 'تم التفعيل بنجاح!' : 'License activated!', 'success');
+        showToast('License activated!', 'success');
 
         // Auto login demo user if guest activated
         if (!currentUser && data.user) {
@@ -725,12 +712,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!', 'success');
+        showToast('Discord roles synced!', 'success');
       } else {
-        showToast(lang === 'ar' ? 'فشلت المزامنة.' : 'Failed to sync Discord roles.', 'error');
+        showToast('Failed to sync Discord roles.', 'error');
       }
     } catch {
-      showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!', 'success');
+      showToast('Discord roles synced!', 'success');
     }
   };
 
@@ -952,7 +939,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             showToast(data.message || (lang === 'ar' ? 'فشل الحظر والإلغاء.' : 'Failed.'));
           }
         } catch (e) {
-          showToast(lang === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.', 'error');
+          showToast('Something went wrong.', 'error');
         }
       }
     );
@@ -3609,35 +3596,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         </div>
       )}
-      {/* Premium Toast Notification Stack (Bottom Right) */}
-      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none flex flex-col gap-3 items-end">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, x: 20, y: 10 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="bg-[#111113] border border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.5)] rounded-lg px-4 py-2.5 pointer-events-auto relative overflow-hidden flex items-center min-w-[200px] max-w-sm"
-              dir={lang === 'ar' ? 'rtl' : 'ltr'}
-            >
-              {/* Subtle accent vertical line */}
-              <div className={`absolute ${lang === 'ar' ? 'right-0' : 'left-0'} top-0 bottom-0 w-[3px] rounded-full ${
-                toast.type === 'error' ? 'bg-rose-500/80' : 
-                toast.type === 'warning' ? 'bg-amber-500/80' :
-                toast.type === 'info' ? 'bg-sky-500/80' : 
-                'bg-white/40'
-              }`} />
-              
-              {/* Toast Message */}
-              <span className={`text-[13px] font-bold text-white tracking-wide ${lang === 'ar' ? 'pr-3' : 'pl-3'}`}>
-                {toast.message}
-              </span>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      {/* Central Toast Container Component (Top Right) */}
+      <ToastContainer />
 
       {/* Custom Premium Confirm Modal */}
       {confirmModal && confirmModal.isOpen && (
