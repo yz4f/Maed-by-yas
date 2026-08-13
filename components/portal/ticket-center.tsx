@@ -124,10 +124,10 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const composerRef = useRef<HTMLTextAreaElement>(null);
 
   const isRtl = lang === 'ar';
-  const textMain = isDark ? 'text-white' : 'text-slate-950';
-  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
-  const card = isDark ? 'border-sky-100/[0.11] bg-slate-950/55 shadow-[0_18px_46px_rgba(3,15,32,0.22)]' : 'border-slate-900/[0.09] bg-white/75 shadow-[0_18px_42px_rgba(83,138,181,0.10)]';
-  const field = isDark ? 'border-sky-100/[0.13] bg-slate-950/55 text-white placeholder:text-slate-500' : 'border-slate-900/[0.10] bg-white/75 text-slate-900 placeholder:text-slate-400';
+  const textMain = isDark ? 'text-zinc-100' : 'text-zinc-950';
+  const textMuted = isDark ? 'text-zinc-400' : 'text-zinc-500';
+  const card = isDark ? 'border-white/[0.09] bg-[#111113] shadow-[0_16px_34px_rgba(0,0,0,0.18)]' : 'border-zinc-900/[0.10] bg-white/85 shadow-[0_12px_28px_rgba(0,0,0,0.07)]';
+  const field = isDark ? 'border-white/[0.10] bg-[#0a0a0b] text-zinc-100 placeholder:text-zinc-500' : 'border-zinc-900/[0.10] bg-white text-zinc-900 placeholder:text-zinc-400';
 
   const notify = (text: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setNotice({ text, type });
@@ -286,22 +286,22 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const selectedTicket = detail?.ticket;
 
   return (
-    <section className="space-y-5" dir={isRtl ? 'rtl' : 'ltr'}>
+    <section className="ticket-center--graphite space-y-5" dir={isRtl ? 'rtl' : 'ltr'}>
       {notice && (
         <div className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-bold ${notice.type === 'error' ? 'border-red-400/25 bg-red-500/10 text-red-200' : notice.type === 'warning' ? 'border-amber-400/25 bg-amber-500/10 text-amber-200' : 'border-sky-400/25 bg-sky-500/10 text-sky-100'}`}>
           <span>{notice.text}</span><button onClick={() => setNotice(null)} className="opacity-70 hover:opacity-100"><X className="h-4 w-4" /></button>
         </div>
       )}
 
-      <div className={`relative overflow-hidden rounded-3xl border p-5 sm:p-6 ${card}`}>
+      <div className={`ticket-hero relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${card}`}>
         <div className="pointer-events-none absolute -left-16 -top-24 h-48 w-48 rounded-full bg-sky-400/15 blur-3xl" />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className={`mb-1 flex items-center gap-2 text-[10px] font-black tracking-[0.18em] ${isDark ? 'text-sky-200/75' : 'text-sky-700/75'}`}><span className="h-1.5 w-1.5 rounded-full bg-sky-400" />{isRtl ? 'الدعم الاحترافي' : 'PREMIUM SUPPORT'}</div>
-            <h2 className={`text-2xl font-black tracking-tight ${textMain}`}>{isRtl ? 'مركز التذاكر' : 'Ticket Center'}</h2>
+            <div className={`mb-1 flex items-center gap-2 text-[10px] font-black tracking-[0.18em] ${isDark ? 'text-sky-200/75' : 'text-sky-700/75'}`}><span className="h-1.5 w-1.5 rounded-full bg-sky-400" />{isRtl ? 'فريق الدعم' : 'SUPPORT DESK'}</div>
+            <h2 className={`text-2xl font-black tracking-tight ${textMain}`}>{isRtl ? 'مركز التذاكر' : 'Support tickets'}</h2>
             <p className={`mt-1 max-w-xl text-sm ${textMuted}`}>{isRtl ? 'نستلم مشكلتك ونتابعها معك من مكان واحد حتى يتم الحل.' : 'Open a ticket and keep every update, reply, and attachment in one place.'}</p>
           </div>
-          <button onClick={() => setNewOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-300 to-slate-100 px-4 py-3 text-sm font-black text-slate-950 shadow-[0_12px_26px_rgba(56,189,248,0.25)] transition hover:-translate-y-0.5 active:translate-y-0"><Plus className="h-4 w-4" />{isRtl ? 'فتح تذكرة' : 'Open ticket'}</button>
+          <button onClick={() => setNewOpen(true)} className="ticket-primary inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black transition hover:-translate-y-0.5 active:translate-y-0"><Plus className="h-4 w-4" />{isRtl ? 'فتح تذكرة' : 'Open ticket'}</button>
         </div>
       </div>
 
@@ -327,18 +327,18 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
           <div className="scrollbar-none mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
             {[
               ['all', isRtl ? 'الكل' : 'All'], ['open', isRtl ? 'الجديدة' : 'New'], ['unassigned', isRtl ? 'غير مستلمة' : 'Unassigned'], ...(isStaff ? [['mine', isRtl ? 'استلمتها' : 'Mine'], ['in_progress', isRtl ? 'قيد المعالجة' : 'In progress'], ['awaiting_user', isRtl ? 'بانتظار المستخدم' : 'Awaiting user'], ['closed', isRtl ? 'مغلقة' : 'Closed']] : []),
-            ].map(([value, label]) => <button key={value} onClick={() => setFilter(value as any)} className={`shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-bold transition ${filter === value ? 'bg-sky-400 text-slate-950' : isDark ? 'bg-white/[0.045] text-slate-400 hover:bg-white/[0.08]' : 'bg-slate-900/[0.05] text-slate-500 hover:bg-slate-900/[0.09]'}`}>{label}</button>)}
+            ].map(([value, label]) => <button key={value} onClick={() => setFilter(value as any)} className={`shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-bold transition ${filter === value ? 'ticket-filter--active' : isDark ? 'bg-white/[0.045] text-slate-400 hover:bg-white/[0.08]' : 'bg-slate-900/[0.05] text-slate-500 hover:bg-slate-900/[0.09]'}`}>{label}</button>)}
           </div>
           <div className="space-y-2 overflow-y-auto px-1 pb-1 xl:max-h-[550px]">
             {loading ? Array.from({ length: 5 }).map((_, index) => <div key={index} className={`h-24 animate-pulse rounded-2xl border ${isDark ? 'border-white/[0.06] bg-white/[0.035]' : 'border-slate-900/[0.06] bg-slate-900/[0.035]'}`} />) : tickets.length === 0 ? (
-              <div className={`flex flex-col items-center justify-center px-5 py-16 text-center ${textMuted}`}><div className={`mb-3 rounded-2xl p-4 ${isDark ? 'bg-white/[0.05]' : 'bg-sky-100/70'}`}><TicketIcon className="h-6 w-6 text-sky-400" /></div><div className={`text-sm font-black ${textMain}`}>{isRtl ? 'لا توجد تذاكر حاليًا' : 'No tickets right now'}</div><p className="mt-1 text-xs">{isRtl ? 'عندما تحتاج مساعدة، افتح تذكرة وسنتابعها هنا.' : 'Open a ticket whenever you need help.'}</p></div>
+              <div className={`flex flex-col items-center justify-center px-5 py-16 text-center ${textMuted}`}><div className={`ticket-empty-icon mb-3 rounded-2xl p-4 ${isDark ? 'bg-white/[0.05]' : 'bg-zinc-100'}`}><TicketIcon className="h-6 w-6 text-sky-400" /></div><div className={`text-sm font-black ${textMain}`}>{isRtl ? 'لا توجد تذاكر حاليًا' : 'No tickets right now'}</div><p className="mt-1 text-xs">{isRtl ? 'عندما تحتاج مساعدة، افتح تذكرة وسنتابعها هنا.' : 'Open a ticket whenever you need help.'}</p></div>
             ) : tickets.map(ticket => <TicketListItem key={ticket.id} ticket={ticket} active={selectedTicket?.id === ticket.id} lang={lang} isDark={isDark} onClick={() => selectTicket(ticket.id)} />)}
           </div>
         </aside>
 
         <main className={`min-h-[620px] overflow-hidden rounded-3xl border ${card}`}>
           {detailLoading ? <TicketDetailSkeleton isDark={isDark} /> : !detail ? (
-            <div className={`flex min-h-[620px] flex-col items-center justify-center px-6 text-center ${textMuted}`}><div className={`mb-5 rounded-3xl p-6 ${isDark ? 'bg-sky-400/[0.08]' : 'bg-sky-100/70'}`}><MessageCircle className="h-9 w-9 text-sky-400" /></div><h3 className={`text-lg font-black ${textMain}`}>{isRtl ? 'اختر تذكرة لعرض التفاصيل' : 'Select a ticket to view details'}</h3><p className="mt-2 max-w-sm text-sm">{isRtl ? 'ستجد المحادثة والمرفقات وسجل كل إجراء في صفحة واحدة منظمة.' : 'Conversation, attachments, and activity history will appear here.'}</p><button onClick={() => setNewOpen(true)} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 text-sm font-black text-slate-950"><Plus className="h-4 w-4" />{isRtl ? 'فتح تذكرة جديدة' : 'Open new ticket'}</button></div>
+            <div className={`flex min-h-[620px] flex-col items-center justify-center px-6 text-center ${textMuted}`}><div className={`ticket-empty-icon mb-5 rounded-2xl p-6 ${isDark ? 'bg-white/[0.05]' : 'bg-zinc-100'}`}><MessageCircle className="h-9 w-9 text-sky-400" /></div><h3 className={`text-lg font-black ${textMain}`}>{isRtl ? 'اختر تذكرة لعرض التفاصيل' : 'Select a ticket to view details'}</h3><p className="mt-2 max-w-sm text-sm">{isRtl ? 'ستجد المحادثة والمرفقات وسجل كل إجراء في صفحة واحدة منظمة.' : 'Conversation, attachments, and activity history will appear here.'}</p><button onClick={() => setNewOpen(true)} className="ticket-primary mt-5 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black"><Plus className="h-4 w-4" />{isRtl ? 'فتح تذكرة جديدة' : 'Open new ticket'}</button></div>
           ) : <TicketDetailView detail={detail} lang={lang} isDark={isDark} isStaff={isStaff} composer={composer} setComposer={setComposer} composerRef={composerRef} composerFiles={composerFiles} setComposerFiles={setComposerFiles} internalNote={internalNote} setInternalNote={setInternalNote} sending={sending} sendMessage={sendMessage} patchTicket={patchTicket} confirmClose={confirmClose} setConfirmClose={setConfirmClose} statusOptions={statusOptions} priorityOptions={priorityOptions} field={field} textMain={textMain} textMuted={textMuted} insertComposerToken={insertComposerToken} />}
         </main>
       </div>
@@ -351,7 +351,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
 function TicketListItem({ ticket, active, lang, isDark, onClick }: { ticket: SupportTicket; active: boolean; lang: 'ar' | 'en'; isDark: boolean; onClick: () => void }) {
   const status = statusMeta[ticket.status];
   const priority = priorityMeta[ticket.priority];
-  return <button onClick={onClick} className={`w-full rounded-2xl border p-3.5 text-right transition ${active ? 'border-sky-400/45 bg-sky-400/[0.10] shadow-[0_12px_24px_rgba(56,189,248,0.10)]' : isDark ? 'border-white/[0.07] bg-white/[0.025] hover:border-sky-300/25 hover:bg-white/[0.055]' : 'border-slate-900/[0.07] bg-white/50 hover:border-sky-400/30 hover:bg-white/80'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+  return <button onClick={onClick} className={`w-full rounded-2xl border p-3.5 text-right transition ${active ? 'ticket-list--active' : isDark ? 'border-white/[0.07] bg-white/[0.025] hover:border-sky-300/25 hover:bg-white/[0.055]' : 'border-slate-900/[0.07] bg-white/50 hover:border-sky-400/30 hover:bg-white/80'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
     <div className="flex items-start justify-between gap-2"><span className={`font-mono text-[10px] font-bold ${isDark ? 'text-sky-200/80' : 'text-sky-700'}`}>#{ticket.number}</span><span className={`h-2 w-2 shrink-0 rounded-full ${status.dot} shadow-[0_0_9px_currentColor]`} /></div>
     <div className={`mt-1 line-clamp-1 text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{ticket.title}</div>
     <div className={`mt-1 flex items-center gap-1.5 text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}><UserRound className="h-3 w-3" />{ticket.userName}<span className="opacity-50">•</span>{relativeTime(ticket.updatedAt, lang)}</div>
