@@ -86,11 +86,23 @@ export class DiscordBotService {
 
       if (res.ok || res.status === 204) {
         return { success: true, message: `تمت إضافة رتبة الديسكورد (${roleId}) بنجاح!` };
-      } else {
-        const errorText = await res.text();
-        console.error('Discord API Error:', errorText);
-        return { success: false, message: `خطأ في Discord API: ${res.statusText}` };
       }
+
+      const errorText = await res.text();
+      console.error('Discord API Error:', errorText);
+      if (res.status === 404) {
+        return { success: false, message: 'لم يتم العثور على حسابك داخل خادم ديسكورد. انضم إلى الخادم أولًا ثم أعد المحاولة.' };
+      }
+      if (res.status === 403) {
+        return { success: false, message: 'لا يملك بوت ديسكورد صلاحية منح هذه الرتبة أو أن الرتبة أعلى من البوت.' };
+      }
+      if (res.status === 401) {
+        return { success: false, message: 'تعذر مصادقة بوت ديسكورد. تواصل مع الإدارة.' };
+      }
+      if (res.status === 429) {
+        return { success: false, message: 'ديسكورد يحد الطلبات مؤقتًا. أعد المحاولة بعد قليل.' };
+      }
+      return { success: false, message: 'تعذر منح رتبة ديسكورد حاليًا. حاول مرة أخرى لاحقًا.' };
     } catch (err: any) {
       console.error('Discord Bot Fetch Error:', err);
       return { success: false, message: err.message || 'فشل الاتصال بـ Discord Bot' };
@@ -163,7 +175,7 @@ export class DiscordBotService {
       failedRoleIds,
       message: failedRoleIds.length === 0
         ? 'تمت استعادة رتب الاستحقاق المرتبطة بتراخيصك المفعلة.'
-        : 'تعذر استعادة بعض الرتب. تأكد من وجودك في خادم ديسكورد ثم أعد المحاولة.'
+        : 'تعذر استعادة بعض الرتب. تأكد من وجودك في خادم ديسكورد ومن أن البوت يملك صلاحية إدارة الرتب.'
     };
   }
 
