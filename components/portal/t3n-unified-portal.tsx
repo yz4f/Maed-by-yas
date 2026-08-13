@@ -695,9 +695,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         setGuestModalOpen(false);
       } else {
         setRedeemMessage({ type: 'error', text: data.message });
+        showToast(data.message || 'Failed to activate license.', 'error');
       }
     } catch (err) {
       setRedeemMessage({ type: 'error', text: 'حدث خطأ غير متوقع أثناء التفعيل.' });
+      showToast('Failed to activate license.', 'error');
     } finally {
       setIsRedeeming(false);
     }
@@ -712,12 +714,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       });
       const data = await res.json();
       if (data.success) {
+        showToast('License restored!', 'success');
         showToast('Discord roles synced!', 'success');
       } else {
-        showToast('Failed to sync Discord roles.', 'error');
+        showToast('Failed to restore license.', 'error');
       }
     } catch {
-      showToast('Discord roles synced!', 'success');
+      showToast('Failed to restore license.', 'error');
     }
   };
 
