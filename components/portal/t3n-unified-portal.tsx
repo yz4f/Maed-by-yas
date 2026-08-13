@@ -1205,10 +1205,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             z-index: -2;
             overflow: hidden;
             background:
-              radial-gradient(ellipse 64% 78% at 8% 20%, rgba(63, 174, 242, 0.30), transparent 55%),
-              radial-gradient(ellipse 52% 66% at 92% 74%, rgba(105, 205, 246, 0.16), transparent 60%),
-              radial-gradient(ellipse 70% 62% at 53% 58%, rgba(19, 79, 145, 0.28), transparent 62%),
-              linear-gradient(125deg, #040b16 0%, #0b2e5e 48%, #061422 100%);
+              linear-gradient(125deg, rgba(2, 9, 20, 0.50) 0%, rgba(4, 25, 57, 0.42) 48%, rgba(2, 12, 26, 0.54) 100%),
+              radial-gradient(ellipse 64% 78% at 8% 20%, rgba(52, 182, 248, 0.18), transparent 55%),
+              radial-gradient(ellipse 52% 66% at 92% 74%, rgba(108, 210, 250, 0.13), transparent 60%),
+              url('/images/t3n-login-azure-background.png') center center / cover no-repeat,
+              #061524;
           }
           .redeem-page-wrapper .bg-gfx::before,
           .redeem-page-wrapper .bg-gfx::after {
@@ -1232,7 +1233,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper .grid-lines {
             position: absolute;
             inset: 0;
-            opacity: 0.45;
+            opacity: 0.18;
             background-image:
               linear-gradient(rgba(215, 236, 253, 0.08) 1px, transparent 1px),
               linear-gradient(90deg, rgba(215, 236, 253, 0.08) 1px, transparent 1px);
@@ -1243,7 +1244,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             position: absolute;
             border-radius: 50%;
             filter: blur(2px);
-            opacity: 0.94;
+            opacity: 0.46;
             pointer-events: none;
           }
           .redeem-page-wrapper .blue-orb.one {
