@@ -203,7 +203,7 @@ const defaultStore: StoreData = {
   user_products: [],
   logs: [],
   settings: {
-    site_name: 'تـعـن',
+    site_name: 'تعن',
     discord_webhook_url: '',
     admin_emails: OWNER_EMAIL
   },

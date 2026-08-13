@@ -61,12 +61,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // Helper to split brand names to prevent browser translation tools from altering them to EON
   const renderBrandText = (text: string) => {
     return (
-      <span className="notranslate inline-flex" translate="no" style={{ unicodeBidi: 'isolate' }}>
-        {text.split('').map((char, idx) => (
-          <span key={idx} className="notranslate" translate="no" style={{ display: 'inline-block' }}>
-            {char === ' ' ? '\u00A0' : char}
-          </span>
-        ))}
+      <span className="notranslate" translate="no">
+        {text}
       </span>
     );
   };
@@ -1057,34 +1053,73 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   if (!isLoggedIn) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-[#030303] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]'} flex flex-col items-center justify-center p-4 relative overflow-hidden select-none transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className={`min-h-screen w-full ${isDark ? 'bg-[#050508] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]'} flex flex-col items-center justify-center p-4 relative overflow-hidden select-none transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         
         {/* Ambient Premium Grid Backdrop */}
-        <div className={`absolute inset-0 bg-[linear-gradient(to_right,${isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'}_1px,transparent_1px),linear-gradient(to_bottom,${isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'}_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] ${isDark ? 'opacity-70' : 'opacity-100'} pointer-events-none`} />
+        <div className={`absolute inset-0 bg-[linear-gradient(to_right,${isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)'}_1px,transparent_1px),linear-gradient(to_bottom,${isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)'}_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] ${isDark ? 'opacity-70' : 'opacity-100'} pointer-events-none`} />
         
-        {/* Interactive Radial Glowing Mesh */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-indigo-500/10 via-purple-500/5 to-transparent rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] bg-violet-600/5 rounded-full blur-[90px] pointer-events-none" />
+        {/* Radial background gradient matching brand color */}
+        {isDark && (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.09)_0%,rgba(5,5,8,1)_75%)] pointer-events-none" />
+        )}
 
-        {/* Floating Controls Container */}
+        {/* Ambient moving glow circles */}
+        {isDark && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <motion.div
+              animate={{
+                x: [0, 40, -20, 0],
+                y: [0, -30, 20, 0],
+              }}
+              transition={{
+                duration: 25,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute top-[20%] left-[20%] w-[350px] h-[350px] bg-indigo-500/[0.06] rounded-full blur-[110px]"
+            />
+            <motion.div
+              animate={{
+                x: [0, -30, 30, 0],
+                y: [0, 40, -20, 0],
+              }}
+              transition={{
+                duration: 30,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute bottom-[20%] right-[20%] w-[400px] h-[400px] bg-purple-500/[0.04] rounded-full blur-[130px]"
+            />
+          </div>
+        )}
+
+        {/* Floating Controls Container (Theme & Language Switchers) */}
         <div className="fixed top-5 z-50 flex items-center gap-3 transition-all" style={{ [lang === 'ar' ? 'left' : 'right']: '1.25rem' }}>
           {/* Theme Switcher */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className={`p-2.5 rounded-full ${isDark ? 'bg-[#09090B]/85 border-white/[0.06] hover:border-white/20 text-white' : 'bg-white/85 border-slate-200 hover:border-slate-350 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center transition-all hover:scale-105 cursor-pointer`}
+            className={`h-10 w-10 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md ${
+              isDark 
+                ? 'bg-[#09090B]/85 border-white/[0.08] hover:bg-[#121217] hover:border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.02)]' 
+                : 'bg-white/85 border-slate-200 hover:bg-slate-50 hover:border-slate-350 text-slate-800 shadow-md'
+            }`}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
           </button>
 
           {/* Language Switcher */}
           <button
             onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className={`px-4 py-2 rounded-full ${isDark ? 'bg-[#09090B]/85 border-white/[0.06] hover:border-white/20 text-white' : 'bg-white/85 border-slate-200 hover:border-slate-350 text-slate-800'} border backdrop-blur-md shadow-2xl flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide transition-all hover:scale-105 cursor-pointer`}
+            className={`h-10 px-4 rounded-full border flex items-center justify-center gap-2 text-xs font-semibold tracking-wide transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md ${
+              isDark 
+                ? 'bg-[#09090B]/85 border-white/[0.08] hover:bg-[#121217] hover:border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.02)]' 
+                : 'bg-white/85 border-slate-200 hover:bg-slate-50 hover:border-slate-350 text-slate-800 shadow-md'
+            }`}
             title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
           >
-            <span className="text-sm">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
-            <span>{lang === 'ar' ? 'English' : 'عربي'}</span>
+            <span className="text-sm flex items-center justify-center leading-none">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
+            <span className="leading-none">{lang === 'ar' ? 'English' : 'عربي'}</span>
           </button>
         </div>
 
@@ -1094,91 +1129,99 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             initial={{ opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className={`w-full max-w-[400px] ${isDark ? 'bg-[#090A0E]/85 border-indigo-500/10 shadow-[0_0_50px_rgba(99,102,241,0.15)] shadow-[0_24px_80px_rgba(0,0,0,0.9)]' : 'bg-white/95 border-slate-250 shadow-[0_24px_80px_rgba(0,0,0,0.06)]'} border rounded-[32px] p-10 relative z-10 text-center space-y-8 backdrop-blur-2xl`}
+            className={`w-full max-w-[400px] p-[1.5px] rounded-[40px] bg-gradient-to-b ${
+              isDark 
+                ? 'from-indigo-500/25 via-purple-500/10 to-indigo-500/20 shadow-[0_0_60px_rgba(99,102,241,0.18)]' 
+                : 'from-indigo-200/50 via-slate-200 to-indigo-200/30 shadow-[0_20px_50px_rgba(0,0,0,0.04)]'
+            } backdrop-blur-3xl z-10`}
           >
-            {/* Logo Section */}
-            <motion.div 
-              initial={{ scale: 0, rotate: -10 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.15 }}
-              className="flex justify-center"
-            >
-              <div className="relative group cursor-pointer">
-                {/* Outer pulsing gradient glow ring */}
-                <div className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-indigo-500/25 via-purple-500/20 to-pink-500/25 blur-md opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-                
-                {/* Perfect Circle frame */}
-                <div className={`w-24 h-24 rounded-full overflow-hidden border ${isDark ? 'border-white/[0.08] bg-[#0A0A0C]' : 'border-black/[0.08] bg-white'} shadow-2xl flex items-center justify-center p-1.5 relative z-10 transition-transform duration-500 group-hover:scale-[1.03]`}>
-                  {/* Inner gradient mask */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" />
+            <div className={`rounded-[38px] ${isDark ? 'bg-[#070709]/95' : 'bg-white/95'} p-9 sm:p-11 text-center space-y-9`}>
+              
+              {/* Logo Section */}
+              <motion.div 
+                initial={{ scale: 0, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.15 }}
+                className="flex justify-center animate-pulse-slow"
+              >
+                <div className="relative group cursor-pointer">
+                  {/* Outer pulsing glow ring */}
+                  <div className="absolute -inset-2.5 rounded-full bg-indigo-500/20 blur-lg opacity-70 group-hover:opacity-100 transition duration-700 pointer-events-none" />
                   
-                  {/* Circle image */}
-                  <img 
-                    src="/logo.png?v=6" 
-                    alt="تعن" 
-                    className="w-full h-full rounded-full object-cover select-none" 
-                    onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-                  />
+                  {/* Circle frame with radial gradient */}
+                  <div className={`w-24 h-24 rounded-full overflow-hidden border ${
+                    isDark 
+                      ? 'border-indigo-500/20 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.22)_0%,#0A0A0C_100%)] shadow-[0_0_20px_rgba(99,102,241,0.25)]' 
+                      : 'border-indigo-500/15 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,#ffffff_100%)] shadow-lg shadow-indigo-500/5'
+                  } flex items-center justify-center p-1.5 relative z-10 transition-all duration-500 group-hover:scale-[1.05] group-hover:border-indigo-500/40 group-hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]`}>
+                    {/* Inner gradient mask */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" />
+                    
+                    {/* Logo image */}
+                    <img 
+                      src="/logo.png?v=6" 
+                      alt="تعن" 
+                      className="w-full h-full rounded-full object-cover select-none" 
+                      onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Titles */}
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="space-y-2.5"
-            >
-              <h1 className={`text-2xl font-bold ${styles.textTitle} tracking-wide notranslate`} translate="no">
-                {renderBrandText(lang === 'ar' ? 'تعن' : 'TA3N')}
-              </h1>
-              <p className={`text-[12.5px] ${styles.textMuted} font-medium leading-relaxed max-w-[290px] mx-auto`}>
-                {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
-              </p>
-            </motion.div>
-
-            {/* Discord Login */}
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="space-y-4"
-            >
-              <button
-                onClick={() => signIn('discord')}
-                className="w-full h-13 rounded-2xl bg-gradient-to-r from-[#5865F2] to-[#404EED] hover:from-[#4E5DFF] hover:to-[#3b47c4] text-white font-bold text-[15px] transition-all duration-300 flex items-center justify-center gap-3.5 shadow-[0_8px_30px_rgba(88,101,242,0.3)] hover:shadow-[0_12px_40px_rgba(88,101,242,0.45)] cursor-pointer hover:-translate-y-0.5 active:translate-y-0 relative overflow-hidden group border border-white/10"
+              {/* Titles */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="space-y-3"
               >
-                {/* Glow sweep effect */}
-                <div className="absolute inset-0 w-1/2 h-full bg-white/15 skew-x-[-25deg] -translate-x-full group-hover:animate-shine pointer-events-none" />
-                
-                {/* Centered official Discord logo */}
-                <svg className="w-5 h-5 fill-current shrink-0 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
-                </svg>
-                <span className="tracking-wide font-extrabold">{lang === 'ar' ? 'تسجيل دخول عبر ديسكورد' : 'Login with Discord'}</span>
-              </button>
+                <h1 className={`text-2xl sm:text-3xl font-extrabold ${styles.textTitle} tracking-wide notranslate`} translate="no">
+                  {renderBrandText(lang === 'ar' ? 'تعن' : 'TA3N')}
+                </h1>
+                <p className={`text-[12px] ${styles.textMuted} font-medium leading-relaxed max-w-[290px] mx-auto`}>
+                  {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
+                </p>
+              </motion.div>
 
-
-            </motion.div>
-
-            {/* Bottom Footer Link */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.45 }}
-              className={`pt-6 border-t ${styles.borderSubtle} text-xs flex items-center justify-center gap-2`}
-            >
-              <span className="text-[#71717A] font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
-              <a
-                href="https://t3n-store-production.up.railway.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`font-bold ${isDark ? 'text-white hover:text-indigo-400' : 'text-indigo-600 hover:text-indigo-500'} transition-colors cursor-pointer`}
+              {/* Discord Login */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="space-y-4"
               >
-                {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
-              </a>
-            </motion.div>
+                <button
+                  onClick={() => signIn('discord')}
+                  className="w-full h-[52px] rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#5865F2] to-[#4F46E5] hover:brightness-110 active:scale-[0.96] text-white font-bold text-[14.5px] transition-all duration-300 flex items-center justify-center gap-3.5 shadow-[0_6px_24px_rgba(88,101,242,0.28)] hover:shadow-[0_10px_32px_rgba(88,101,242,0.45)] cursor-pointer relative overflow-hidden group border border-white/10"
+                >
+                  {/* Glow sweep effect */}
+                  <div className="absolute inset-0 w-1/2 h-full bg-white/15 skew-x-[-25deg] -translate-x-full group-hover:animate-shine pointer-events-none" />
+                  
+                  {/* Text first, then Discord logo */}
+                  <span className="tracking-wide font-extrabold">{lang === 'ar' ? 'تسجيل دخول عبر ديسكورد' : 'Login with Discord'}</span>
+                  
+                  <svg className="w-[22px] h-[22px] fill-current shrink-0 transition-transform duration-300 group-hover:scale-108" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
+                  </svg>
+                </button>
+              </motion.div>
+
+              {/* Bottom Footer Link */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45 }}
+                className={`pt-6 border-t ${styles.borderSubtle} text-xs flex items-center justify-center gap-2`}
+              >
+                <span className="text-[#71717A] font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
+                <button
+                  onClick={() => setGuestModalOpen(true)}
+                  className={`font-bold ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-650 hover:text-indigo-550'} transition-colors cursor-pointer bg-transparent border-none p-0`}
+                >
+                  {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
+                </button>
+              </motion.div>
+            </div>
           </motion.div>
         </AnimatePresence>
  
@@ -1187,12 +1230,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className={`absolute bottom-6 left-8 text-xs font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'} tracking-wide`}
+          className={`absolute bottom-6 left-8 text-xs font-medium ${isDark ? 'text-slate-650' : 'text-slate-400'} tracking-wide`}
           dir="rtl"
         >
           © 2026 جميع الحقوق محفوظة لمنصة {renderBrandText('تعن')}
         </motion.div>
- 
+
         {/* Guest Key Redemption Modal */}
         {guestModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">

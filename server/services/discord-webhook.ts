@@ -76,7 +76,7 @@ export async function sendDiscordLog(log: DiscordEmbedLog) {
       fields: fields,
       timestamp: log.timestamp || new Date().toISOString(),
       footer: {
-        text: 'تـعـن | نظام المراقبة والحماية الآلي',
+        text: 'تعن | نظام المراقبة والحماية الآلي',
       },
     };
 

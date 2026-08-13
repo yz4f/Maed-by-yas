@@ -20,7 +20,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-sky-500/30 text-sky-400 text-xs font-semibold mb-8 shadow-neon-glow"
         >
           <Zap className="w-4 h-4 animate-pulse text-amber-400" />
-          <span>إصدار تـعـن v3.5 المتطور - دعم كامل لفك حظر جميع الألعاب بنسبة 100%</span>
+          <span>إصدار تعن v3.5 المتطور - دعم كامل لفك حظر جميع الألعاب بنسبة 100%</span>
         </motion.div>
 
         {/* Main Title */}

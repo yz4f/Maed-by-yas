@@ -569,7 +569,7 @@ router.get('/logs', (req: Request, res: Response) => {
 // ─── 7. SYSTEM SETTINGS & DISCORD WEBHOOK CONFIG ───
 router.get('/settings', (req: Request, res: Response) => {
   try {
-    const site_title = getSetting('site_title') || getSetting('site_name') || 'تـعـن | المنصة الرقمية';
+    const site_title = getSetting('site_title') || getSetting('site_name') || 'تعن | المنصة الرقمية';
     const discord_webhook_url = getSetting('discord_webhook_url') || '';
     const google_client_id = getSetting('google_client_id') || process.env.GOOGLE_CLIENT_ID || '';
     return res.json({
