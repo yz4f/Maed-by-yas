@@ -5,9 +5,20 @@ interface DiscordRoleResult {
   message: string;
 }
 
+export interface DiscordRoleRestoreResult {
+  success: boolean;
+  restoredRoleIds: string[];
+  failedRoleIds: string[];
+  message: string;
+}
+
 export class DiscordBotService {
   private static botToken = process.env.DISCORD_BOT_TOKEN || '';
   private static guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
+
+  static isConfigured(): boolean {
+    return Boolean(this.botToken && this.guildId);
+  }
 
   /**
    * Helper to perform fetches with a fast timeout to prevent blocking server threads
@@ -59,9 +70,8 @@ export class DiscordBotService {
    * Adds a role to a Discord user in the target Guild
    */
   static async addRoleToMember(discordUserId: string, roleId: string): Promise<DiscordRoleResult> {
-    if (!this.botToken || !this.guildId) {
-      console.log(`[Discord Bot Simulation] Added Role ID ${roleId} to User ID ${discordUserId}`);
-      return { success: true, message: `(محاكاة) تم إسناد رتبة الديسكورد ${roleId} بنجاح.` };
+    if (!this.isConfigured()) {
+      return { success: false, message: 'خدمة ديسكورد غير مهيأة حاليًا.' };
     }
 
     try {
@@ -113,6 +123,48 @@ export class DiscordBotService {
     } catch (err: any) {
       return { success: false, message: err.message || 'فشل الاتصال بـ Discord Bot' };
     }
+  }
+
+  /**
+   * Restores only roles that are derived from currently active product entitlements.
+   * It never grants administrative roles and does not modify licenses or product records.
+   */
+  static async restoreEntitledRoles(discordUserId: string, activeProductNames: string[]): Promise<DiscordRoleRestoreResult> {
+    if (!this.isConfigured()) {
+      return {
+        success: false,
+        restoredRoleIds: [],
+        failedRoleIds: [],
+        message: 'خدمة رتب ديسكورد غير مهيأة حاليًا. تواصل مع الإدارة.'
+      };
+    }
+
+    const roleIds = new Set<string>([DISCORD_ROLES.CUSTOMER]);
+    for (const productName of activeProductNames) {
+      const lowerName = productName.toLowerCase();
+      if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass')) {
+        roleIds.add(DISCORD_ROLES.FORTNITE);
+      }
+      if (lowerName.includes('سبوفر') || lowerName.includes('spoofer') || lowerName.includes('تعن') || lowerName.includes('ta3n')) {
+        roleIds.add(DISCORD_ROLES.PERM);
+      }
+    }
+
+    const attemptedRoleIds = Array.from(roleIds);
+    const settled = await Promise.all(
+      attemptedRoleIds.map(async (roleId) => ({ roleId, result: await this.addRoleToMember(discordUserId, roleId) }))
+    );
+    const restoredRoleIds = settled.filter(({ result }) => result.success).map(({ roleId }) => roleId);
+    const failedRoleIds = settled.filter(({ result }) => !result.success).map(({ roleId }) => roleId);
+
+    return {
+      success: restoredRoleIds.length > 0 && failedRoleIds.length === 0,
+      restoredRoleIds,
+      failedRoleIds,
+      message: failedRoleIds.length === 0
+        ? 'تمت استعادة رتب الاستحقاق المرتبطة بتراخيصك المفعلة.'
+        : 'تعذر استعادة بعض الرتب. تأكد من وجودك في خادم ديسكورد ثم أعد المحاولة.'
+    };
   }
 
   /**
