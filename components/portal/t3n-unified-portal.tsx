@@ -2288,7 +2288,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
           </div>
         )}
-        /* TAB 3: REDEEM KEY (Integrated into My Products) */
+        {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
         {/* TAB 5: PROFILE */}
         {activeTab === 'profile' && (
           <div className="space-y-8 max-w-2xl mx-auto py-6 animate-slide-up">
