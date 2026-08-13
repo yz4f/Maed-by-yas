@@ -167,6 +167,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // User Products State
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isSyncingDiscordRoles, setIsSyncingDiscordRoles] = useState(false);
 
   // Key Redemption State
   const [keyInput, setKeyInput] = useState('');
@@ -724,22 +725,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
-  // Sync Discord Roles Handler
+  // Restores only entitlement roles for the authenticated Discord account.
   const handleSyncDiscordRoles = async () => {
+    if (isSyncingDiscordRoles) return;
+    setIsSyncingDiscordRoles(true);
     try {
       const res = await fetch('/api/user/sync-discord-roles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
       });
-      const data = await res.json();
-      if (data.success) {
-        showToast('License restored!', 'success');
-        showToast('Discord roles synced!', 'success');
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        showToast(data.message || (lang === 'ar' ? 'تمت استعادة رتب ديسكورد المرتبطة بتراخيصك.' : 'Your Discord entitlement roles were restored.'), 'success');
       } else {
-        showToast('Failed to restore license.', 'error');
+        showToast(data.message || (lang === 'ar' ? 'تعذر استرجاع رتب ديسكورد الآن.' : 'Unable to restore Discord roles right now.'), 'error');
       }
     } catch {
-      showToast('Failed to restore license.', 'error');
+      showToast(lang === 'ar' ? 'تعذر الاتصال بخدمة ديسكورد. حاول لاحقًا.' : 'Could not reach the Discord role service. Please try again later.', 'error');
+    } finally {
+      setIsSyncingDiscordRoles(false);
     }
   };
 
@@ -1200,17 +1205,29 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             z-index: -2;
             overflow: hidden;
             background:
-              radial-gradient(ellipse 70% 80% at 8% 22%, rgba(59, 165, 232, 0.38), transparent 51%),
-              radial-gradient(ellipse 60% 68% at 96% 82%, rgba(102, 193, 235, 0.24), transparent 53%),
-              linear-gradient(125deg, #061121 0%, #0d3468 48%, #071321 100%);
+              radial-gradient(ellipse 64% 78% at 8% 20%, rgba(63, 174, 242, 0.30), transparent 55%),
+              radial-gradient(ellipse 52% 66% at 92% 74%, rgba(105, 205, 246, 0.16), transparent 60%),
+              radial-gradient(ellipse 70% 62% at 53% 58%, rgba(19, 79, 145, 0.28), transparent 62%),
+              linear-gradient(125deg, #040b16 0%, #0b2e5e 48%, #061422 100%);
           }
-          .redeem-page-wrapper .bg-gfx::before {
+          .redeem-page-wrapper .bg-gfx::before,
+          .redeem-page-wrapper .bg-gfx::after {
             content: '';
             position: absolute;
-            inset: 0;
-            opacity: 0.38;
-            background: linear-gradient(115deg, rgba(255,255,255,0.04), transparent 35%, rgba(202,220,236,0.08) 66%, transparent 85%);
+            inset: -12%;
             pointer-events: none;
+          }
+          .redeem-page-wrapper .bg-gfx::before {
+            opacity: 0.62;
+            filter: blur(28px);
+            background:
+              radial-gradient(ellipse 42% 28% at 25% 50%, rgba(152, 223, 255, 0.17), transparent 72%),
+              radial-gradient(ellipse 34% 28% at 79% 27%, rgba(116, 208, 255, 0.12), transparent 75%);
+            animation: mistFloat 16s ease-in-out infinite alternate;
+          }
+          .redeem-page-wrapper .bg-gfx::after {
+            opacity: 0.36;
+            background: linear-gradient(118deg, rgba(255,255,255,0.045), transparent 31%, rgba(197,226,248,0.075) 59%, transparent 83%);
           }
           .redeem-page-wrapper .grid-lines {
             position: absolute;
@@ -1305,34 +1322,34 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           }
           .redeem-page-wrapper .brand-corner {
             position: fixed;
-            top: 26px;
+            top: 28px;
             z-index: 6;
             display: flex;
             align-items: center;
-            gap: 13px;
-            padding: 7px 13px 7px 8px;
-            border: 1px solid rgba(222, 238, 252, 0.18);
-            border-radius: 16px;
-            background: linear-gradient(125deg, rgba(15, 53, 93, 0.64), rgba(7, 16, 33, 0.43));
-            box-shadow: 0 14px 40px rgba(0, 9, 25, 0.28), inset 0 1px 0 rgba(255,255,255,0.14);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            gap: 12px;
+            padding: 3px 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
             animation: fadeDown .7s ease both;
           }
           .redeem-page-wrapper .brand-corner .mark {
-            width: 46px;
-            height: 46px;
-            padding: 4px;
+            width: 43px;
+            height: 43px;
+            padding: 3px;
+            border: 1px solid rgba(214, 239, 255, 0.38);
             border-radius: 13px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #eff8ff 0%, #72caff 36%, #2875bd 100%);
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.26), 0 0 28px rgba(92, 199, 255, 0.42);
+            background: linear-gradient(135deg, #dff5ff 0%, #80ccf4 45%, #1e659f 100%);
+            box-shadow: 0 8px 24px rgba(12, 88, 150, 0.34), 0 0 0 4px rgba(124, 205, 255, 0.06);
           }
           .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border-radius: 9px; object-fit: cover; }
-          .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 19px; line-height: 1; letter-spacing: 0.04em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.4); }
-          .redeem-page-wrapper .brand-tag { margin-top: 5px; font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: 0.2em; color: #9bd7fa; }
+          .redeem-page-wrapper .brand-corner > div:last-child { padding-inline-start: 12px; border-inline-start: 1px solid rgba(215, 239, 255, 0.28); }
+          .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 19px; line-height: 1; letter-spacing: 0.04em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.28); }
+          .redeem-page-wrapper .brand-tag { margin-top: 5px; font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: 0.2em; color: #a8d9f5; }
           .redeem-page-wrapper .copy { flex: 1; max-width: 554px; animation: fadeRight .8s ease both .1s; }
           .redeem-page-wrapper .eyebrow {
             display: inline-flex;
@@ -1373,31 +1390,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper .mini-stats div .n { color: #f4faff; font-family: 'Almarai', sans-serif; font-size: 22px; font-weight: 900; }
           .redeem-page-wrapper .mini-stats div .l { margin-top: 5px; color: #a8c4d8; font-size: 11px; font-weight: 600; }
           .redeem-page-wrapper .card {
-            width: min(410px, 100%);
+            width: min(382px, 100%);
             flex-shrink: 0;
             position: relative;
             overflow: hidden;
-            padding: 30px 34px 34px;
-            border: 1px solid rgba(227, 241, 251, 0.32);
-            border-radius: 25px;
+            padding: 28px 30px 31px;
+            border: 1px solid rgba(219, 241, 255, 0.29);
+            border-radius: 23px;
             color: var(--ice);
             text-align: center;
-            background: linear-gradient(145deg, rgba(16, 52, 90, 0.78), rgba(5, 15, 31, 0.87) 58%, rgba(31, 72, 108, 0.66));
-            box-shadow: 0 30px 90px rgba(0, 7, 22, 0.48), 0 0 0 5px rgba(207, 230, 248, 0.055), inset 0 1px 0 rgba(255,255,255,0.18);
-            backdrop-filter: blur(24px) saturate(132%);
-            -webkit-backdrop-filter: blur(24px) saturate(132%);
+            background: linear-gradient(155deg, rgba(17, 53, 89, 0.80), rgba(5, 15, 29, 0.90) 57%, rgba(19, 56, 86, 0.75));
+            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.47), 0 0 0 5px rgba(208, 234, 252, 0.045), inset 0 1px 0 rgba(255,255,255,0.16);
+            backdrop-filter: blur(26px) saturate(125%);
+            -webkit-backdrop-filter: blur(26px) saturate(125%);
             animation: fadeUp .8s ease both .25s;
           }
-          .redeem-page-wrapper .card::before { content: ''; position: absolute; top: 0; right: 12%; left: 12%; height: 1px; background: linear-gradient(90deg, transparent, rgba(238,249,255,0.94), transparent); box-shadow: 0 0 18px rgba(184,230,255,0.9); }
-          .redeem-page-wrapper .card::after { content: ''; position: absolute; width: 280px; height: 280px; top: -160px; left: -92px; border-radius: 50%; background: radial-gradient(circle, rgba(133,207,248,0.22), transparent 70%); pointer-events: none; }
+          .redeem-page-wrapper .card::before { content: ''; position: absolute; top: 0; right: 14%; left: 14%; height: 1px; background: linear-gradient(90deg, transparent, rgba(238,249,255,0.86), transparent); box-shadow: 0 0 18px rgba(154,218,255,0.72); }
+          .redeem-page-wrapper .card::after { content: ''; position: absolute; width: 280px; height: 280px; top: -166px; left: -104px; border-radius: 50%; background: radial-gradient(circle, rgba(117,202,249,0.18), transparent 70%); pointer-events: none; }
           .redeem-page-wrapper .card-topline { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 7px; margin-bottom: 18px; color: #b8dcf3; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; }
           .redeem-page-wrapper .card-topline i { width: 6px; height: 6px; border-radius: 50%; background: #82e5ff; box-shadow: 0 0 10px #82e5ff; }
           .redeem-page-wrapper .card-icon { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin: 0 auto 19px; border: 1px solid rgba(220,240,254,0.36); border-radius: 19px; color: #b9ecff; background: linear-gradient(145deg, rgba(166,225,255,0.28), rgba(33,101,164,0.17)); box-shadow: 0 0 30px rgba(100,207,255,0.2), inset 0 1px 0 rgba(255,255,255,0.18); }
           .redeem-page-wrapper .card-icon svg { width: 28px; height: 28px; }
           .redeem-page-wrapper .card h2 { position: relative; z-index: 1; margin-bottom: 11px; color: #f5fbff; font-family: 'Almarai', sans-serif; font-size: 21px; font-weight: 900; }
           .redeem-page-wrapper .card p { position: relative; z-index: 1; margin-bottom: 25px; color: #bed1e0; font-size: 13.5px; line-height: 1.85; }
-          .redeem-page-wrapper .discord-btn { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 1px solid rgba(214,222,255,0.36); border-radius: 14px; cursor: pointer; color: white; background: linear-gradient(105deg, #4e59d7 0%, #6976ff 52%, #5361db 100%); box-shadow: 0 12px 28px rgba(64, 75, 219, 0.35), inset 0 1px 0 rgba(255,255,255,0.23); font-family: inherit; font-size: 14.5px; font-weight: 800; transition: transform .22s ease, box-shadow .22s ease, filter .22s ease; }
-          .redeem-page-wrapper .discord-btn:hover { transform: translateY(-3px); filter: brightness(1.08); box-shadow: 0 18px 35px rgba(71, 83, 229, 0.48), inset 0 1px 0 rgba(255,255,255,0.28); }
+          .redeem-page-wrapper .discord-btn { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 1px solid rgba(206,226,255,0.38); border-radius: 14px; cursor: pointer; color: white; background: linear-gradient(105deg, #385fc8 0%, #5c75e8 52%, #4165cc 100%); box-shadow: 0 12px 28px rgba(38, 82, 191, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); font-family: inherit; font-size: 14.5px; font-weight: 800; transition: transform .22s ease, box-shadow .22s ease, filter .22s ease; }
+          .redeem-page-wrapper .discord-btn:hover { transform: translateY(-3px); filter: brightness(1.08); box-shadow: 0 18px 35px rgba(51, 93, 211, 0.48), inset 0 1px 0 rgba(255,255,255,0.28); }
           .redeem-page-wrapper .discord-btn svg { width: 19px; height: 19px; }
           .redeem-page-wrapper .divider { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin: 22px 0 18px; }
           .redeem-page-wrapper .divider .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(215,235,249,0.34), transparent); }
@@ -1429,6 +1446,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper--light .divider .line { background: linear-gradient(90deg, transparent, rgba(67, 132, 177, 0.32), transparent); }
           .redeem-page-wrapper--light .divider span { color: #61809b; }
           .redeem-page-wrapper--light .alt-link button { color: #2176ae; }
+          @keyframes mistFloat { from { transform: translate3d(-1.5%, -1%, 0) scale(1); } to { transform: translate3d(2%, 1.5%, 0) scale(1.05); } }
           @keyframes driftOne { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-22px, 18px, 0) scale(1.04); } }
           @keyframes driftTwo { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(24px, -18px, 0) scale(1.03); } }
           @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
@@ -1476,7 +1494,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
           <div>
             <div className="brand-name">{lang === 'ar' ? 'تـعـن' : 'T3N'}</div>
-            <div className="brand-tag">SECURE PLATFORM</div>
+            <div className="brand-tag">{lang === 'ar' ? 'منصة التراخيص' : 'LICENSE PLATFORM'}</div>
           </div>
         </div>
 
@@ -1548,7 +1566,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <div className="card">
             <div className="card-topline"><i /> {lang === 'ar' ? 'وصول آمن عبر ديسكورد' : 'SECURE DISCORD ACCESS'}</div>
             <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="8" cy="15" r="4" />
                 <path d="M10.5 12.5L20 3M17 6l2.5 2.5M14 9l2 2" />
               </svg>
@@ -1566,9 +1584,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               onClick={() => signIn('discord')}
               className="discord-btn"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.21.375-.444.87-.608 1.262a18.27 18.27 0 00-3.9 0A12.6 12.6 0 0011.442 3a19.74 19.74 0 00-3.76 1.369C4.4 9.008 3.68 13.54 3.955 18.008a19.9 19.9 0 006.058 3.06 14.6 14.6 0 001.28-2.06 12.9 12.9 0 01-2.017-.96c.17-.123.335-.252.494-.384a14.16 14.16 0 0012.46 0c.16.132.324.26.494.384-.64.38-1.317.7-2.02.96.372.72.807 1.404 1.283 2.06a19.84 19.84 0 006.06-3.06c.324-5.19-.79-9.68-3.7-13.64zM9.68 15.33c-1.147 0-2.09-1.06-2.09-2.36 0-1.3.92-2.36 2.09-2.36 1.18 0 2.11 1.07 2.09 2.36 0 1.3-.91 2.36-2.09 2.36zm6.65 0c-1.147 0-2.09-1.06-2.09-2.36 0-1.3.92-2.36 2.09-2.36 1.18 0 2.11 1.07 2.09 2.36 0 1.3-.9 2.36-2.09 2.36z" />
-              </svg>
+              <DiscordMark className="w-[19px] h-[19px]" />
               {lang === 'ar' ? 'المتابعة عبر ديسكورد' : 'Continue with Discord'}
             </button>
             
@@ -2090,15 +2106,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                 <button
                   onClick={() => handleSyncDiscordRoles()}
-                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
+                  disabled={isSyncingDiscordRoles}
+                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group disabled:cursor-wait disabled:opacity-70 ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
-                      <Users className="w-[19px] h-[19px]" />
+                      {isSyncingDiscordRoles ? <RefreshCw className="w-[19px] h-[19px] animate-spin" /> : <Users className="w-[19px] h-[19px]" />}
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'مزامنة رتب ديسكورد' : 'Sync Discord Roles'}</span>
-                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</span>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{isSyncingDiscordRoles ? (lang === 'ar' ? 'جارِ استعادة الرتب...' : 'Restoring roles...') : (lang === 'ar' ? 'استعادة رتب ديسكورد' : 'Restore Discord Roles')}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'يعيد رتب الاستحقاق للتراخيص المفعلة فقط' : 'Restores entitlement roles for active licenses only'}</span>
                     </div>
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
@@ -2160,9 +2177,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
-          <div className="space-y-6">
-            {/* Inline Premium Key Activation Card */}
-            <div className="w-full bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-6 relative overflow-hidden shadow-xl">
+          <div className="products-experience space-y-6">
+            {/* License activation sits above the library without exposing any existing data. */}
+            <section className="product-redeem-card w-full rounded-2xl p-5 sm:p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-5">
                 <div className={`flex items-center gap-4 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
@@ -2202,7 +2219,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <span>{redeemMessage?.text}</span>
                 </div>
               )}
-            </div>
+            </section>
             {/* Products Grid */}
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
@@ -2257,7 +2274,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="product-library grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 xl:gap-6">
                 {userProducts.map((up) => {
                   const rawKey = up.keyString || 'KEY-ACTIVATED';
                   const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
@@ -2266,36 +2283,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   const productImg = getProductImage(up.product);
 
                   return (
-                    <div
+                    <article
                       key={up.id}
-                      style={{
-                        background: '#0f0f0f',
-                        border: '1px solid rgba(255,255,255,0.07)',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        transition: 'border-color 0.2s, transform 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
+                      className="product-license-card group"
+                      data-active={isActive ? 'true' : 'false'}
                     >
                       {/* ── BANNER IMAGE ── */}
-                      <div style={{ position: 'relative', height: '160px', overflow: 'hidden', background: '#050505' }}>
+                      <div className="product-license-card__media">
                         <img
                           src={productImg}
                           alt={up.product?.name || 'Product'}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(60%) contrast(1.1)', opacity: 0.9 }}
+                          className="product-license-card__image"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
                         {/* Gradient overlay */}
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, #0f0f0f 100%)' }} />
+                        <div className="product-license-card__media-overlay" />
                         {/* Status badge top-left */}
                         <div style={{
                           position: 'absolute', top: '10px', left: lang === 'ar' ? 'auto' : '10px', right: lang === 'ar' ? '10px' : 'auto',
@@ -2313,14 +2317,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       </div>
 
                       {/* ── BODY ── */}
-                      <div style={{ padding: '16px' }}>
+                      <div className="product-license-card__body">
 
                         {/* Product name + subtitle */}
-                        <div style={{ marginBottom: '14px' }}>
-                          <div style={{ fontSize: '16px', fontWeight: 700, color: '#f0f0f0', marginBottom: '3px' }}>
+                        <div className="product-license-card__heading">
+                          <div className="product-license-card__title">
                             {up.product?.name || 'Product'}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#555', fontWeight: 500 }}>
+                          <div className="product-license-card__meta">
                             {up.expiresAt
                               ? `${lang === 'ar' ? 'ينتهي في' : 'Expires'} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
                               : (lang === 'ar' ? 'مدى الحياة' : 'Lifetime License')}
@@ -2328,66 +2332,36 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
 
                         {/* Key row */}
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: '6px',
-                          background: '#080808', border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '8px', padding: '8px 10px', marginBottom: '12px',
-                        }}>
-                          <code style={{
-                            flex: 1, fontSize: '12px', fontFamily: 'monospace',
-                            color: '#ccc', direction: 'ltr', textAlign: 'left',
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
+                        <div className="product-key-row">
+                          <code className="product-key-row__value">
                             {displayKey}
                           </code>
                           <button
                             onClick={() => toggleKeyReveal(up.id)}
                             title={revealedKeys[up.id] ? 'Hide' : 'Show'}
-                            style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = '#aaa'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = '#444'; }}
+                            className="product-key-row__icon"
                           >
                             {revealedKeys[up.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                           </button>
                           <button
                             onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
                             title={lang === 'ar' ? 'نسخ' : 'Copy'}
-                            style={{ background: 'none', border: 'none', color: copiedKeyId === up.id ? '#34d399' : '#444', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
-                            onMouseEnter={(e) => { if (copiedKeyId !== up.id) e.currentTarget.style.color = '#aaa'; }}
-                            onMouseLeave={(e) => { if (copiedKeyId !== up.id) e.currentTarget.style.color = '#444'; }}
+                            className={`product-key-row__icon ${copiedKeyId === up.id ? 'product-key-row__icon--copied' : ''}`}
                           >
                             {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
                           </button>
                         </div>
 
                         {/* Action buttons row 1: HWID Reset + Pause Key */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                        <div className="product-license-card__utilities">
                           <button
                             onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
-                            style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                              padding: '9px 8px', borderRadius: '8px', cursor: 'pointer',
-                              fontSize: '12px', fontWeight: 600, color: '#ccc',
-                              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = '#fff'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#ccc'; }}
+                            className="product-utility-button"
                           >
                             <RefreshCw size={13} />
                             {lang === 'ar' ? 'إعادة تعيين' : 'HWID Reset'}
                           </button>
-                          <button
-                            style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                              padding: '9px 8px', borderRadius: '8px', cursor: 'pointer',
-                              fontSize: '12px', fontWeight: 600, color: '#ccc',
-                              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = '#fff'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#ccc'; }}
-                          >
+                          <button className="product-utility-button" type="button">
                             <Clock size={13} />
                             {lang === 'ar' ? 'إيقاف مؤقت' : 'Pause Key'}
                           </button>
@@ -2396,15 +2370,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {/* Download Loader — white primary */}
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          style={{
-                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-                            padding: '11px', borderRadius: '8px', cursor: 'pointer',
-                            fontSize: '13px', fontWeight: 700, color: '#000',
-                            background: '#fff', border: 'none', marginBottom: '8px',
-                            transition: 'background 0.15s, transform 0.15s',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = '#e5e5e5'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                          className="product-download-button"
                         >
                           <Download size={14} />
                           {lang === 'ar' ? 'تحميل اللودر' : 'Download Loader'}
@@ -2413,21 +2379,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {/* Guide — dark outline */}
                         <button
                           onClick={() => { setGuideModalProduct(up); setGuideView('menu'); }}
-                          style={{
-                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-                            padding: '10px', borderRadius: '8px', cursor: 'pointer',
-                            fontSize: '12.5px', fontWeight: 600, color: '#888',
-                            background: 'transparent', border: '1px solid rgba(255,255,255,0.09)',
-                            transition: 'all 0.15s',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = '#ccc'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}
+                          className="product-guide-button"
                         >
                           <HelpCircle size={13} />
                           {lang === 'ar' ? 'الشروحات والتعليمات' : 'Guide'}
                         </button>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
