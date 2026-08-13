@@ -184,22 +184,7 @@ const defaultStore: StoreData = {
       created_at: new Date().toISOString()
     }
   ],
-  product_keys: [
-    {
-      id: 'key-seed-1',
-      product_id: 'spoofer-prod-1',
-      key_value: 'TA3N-SPOOF-2026-VIP-001',
-      status: 'unused',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'key-seed-2',
-      product_id: 'unban-prod-2',
-      key_value: 'TA3N-UNBAN-2026-PRO-001',
-      status: 'unused',
-      created_at: new Date().toISOString()
-    }
-  ],
+  product_keys: [],
   user_products: [],
   logs: [],
   settings: {
@@ -241,17 +226,24 @@ const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_
 
 async function syncToFirestore(data: StoreData) {
   try {
-    await fetch(FIRESTORE_URL, {
+    const payload = JSON.stringify(data);
+    const res = await fetch(FIRESTORE_URL + '?updateMask.fieldPaths=payload', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fields: {
-          payload: { stringValue: JSON.stringify(data) }
+          payload: { stringValue: payload },
+          updated_at: { stringValue: new Date().toISOString() }
         }
       })
     });
-  } catch {
-    // ignore errors
+    if (!res.ok) {
+      console.error('Firestore sync failed:', res.status, await res.text().catch(() => ''));
+    } else {
+      console.log('Firestore sync OK - data saved persistently');
+    }
+  } catch (err) {
+    console.error('Firestore sync error:', err);
   }
 }
 
@@ -263,14 +255,27 @@ async function pullFromFirestore() {
       if (json && json.fields && json.fields.payload && json.fields.payload.stringValue) {
         const cloudStore = JSON.parse(json.fields.payload.stringValue);
         if (cloudStore && cloudStore.users && cloudStore.products) {
-          memoryStore = cloudStore;
+          // Use cloud data as the primary source of truth
+          memoryStore = {
+            users: cloudStore.users || [],
+            products: cloudStore.products || defaultStore.products,
+            product_files: cloudStore.product_files || [],
+            product_keys: cloudStore.product_keys || [],
+            user_products: cloudStore.user_products || [],
+            logs: cloudStore.logs || [],
+            settings: { ...defaultStore.settings, ...(cloudStore.settings || {}) },
+            sessions: cloudStore.sessions || [],
+            tickets: cloudStore.tickets || []
+          };
           fs.writeFileSync(STORE_PATH, JSON.stringify(memoryStore, null, 2), 'utf-8');
           console.log('Successfully loaded persistent store from Firestore tnnn-aa170');
         }
       }
+    } else {
+      console.log('Firestore pull returned:', res.status);
     }
-  } catch {
-    // ignore errors
+  } catch (err) {
+    console.error('Firestore pull error:', err);
   }
 }
 
@@ -600,15 +605,14 @@ export function addKeys(productId: string, keys: string[], duration?: 'lifetime'
 
 // Generate keys automatically
 export function generateKeys(productId: string, count: number, duration: 'lifetime' | '30d' | '7d' | '1d' = 'lifetime', prefix?: string) {
-  const product = memoryStore.products.find(p => p.id === productId);
-  const productPrefix = prefix || (product?.name?.includes('سبوفر') ? 'TA3N-SPOOF' : product?.name?.includes('فورت') ? 'TA3N-UNBAN' : 'TA3N');
   const generated: string[] = [];
   
   for (let i = 0; i < count; i++) {
-    const segment1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const segment2 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const segment3 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const keyValue = `${productPrefix}-${segment1}-${segment2}-${segment3}`;
+    // Generate KEY-XXXXXX-XXXXXX format (alphanumeric mixed case)
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const seg1 = Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const seg2 = Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const keyValue = `KEY-${seg1}-${seg2}`;
     
     if (!memoryStore.product_keys.some(existing => existing.key_value === keyValue)) {
       memoryStore.product_keys.push({
