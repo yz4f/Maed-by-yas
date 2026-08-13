@@ -161,7 +161,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const loadStats = async () => {
     if (!isStaff) return;
     try {
-      const response = await fetch('/api/tickets/stats', { cache: 'no-store' });
+      const response = await fetch('/api/tickets?action=stats', { cache: 'no-store' });
       const data = await response.json();
       if (response.ok && data.success) setStats(data.stats);
     } catch { /* Ticket list remains usable if summary stats fail. */ }
@@ -170,7 +170,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const selectTicket = async (ticketId: string) => {
     setDetailLoading(true);
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`, { cache: 'no-store' });
+      const response = await fetch(`/api/tickets?ticketId=${encodeURIComponent(ticketId)}`, { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر فتح التذكرة.');
       setDetail(data.detail);
@@ -195,7 +195,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
     for (const file of files) {
       const body = new FormData();
       body.append('file', file);
-      const response = await fetch(`/api/tickets/${ticketId}/attachments`, { method: 'POST', body });
+      const response = await fetch(`/api/tickets?action=attachment&ticketId=${encodeURIComponent(ticketId)}`, { method: 'POST', body });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || `تعذر رفع ${file.name}`);
       attachments.push(data.attachment);
@@ -212,7 +212,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
       let nextDetail: TicketDetail = data.detail;
       if (newFiles.length) {
         const attachments = await uploadFiles(nextDetail.ticket.id, newFiles);
-        const attachmentResponse = await fetch(`/api/tickets/${nextDetail.ticket.id}/messages`, {
+        const attachmentResponse = await fetch(`/api/tickets?action=message&ticketId=${encodeURIComponent(nextDetail.ticket.id)}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ body: isRtl ? 'مرفقات إضافية للتذكرة.' : 'Additional ticket attachments.', attachments }),
         });
@@ -237,7 +237,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const patchTicket = async (payload: Record<string, unknown>, successMessage?: string) => {
     if (!detail) return;
     try {
-      const response = await fetch(`/api/tickets/${detail.ticket.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const response = await fetch(`/api/tickets?ticketId=${encodeURIComponent(detail.ticket.id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحديث التذكرة.');
       setDetail(data.detail);
@@ -252,7 +252,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
     setSending(true);
     try {
       const attachments = await uploadFiles(detail.ticket.id, composerFiles);
-      const response = await fetch(`/api/tickets/${detail.ticket.id}/messages`, {
+      const response = await fetch(`/api/tickets?action=message&ticketId=${encodeURIComponent(detail.ticket.id)}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body: composer, isInternal: internalNote, attachments }),
       });
