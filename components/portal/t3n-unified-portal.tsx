@@ -1150,7 +1150,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   if (!isLoggedIn) {
     return (
-      <div className="redeem-page-wrapper min-h-screen w-full relative overflow-hidden select-none" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className={`redeem-page-wrapper ${isDark ? 'redeem-page-wrapper--dark' : 'redeem-page-wrapper--light'} min-h-screen w-full relative overflow-hidden select-none`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         <style dangerouslySetInnerHTML={{ __html: `
           .redeem-page-wrapper {
             --night: #050b16;
@@ -1389,6 +1389,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper .floating-ctrls { position: fixed; top: 26px; z-index: 6; display: flex; align-items: center; gap: 9px; }
           .redeem-page-wrapper .floating-ctrls button { height: 42px; border: 1px solid rgba(218,238,252,0.19); border-radius: 13px; cursor: pointer; color: #e9f7ff; background: rgba(7, 25, 50, 0.58); box-shadow: inset 0 1px 0 rgba(255,255,255,0.09); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
           .redeem-page-wrapper .floating-ctrls button:hover { transform: translateY(-2px); border-color: rgba(182,229,255,0.54); background: rgba(38, 114, 177, 0.38); }
+          .redeem-page-wrapper--light { --night: #eef7fd; --deep-blue: #dceefa; --ice: #102845; --silver: #6e8eaa; --muted: #5d7893; --glass: rgba(255, 255, 255, 0.68); --glass-border: rgba(73, 137, 185, 0.22); color: #102845; }
+          .redeem-page-wrapper--light .bg-gfx { background: radial-gradient(ellipse 70% 80% at 8% 22%, rgba(76, 185, 247, 0.32), transparent 51%), radial-gradient(ellipse 60% 68% at 96% 82%, rgba(98, 166, 223, 0.2), transparent 53%), linear-gradient(125deg, #f7fbff 0%, #d9edf9 48%, #f5fbfe 100%); }
+          .redeem-page-wrapper--light .bg-gfx::before { opacity: 0.58; background: linear-gradient(115deg, rgba(255,255,255,0.7), transparent 35%, rgba(95,168,212,0.12) 66%, transparent 85%); }
+          .redeem-page-wrapper--light .grid-lines { opacity: 0.6; background-image: linear-gradient(rgba(56, 125, 175, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 125, 175, 0.1) 1px, transparent 1px); }
+          .redeem-page-wrapper--light .silver-ribbon { border-color: rgba(69, 134, 179, 0.28); background: linear-gradient(115deg, rgba(255,255,255,0.46), transparent 18%, rgba(83, 165, 215, 0.09) 50%, rgba(255,255,255,0.42) 82%, transparent); box-shadow: 0 0 0 9px rgba(104, 169, 211, 0.06), 0 0 64px rgba(86, 170, 226, 0.14), inset 0 0 38px rgba(255,255,255,0.32); }
+          .redeem-page-wrapper--light .wordmark-ghost { background: linear-gradient(110deg, rgba(36, 104, 151, 0.05), rgba(64, 137, 185, 0.22), rgba(45, 119, 167, 0.04)); -webkit-text-stroke-color: rgba(56, 125, 175, 0.16); }
+          .redeem-page-wrapper--light .brand-corner, .redeem-page-wrapper--light .floating-ctrls button { border-color: rgba(67, 132, 177, 0.2); color: #163754; background: rgba(255, 255, 255, 0.64); box-shadow: 0 14px 40px rgba(50, 111, 153, 0.12), inset 0 1px 0 rgba(255,255,255,0.78); }
+          .redeem-page-wrapper--light .brand-name, .redeem-page-wrapper--light .headline, .redeem-page-wrapper--light .card h2 { color: #102845; text-shadow: none; }
+          .redeem-page-wrapper--light .brand-tag, .redeem-page-wrapper--light .card-topline { color: #2873a8; }
+          .redeem-page-wrapper--light .headline .grad { background: linear-gradient(110deg, #155a90 8%, #2e93ce 48%, #426d90 100%); -webkit-background-clip: text; background-clip: text; }
+          .redeem-page-wrapper--light .subtext, .redeem-page-wrapper--light .card p { color: #506e89; text-shadow: none; }
+          .redeem-page-wrapper--light .mini-stats { border-color: rgba(67, 132, 177, 0.28); }
+          .redeem-page-wrapper--light .mini-stats div { border-color: rgba(67, 132, 177, 0.2); }
+          .redeem-page-wrapper--light .mini-stats div .n { color: #173b5d; }
+          .redeem-page-wrapper--light .mini-stats div .l, .redeem-page-wrapper--light .alt-link { color: #5d7893; }
+          .redeem-page-wrapper--light .card { color: #102845; border-color: rgba(73, 137, 185, 0.25); background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(232, 245, 253, 0.9) 58%, rgba(211, 234, 247, 0.72)); box-shadow: 0 30px 90px rgba(49, 113, 157, 0.16), 0 0 0 5px rgba(104, 174, 219, 0.06), inset 0 1px 0 rgba(255,255,255,0.88); }
+          .redeem-page-wrapper--light .card::before { background: linear-gradient(90deg, transparent, rgba(47, 138, 196, 0.7), transparent); box-shadow: 0 0 18px rgba(76, 173, 226, 0.52); }
+          .redeem-page-wrapper--light .card-icon { color: #1c6b9f; border-color: rgba(76, 149, 196, 0.26); background: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(143, 209, 242, 0.3)); }
+          .redeem-page-wrapper--light .divider .line { background: linear-gradient(90deg, transparent, rgba(67, 132, 177, 0.32), transparent); }
+          .redeem-page-wrapper--light .divider span { color: #61809b; }
+          .redeem-page-wrapper--light .alt-link button { color: #2176ae; }
           @keyframes driftOne { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-22px, 18px, 0) scale(1.04); } }
           @keyframes driftTwo { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(24px, -18px, 0) scale(1.03); } }
           @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
@@ -1671,26 +1692,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#070709] text-white selection:bg-white selection:text-black transition-colors duration-300 relative" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Subtle Infinite Grid Background */}
-      <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0 opacity-100" />
+    <div className={`portal-shell ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Layered luxury background */}
+      <div className="portal-ambient" aria-hidden="true" />
+      <div className="portal-grid" aria-hidden="true" />
+      <div className="portal-noise" aria-hidden="true" />
 
-      {/* PREMIUM DARK SIDEBAR */}
+      {/* Premium navigation panel */}
       <aside
-        className="hidden md:flex flex-col shrink-0 h-full relative z-20"
+        className="portal-sidebar hidden md:flex flex-col shrink-0 h-full relative z-20 transition-colors duration-500"
         style={{
           width: '220px',
-          background: '#0a0a0a',
-          borderRight: lang === 'ar' ? 'none' : '1px solid rgba(255,255,255,0.07)',
-          borderLeft: lang === 'ar' ? '1px solid rgba(255,255,255,0.07)' : 'none',
+          background: isDark ? 'linear-gradient(180deg, rgba(7, 21, 42, 0.92), rgba(4, 12, 26, 0.86))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(234, 245, 253, 0.74))',
+          borderRight: lang === 'ar' ? 'none' : `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}`,
+          borderLeft: lang === 'ar' ? `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}` : 'none',
         }}
       >
         {/* BRAND */}
-        <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '22px 20px 18px', borderBottom: `1px solid ${isDark ? 'rgba(209, 235, 255, 0.1)' : 'rgba(47, 110, 162, 0.12)'}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
             <img src="/logo.png" alt="تعن" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
-          <span className="notranslate" translate="no" style={{ fontSize: '17px', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
+          <span className="notranslate" translate="no" style={{ fontSize: '17px', fontWeight: 800, color: isDark ? '#f1f8ff' : '#102845', letterSpacing: '-0.3px' }}>
             {renderBrandText('تعن')}
           </span>
         </div>
@@ -1878,10 +1901,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         )}
 
-        {/* UNIFIED TOP BAR HEADER (MATCHING SCREENSHOT 1) */}
-        <header className="flex items-center justify-between pb-6 mb-4 border-b border-white/[0.08] animate-fade-in">
+        {/* Structured portal header */}
+        <header className={`flex items-center justify-between pb-6 mb-5 border-b animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            <div className={`mb-1 flex items-center gap-2 text-[10px] font-black tracking-[0.18em] ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.9)]" />
+              {lang === 'ar' ? 'بوابة تعن' : 'T3N PORTAL'}
+            </div>
+            <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
@@ -1890,20 +1917,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </h1>
           </div>
 
-          {/* Primary Action Button matching Screenshot 1 */}
-          <button
-            onClick={() => {
-              setActiveTab('my-products');
-              setTimeout(() => {
-                const el = document.getElementById('my-products-key-input');
-                if (el) el.focus();
-              }, 150);
-            }}
-            className="bg-white hover:bg-neutral-200 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer shadow-md active:scale-95 shrink-0"
-          >
-            <Key className="w-4 h-4 text-black" />
-            <span>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              title={isDark ? (lang === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (lang === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
+              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all duration-200 active:scale-95 ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('my-products');
+                setTimeout(() => {
+                  const el = document.getElementById('my-products-key-input');
+                  if (el) el.focus();
+                }, 150);
+              }}
+              className="bg-gradient-to-r from-sky-400 via-cyan-300 to-slate-100 hover:from-sky-300 hover:via-cyan-200 hover:to-white text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer shadow-[0_10px_24px_rgba(56,189,248,0.23)] active:scale-95 shrink-0"
+            >
+              <Key className="w-4 h-4" />
+              <span>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
+            </button>
+          </div>
         </header>
 
         {/* TAB 1: OVERVIEW */}
