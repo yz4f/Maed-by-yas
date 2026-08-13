@@ -222,8 +222,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [keyActionMessage, setKeyActionMessage] = useState<string | null>(null);
 
   // Language State: 'ar' or 'en'
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const showToast = (msg: string) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 3000); };
+  // Premium Stackable Toast System
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }[]>([]);
+  
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    setToasts(prev => {
+      if (prev.some(t => t.message === message)) return prev; // Prevent duplicate texts
+      const newToast = { id: Math.random().toString(36).substring(2, 9), message, type };
+      return [...prev, newToast].slice(-5); // Keep max 5 toasts visible
+    });
+  };
+
+  useEffect(() => {
+    if (toasts.length > 0) {
+      const timer = setTimeout(() => {
+        setToasts(prev => prev.slice(1));
+      }, 3500); // Auto-dismiss after 3.5s
+      return () => clearTimeout(timer);
+    }
+  }, [toasts]);
 
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
@@ -440,7 +457,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           });
           const data = await res.json();
           if (data.success) {
-            showToast(data.message || (lang === 'ar' ? 'تم سحب المنتج من العميل بنجاح' : 'Product revoked from customer successfully'));
+            showToast(data.message || (lang === 'ar' ? 'تم استرجاع المنتج!' : 'Product restored!'), 'success');
             if (selectedAdminCustomer && selectedAdminCustomer.id === userId) {
               const detailRes = await fetch(`/api/admin/customers/${userId}`);
               if (detailRes.ok) {
@@ -451,10 +468,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             loadAdminCustomersList();
             loadAdminStats();
           } else {
-            showToast(data.message || (lang === 'ar' ? 'فشل سحب المنتج' : 'Failed to revoke product'));
+            showToast(data.message || (lang === 'ar' ? 'فشل استرجاع المنتج.' : 'Failed to restore product.'), 'error');
           }
         } catch (err) {
-          showToast(lang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم.' : 'Error communicating with server.');
+          showToast(lang === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.', 'error');
         }
       }
     );
@@ -462,7 +479,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const handleGrantProduct = async (userId: string) => {
     if (!selectedProductToGrant) {
-      showToast('يرجى تحديد منتج أولاً');
+      showToast('يرجى تحديد منتج أولاً', 'warning');
       return;
     }
     setIsProcessingAdminAction(true);
@@ -480,7 +497,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('تم منح المنتج للعميل بنجاح');
+        showToast(lang === 'ar' ? 'تم منح المنتج للعميل!' : 'Product activated!', 'success');
         setSelectedProductToGrant('');
         // Refresh detail view
         const detailRes = await fetch(`/api/admin/customers/${userId}`);
@@ -491,10 +508,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         loadAdminCustomersList();
         loadAdminStats();
       } else {
-        showToast(data.message || 'فشل منح المنتج');
+        showToast(data.message || 'فشل منح المنتج', 'error');
       }
     } catch (e) {
-      showToast('حدث خطأ أثناء منح المنتج.');
+      showToast(lang === 'ar' ? 'فشل منح المنتج.' : 'Failed to activate product.', 'error');
     } finally {
       setIsProcessingAdminAction(false);
     }
@@ -502,7 +519,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const handleWarnUser = async (userId: string) => {
     if (!warningMessageInput.trim()) {
-      showToast('يرجى كتابة رسالة التحذير');
+      showToast('يرجى كتابة رسالة التحذير', 'warning');
       return;
     }
     setIsProcessingAdminAction(true);
@@ -531,10 +548,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         loadAdminCustomersList();
         loadAdminStats();
       } else {
-        showToast(data.message || 'فشل إرسال التحذير');
+        showToast(data.message || 'فشل إرسال التحذير', 'error');
       }
     } catch (e) {
-      showToast('حدث خطأ أثناء إرسال التحذير.');
+      showToast('حدث خطأ أثناء إرسال التحذير.', 'error');
     } finally {
       setIsProcessingAdminAction(false);
     }
@@ -542,11 +559,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const handleBanUser = async (userId: string) => {
     if (!banReasonInput.trim()) {
-      showToast('يرجى كتابة سبب الحظر');
+      showToast('يرجى كتابة سبب الحظر', 'warning');
       return;
     }
     if (banTypeInput === 'temporary' && !banExpiresAtInput) {
-      showToast('يرجى تحديد تاريخ انتهاء الحظر المؤقت');
+      showToast('يرجى تحديد تاريخ انتهاء الحظر المؤقت', 'warning');
       return;
     }
     setIsProcessingAdminAction(true);
@@ -578,10 +595,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         loadAdminCustomersList();
         loadAdminStats();
       } else {
-        showToast(data.message || 'فشل فرض الحظر');
+        showToast(data.message || 'فشل فرض الحظر', 'error');
       }
     } catch (e) {
-      showToast('حدث خطأ أثناء فرض الحظر.');
+      showToast('حدث خطأ أثناء فرض الحظر.', 'error');
     } finally {
       setIsProcessingAdminAction(false);
     }
@@ -612,10 +629,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         loadAdminCustomersList();
         loadAdminStats();
       } else {
-        showToast(data.message || 'فشل إلغاء الحظر');
+        showToast(data.message || 'فشل إلغاء الحظر', 'error');
       }
     } catch (e) {
-      showToast('حدث خطأ أثناء إلغاء الحظر.');
+      showToast('حدث خطأ أثناء إلغاء الحظر.', 'error');
     } finally {
       setIsProcessingAdminAction(false);
     }
@@ -678,7 +695,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (data.success) {
         setRedeemMessage({ type: 'success', text: data.message });
         setKeyInput('');
-        showToast(lang === 'ar' ? 'تم تفعيل المفتاح بنجاح وإضافته إلى حسابك!' : 'Key activated successfully and added to your account!');
+        showToast(lang === 'ar' ? 'تم التفعيل بنجاح!' : 'License activated!', 'success');
 
         // Auto login demo user if guest activated
         if (!currentUser && data.user) {
@@ -708,12 +725,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(lang === 'ar' ? 'تمت مزامنة جميع رتب ديسكورد بنجاح!' : 'All Discord roles are already synced.');
+        showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!', 'success');
       } else {
-        showToast(lang === 'ar' ? 'فشلت مزامنة الرتب' : 'Failed to sync roles');
+        showToast(lang === 'ar' ? 'فشلت المزامنة.' : 'Failed to sync Discord roles.', 'error');
       }
     } catch {
-      showToast(lang === 'ar' ? 'تمت مزامنة جميع رتب ديسكورد بنجاح!' : 'All Discord roles are already synced.');
+      showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!', 'success');
     }
   };
 
@@ -737,10 +754,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (data.success && data.fileUrl) {
         window.open(data.fileUrl, '_blank');
       } else {
-        showToast(data.message || 'عذراً، فشل التحميل.');
+        showToast(data.message || 'عذراً، فشل التحميل.', 'error');
       }
     } catch (e) {
-      showToast('حدث خطأ في طلب التحميل.');
+      showToast('حدث خطأ في طلب التحميل.', 'error');
     }
   };
 
@@ -928,14 +945,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           });
           const data = await res.json();
           if (data.success) {
-            showToast(lang === 'ar' ? 'تم حظر المستخدم وسحب المفتاح والمنتج بنجاح.' : 'User banned and key/product revoked successfully.');
+            showToast(lang === 'ar' ? 'تم حظر العميل واسترجاع المنتج.' : 'User banned and product restored!', 'success');
             await loadAllKeysList();
             loadAdminStats();
           } else {
             showToast(data.message || (lang === 'ar' ? 'فشل الحظر والإلغاء.' : 'Failed.'));
           }
         } catch (e) {
-          showToast(lang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم.' : 'Error communicating with server.');
+          showToast(lang === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.', 'error');
         }
       }
     );
@@ -1062,7 +1079,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       }
     } catch (e) {
       console.error('Failed to bulk add keys:', e);
-      showToast('حدث خطأ أثناء مزامنة المفاتيح مع الخادم.');
+      showToast('حدث خطأ أثناء مزامنة المفاتيح مع الخادم.', 'error');
     }
   };
 
@@ -3592,14 +3609,35 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         </div>
       )}
-      {/* Toast Notification Container (Bottom Right) */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-[#0b0c0e]/95 border border-neutral-800 rounded-xl px-4 py-3 shadow-2xl flex items-center gap-3 pointer-events-auto">
-            <span className="text-xs font-bold text-white tracking-wide">{toastMessage}</span>
-          </div>
-        </div>
-      )}
+      {/* Premium Toast Notification Stack (Bottom Right) */}
+      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none flex flex-col gap-3 items-end">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, x: 20, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="bg-[#111113] border border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.5)] rounded-lg px-4 py-2.5 pointer-events-auto relative overflow-hidden flex items-center min-w-[200px] max-w-sm"
+              dir={lang === 'ar' ? 'rtl' : 'ltr'}
+            >
+              {/* Subtle accent vertical line */}
+              <div className={`absolute ${lang === 'ar' ? 'right-0' : 'left-0'} top-0 bottom-0 w-[3px] rounded-full ${
+                toast.type === 'error' ? 'bg-rose-500/80' : 
+                toast.type === 'warning' ? 'bg-amber-500/80' :
+                toast.type === 'info' ? 'bg-sky-500/80' : 
+                'bg-white/40'
+              }`} />
+              
+              {/* Toast Message */}
+              <span className={`text-[13px] font-bold text-white tracking-wide ${lang === 'ar' ? 'pr-3' : 'pl-3'}`}>
+                {toast.message}
+              </span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
       {/* Custom Premium Confirm Modal */}
       {confirmModal && confirmModal.isOpen && (
