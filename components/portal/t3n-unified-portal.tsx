@@ -59,6 +59,17 @@ interface T3NUnifiedPortalProps {
   initialProducts: Product[];
 }
 
+function DiscordMark({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none">
+      <path d="M7.05 6.34c1.28-.95 2.8-1.42 4.95-1.42s3.67.47 4.95 1.42c1.18 1.5 1.8 3.54 1.8 5.9 0 2.34-.62 4.34-1.8 5.82-1.2.9-2.8 1.45-4.95 1.45s-3.75-.55-4.95-1.45c-1.18-1.48-1.8-3.48-1.8-5.82 0-2.36.62-4.4 1.8-5.9Z" fill="currentColor" />
+      <path d="M8.15 8.44c.55.2 1.04.47 1.47.8M15.85 8.44c-.55.2-1.04.47-1.47.8M8.9 15.3c1.78.86 4.42.86 6.2 0" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
+      <circle cx="9.6" cy="12.25" r="1.05" fill="#101113" />
+      <circle cx="14.4" cy="12.25" r="1.05" fill="#101113" />
+    </svg>
+  );
+}
+
 export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const { data: session, status } = useSession();
 
@@ -1990,101 +2001,104 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             </div>
 
-            {/* Quick Actions Grid (Matching Screenshots 2 & 3) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Discord Quick Action Item (Screenshot 2 & 3) */}
-              <a
-                href="https://discord.gg/t3n"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-white/20 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
-                    <MessageSquare className="w-5 h-5 text-neutral-300" />
-                  </div>
-                  <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    <span className="text-sm sm:text-base font-bold text-white tracking-wide">{lang === 'ar' ? 'ديسكورد' : 'Discord'}</span>
-                    <span className="text-xs text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'الدعم والتحديثات' : 'Support & Updates'}</span>
-                  </div>
-                </div>
-                <ArrowLeft className={`w-4 h-4 text-neutral-500 group-hover:text-white transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
-              </a>
+            {/* Quick actions: a single ordered panel modeled after the graphite reference. */}
+            <section className={`quick-actions-panel overflow-hidden rounded-2xl border shadow-[0_20px_48px_rgba(0,0,0,0.22)] ${isDark ? 'bg-[#101113] border-white/[0.10]' : 'bg-white border-neutral-200 shadow-[0_16px_38px_rgba(15,23,42,0.08)]'}`}>
+              <div className={`px-5 py-3.5 border-b ${isDark ? 'bg-white/[0.025] border-white/[0.08]' : 'bg-neutral-50 border-neutral-200'}`}>
+                <p className={`text-[11px] font-extrabold tracking-[0.12em] uppercase ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                  {lang === 'ar' ? 'إجراءات سريعة' : 'Quick Actions'}
+                </p>
+              </div>
 
-              {/* Support Tickets Item */}
-              <button
-                onClick={() => setActiveTab('tickets')}
-                className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-sky-300/30 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-sky-400/[0.08] border border-sky-300/20 flex items-center justify-center text-sky-200 shrink-0 group-hover:scale-105 transition-transform">
-                    <HelpCircle className="w-5 h-5" />
+              <div>
+                <button
+                  onClick={() => setActiveTab('my-products')}
+                  className={`w-full min-h-[76px] px-5 py-3.5 flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'hover:bg-white/[0.035]' : 'hover:bg-neutral-50'}`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
+                      <Package className="w-[19px] h-[19px]" />
+                    </div>
+                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
+                      <span className={`text-xs font-medium mt-1 ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</span>
+                    </div>
                   </div>
-                  <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    <span className="text-sm sm:text-base font-bold text-white tracking-wide">{lang === 'ar' ? 'تذاكر الدعم' : 'Support Tickets'}</span>
-                    <span className="text-xs text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'تحتاج مساعدة؟ افتح تذكرة' : 'Need help? Open a ticket'}</span>
-                  </div>
-                </div>
-                <ArrowLeft className={`w-4 h-4 text-sky-300/70 group-hover:text-sky-100 transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
-              </button>
+                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
+                </button>
 
-              {/* My Products Item */}
-              <button
-                onClick={() => setActiveTab('my-products')}
-                className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-white/20 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
-                    <Package className="w-5 h-5 text-neutral-300" />
+                <button
+                  onClick={() => {
+                    setActiveTab('my-products');
+                    setTimeout(() => {
+                      const el = document.getElementById('my-products-key-input');
+                      if (el) el.focus();
+                    }, 150);
+                  }}
+                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
+                      <Key className="w-[19px] h-[19px]" />
+                    </div>
+                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</span>
+                    </div>
                   </div>
-                  <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    <span className="text-sm sm:text-base font-bold text-white tracking-wide">{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
-                    <span className="text-xs text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</span>
-                  </div>
-                </div>
-                <ArrowLeft className={`w-4 h-4 text-neutral-500 group-hover:text-white transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
-              </button>
+                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
+                </button>
 
-              {/* Redeem Key Item */}
-              <button
-                onClick={() => {
-                  setActiveTab('my-products');
-                  setTimeout(() => {
-                    const el = document.getElementById('my-products-key-input');
-                    if (el) el.focus();
-                  }, 150);
-                }}
-                className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-white/20 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
-                    <Key className="w-5 h-5 text-neutral-300" />
+                <button
+                  onClick={() => handleSyncDiscordRoles()}
+                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
+                      <Users className="w-[19px] h-[19px]" />
+                    </div>
+                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'مزامنة رتب ديسكورد' : 'Sync Discord Roles'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'استعادة رتب العملاء والمنتجات' : 'Restore customer & product roles'}</span>
+                    </div>
                   </div>
-                  <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    <span className="text-sm sm:text-base font-bold text-white tracking-wide">{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
-                    <span className="text-xs text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</span>
-                  </div>
-                </div>
-                <ArrowLeft className={`w-4 h-4 text-neutral-500 group-hover:text-white transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
-              </button>
+                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
+                </button>
 
-              {/* Sync Discord Roles Item */}
-              <button
-                onClick={() => handleSyncDiscordRoles()}
-                className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-white/20 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
-                    <User className="w-5 h-5 text-neutral-300" />
+                <a
+                  href="https://discord.gg/t3n"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-[#5865F2]/[0.13] border-[#7289da]/35 text-[#c8ceff]' : 'bg-[#5865F2]/10 border-[#5865F2]/20 text-[#4d58d5]'}`}>
+                      <DiscordMark className="w-[21px] h-[21px]" />
+                    </div>
+                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'انضم إلى ديسكورد' : 'Join Discord'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الدعم والتحديثات والمجتمع' : 'Get support & updates'}</span>
+                    </div>
                   </div>
-                  <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    <span className="text-sm sm:text-base font-bold text-white tracking-wide">{lang === 'ar' ? 'مزامنة الرتب' : 'Sync Discord Roles'}</span>
-                    <span className="text-xs text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'استعادة رتب العملاء' : 'Restore customer & product roles'}</span>
+                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
+                </a>
+
+                <button
+                  onClick={() => setActiveTab('tickets')}
+                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
+                      <HelpCircle className="w-[19px] h-[19px]" />
+                    </div>
+                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'تذاكر الدعم' : 'Support Tickets'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'افتح تذكرة وتابع الحل من مكان واحد' : 'Open a ticket and follow every update'}</span>
+                    </div>
                   </div>
-                </div>
-                <ArrowLeft className={`w-4 h-4 text-neutral-500 group-hover:text-white transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
-              </button>
-            </div>
+                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
+                </button>
+              </div>
+            </section>
           </div>
         )}
 
