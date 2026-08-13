@@ -51,6 +51,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
+import { TicketCenter } from './ticket-center';
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -87,7 +88,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'admin' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'tickets' | 'admin' | 'profile'>('overview');
 
   // Custom Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -313,7 +314,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         name: session.user.name || 'T3N User',
         email: session.user.email || 'user@t3n-store.com',
         image: session.user.image || 'https://cdn.discordapp.com/embed/avatars/0.png',
-        role: ((session.user as any).role || 'Customer') as 'Boss' | 'Co-Boss' | 'Customer',
+        role: ((session.user as any).role || 'Customer') as 'Boss' | 'Co-Boss' | 'Admin' | 'Customer',
         discordRoles: [],
         createdAt: new Date().toISOString()
       } as UserType;
@@ -322,7 +323,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }, [demoUser, session?.user]);
 
   const isLoggedIn = !!currentUser;
-  const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.email === 'boss@t3n-store.com';
+  const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
 
   // Load User Products when user logs in
   useEffect(() => {
@@ -1761,6 +1762,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </button>
           </div>
 
+          {/* SUPPORT */}
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: isDark ? '#7490a8' : '#5f7890', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
+              {lang === 'ar' ? 'الدعم' : 'SUPPORT'}
+            </div>
+            <button
+              onClick={() => setActiveTab('tickets')}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                background: activeTab === 'tickets' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(56, 154, 215, 0.11)') : 'transparent',
+                border: activeTab === 'tickets' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.25)' : 'rgba(46, 132, 190, 0.20)'}` : '1px solid transparent',
+                color: activeTab === 'tickets' ? (isDark ? '#bcecff' : '#155c8b') : (isDark ? '#7893aa' : '#597187'),
+              }}
+            >
+              <HelpCircle size={15} />
+              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'tickets' ? 700 : 500 }}>{lang === 'ar' ? 'تذاكر الدعم' : 'Support Tickets'}</span>
+              <span style={{ marginInlineStart: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: activeTab === 'tickets' ? '#5ed3ff' : (isDark ? '#35536b' : '#9ab3c7'), boxShadow: activeTab === 'tickets' ? '0 0 12px rgba(94,211,255,.72)' : 'none' }} />
+            </button>
+          </div>
+
           {/* COMMUNITY */}
           <div>
             <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
@@ -1912,6 +1934,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
+              {activeTab === 'tickets' && (lang === 'ar' ? 'مركز التذاكر' : 'Ticket Center')}
               {activeTab === 'profile' && (lang === 'ar' ? 'الملف الشخصي' : 'Profile')}
               {activeTab === 'admin' && (lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control')}
             </h1>
@@ -1940,6 +1963,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </button>
           </div>
         </header>
+
+        {/* TICKETS */}
+        {activeTab === 'tickets' && (
+          <TicketCenter lang={lang} isDark={isDark} isStaff={isAdmin} onNotify={showToast} />
+        )}
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
@@ -1982,6 +2010,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
                 <ArrowLeft className={`w-4 h-4 text-neutral-500 group-hover:text-white transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
               </a>
+
+              {/* Support Tickets Item */}
+              <button
+                onClick={() => setActiveTab('tickets')}
+                className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-sky-300/30 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-sky-400/[0.08] border border-sky-300/20 flex items-center justify-center text-sky-200 shrink-0 group-hover:scale-105 transition-transform">
+                    <HelpCircle className="w-5 h-5" />
+                  </div>
+                  <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                    <span className="text-sm sm:text-base font-bold text-white tracking-wide">{lang === 'ar' ? 'تذاكر الدعم' : 'Support Tickets'}</span>
+                    <span className="text-xs text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'تحتاج مساعدة؟ افتح تذكرة' : 'Need help? Open a ticket'}</span>
+                  </div>
+                </div>
+                <ArrowLeft className={`w-4 h-4 text-sky-300/70 group-hover:text-sky-100 transition-colors transform ${lang === 'ar' ? '' : 'rotate-180'}`} />
+              </button>
 
               {/* My Products Item */}
               <button
