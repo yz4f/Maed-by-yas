@@ -751,6 +751,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
+  // HWID Reset Handler
+  const handleHwidReset = async (productId: string, productName: string) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/user/hwid-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || (lang === 'ar' ? 'تمت إعادة تعيين الجهاز بنجاح!' : 'HWID reset successful!'), 'success');
+      } else {
+        showToast(data.error || (lang === 'ar' ? 'فشل إعادة تعيين الجهاز.' : 'HWID reset failed.'), 'error');
+      }
+    } catch (e) {
+      showToast(lang === 'ar' ? 'حدث خطأ في إعادة تعيين الجهاز.' : 'Error resetting HWID.', 'error');
+    }
+  };
+
   // Demo Login Quick Action
   const loginAsDemoCustomer = () => {
     setDemoUser({
@@ -1130,56 +1150,270 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   if (!isLoggedIn) {
     return (
-      <div className={`min-h-screen w-full ${isDark ? 'bg-[#050508] text-[#F4F4F5]' : 'bg-[#FAFAFA] text-[#09090B]'} flex flex-col items-center justify-center p-4 relative overflow-hidden select-none transition-colors duration-500`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-        
-        {/* Ambient Premium Grid Backdrop */}
-        <div className={`absolute inset-0 bg-[linear-gradient(to_right,${isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)'}_1px,transparent_1px),linear-gradient(to_bottom,${isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)'}_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] ${isDark ? 'opacity-70' : 'opacity-100'} pointer-events-none`} />
-        
-        {/* Radial background gradient matching brand color */}
-        {isDark && (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.09)_0%,rgba(5,5,8,1)_75%)] pointer-events-none" />
-        )}
+      <div className="redeem-page-wrapper min-h-screen w-full relative overflow-hidden select-none" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .redeem-page-wrapper {
+            --bg: #050810;
+            --bg-2: #080d18;
+            --blue-900: #0a1730;
+            --blue-600: #2a5fd8;
+            --blue-400: #4a90f2;
+            --blue-300: #7fb8ff;
+            --cyan: #5ecdf0;
+            --ivory: #eef3fb;
+            --muted: #8791a8;
+            --glass: rgba(18,26,46,0.55);
+            --glass-border: rgba(127,184,255,0.18);
+            --discord: #5865f2;
+            background: var(--bg);
+            color: var(--ivory);
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          }
+          .redeem-page-wrapper .bg-gfx {
+            position: absolute; inset: 0; z-index: 0; overflow: hidden;
+            background:
+              radial-gradient(1200px 700px at 50% 40%, rgba(42,95,216,0.16), transparent 65%),
+              linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
+          }
+          .redeem-page-wrapper .crescent {
+            position: absolute; border-radius: 50%;
+            filter: blur(2px);
+          }
+          .redeem-page-wrapper .crescent.left {
+            width: 640px; height: 640px; top: -160px; right: calc(100% - 340px);
+            background: radial-gradient(circle at 65% 35%, rgba(94,205,240,0.35), rgba(42,95,216,0.18) 55%, transparent 72%);
+            animation: floatY 9s ease-in-out infinite;
+          }
+          .redeem-page-wrapper .crescent.right {
+            width: 640px; height: 640px; bottom: -200px; left: calc(100% - 340px);
+            background: radial-gradient(circle at 35% 65%, rgba(94,205,240,0.3), rgba(42,95,216,0.16) 55%, transparent 72%);
+            animation: floatY 11s ease-in-out infinite reverse;
+          }
+          @keyframes floatY {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-26px) scale(1.03); }
+          }
+          .redeem-page-wrapper .grid-lines {
+            position: absolute; inset: 0;
+            background-image:
+              linear-gradient(rgba(127,184,255,0.045) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(127,184,255,0.045) 1px, transparent 1px);
+            background-size: 56px 56px;
+            mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 72%);
+          }
+          .redeem-page-wrapper .wordmark-ghost {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -52%);
+            font-family: 'Almarai', sans-serif; font-weight: 800;
+            font-size: min(24vw, 340px);
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(127,184,255,0.06);
+            letter-spacing: 6px;
+            user-select: none; pointer-events: none;
+            white-space: nowrap;
+          }
+          .redeem-page-wrapper .runner {
+            position: absolute; bottom: 8%; left: 12%;
+            width: 120px; opacity: 0.5; filter: drop-shadow(0 0 14px rgba(94,205,240,0.45));
+            animation: run 5.5s ease-in-out infinite;
+          }
+          @keyframes run {
+            0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+            50% { transform: translateX(18px) translateY(-6px) rotate(-2deg); }
+          }
+          .redeem-page-wrapper .noise {
+            position: absolute; inset: 0; pointer-events: none; opacity: 0.035; mix-blend-mode: overlay; z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          }
+          .redeem-page-wrapper .stage {
+            position: relative; z-index: 2;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 40px 6vw;
+            gap: 80px;
+            width: 100%;
+          }
+          .redeem-page-wrapper .brand-corner {
+            position: fixed; top: 32px; z-index: 3;
+            display: flex; align-items: center; gap: 10px;
+            animation: fadeDown .7s ease both;
+          }
+          .redeem-page-wrapper .brand-corner .mark {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue-600));
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(94,205,240,0.4);
+          }
+          .redeem-page-wrapper .brand-corner .mark img { width: 18px; height: 18px; }
+          .redeem-page-wrapper .brand-corner .txt { font-family: 'Almarai', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 1px; }
 
-        {/* Ambient moving glow circles */}
-        {isDark && (
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              animate={{
-                x: [0, 40, -20, 0],
-                y: [0, -30, 20, 0],
-              }}
-              transition={{
-                duration: 25,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="absolute top-[20%] left-[20%] w-[350px] h-[350px] bg-indigo-500/[0.06] rounded-full blur-[110px]"
-            />
-            <motion.div
-              animate={{
-                x: [0, -30, 30, 0],
-                y: [0, 40, -20, 0],
-              }}
-              transition={{
-                duration: 30,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="absolute bottom-[20%] right-[20%] w-[400px] h-[400px] bg-purple-500/[0.04] rounded-full blur-[130px]"
-            />
+          .redeem-page-wrapper .copy {
+            flex: 1; max-width: 520px;
+            animation: fadeRight 0.8s ease both 0.1s;
+          }
+          .redeem-page-wrapper .eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 12.5px; color: var(--blue-300); font-weight: 700; letter-spacing: 1px;
+            padding: 6px 14px; border: 1px solid var(--glass-border); border-radius: 999px;
+            background: rgba(94,205,240,0.06);
+            margin-bottom: 22px;
+          }
+          .redeem-page-wrapper .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+          .redeem-page-wrapper .headline {
+            font-family: 'Almarai', sans-serif; font-weight: 800;
+            font-size: clamp(34px, 4vw, 50px); line-height: 1.2;
+            margin-bottom: 18px;
+            color: var(--ivory);
+            text-align: right;
+          }
+          .redeem-page-wrapper[dir="ltr"] .headline {
+            text-align: left;
+          }
+          .redeem-page-wrapper .headline .grad {
+            background: linear-gradient(90deg, var(--cyan), var(--blue-300));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+          }
+          .redeem-page-wrapper .subtext {
+            font-size: 15.5px; line-height: 1.9; color: var(--muted); max-width: 420px;
+            text-align: right;
+          }
+          .redeem-page-wrapper[dir="ltr"] .subtext {
+            text-align: left;
+          }
+          .redeem-page-wrapper .mini-stats {
+            display: flex; gap: 28px; margin-top: 34px;
+            justify-content: flex-start;
+          }
+          .redeem-page-wrapper .mini-stats div {
+            text-align: right;
+          }
+          .redeem-page-wrapper[dir="ltr"] .mini-stats div {
+            text-align: left;
+          }
+          .redeem-page-wrapper .mini-stats div .n { font-family: 'Almarai', sans-serif; font-weight: 800; font-size: 22px; color: var(--ivory); }
+          .redeem-page-wrapper .mini-stats div .l { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+          .redeem-page-wrapper .card {
+            width: 400px; flex-shrink: 0;
+            background: var(--glass);
+            backdrop-filter: blur(22px) saturate(140%);
+            -webkit-backdrop-filter: blur(22px) saturate(140%);
+            border: 1px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 40px 34px 34px;
+            box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+            text-align: center;
+            animation: fadeUp 0.8s ease both 0.25s;
+            position: relative;
+            overflow: hidden;
+          }
+          .redeem-page-wrapper .card::before {
+            content: "";
+            position: absolute; top: -50%; left: -20%; width: 140%; height: 140%;
+            background: radial-gradient(circle at 50% 0%, rgba(94,205,240,0.14), transparent 60%);
+            pointer-events: none;
+          }
+          .redeem-page-wrapper .card-icon {
+            width: 56px; height: 56px; margin: 0 auto 20px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(94,205,240,0.22), rgba(42,95,216,0.08));
+            border: 1px solid var(--glass-border);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 26px rgba(94,205,240,0.18);
+          }
+          .redeem-page-wrapper .card-icon svg { width: 26px; height: 26px; color: var(--cyan); }
+          .redeem-page-wrapper h2 {
+            font-family: 'Almarai', sans-serif; font-weight: 800; font-size: 20px; margin-bottom: 10px;
+            color: var(--ivory);
+          }
+          .redeem-page-wrapper p {
+            font-size: 13.5px; color: var(--muted); line-height: 1.8; margin-bottom: 26px;
+          }
+          .redeem-page-wrapper .discord-btn {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 14px; border-radius: 13px; border: none; cursor: pointer;
+            background: linear-gradient(90deg, #5865f2, #6f77f5);
+            color: #fff; font-weight: 700; font-size: 14.5px;
+            font-family: inherit;
+            box-shadow: 0 10px 26px rgba(88,101,242,0.35);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+          }
+          .redeem-page-wrapper .discord-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(88,101,242,0.5); }
+          .redeem-page-wrapper .discord-btn svg { width: 19px; height: 19px; }
+          .redeem-page-wrapper .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 18px; }
+          .redeem-page-wrapper .divider .line { flex: 1; height: 1px; background: var(--glass-border); }
+          .redeem-page-wrapper .divider span { font-size: 11px; color: var(--muted); }
+          .redeem-page-wrapper .alt-link { font-size: 13px; color: var(--muted); }
+          .redeem-page-wrapper .alt-link button { color: var(--blue-300); font-weight: 700; text-decoration: none; background: transparent; border: none; cursor: pointer; font-family: inherit; }
+          .redeem-page-wrapper .alt-link button:hover { text-decoration: underline; }
+
+          .redeem-page-wrapper .floating-ctrls {
+            position: fixed; top: 20px; z-index: 50; display: flex; align-items: center; gap: 12px;
+          }
+          .redeem-page-wrapper .floating-ctrls button {
+            height: 40px; border-radius: 999px; border: 1px solid var(--glass-border);
+            background: rgba(18, 26, 46, 0.65); color: var(--ivory); font-weight: 600; font-size: 13px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            transition: all 0.2s ease;
+          }
+          .redeem-page-wrapper .floating-ctrls button:hover {
+            background: rgba(42, 95, 216, 0.15); border-color: rgba(94, 205, 240, 0.4);
+            transform: scale(1.05);
+          }
+
+          @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes fadeRight { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+          @keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+
+          @media (max-width: 900px) {
+            .redeem-page-wrapper .stage { flex-direction: column; gap: 40px; padding: 100px 24px 60px; text-align: center; }
+            .redeem-page-wrapper .copy { max-width: 100%; }
+            .redeem-page-wrapper .mini-stats { justify-content: center; }
+            .redeem-page-wrapper .card { width: 100%; max-width: 400px; }
+            .redeem-page-wrapper .headline { text-align: center !important; }
+            .redeem-page-wrapper .subtext { text-align: center !important; margin: 0 auto; }
+            .redeem-page-wrapper .mini-stats div { text-align: center !important; }
+          }
+        ` }} />
+
+        {/* Animated background */}
+        <div className="bg-gfx">
+          <div className="grid-lines" />
+          <div className="wordmark-ghost">{lang === 'ar' ? 'تـعـن' : 'T3N'}</div>
+          <div className="crescent left" />
+          <div className="crescent right" />
+          <svg className="runner" viewBox="0 0 100 100" fill="none" stroke="#7fb8ff" stroke-width="4" stroke-linecap="round">
+            <circle cx="62" cy="18" r="7" fill="#7fb8ff" stroke="none" />
+            <path d="M62 26 L54 46 L66 52 L60 78" />
+            <path d="M54 46 L34 40" />
+            <path d="M66 52 L82 62" />
+            <path d="M60 78 L46 92" />
+            <path d="M60 78 L74 90" />
+          </svg>
+        </div>
+        <div className="noise" />
+
+        {/* Brand Corner */}
+        <div className="brand-corner" style={{ [lang === 'ar' ? 'right' : 'left']: '42px' }}>
+          <div className="mark">
+            <img src="/logo.png?v=6" alt="T3N Logo" className="w-[18px] h-[18px] rounded-full object-cover" />
           </div>
-        )}
+          <div className="txt">{lang === 'ar' ? 'تـعـن' : 'T3N'}</div>
+        </div>
 
         {/* Floating Controls Container (Theme & Language Switchers) */}
-        <div className="fixed top-5 z-50 flex items-center gap-3 transition-all" style={{ [lang === 'ar' ? 'left' : 'right']: '1.25rem' }}>
+        <div className="floating-ctrls" style={{ [lang === 'ar' ? 'left' : 'right']: '20px' }}>
           {/* Theme Switcher */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className={`h-10 w-10 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md ${
-              isDark 
-                ? 'bg-[#09090B]/85 border-white/[0.08] hover:bg-[#121217] hover:border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.02)]' 
-                : 'bg-white/85 border-slate-200 hover:bg-slate-50 hover:border-slate-350 text-slate-800 shadow-md'
-            }`}
+            className="w-10"
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
@@ -1188,11 +1422,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           {/* Language Switcher */}
           <button
             onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className={`h-10 px-4 rounded-full border flex items-center justify-center gap-2 text-xs font-semibold tracking-wide transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md ${
-              isDark 
-                ? 'bg-[#09090B]/85 border-white/[0.08] hover:bg-[#121217] hover:border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.02)]' 
-                : 'bg-white/85 border-slate-200 hover:bg-slate-50 hover:border-slate-350 text-slate-800 shadow-md'
-            }`}
+            className="px-4 gap-2"
             title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
           >
             <span className="text-sm flex items-center justify-center leading-none">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
@@ -1200,118 +1430,97 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </button>
         </div>
 
-        {/* Animated Login Card */}
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className={`w-full max-w-[400px] p-[1.5px] rounded-[40px] bg-gradient-to-b ${
-              isDark 
-                ? 'from-indigo-500/25 via-purple-500/10 to-indigo-500/20 shadow-[0_0_60px_rgba(99,102,241,0.18)]' 
-                : 'from-indigo-200/50 via-slate-200 to-indigo-200/30 shadow-[0_20px_50px_rgba(0,0,0,0.04)]'
-            } backdrop-blur-3xl z-10`}
-          >
-            <div className={`rounded-[38px] ${isDark ? 'bg-[#070709]/95' : 'bg-white/95'} p-9 sm:p-11 text-center space-y-9`}>
-              
-              {/* Logo Section */}
-              <motion.div 
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.15 }}
-                className="flex justify-center animate-pulse-slow"
-              >
-                <div className="relative group cursor-pointer">
-                  {/* Outer pulsing glow ring */}
-                  <div className="absolute -inset-2.5 rounded-full bg-indigo-500/20 blur-lg opacity-70 group-hover:opacity-100 transition duration-700 pointer-events-none" />
-                  
-                  {/* Circle frame with radial gradient */}
-                  <div className={`w-24 h-24 rounded-full overflow-hidden border ${
-                    isDark 
-                      ? 'border-indigo-500/20 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.22)_0%,#0A0A0C_100%)] shadow-[0_0_20px_rgba(99,102,241,0.25)]' 
-                      : 'border-indigo-500/15 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,#ffffff_100%)] shadow-lg shadow-indigo-500/5'
-                  } flex items-center justify-center p-1.5 relative z-10 transition-all duration-500 group-hover:scale-[1.05] group-hover:border-indigo-500/40 group-hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]`}>
-                    {/* Inner gradient mask */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" />
-                    
-                    {/* Logo image */}
-                    <img 
-                      src="/logo.png?v=6" 
-                      alt="تعن" 
-                      className="w-full h-full rounded-full object-cover select-none" 
-                      onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Titles */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="space-y-3"
-              >
-                <h1 className={`text-2xl sm:text-3xl font-extrabold ${styles.textTitle} notranslate`} translate="no">
-                  {renderBrandText(lang === 'ar' ? 'تعن' : 'TA3N')}
-                </h1>
-                <p className={`text-[12px] ${styles.textMuted} font-medium leading-relaxed max-w-[290px] mx-auto`}>
-                  {lang === 'ar' ? 'المنصة الاحترافية الأولى لفك حظر الألعاب والتجربة الآمنة' : 'The premier gaming unban and protection platform.'}
-                </p>
-              </motion.div>
-
-              {/* Discord Login */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                className="space-y-4"
-              >
-                <button
-                  onClick={() => signIn('discord')}
-                  className="w-full h-[52px] rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#5865F2] to-[#4F46E5] hover:brightness-110 active:scale-[0.96] text-white font-bold text-[14.5px] transition-all duration-300 flex items-center justify-center gap-3.5 shadow-[0_6px_24px_rgba(88,101,242,0.28)] hover:shadow-[0_10px_32px_rgba(88,101,242,0.45)] cursor-pointer relative overflow-hidden group border border-white/10"
-                >
-                  {/* Glow sweep effect */}
-                  <div className="absolute inset-0 w-1/2 h-full bg-white/15 skew-x-[-25deg] -translate-x-full group-hover:animate-shine pointer-events-none" />
-                  
-                  {/* Text first, then Discord logo */}
-                  <span className="font-extrabold">{lang === 'ar' ? 'تسجيل دخول عبر ديسكورد' : 'Login with Discord'}</span>
-                  
-                  <svg className="w-[22px] h-[22px] fill-current shrink-0 transition-transform duration-300 group-hover:scale-108" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
-                  </svg>
-                </button>
-              </motion.div>
-
-              {/* Bottom Footer Link */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                className={`pt-6 border-t ${styles.borderSubtle} text-xs flex items-center justify-center gap-2`}
-              >
-                <span className="text-[#71717A] font-medium">{lang === 'ar' ? 'عضو جديد؟' : 'New member?'}</span>
-                <button
-                  onClick={() => setGuestModalOpen(true)}
-                  className={`font-bold ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-650 hover:text-indigo-550'} transition-colors cursor-pointer bg-transparent border-none p-0`}
-                >
-                  {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
-                </button>
-              </motion.div>
+        <div className="stage">
+          {/* Left / Copy Section */}
+          <div className="copy">
+            <div className="eyebrow">
+              <span className="dot" />
+              {lang === 'ar' ? 'تفعيل الترخيص' : 'License Activation'}
             </div>
-          </motion.div>
-        </AnimatePresence>
- 
+            
+            <h1 className="headline">
+              {lang === 'ar' ? (
+                <>
+                  فعّل <span className="grad">مفتاح الترخيص</span><br />الخاص بك
+                </>
+              ) : (
+                <>
+                  Activate Your <span className="grad">License Key</span>
+                </>
+              )}
+            </h1>
+            
+            <p className="subtext">
+              {lang === 'ar' 
+                ? 'أدخل مفتاح الترخيص لفتح منتجك والحصول على وصول فوري لكل الميزات والتحديثات.' 
+                : 'Enter your license key to unlock your product and get instant access to all features and updates.'}
+            </p>
+            
+            <div className="mini-stats">
+              <div>
+                <div className="n">2,400+</div>
+                <div className="l">{lang === 'ar' ? 'عضو نشط' : 'Active Members'}</div>
+              </div>
+              <div>
+                <div className="n">99.9%</div>
+                <div className="l">{lang === 'ar' ? 'وقت التشغيل' : 'Uptime'}</div>
+              </div>
+              <div>
+                <div className="n">24/7</div>
+                <div className="l">{lang === 'ar' ? 'دعم فني' : 'Technical Support'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right / Glass Card Section */}
+          <div className="card">
+            <div className="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="8" cy="15" r="4" />
+                <path d="M10.5 12.5L20 3M17 6l2.5 2.5M14 9l2 2" />
+              </svg>
+            </div>
+            
+            <h2>{lang === 'ar' ? 'سجّل الدخول للاسترداد' : 'Login to Redeem'}</h2>
+            
+            <p>
+              {lang === 'ar' 
+                ? 'اربط حساب ديسكورد الخاص بك لاسترداد وإدارة تراخيصك.' 
+                : 'Link your Discord account to redeem and manage your licenses.'}
+            </p>
+            
+            <button 
+              onClick={() => signIn('discord')}
+              className="discord-btn"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.21.375-.444.87-.608 1.262a18.27 18.27 0 00-3.9 0A12.6 12.6 0 0011.442 3a19.74 19.74 0 00-3.76 1.369C4.4 9.008 3.68 13.54 3.955 18.008a19.9 19.9 0 006.058 3.06 14.6 14.6 0 001.28-2.06 12.9 12.9 0 01-2.017-.96c.17-.123.335-.252.494-.384a14.16 14.16 0 0012.46 0c.16.132.324.26.494.384-.64.38-1.317.7-2.02.96.372.72.807 1.404 1.283 2.06a19.84 19.84 0 006.06-3.06c.324-5.19-.79-9.68-3.7-13.64zM9.68 15.33c-1.147 0-2.09-1.06-2.09-2.36 0-1.3.92-2.36 2.09-2.36 1.18 0 2.11 1.07 2.09 2.36 0 1.3-.91 2.36-2.09 2.36zm6.65 0c-1.147 0-2.09-1.06-2.09-2.36 0-1.3.92-2.36 2.09-2.36 1.18 0 2.11 1.07 2.09 2.36 0 1.3-.9 2.36-2.09 2.36z" />
+              </svg>
+              {lang === 'ar' ? 'المتابعة عبر ديسكورد' : 'Continue with Discord'}
+            </button>
+            
+            <div className="divider">
+              <span className="line" />
+              <span>{lang === 'ar' ? 'أو' : 'OR'}</span>
+              <span className="line" />
+            </div>
+            
+            <div className="alt-link">
+              <span>{lang === 'ar' ? 'عضو جديد؟ ' : 'New member? '}</span>
+              <button onClick={() => setGuestModalOpen(true)}>
+                {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Copyright Footer */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className={`absolute bottom-6 left-8 text-xs font-medium ${isDark ? 'text-slate-650' : 'text-slate-400'} tracking-wide`}
+        <div 
+          className="absolute bottom-6 left-8 text-xs font-medium text-slate-500 tracking-wide z-10"
           dir="rtl"
         >
           © 2026 جميع الحقوق محفوظة لمنصة {renderBrandText('تعن')}
-        </motion.div>
+        </div>
 
         {/* Guest Key Redemption Modal */}
         {guestModalOpen && (
@@ -1790,19 +1999,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
             {/* Products Grid */}
             {isLoadingProducts ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="bg-[#0e0e11] border border-white/[0.08] rounded-2xl overflow-hidden p-5 space-y-4 animate-pulse">
-                    <div className="h-44 bg-white/[0.04] rounded-xl w-full" />
-                    <div className="flex gap-3 items-center">
-                      <div className="w-10 h-10 bg-white/[0.04] rounded-xl shrink-0" />
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-white/[0.04] rounded w-3/4" />
-                        <div className="h-3 bg-white/[0.04] rounded w-1/2" />
+                  <div key={n} style={{
+                    background: 'rgba(16,23,42,0.65)',
+                    border: '1px solid rgba(127,184,255,0.16)',
+                    borderRadius: '22px',
+                    padding: '26px',
+                    overflow: 'hidden',
+                  }} className="animate-pulse space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-[42px] h-[42px] rounded-xl" style={{ background: 'rgba(127,184,255,0.08)' }} />
+                        <div className="space-y-2">
+                          <div className="h-4 w-28 rounded" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                          <div className="h-3 w-20 rounded" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                        </div>
                       </div>
+                      <div className="h-6 w-16 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
                     </div>
-                    <div className="h-14 bg-white/[0.04] rounded-xl w-full" />
-                    <div className="h-11 bg-white/[0.04] rounded-xl w-full" />
+                    <div className="h-12 w-full rounded-[14px]" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(127,184,255,0.16)' }} />
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="h-12 rounded-[13px]" style={{ background: 'rgba(255,255,255,0.035)' }} />
+                      <div className="h-12 rounded-[13px]" style={{ background: 'rgba(255,255,255,0.035)' }} />
+                      <div className="h-12 col-span-2 rounded-[13px]" style={{ background: 'rgba(94,205,240,0.08)' }} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1830,134 +2051,239 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {userProducts.map((up) => (
-                  <div
-                    key={up.id}
-                    className="bg-[#0e0e11] border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl hover:border-white/20 hover:-translate-y-1 transition-all duration-200 ease-out flex flex-col group relative"
-                  >
-                    {/* 1. HEADER / BANNER */}
-                    <div className="relative h-44 w-full overflow-hidden bg-black/40 border-b border-white/[0.08]">
-                      <img
-                        src={getProductImage(up.product)}
-                        alt={up.product?.name || 'Product'}
-                        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                        onError={(e) => { 
-                          e.currentTarget.src = '/logo.png'; 
-                          e.currentTarget.className = 'w-full h-full object-contain p-6 opacity-80 transition-transform duration-500 ease-out group-hover:scale-105'; 
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e11] via-transparent to-transparent opacity-90" />
-                      
-                      {/* Top Category Badge */}
-                      <div className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-md flex items-center gap-1.5`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>{up.product?.category || 'SPOOFER'}</span>
-                      </div>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
+                {userProducts.map((up) => {
+                  const rawKey = up.keyString || 'KEY-ACTIVATED';
+                  const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
+                  const displayKey = revealedKeys[up.id] ? fullKey : `${fullKey.substring(0, 5)}••••-••••`;
+                  const isActive = up.status === 'Active';
+                  const productImg = getProductImage(up.product);
 
-                    {/* CONTENT BODY */}
-                    <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                      
-                      {/* 2 & 3. PRODUCT NAME & SUBLINE */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 text-white shadow-inner">
-                          <Package className="w-5 h-5" />
-                        </div>
-                        <div className="flex flex-col overflow-hidden">
-                          <h3 className="font-extrabold text-white text-base tracking-tight truncate">
-                            {up.product?.name || 'فك باند فورت نايت'}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400 font-medium">
-                            <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                              {lang === 'ar' ? 'فعال' : 'Active'}
-                            </span>
+                  return (
+                    <div
+                      key={up.id}
+                      className="glass-product-card"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(16,23,42,0.65)',
+                        backdropFilter: 'blur(20px) saturate(140%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+                        border: '1px solid rgba(127,184,255,0.16)',
+                        borderRadius: '22px',
+                        padding: '26px',
+                        boxShadow: '0 30px 70px -24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'transform 0.22s ease, box-shadow 0.22s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 36px 80px -20px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 30px 70px -24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)';
+                      }}
+                    >
+                      {/* Radial glow overlay */}
+                      <div style={{
+                        position: 'absolute', top: '-60%', left: '-10%', width: '130%', height: '130%',
+                        background: 'radial-gradient(circle at 30% 0%, rgba(94,205,240,0.10), transparent 60%)',
+                        pointerEvents: 'none',
+                      }} />
+
+                      {/* ── CARD HEAD ── */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', position: 'relative', zIndex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {/* Product Icon / Logo */}
+                          <div style={{
+                            width: '42px', height: '42px', borderRadius: '12px',
+                            background: 'linear-gradient(145deg, rgba(94,205,240,0.22), rgba(42,95,216,0.08))',
+                            border: '1px solid rgba(127,184,255,0.16)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            overflow: 'hidden', flexShrink: 0,
+                          }}>
+                            <img
+                              src={productImg}
+                              alt={up.product?.name || 'Product'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '11px' }}
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.parentElement) {
+                                  e.currentTarget.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#5ecdf0" stroke-width="2" width="20" height="20"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
+                                }
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '15px', color: '#eef3fb' }}>
+                              {up.product?.name || 'Product'}
+                            </div>
+                            <div style={{ fontSize: '11.5px', color: '#8791a8', marginTop: '2px' }}>
+                              {up.expiresAt
+                                ? `${lang === 'ar' ? 'ينتهي في' : 'Expires'} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                                : (lang === 'ar' ? 'اشتراك مدى الحياة' : 'Lifetime License')}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* 4. MASKED LICENSE KEY BOX WITH REVEAL TOGGLE & COPY */}
-                      <div className="bg-[#060709] border border-white/[0.08] rounded-xl p-3 flex flex-col gap-2 relative transition-all duration-200 hover:border-white/15 shadow-inner">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">
-                            {lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}
-                          </span>
-                          <span className="text-[9px] text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded-md flex items-center gap-1 border border-emerald-400/20">
-                            <CheckCircle2 className="w-2.5 h-2.5" />
-                            {lang === 'ar' ? 'صالح' : 'Valid'}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between gap-2 pt-0.5">
-                          <code dir="ltr" className="text-xs sm:text-sm font-mono text-white font-bold tracking-wider truncate flex-1 text-left select-all">
-                            {(() => {
-                              const rawKey = up.keyString || 'KEY-ACTIVATED';
-                              const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
-                              return revealedKeys[up.id]
-                                ? fullKey
-                                : `${fullKey.substring(0, 5)}••••-••••`;
-                            })()}
-                          </code>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              onClick={() => toggleKeyReveal(up.id)}
-                              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-neutral-400 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95"
-                              title={revealedKeys[up.id] ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'إظهار' : 'Show')}
-                            >
-                              {revealedKeys[up.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-
-                            <button
-                              onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
-                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 active:scale-95 ${
-                                copiedKeyId === up.id
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                  : 'bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-neutral-400 hover:text-white'
-                              }`}
-                              title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy Key'}
-                            >
-                              {copiedKeyId === up.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
+                        {/* Status Pill */}
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          fontSize: '11px', fontWeight: 700,
+                          color: isActive ? '#3ecf8e' : '#ff8a8a',
+                          background: isActive ? 'rgba(62,207,142,0.1)' : 'rgba(230,90,90,0.1)',
+                          border: `1px solid ${isActive ? 'rgba(62,207,142,0.25)' : 'rgba(230,90,90,0.25)'}`,
+                          padding: '5px 12px', borderRadius: '999px',
+                        }}>
+                          <span style={{
+                            width: '6px', height: '6px', borderRadius: '50%',
+                            background: isActive ? '#3ecf8e' : '#ff8a8a',
+                            boxShadow: `0 0 6px ${isActive ? '#3ecf8e' : '#ff8a8a'}`,
+                          }} />
+                          {isActive ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير نشط' : 'Inactive')}
                         </div>
                       </div>
 
-                      {/* 5. ACTION BUTTONS (WHITE PRIMARY DOWNLOAD BUTTON) */}
-                      <div className="space-y-2 pt-1">
-                        {/* Primary Download Button (White Button matching reference) */}
+                      {/* ── LICENSE KEY ── */}
+                      <div style={{ fontSize: '11.5px', color: '#8791a8', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+                        {lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}
+                      </div>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        background: 'rgba(255,255,255,0.035)',
+                        border: '1px solid rgba(127,184,255,0.16)',
+                        borderRadius: '14px',
+                        padding: '6px 6px 6px 16px',
+                        marginBottom: '22px',
+                        position: 'relative', zIndex: 1,
+                      }}>
+                        <div style={{
+                          flex: 1, fontFamily: "'IBM Plex Sans Arabic', monospace",
+                          letterSpacing: '0.5px', fontSize: '14px', color: '#eef3fb',
+                          direction: 'ltr', textAlign: 'left', overflow: 'hidden',
+                          textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {displayKey}
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                          {/* Reveal Toggle */}
+                          <button
+                            onClick={() => toggleKeyReveal(up.id)}
+                            title={revealedKeys[up.id] ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'إظهار' : 'Show')}
+                            style={{
+                              width: '36px', height: '36px', borderRadius: '10px',
+                              background: 'rgba(127,184,255,0.08)',
+                              border: '1px solid rgba(127,184,255,0.16)',
+                              color: '#7fb8ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', transition: '0.2s',
+                            }}
+                          >
+                            {revealedKeys[up.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                          {/* Copy Button */}
+                          <button
+                            onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
+                            title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy Key'}
+                            style={{
+                              width: '36px', height: '36px', borderRadius: '10px',
+                              background: copiedKeyId === up.id ? 'rgba(62,207,142,0.15)' : 'rgba(127,184,255,0.08)',
+                              border: `1px solid ${copiedKeyId === up.id ? 'rgba(62,207,142,0.35)' : 'rgba(127,184,255,0.16)'}`,
+                              color: copiedKeyId === up.id ? '#3ecf8e' : '#7fb8ff',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', transition: '0.2s',
+                            }}
+                          >
+                            {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* ── ACTION BUTTONS ── */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', position: 'relative', zIndex: 1 }}>
+                        {/* HWID Reset */}
                         <button
-                          onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          className="w-full h-11 rounded-xl bg-white hover:bg-neutral-200 text-black font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.98]"
+                          onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
+                            padding: '13px 10px', borderRadius: '13px',
+                            fontSize: '13.5px', fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.22s ease',
+                            border: '1px solid rgba(127,184,255,0.16)',
+                            background: 'rgba(255,255,255,0.035)',
+                            color: '#eef3fb',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(127,184,255,0.08)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
                         >
-                          <Download className="w-4 h-4 text-black" />
-                          <span>{lang === 'ar' ? 'تحميل البرنامج' : 'Download Loader'}</span>
+                          <RefreshCw className="w-4 h-4" style={{ flexShrink: 0 }} />
+                          {lang === 'ar' ? 'إعادة تعيين الجهاز' : 'Reset HWID'}
                         </button>
 
-                        {/* Secondary Guide Button */}
+                        {/* Guide */}
                         <button
                           onClick={() => {
                             setGuideModalProduct(up);
                             setGuideView('menu');
                           }}
-                          className="w-full h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-200 font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
+                            padding: '13px 10px', borderRadius: '13px',
+                            fontSize: '13.5px', fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.22s ease',
+                            border: '1px solid rgba(127,184,255,0.16)',
+                            background: 'rgba(255,255,255,0.035)',
+                            color: '#eef3fb',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(127,184,255,0.08)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
                         >
-                          <HelpCircle className="w-4 h-4 text-neutral-400" />
-                          <span>{lang === 'ar' ? 'الشروحات والتعليمات' : 'Guide & Documentation'}</span>
+                          <HelpCircle className="w-4 h-4" style={{ flexShrink: 0 }} />
+                          {lang === 'ar' ? 'الدليل' : 'Guide'}
+                        </button>
+
+                        {/* Primary Download - full width */}
+                        <button
+                          onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
+                          style={{
+                            gridColumn: '1 / -1',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
+                            padding: '13px 10px', borderRadius: '13px',
+                            fontSize: '13.5px', fontWeight: 700,
+                            cursor: 'pointer', transition: 'all 0.22s ease',
+                            border: 'none',
+                            background: 'linear-gradient(90deg, #5ecdf0, #2a5fd8)',
+                            color: '#03101f',
+                            boxShadow: '0 10px 26px rgba(94,205,240,0.28)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = '0 14px 32px rgba(94,205,240,0.4)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = '0 10px 26px rgba(94,205,240,0.28)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          <Download className="w-4 h-4" style={{ flexShrink: 0 }} />
+                          {lang === 'ar' ? 'تحميل اللودر' : 'Download Loader'}
                         </button>
                       </div>
-
-                      {/* 6. FOOTER DATE METADATA */}
-                      {up.activatedAt && (
-                        <div className="mt-2 pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[10px] text-neutral-500 font-mono">
-                          <span>{new Date(up.activatedAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' })}</span>
-                        </div>
-                      )}
-
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

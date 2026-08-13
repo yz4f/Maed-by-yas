@@ -66,8 +66,35 @@ router.post('/hwid-reset', requireAuth, (req: Request, res: Response) => {
     const { productId } = req.body;
     if (!productId) {
       return res.status(400).json({ error: 'معرف المنتج مطلوب' });
+    }
+    const user = req.user!;
+    const activatedProducts = getUserProducts(user.id);
+    const prod = activatedProducts.find((p: any) => p.product_id === productId);
+    if (!prod) {
+      return res.status(404).json({ error: 'لم تقم بتفعيل هذا المنتج' });
+    }
 
-// 4. Sync Discord Roles
+    // Add log entry
+    addLog({
+      user_id: user.id,
+      user_email: user.email,
+      action: 'إعادة تعيين HWID',
+      details: `تمت إعادة تعيين الهوية العتادية لمنتج: ${prod.name || prod.product_id}`,
+      ip: req.ip || '',
+      user_agent: req.headers['user-agent'] || ''
+    });
+
+    return res.json({
+      success: true,
+      message: 'تمت إعادة تعيين الهوية العتادية بنجاح!'
+    });
+  } catch (err) {
+    console.error('Error resetting HWID:', err);
+    return res.status(500).json({ error: 'فشل في إعادة تعيين الهوية العتادية' });
+  }
+});
+
+// ─── 4. Sync Discord Roles ───
 router.post('/sync-discord-roles', requireAuth, (req: Request, res: Response) => {
   try {
     const user = req.user!;
@@ -89,33 +116,6 @@ router.post('/sync-discord-roles', requireAuth, (req: Request, res: Response) =>
   } catch (err) {
     console.error('Error syncing Discord roles:', err);
     return res.status(500).json({ error: 'حدث خطأ أثناء مزامنة الرتب' });
-  }
-});
-    }
-    const user = req.user!;
-    const activatedProducts = getUserProducts(user.id);
-    const prod = activatedProducts.find((p: any) => p.product_id === productId);
-    if (!prod) {
-      return res.status(404).json({ error: 'لم تقم بتفعيل هذا المنتج' });
-    }
-
-    // Add log entry
-    addLog({
-      user_id: user.id,
-      user_email: user.email,
-      action: 'إعادة تعيين HWID',
-      details: `تمت إعادة تعيين الهوية العتادية لمنتج: ${prod.name}`,
-      ip: req.ip || '',
-      user_agent: req.headers['user-agent'] || ''
-    });
-
-    return res.json({
-      success: true,
-      message: 'تمت إعادة تعيين الهوية العتادية بنجاح!'
-    });
-  } catch (err) {
-    console.error('Error resetting HWID:', err);
-    return res.status(500).json({ error: 'فشل في إعادة تعيين الهوية العتادية' });
   }
 });
 
