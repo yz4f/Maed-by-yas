@@ -335,6 +335,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
+  const activeProductCount = userProducts.filter((product) => product.status === 'Active').length;
+  const memberSince = React.useMemo(() => {
+    if (!currentUser?.createdAt) return '—';
+    const joined = new Date(currentUser.createdAt);
+    if (Number.isNaN(joined.getTime())) return '—';
+    return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'short', year: 'numeric' }).format(joined);
+  }, [currentUser?.createdAt, lang]);
 
   // Load User Products when user logs in
   useEffect(() => {
@@ -1714,7 +1721,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <aside
         className="portal-sidebar hidden md:flex flex-col shrink-0 h-full relative z-20 transition-colors duration-500"
         style={{
-          width: '220px',
+          width: '238px',
           background: isDark ? 'linear-gradient(180deg, rgba(7, 21, 42, 0.92), rgba(4, 12, 26, 0.86))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(234, 245, 253, 0.74))',
           borderRight: lang === 'ar' ? 'none' : `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}`,
           borderLeft: lang === 'ar' ? `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}` : 'none',
@@ -1811,8 +1818,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               onMouseEnter={(e) => { e.currentTarget.style.color = '#aaa'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; e.currentTarget.style.background = 'transparent'; }}
             >
-              <MessageSquare size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{lang === 'ar' ? 'ديسكورد' : 'Forum'}</span>
+              <DiscordMark className="w-[17px] h-[17px]" />
+              <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{lang === 'ar' ? 'ديسكورد' : 'Discord'}</span>
             </a>
           </div>
 
@@ -1905,7 +1912,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {/* Main Content Area */}
       <main className="flex-grow h-full overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-none relative z-10">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="max-w-[1440px] mx-auto space-y-6">
 
         {currentUser?.warningMessage && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -1982,27 +1989,60 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Welcome Banner Card */}
-            <div className="w-full bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden transition-all duration-200 shadow-xl">
-              <img
-                src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                alt={currentUser.name}
-                className="w-12 h-12 rounded-full object-cover border border-white/10 shadow-sm shrink-0"
-                onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-              />
-              <div className={`flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
-                  {lang === 'ar' ? `مرحباً بعودتك، ${currentUser.name}!` : `Welcome back, ${currentUser.name}!`}
-                </h2>
-                <p className="text-xs text-neutral-400 mt-0.5 font-medium">
-                  {lang === 'ar' ? `لديك ${userProducts.length} منتجات مفعلة بحسابك.` : `You have ${userProducts.length} active product(s) on your account.`}
-                </p>
-              </div>
+          <div className="overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-6">
+              {/* Welcome banner: the spacious anchor of the dashboard. */}
+              <section className={`overview-welcome-card relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-white/[0.14] bg-[#171b22]/92 text-white' : 'border-slate-200 bg-white text-slate-950 shadow-[0_18px_38px_rgba(30,64,95,0.08)]'}`}>
+                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(110deg,rgba(255,255,255,0.055),transparent_42%,rgba(88,172,234,0.10))]" />
+                <div className="relative flex items-center gap-4 sm:gap-5">
+                  <img
+                    src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                    alt={currentUser.name}
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-white/20 shadow-[0_6px_18px_rgba(0,0,0,0.3)] shrink-0"
+                    onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                  />
+                  <div className={`min-w-0 flex-1 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300 shadow-[0_0_12px_rgba(125,211,252,0.95)]" />
+                      <span className={`text-[10px] font-black tracking-[0.16em] uppercase ${isDark ? 'text-sky-100/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'حسابك متصل' : 'Account Online'}</span>
+                    </div>
+                    <h2 className={`text-base sm:text-lg font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
+                      {lang === 'ar' ? `مرحباً بعودتك، ${currentUser.name}!` : `Welcome back, ${currentUser.name}!`}
+                    </h2>
+                    <p className={`text-xs sm:text-sm mt-1 font-medium ${isDark ? 'text-slate-300/75' : 'text-slate-500'}`}>
+                      {lang === 'ar' ? `لديك ${activeProductCount} منتجات مفعلة بحسابك.` : `You have ${activeProductCount} active product(s) on your account.`}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Dashboard statistics: useful context before taking an action. */}
+              <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className={`overview-stat-card rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
+                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><Package className="w-[18px] h-[18px]" /></div>
+                  <p className={`text-2xl sm:text-3xl leading-none font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{activeProductCount}</p>
+                  <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'منتجات مفعلة' : 'Active Products'}</p>
+                </div>
+                <div className={`overview-stat-card rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
+                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><CheckCircle2 className="w-[18px] h-[18px]" /></div>
+                  <p className={`text-xl sm:text-2xl leading-none font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'فعال' : 'Active'}</p>
+                  <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</p>
+                </div>
+                <div className={`overview-stat-card rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
+                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><Clock className="w-[18px] h-[18px]" /></div>
+                  <p className={`text-base sm:text-lg leading-none font-black tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-950'}`}>{memberSince}</p>
+                  <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</p>
+                </div>
+                <div className={`overview-stat-card rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
+                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><Shield className="w-[18px] h-[18px]" /></div>
+                  <p className={`text-xl sm:text-2xl leading-none font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{currentUser.discordRoles?.length || 0}</p>
+                  <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'رتب ديسكورد' : 'Discord Roles'}</p>
+                </div>
+              </section>
             </div>
 
-            {/* Quick actions: a single ordered panel modeled after the graphite reference. */}
-            <section className={`quick-actions-panel overflow-hidden rounded-2xl border shadow-[0_20px_48px_rgba(0,0,0,0.22)] ${isDark ? 'bg-[#101113] border-white/[0.10]' : 'bg-white border-neutral-200 shadow-[0_16px_38px_rgba(15,23,42,0.08)]'}`}>
+            {/* Quick actions: a graphite side panel with a precise white separator system. */}
+            <section className={`overview-quick-actions quick-actions-panel overflow-hidden rounded-2xl border shadow-[0_20px_48px_rgba(0,0,0,0.22)] ${isDark ? 'bg-[#15171b]/94 border-white/[0.14]' : 'bg-white border-slate-200 shadow-[0_16px_38px_rgba(30,64,95,0.10)]'}`}>
               <div className={`px-5 py-3.5 border-b ${isDark ? 'bg-white/[0.025] border-white/[0.08]' : 'bg-neutral-50 border-neutral-200'}`}>
                 <p className={`text-[11px] font-extrabold tracking-[0.12em] uppercase ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>
                   {lang === 'ar' ? 'إجراءات سريعة' : 'Quick Actions'}
@@ -2081,6 +2121,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
                 </a>
+
+                <button
+                  onClick={() => setActiveTab('my-products')}
+                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
+                      <ShoppingCart className="w-[19px] h-[19px]" />
+                    </div>
+                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'المتجر' : 'Shop'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'استعرض المنتجات والرخص المتاحة' : 'Browse available products and licenses'}</span>
+                    </div>
+                  </div>
+                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
+                </button>
 
                 <button
                   onClick={() => setActiveTab('tickets')}
