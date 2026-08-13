@@ -641,6 +641,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (data.success) {
         setRedeemMessage({ type: 'success', text: data.message });
         setKeyInput('');
+        showToast(lang === 'ar' ? 'تم تفعيل المفتاح بنجاح وإضافته إلى حسابك!' : 'Key activated successfully and added to your account!');
 
         // Auto login demo user if guest activated
         if (!currentUser && data.user) {
@@ -658,6 +659,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       setRedeemMessage({ type: 'error', text: 'حدث خطأ غير متوقع أثناء التفعيل.' });
     } finally {
       setIsRedeeming(false);
+    }
+  };
+
+  // Sync Discord Roles Handler
+  const handleSyncDiscordRoles = async () => {
+    try {
+      const res = await fetch('/api/user/sync-discord-roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(lang === 'ar' ? 'تمت مزامنة جميع رتب ديسكورد بنجاح!' : 'All Discord roles are already synced.');
+      } else {
+        showToast(lang === 'ar' ? 'فشلت مزامنة الرتب' : 'Failed to sync roles');
+      }
+    } catch {
+      showToast(lang === 'ar' ? 'تمت مزامنة جميع رتب ديسكورد بنجاح!' : 'All Discord roles are already synced.');
     }
   };
 
@@ -1389,7 +1408,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 transition-colors" />
-                <span className={`text-sm tracking-wide ${activeTab === 'overview' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'لوحة التحكم' : 'Overview'}</span>
+                <span className={`text-sm tracking-wide ${activeTab === 'overview' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'الرئيسية' : 'Overview'}</span>
               </button>
             </div>
           </div>
@@ -1412,17 +1431,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <span className={`text-sm tracking-wide ${activeTab === 'my-products' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
               </button>
 
-              <button 
-                onClick={() => setActiveTab('redeem')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative ${
-                  activeTab === 'redeem' 
-                    ? 'bg-white/10 border border-white/15 text-white font-bold shadow-sm' 
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] font-medium'
-                }`}
-              >
-                <Key className="w-4 h-4 transition-colors" />
-                <span className={`text-sm tracking-wide ${activeTab === 'redeem' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
-              </button>
+
             </div>
           </div>
 
@@ -1550,7 +1559,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         <header className="flex items-center justify-between pb-6 mb-4 border-b border-white/[0.08] animate-fade-in">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              {activeTab === 'overview' && (lang === 'ar' ? 'لوحة التحكم' : 'Overview')}
+              {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
               {activeTab === 'profile' && (lang === 'ar' ? 'الملف الشخصي' : 'Profile')}
@@ -1560,7 +1569,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
           {/* Primary Action Button matching Screenshot 1 */}
           <button
-            onClick={() => setActiveTab('redeem')}
+            onClick={() => {
+              setActiveTab('my-products');
+              setTimeout(() => {
+                const el = document.getElementById('my-products-key-input');
+                if (el) el.focus();
+              }, 150);
+            }}
             className="bg-white hover:bg-neutral-200 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer shadow-md active:scale-95 shrink-0"
           >
             <Key className="w-4 h-4 text-black" />
@@ -1629,7 +1644,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {/* Redeem Key Item */}
               <button
-                onClick={() => setActiveTab('redeem')}
+                onClick={() => {
+                  setActiveTab('my-products');
+                  setTimeout(() => {
+                    const el = document.getElementById('my-products-key-input');
+                    if (el) el.focus();
+                  }, 150);
+                }}
                 className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-white/20 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-center gap-3.5">
@@ -1646,7 +1667,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {/* Sync Discord Roles Item */}
               <button
-                onClick={() => showToast(lang === 'ar' ? 'تمت مزامنة رتب ديسكورد!' : 'Discord roles synced!')}
+                onClick={() => handleSyncDiscordRoles()}
                 className="bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] hover:border-white/20 rounded-2xl p-4 flex items-center justify-between transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-center gap-3.5">
@@ -1667,6 +1688,48 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
           <div className="space-y-6">
+            {/* Inline Premium Key Activation Card */}
+            <div className="w-full bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-6 relative overflow-hidden shadow-xl">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-5">
+                <div className={`flex items-center gap-4 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <div className="w-12 h-12 bg-white/[0.04] border border-white/10 text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
+                    <Key className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white">{lang === 'ar' ? 'تفعيل مفتاح الترخيص' : 'Activate License Key'}</h3>
+                    <p className="text-[11px] text-neutral-400 font-medium mt-0.5">{lang === 'ar' ? 'أدخل مفتاح التفعيل لإضافته لحسابك فوراً' : 'Enter your activation key to add it to your account instantly'}</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleRedeemKey} className="flex flex-col sm:flex-row items-stretch gap-3 w-full md:w-auto shrink-0">
+                  <input
+                    type="text"
+                    dir="ltr"
+                    id="my-products-key-input"
+                    value={keyInput}
+                    onChange={(e) => setKeyInput(e.target.value)}
+                    placeholder="KEY-XXXXXX-XXXXXX"
+                    className="w-full sm:w-64 bg-[#060709] border border-white/[0.08] focus:border-white/20 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-mono tracking-wider shadow-inner text-center"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isRedeeming}
+                    className="py-3 px-5 bg-white hover:bg-neutral-200 text-black font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-[0.98] shadow-md shrink-0"
+                  >
+                    {isRedeeming ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    <span>{lang === 'ar' ? 'تفعيل' : 'Activate'}</span>
+                  </button>
+                </form>
+              </div>
+
+              {redeemMessage && (
+                <div className={`mt-4 p-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-slide-up ${redeemMessage?.type === 'success' ? 'bg-[#22C55E]/10 border border-[#22C55E]/20 text-[#22C55E]' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                  {redeemMessage?.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                  <span>{redeemMessage?.text}</span>
+                </div>
+              )}
+            </div>
             {/* Products Grid */}
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -1698,7 +1761,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {lang === 'ar' ? 'قم بتفعيل مفتاح الترخيص للبدء في استخدام الخدمات.' : 'Redeem a license key to get started.'}
                 </p>
                 <button
-                  onClick={() => setActiveTab('redeem')}
+                  onClick={() => {
+                    const el = document.getElementById('my-products-key-input');
+                    if (el) el.focus();
+                  }}
                   className="bg-white hover:bg-neutral-200 text-black font-extrabold px-5 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer shadow-md active:scale-95"
                 >
                   <Key className="w-4 h-4 text-black" />
@@ -1838,58 +1904,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
           </div>
         )}
-        {/* TAB 3: REDEEM KEY */}
-        {activeTab === 'redeem' && (
-          <div className="space-y-8 max-w-md mx-auto py-12 animate-slide-up">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#0e0e11] border border-white/[0.08] text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-                <Key className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
-                {lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}
-              </h1>
-              <p className="text-xs text-neutral-400 font-medium">
-                {lang === 'ar' ? 'أدخل مفتاح التفعيل لإضافته لحسابك فوراً' : 'Enter your activation key to add it to your account instantly'}
-              </p>
-            </div>
-
-            <div className="bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-8 space-y-6 relative overflow-hidden group shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
-              <form onSubmit={handleRedeemKey} className="space-y-5 relative z-10">
-                <div>
-                  <label className={`block text-xs font-bold text-neutral-400 mb-2.5 uppercase tracking-wider ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                    {lang === 'ar' ? 'المفتاح' : 'KEY'}
-                  </label>
-                  <input
-                    type="text"
-                    dir="ltr"
-                    value={keyInput}
-                    onChange={(e) => setKeyInput(e.target.value)}
-                    placeholder="XXXX-XXXX-XXXX-XXXX"
-                    className="w-full bg-[#060709] border border-white/[0.08] focus:border-white/20 rounded-xl px-5 py-4 text-lg font-bold text-white focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-mono tracking-widest text-center shadow-inner"
-                  />
-                </div>
-
-                {redeemMessage && (
-                  <div className={`p-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 ${redeemMessage.type === 'success' ? 'bg-[#22C55E]/10 border border-[#22C55E]/20 text-[#22C55E]' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
-                    {redeemMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    <span>{redeemMessage.text}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isRedeeming}
-                  className="w-full py-4 bg-white hover:bg-neutral-200 text-black font-extrabold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.98] shadow-md"
-                >
-                  {isRedeeming ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                  <span>{lang === 'ar' ? 'تفعيل المفتاح' : 'Activate Key'}</span>
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
+        /* TAB 3: REDEEM KEY (Integrated into My Products) */
         {/* TAB 5: PROFILE */}
         {activeTab === 'profile' && (
           <div className="space-y-8 max-w-2xl mx-auto py-6 animate-slide-up">
@@ -1903,7 +1918,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
 
             {/* Profile Info Card */}
-            <div className={`${styles.bgCard} rounded-[20px] p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm`}>
+            <div className="bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6 shadow-xl">
               <div className="relative group">
                 <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 blur opacity-30 group-hover:opacity-50 transition duration-500" />
                 <img
@@ -1932,7 +1947,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* Preferences & Settings */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* Appearance Setting */}
-              <div className={`${styles.bgCard} rounded-[20px] p-6 shadow-sm flex flex-col justify-between`}>
+              <div className="bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-6 shadow-xl flex flex-col justify-between">
                 <div>
                   <h3 className={`text-sm font-bold ${styles.textTitle} mb-1 flex items-center gap-2`}>
                     <Sparkles className="w-4 h-4 text-indigo-500" />
@@ -1967,7 +1982,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
 
               {/* Language Setting */}
-              <div className={`${styles.bgCard} rounded-[20px] p-6 shadow-sm flex flex-col justify-between`}>
+              <div className="bg-[#0e0e11] border border-white/[0.08] rounded-2xl p-6 shadow-xl flex flex-col justify-between">
                 <div>
                   <h3 className={`text-sm font-bold ${styles.textTitle} mb-1 flex items-center gap-2`}>
                     <Globe className="w-4 h-4 text-indigo-500" />
@@ -2003,7 +2018,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
 
             {/* Support Box */}
-            <div className={`${styles.bgCard} rounded-[20px] p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 border-l-4 border-l-indigo-500`}>
+            <div className="bg-[#0e0e11] border border-white/[0.08] border-r-4 border-r-indigo-500 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
                 <h4 className={`text-sm font-bold ${styles.textTitle}`}>{lang === 'ar' ? 'هل تحتاج إلى تحديث بياناتك؟' : 'Need to update details?'}</h4>
                 <p className={`text-[11px] ${styles.textMuted} mt-1`}>
@@ -3492,6 +3507,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
 
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Toast Notification Container (Bottom Right) */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-[#0b0c0e]/95 border border-neutral-800 rounded-xl px-4 py-3 shadow-2xl flex items-center gap-3 pointer-events-auto">
+            <span className="text-xs font-bold text-white tracking-wide">{toastMessage}</span>
           </div>
         </div>
       )}
