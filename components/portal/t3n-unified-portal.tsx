@@ -45,7 +45,8 @@ import {
   User,
   Globe,
   AlertTriangle,
-  Unlock
+  Unlock,
+  Hash
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
@@ -85,6 +86,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'admin' | 'profile'>('overview');
+
+  // Custom Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  } | null>(null);
+
+  const askConfirm = (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(null);
+      },
+      onCancel: () => {
+        if (onCancel) onCancel();
+        setConfirmModal(null);
+      }
+    });
+  };
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
   const toggleKeyReveal = (id: string) => {
     setRevealedKeys(prev => ({ ...prev, [id]: !prev[id] }));
@@ -396,36 +422,42 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   const handleRevokeUserProduct = async (userId: string, productId: string) => {
-    if (!confirm('هل أنت متأكد من سحب هذا المنتج من حساب المشترك؟')) return;
-    try {
-      const res = await fetch('/api/admin/customers/manage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'remove_product',
-          userId,
-          productId,
-          adminName: currentUser?.name || 'Admin',
-          adminId: currentUser?.id || 'admin-system'
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || 'تم تعطيل المنتج عن العميل بنجاح');
-        // Refresh customer details if open
-        if (selectedAdminCustomer && selectedAdminCustomer.id === userId) {
-          const detailRes = await fetch(`/api/admin/customers/${userId}`);
-          if (detailRes.ok) {
-            const detailData = await detailRes.json();
-            setSelectedAdminCustomer(detailData.user || detailData);
+    askConfirm(
+      lang === 'ar' ? 'سحب المنتج من العميل' : 'Revoke Product from Customer',
+      lang === 'ar' ? 'هل أنت متأكد من سحب هذا المنتج من حساب المشترك؟' : 'Are you sure you want to revoke this product from the subscriber\'s account?',
+      async () => {
+        try {
+          const res = await fetch('/api/admin/customers/manage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'remove_product',
+              userId,
+              productId,
+              adminName: currentUser?.name || 'Admin',
+              adminId: currentUser?.id || 'admin-system'
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(data.message || (lang === 'ar' ? 'تم سحب المنتج من العميل بنجاح' : 'Product revoked from customer successfully'));
+            if (selectedAdminCustomer && selectedAdminCustomer.id === userId) {
+              const detailRes = await fetch(`/api/admin/customers/${userId}`);
+              if (detailRes.ok) {
+                const detailData = await detailRes.json();
+                setSelectedAdminCustomer(detailData.user || detailData);
+              }
+            }
+            loadAdminCustomersList();
+            loadAdminStats();
+          } else {
+            showToast(data.message || (lang === 'ar' ? 'فشل سحب المنتج' : 'Failed to revoke product'));
           }
+        } catch (err) {
+          showToast(lang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم.' : 'Error communicating with server.');
         }
-        loadAdminCustomersList();
-        loadAdminStats();
       }
-    } catch (e) {
-      showToast('حدث خطأ أثناء تعطيل المنتج.');
-    }
+    );
   };
 
   const handleGrantProduct = async (userId: string) => {
@@ -590,19 +622,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   const handleDeleteUserAccount = async (userId: string, userName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف حساب العميل ${userName} نهائياً؟`)) return;
-    try {
-      const res = await fetch(`/api/admin/customers/${userId}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || 'تم حذف العميل بنجاح.');
-        setSelectedAdminCustomer(null);
-        loadAdminCustomersList();
-        loadAdminStats();
+    askConfirm(
+      lang === 'ar' ? 'حذف حساب العميل' : 'Delete Customer Account',
+      lang === 'ar' ? `هل أنت متأكد من حذف حساب العميل ${userName} نهائياً؟` : `Are you sure you want to delete customer ${userName}'s account permanently?`,
+      async () => {
+        try {
+          const res = await fetch(`/api/admin/customers/${userId}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            showToast(data.message || (lang === 'ar' ? 'تم حذف حساب العميل بنجاح.' : 'Customer account deleted successfully.'));
+            setSelectedAdminCustomer(null);
+            loadAdminCustomersList();
+            loadAdminStats();
+          }
+        } catch (e) {
+          showToast(lang === 'ar' ? 'حدث خطأ أثناء حذف العميل.' : 'Error deleting customer.');
+        }
       }
-    } catch (e) {
-      showToast('حدث خطأ أثناء حذف العميل.');
-    }
+    );
   };
 
   // Redeem Key Handler
@@ -879,45 +916,54 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const handleRevokeAndBan = async (userId: string | null | undefined, keyId: string) => {
     if (!userId) return;
-    if (!confirm('هل أنت متأكد من حظر المستخدم وإلغاء مفتاحه وسحب المنتج منه؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-    try {
-      const res = await fetch('/api/admin/keys/revoke', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, keyId })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('تم حظر المستخدم وسحب المفتاح والمنتج بنجاح.');
-        await loadAllKeysList();
-        loadAdminStats();
-      } else {
-        showToast(data.message || 'فشل الحظر والإلغاء.');
+    askConfirm(
+      lang === 'ar' ? 'حظر المستخدم وسحب المنتج' : 'Ban User & Revoke Product',
+      lang === 'ar' ? 'هل أنت متأكد من حظر المستخدم وإلغاء مفتاحه وسحب المنتج منه؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to ban this user, invalidate their key, and revoke their product access? This action is permanent.',
+      async () => {
+        try {
+          const res = await fetch('/api/admin/keys/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, keyId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(lang === 'ar' ? 'تم حظر المستخدم وسحب المفتاح والمنتج بنجاح.' : 'User banned and key/product revoked successfully.');
+            await loadAllKeysList();
+            loadAdminStats();
+          } else {
+            showToast(data.message || (lang === 'ar' ? 'فشل الحظر والإلغاء.' : 'Failed.'));
+          }
+        } catch (e) {
+          showToast(lang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم.' : 'Error communicating with server.');
+        }
       }
-    } catch (e) {
-      showToast('حدث خطأ أثناء الاتصال بالخادم.');
-    }
+    );
   };
 
   const handleDeleteAllKeys = async () => {
     if (!inventoryProduct) return;
-    if (!confirm(`هل أنت تأكد من حذف جميع الأكواد المتاحة (${inventoryKeys.length} كود) لهذا المنتج؟`)) return;
-
-    try {
-      const res = await fetch('/api/keys', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deleteAllForProductId: inventoryProduct.id })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setKeyActionMessage(`تم حذف جميع الأكواد بنجاح (${data.count || inventoryKeys.length} كود)`);
-        await loadInventoryKeys(inventoryProduct.id);
-        loadAdminStats();
+    askConfirm(
+      lang === 'ar' ? 'حذف جميع الأكواد' : 'Delete All Keys',
+      lang === 'ar' ? `هل أنت متأكد من حذف جميع الأكواد المتاحة (${inventoryKeys.length} كود) لهذا المنتج؟` : `Are you sure you want to delete all available keys (${inventoryKeys.length} keys) for this product?`,
+      async () => {
+        try {
+          const res = await fetch('/api/keys', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deleteAllForProductId: inventoryProduct.id })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setKeyActionMessage(lang === 'ar' ? `تم حذف جميع الأكواد بنجاح (${data.count || inventoryKeys.length} كود)` : `Successfully deleted all available keys (${data.count || inventoryKeys.length} keys)`);
+            await loadInventoryKeys(inventoryProduct.id);
+            loadAdminStats();
+          }
+        } catch (e) {
+          setKeyActionMessage(lang === 'ar' ? 'حدث خطأ أثناء حذف جميع الأكواد' : 'Error deleting keys');
+        }
       }
-    } catch (e) {
-      setKeyActionMessage('حدث خطأ أثناء حذف جميع الأكواد');
-    }
+    );
   };
 
   const handleStartEditKey = (keyItem: KeyType) => {
@@ -946,21 +992,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const handleDeleteProductPermanently = async () => {
     if (!inventoryProduct) return;
-    if (!confirm(`هل أنت تأكد من حذف المنتج "${inventoryProduct.name}" نهائياً من المتجر وكافة العملاء؟`)) return;
-    try {
-      const res = await fetch(`/api/admin/products?id=${inventoryProduct.id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        setProducts(prev => prev.filter(p => p.id !== inventoryProduct.id));
-        const idx = initialProducts.findIndex((p) => p.id === inventoryProduct.id);
-        if (idx !== -1) initialProducts.splice(idx, 1);
-        setInventoryModalOpen(false);
-        loadAdminStats();
-        loadUserProducts();
+    askConfirm(
+      lang === 'ar' ? 'حذف المنتج نهائياً' : 'Delete Product Permanently',
+      lang === 'ar' ? `هل أنت متأكد من حذف المنتج "${inventoryProduct.name}" نهائياً من المتجر وكافة العملاء؟` : `Are you sure you want to delete product "${inventoryProduct.name}" permanently from store and all customers?`,
+      async () => {
+        try {
+          const res = await fetch(`/api/admin/products?id=${inventoryProduct.id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            setProducts(prev => prev.filter(p => p.id !== inventoryProduct.id));
+            const idx = initialProducts.findIndex((p) => p.id === inventoryProduct.id);
+            if (idx !== -1) initialProducts.splice(idx, 1);
+            setInventoryModalOpen(false);
+            loadAdminStats();
+            loadUserProducts();
+          }
+        } catch (e) {
+          showToast(lang === 'ar' ? 'حدث خطأ أثناء حذف المنتج.' : 'Error deleting product.');
+        }
       }
-    } catch (e) {
-      showToast('حدث خطأ أثناء حذف المنتج.');
-    }
+    );
   };
 
   const handleBulkAddKeys = async () => {
@@ -3222,8 +3273,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
       {selectedAdminCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className={`${styles.bgPanel} rounded-[28px] p-6 md:p-8 max-w-2xl w-full relative shadow-2xl max-h-[92vh] overflow-y-auto border scrollbar-none space-y-6`}>
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="bg-[#0b0c0e]/95 border border-white/[0.08] rounded-[28px] p-6 md:p-8 max-w-4xl w-full relative shadow-2xl max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
             
             {/* Close Button */}
             <button
@@ -3231,291 +3282,350 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 setSelectedAdminCustomer(null);
                 setSelectedCustomerProducts([]);
               }}
-              className={`absolute top-5 ${lang === 'ar' ? 'left-5' : 'right-5'} p-2 rounded-full ${styles.btnSecondary} border transition-all hover:scale-105 cursor-pointer`}
+              className={`absolute top-5 ${lang === 'ar' ? 'left-5' : 'right-5'} p-2.5 rounded-full bg-white/[0.03] border border-white/10 text-neutral-400 hover:text-white hover:bg-white/10 transition-all hover:scale-105 cursor-pointer z-10`}
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Modal Header */}
-            <div className="flex items-center gap-4.5 pb-5 border-b border-white/5">
-              <img
-                src={selectedAdminCustomer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                alt={selectedAdminCustomer.name}
-                className="w-14 h-14 rounded-2xl border border-indigo-500/20 object-cover shadow-lg"
-                onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-              />
-              <div className="text-right">
-                <h3 className={`text-[17px] font-black ${styles.textTitle} flex items-center gap-2`}>
-                  <span>{selectedAdminCustomer.name}</span>
-                  <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                    selectedAdminCustomer.role === 'Boss' 
-                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
-                      : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                  }`}>
-                    {selectedAdminCustomer.role || 'Customer'}
-                  </span>
-                  {selectedAdminCustomer.isBanned && (
-                    <span className="px-2 py-0.5 rounded-md text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                      {lang === 'ar' ? 'محظور' : 'Banned'}
-                    </span>
-                  )}
-                </h3>
-                <div className="text-[11px] ${styles.textMuted} mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-medium">
-                  <span className="flex items-center gap-1">
-                    <span className={styles.textLightMuted}>Discord ID:</span>
-                    <span className="font-mono text-indigo-400 font-bold">{selectedAdminCustomer.discordId || 'N/A'}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className={styles.textLightMuted}>IP:</span>
-                    <span className="font-mono text-slate-350 font-bold">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className={styles.textLightMuted}>{lang === 'ar' ? 'التحذيرات:' : 'Warnings:'}</span>
-                    <span className="text-amber-500 font-bold">{selectedAdminCustomer.warningCount || 0}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body grid */}
-            <div className="space-y-6 text-right">
-
-              {/* SECTION 1: ACTIVE PRODUCTS / SUBSCRIPTIONS */}
-              <div className="space-y-3">
-                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
-                  <Sparkles className="w-4 h-4 text-indigo-500" />
-                  <span>{lang === 'ar' ? 'الاشتراكات والمنتجات النشطة' : 'Active Products & Subscriptions'}</span>
-                </h4>
-                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border`}>
-                  {selectedCustomerProducts.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedCustomerProducts.map((userProd) => {
-                        const originalProd = products.find(p => p.id === userProd.productId);
-                        return (
-                          <div key={userProd.id} className="flex items-center justify-between p-3 bg-black/10 dark:bg-white/[0.02] border border-white/5 rounded-xl">
-                            <div>
-                              <div className={`text-xs font-black ${styles.textTitle}`}>
-                                {originalProd?.name || userProd.productId}
+            {/* Grid Layout: Left Column (7/12) and Right Column (5/12) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4">
+              
+              {/* LEFT COLUMN: PRODUCTS & KEYS (lg:col-span-7) */}
+              <div className="lg:col-span-7 space-y-6">
+                
+                {/* SECTION 1: ACTIVE PRODUCTS / SUBSCRIPTIONS */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <Sparkles className="w-4.5 h-4.5 text-indigo-500" />
+                    <span>{lang === 'ar' ? 'الاشتراكات والمنتجات النشطة' : 'Active Products & Subscriptions'}</span>
+                  </h4>
+                  <div className="bg-[#0e0e11] border border-white/[0.06] rounded-2xl p-5 shadow-inner">
+                    {selectedCustomerProducts.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedCustomerProducts.map((userProd) => {
+                          const originalProd = products.find(p => p.id === userProd.productId);
+                          return (
+                            <div key={userProd.id} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:border-white/10 transition-all">
+                              <div className="space-y-1">
+                                <div className="text-sm font-extrabold text-white flex items-center gap-2">
+                                  <span>{originalProd?.name || userProd.productId}</span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                </div>
+                                <div className="text-[11px] text-neutral-400 flex flex-wrap gap-x-3 font-medium">
+                                  <span>{lang === 'ar' ? 'تاريخ التفعيل:' : 'Activated:'} {new Date(userProd.activatedAt).toLocaleDateString('ar-SA')}</span>
+                                  <span className="text-neutral-600">|</span>
+                                  <span className="text-emerald-400 font-bold">
+                                    {lang === 'ar' ? 'نشط' : 'Active'}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="text-[10px] text-slate-500 mt-1 flex gap-3 font-medium">
-                                <span>{lang === 'ar' ? 'تاريخ التفعيل:' : 'Active since:'} {new Date(userProd.activatedAt).toLocaleDateString('ar-SA')}</span>
-                                <span>•</span>
-                                <span className={userProd.status === 'active' ? 'text-emerald-400 font-bold' : 'text-slate-400 font-bold'}>
-                                  {userProd.status === 'active' ? (lang === 'ar' ? 'نشط' : 'Active') : userProd.status}
-                                </span>
-                              </div>
+                              <button
+                                onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, userProd.productId)}
+                                className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-95"
+                              >
+                                {lang === 'ar' ? 'سحب وتعطيل' : 'Revoke Product'}
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, userProd.productId)}
-                              className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-[10px] font-black rounded-lg transition-all cursor-pointer"
-                            >
-                              {lang === 'ar' ? 'سحب وتعطيل' : 'Revoke Product'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-slate-500 text-center py-4 font-medium">
-                      {lang === 'ar' ? 'لا توجد منتجات نشطة حالياً لهذا العميل.' : 'No active products found.'}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION 2: GRANT NEW PRODUCT */}
-              <div className="space-y-3">
-                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
-                  <Key className="w-4 h-4 text-emerald-500" />
-                  <span>{lang === 'ar' ? 'منح منتج جديد مباشرة' : 'Grant New Product'}</span>
-                </h4>
-                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border flex flex-col sm:flex-row gap-3 items-end sm:items-center`}>
-                  <div className="flex-1 w-full text-right">
-                    <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'اختر المنتج من المتجر' : 'Select Product'}</label>
-                    <select
-                      value={selectedProductToGrant}
-                      onChange={(e) => setSelectedProductToGrant(e.target.value)}
-                      className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-bold focus:outline-none`}
-                    >
-                      <option value="">{lang === 'ar' ? '-- اختر منتجاً --' : '-- Choose Product --'}</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-neutral-500 text-center py-6 font-medium">
+                        {lang === 'ar' ? 'لا يملك هذا العميل أي منتجات نشطة حالياً.' : 'No active products found.'}
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleGrantProduct(selectedAdminCustomer.id)}
-                    disabled={isProcessingAdminAction}
-                    className="h-11 px-5 bg-emerald-600 hover:bg-emerald-550 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-600/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>{lang === 'ar' ? 'منح المنتج الآن' : 'Grant Product'}</span>
-                  </button>
                 </div>
-              </div>
 
-              {/* SECTION 3: WARNING MANAGEMENT */}
-              <div className="space-y-3">
-                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  <span>{lang === 'ar' ? 'توجيه تحذير للعميل' : 'Warn Customer'}</span>
-                </h4>
-                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border space-y-4`}>
-                  {selectedAdminCustomer.warningMessage && (
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs rounded-xl font-medium">
-                      <span className="font-bold block mb-1">{lang === 'ar' ? 'التحذير النشط حالياً:' : 'Active Warning:'}</span>
-                      <span>{selectedAdminCustomer.warningMessage}</span>
-                    </div>
-                  )}
-                  <div className="flex flex-col sm:flex-row gap-3 items-end">
-                    <div className="flex-grow w-full">
-                      <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'اكتب رسالة التحذير للعميل' : 'Warning Message'}</label>
-                      <input
-                        type="text"
-                        value={warningMessageInput}
-                        onChange={(e) => setWarningMessageInput(e.target.value)}
-                        placeholder={lang === 'ar' ? 'مثال: الرجاء الالتزام بشروط الاستخدام...' : 'Enter warning...'}
-                        className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-semibold focus:outline-none`}
-                      />
+                {/* SECTION 2: GRANT NEW PRODUCT */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <Key className="w-4.5 h-4.5 text-emerald-500" />
+                    <span>{lang === 'ar' ? 'منح منتج جديد مباشرة' : 'Grant New Product'}</span>
+                  </h4>
+                  <div className="bg-[#0e0e11] border border-white/[0.06] rounded-2xl p-5 shadow-inner flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                    <div className="flex-grow w-full text-right">
+                      <label className="block text-[10px] font-bold text-neutral-400 mb-1.5">{lang === 'ar' ? 'اختر المنتج من المتجر' : 'Select Product'}</label>
+                      <select
+                        value={selectedProductToGrant}
+                        onChange={(e) => setSelectedProductToGrant(e.target.value)}
+                        className="w-full h-11 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] focus:border-white/20 text-xs font-bold text-white focus:outline-none"
+                      >
+                        <option value="">{lang === 'ar' ? '-- اختر منتجاً --' : '-- Choose Product --'}</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <button
-                      onClick={() => handleWarnUser(selectedAdminCustomer.id)}
+                      onClick={() => handleGrantProduct(selectedAdminCustomer.id)}
                       disabled={isProcessingAdminAction}
-                      className="h-11 px-5 bg-amber-500 hover:bg-amber-450 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg shadow-amber-500/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
+                      className="h-11 px-5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer sm:mt-5 active:scale-95 shrink-0"
                     >
-                      <AlertTriangle className="w-4 h-4" />
-                      <span>{lang === 'ar' ? 'إرسال تحذير' : 'Send Warning'}</span>
+                      <Sparkles className="w-4 h-4" />
+                      <span>{lang === 'ar' ? 'منح المنتج الآن' : 'Grant Product'}</span>
                     </button>
                   </div>
                 </div>
-              </div>
 
-              {/* SECTION 4: BAN/RESTRICTION MANAGEMENT */}
-              <div className="space-y-3">
-                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
-                  <Lock className="w-4 h-4 text-rose-500" />
-                  <span>{lang === 'ar' ? 'إدارة حظر العميل (Ban Controls)' : 'Ban Restrictions'}</span>
-                </h4>
-                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border`}>
-                  {selectedAdminCustomer.isBanned ? (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl space-y-2">
-                        <div className="font-black text-sm">{lang === 'ar' ? 'حساب العميل محظور حالياً' : 'Customer Account is Banned'}</div>
-                        <div>
-                          <span className="font-bold">{lang === 'ar' ? 'السبب:' : 'Reason:'}</span> {selectedAdminCustomer.banReason || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-bold">{lang === 'ar' ? 'النوع:' : 'Type:'}</span> {selectedAdminCustomer.banType === 'temporary' ? (lang === 'ar' ? 'مؤقت' : 'Temporary') : (lang === 'ar' ? 'دائم' : 'Permanent')}
-                        </div>
-                        {selectedAdminCustomer.banType === 'temporary' && selectedAdminCustomer.banExpiresAt && (
-                          <div>
-                            <span className="font-bold">{lang === 'ar' ? 'ينتهي في:' : 'Expires:'}</span> {new Date(selectedAdminCustomer.banExpiresAt).toLocaleString('ar-SA')}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleUnbanUser(selectedAdminCustomer.id)}
-                        disabled={isProcessingAdminAction}
-                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-550 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Unlock className="w-4 h-4" />
-                        <span>{lang === 'ar' ? 'إلغاء الحظر وتفعيل الحساب' : 'Unban Account'}</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="text-right">
-                          <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'سبب الحظر' : 'Ban Reason'}</label>
-                          <input
-                            type="text"
-                            value={banReasonInput}
-                            onChange={(e) => setBanReasonInput(e.target.value)}
-                            placeholder={lang === 'ar' ? 'مخالفة شروط متجر تعن...' : 'Reason...'}
-                            className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-semibold focus:outline-none`}
-                          />
-                        </div>
-                        <div className="text-right">
-                          <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'نوع الحظر' : 'Ban Type'}</label>
-                          <select
-                            value={banTypeInput}
-                            onChange={(e) => setBanTypeInput(e.target.value as 'temporary' | 'permanent')}
-                            className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-bold focus:outline-none`}
-                          >
-                            <option value="permanent">{lang === 'ar' ? 'دائم (Permanent)' : 'Permanent'}</option>
-                            <option value="temporary">{lang === 'ar' ? 'مؤقت (Temporary)' : 'Temporary'}</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {banTypeInput === 'temporary' && (
-                        <div className="text-right animate-slide-up">
-                          <label className={`block text-[10px] font-bold ${styles.textLightMuted} mb-1.5`}>{lang === 'ar' ? 'تاريخ ووقت انتهاء الحظر المؤقت' : 'Ban Expiration Date & Time'}</label>
-                          <input
-                            type="datetime-local"
-                            value={banExpiresAtInput}
-                            onChange={(e) => setBanExpiresAtInput(e.target.value)}
-                            className={`w-full h-11 px-3.5 rounded-xl ${styles.bgInput} text-xs font-bold focus:outline-none`}
-                          />
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => handleBanUser(selectedAdminCustomer.id)}
-                        disabled={isProcessingAdminAction}
-                        className="w-full py-3 bg-red-650 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Lock className="w-4 h-4" />
-                        <span>{lang === 'ar' ? 'تأكيد فرض الحظر' : 'Apply Ban'}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION 5: ACTIVATED LICENSE KEYS */}
-              <div className="space-y-3">
-                <h4 className={`text-xs font-black uppercase tracking-wider ${styles.textLightMuted} flex items-center gap-2`}>
-                  <FileText className="w-4 h-4 text-sky-500" />
-                  <span>{lang === 'ar' ? 'المفاتيح المفعلة بالحساب' : 'Redeemed License Keys'}</span>
-                </h4>
-                <div className={`${styles.bgInnerCard} rounded-2xl p-4 border max-h-48 overflow-y-auto scrollbar-none`}>
-                  {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).length > 0 ? (
-                    <div className="space-y-2">
-                      {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).map(keyObj => (
-                        <div key={keyObj.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-2.5 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-white/5">
-                          <div>
-                            <div className="font-mono text-xs text-emerald-400 font-bold tracking-wider">{keyObj.key}</div>
-                            <div className="text-[10px] text-slate-500 mt-1 font-medium">
-                              {lang === 'ar' ? 'المنتج:' : 'Product:'} <span className={styles.textTitle}>{keyObj.productName || 'N/A'}</span> — {lang === 'ar' ? 'المدة:' : 'Duration:'} <span className={styles.textTitle}>{keyObj.duration}</span>
+                {/* SECTION 3: ACTIVATED LICENSE KEYS */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <FileText className="w-4.5 h-4.5 text-sky-500" />
+                    <span>{lang === 'ar' ? 'المفاتيح المفعلة وتاريخ الاستخدام' : 'Redeemed License Keys'}</span>
+                  </h4>
+                  <div className="bg-[#0e0e11] border border-white/[0.06] rounded-2xl p-5 shadow-inner max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+                    {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).length > 0 ? (
+                      <div className="space-y-3">
+                        {allKeysList.filter(k => k.usedByUserId === selectedAdminCustomer.id).map(keyObj => (
+                          <div key={keyObj.id} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:border-white/10 transition-all">
+                            <div>
+                              <div className="font-mono text-xs text-emerald-400 font-bold tracking-wider">{keyObj.key}</div>
+                              <div className="text-[10px] text-neutral-400 mt-1 font-medium flex items-center gap-1.5">
+                                <span>{lang === 'ar' ? 'المنتج:' : 'Product:'} <span className="text-white font-bold">{keyObj.productName || 'N/A'}</span></span>
+                                <span className="text-neutral-600">•</span>
+                                <span>{lang === 'ar' ? 'المدة:' : 'Duration:'} <span className="text-white font-bold">{keyObj.duration}</span></span>
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-mono">
+                              {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
                             </div>
                           </div>
-                          <div className="text-[9px] text-slate-500 font-mono">
-                            {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-slate-500 text-center py-4 font-medium">
-                      {lang === 'ar' ? 'لم يقم هذا العميل بتفعيل أي مفاتيح حتى الآن.' : 'No keys activated.'}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-neutral-500 text-center py-6 font-medium">
+                        {lang === 'ar' ? 'لم يقم هذا العميل بتفعيل أي مفاتيح حتى الآن.' : 'No keys activated.'}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+              </div>
+
+              {/* RIGHT COLUMN: PROFILE & MODERATION (lg:col-span-5) */}
+              <div className="lg:col-span-5 space-y-6 lg:border-r lg:border-white/[0.06] lg:pr-6">
+                
+                {/* Profile Card */}
+                <div className="bg-[#0e0e11] border border-white/[0.06] rounded-2xl p-5 shadow-xl flex flex-col items-center text-center relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      selectedAdminCustomer.role === 'Boss' 
+                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                        : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                    }`}>
+                      {selectedAdminCustomer.role || 'Customer'}
+                    </span>
+                  </div>
+
+                  <img
+                    src={selectedAdminCustomer.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                    alt={selectedAdminCustomer.name}
+                    className="w-18 h-18 rounded-2xl border-2 border-indigo-500/30 object-cover shadow-xl mb-3"
+                    onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
+                  />
+
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2 justify-center">
+                    <span>{selectedAdminCustomer.name}</span>
+                    {selectedAdminCustomer.isBanned && (
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                        {lang === 'ar' ? 'محظور' : 'Banned'}
+                      </span>
+                    )}
+                  </h3>
+
+                  <div className="w-full border-t border-white/[0.06] my-4 pt-4 space-y-2.5 text-right text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400 flex items-center gap-1.5"><Hash className="w-3.5 h-3.5 text-indigo-400" /> Discord ID</span>
+                      <span className="font-mono text-white font-bold select-all bg-black/30 px-2 py-0.5 rounded border border-white/5">{selectedAdminCustomer.discordId || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-indigo-400" /> IP Address</span>
+                      <span className="font-mono text-white font-bold">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> {lang === 'ar' ? 'التحذيرات النشطة' : 'Warnings'}</span>
+                      <span className="text-amber-500 font-extrabold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{selectedAdminCustomer.warningCount || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 4: WARNING MANAGEMENT */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <AlertTriangle className="w-4.5 h-4.5 text-amber-500" />
+                    <span>{lang === 'ar' ? 'توجيه تحذير للعميل' : 'Warn Customer'}</span>
+                  </h4>
+                  <div className="bg-[#0e0e11] border border-white/[0.06] rounded-2xl p-5 shadow-inner space-y-4">
+                    {selectedAdminCustomer.warningMessage && (
+                      <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs rounded-xl font-medium flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block mb-0.5">{lang === 'ar' ? 'التحذير الحالي:' : 'Current Warning:'}</span>
+                          <span>{selectedAdminCustomer.warningMessage}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-3">
+                      <div className="w-full text-right">
+                        <label className="block text-[10px] font-bold text-neutral-400 mb-1.5">{lang === 'ar' ? 'اكتب رسالة التحذير للعميل' : 'Warning Message'}</label>
+                        <input
+                          type="text"
+                          value={warningMessageInput}
+                          onChange={(e) => setWarningMessageInput(e.target.value)}
+                          placeholder={lang === 'ar' ? 'مثال: الرجاء الالتزام بشروط الاستخدام...' : 'Enter warning...'}
+                          className="w-full h-11 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] focus:border-white/20 text-xs font-medium text-white focus:outline-none text-right"
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleWarnUser(selectedAdminCustomer.id)}
+                        disabled={isProcessingAdminAction}
+                        className="h-11 px-5 bg-amber-500 hover:bg-amber-450 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 w-full"
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>{lang === 'ar' ? 'إرسال تحذير' : 'Send Warning'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 5: BAN/RESTRICTION MANAGEMENT */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <Lock className="w-4.5 h-4.5 text-rose-500" />
+                    <span>{lang === 'ar' ? 'إدارة حظر العميل (BAN CONTROLS)' : 'Ban Controls'}</span>
+                  </h4>
+                  <div className="bg-[#0e0e11] border border-white/[0.06] rounded-2xl p-5 shadow-inner">
+                    {selectedAdminCustomer.isBanned ? (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl space-y-2 text-right">
+                          <div className="font-black text-sm">{lang === 'ar' ? 'حساب العميل محظور حالياً' : 'Customer Account is Banned'}</div>
+                          <div>
+                            <span className="font-bold">{lang === 'ar' ? 'السبب:' : 'Reason:'}</span> {selectedAdminCustomer.banReason || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="font-bold">{lang === 'ar' ? 'النوع:' : 'Type:'}</span> {selectedAdminCustomer.banType === 'temporary' ? (lang === 'ar' ? 'مؤقت' : 'Temporary') : (lang === 'ar' ? 'دائم' : 'Permanent')}
+                          </div>
+                          {selectedAdminCustomer.banType === 'temporary' && selectedAdminCustomer.banExpiresAt && (
+                            <div>
+                              <span className="font-bold">{lang === 'ar' ? 'ينتهي في:' : 'Expires:'}</span> {new Date(selectedAdminCustomer.banExpiresAt).toLocaleString('ar-SA')}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            askConfirm(
+                              lang === 'ar' ? 'إلغاء الحظر' : 'Unban Account',
+                              lang === 'ar' ? `هل أنت متأكد من إلغاء الحظر عن حساب العميل ${selectedAdminCustomer.name}؟` : `Are you sure you want to unban customer ${selectedAdminCustomer.name}?`,
+                              () => handleUnbanUser(selectedAdminCustomer.id)
+                            );
+                          }}
+                          disabled={isProcessingAdminAction}
+                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-550 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                        >
+                          <Unlock className="w-4 h-4" />
+                          <span>{lang === 'ar' ? 'إلغاء حظر حساب العميل' : 'Unban Account'}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-3">
+                          <div className="text-right">
+                            <label className="block text-[10px] font-bold text-neutral-400 mb-1.5">{lang === 'ar' ? 'سبب الحظر' : 'Ban Reason'}</label>
+                            <input
+                              type="text"
+                              value={banReasonInput}
+                              onChange={(e) => setBanReasonInput(e.target.value)}
+                              placeholder={lang === 'ar' ? 'مخالفة شروط متجر تعن...' : 'Reason...'}
+                              className="w-full h-11 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] focus:border-white/20 text-xs font-semibold text-white focus:outline-none text-right"
+                            />
+                          </div>
+                          <div className="text-right">
+                            <label className="block text-[10px] font-bold text-neutral-400 mb-1.5">{lang === 'ar' ? 'نوع الحظر' : 'Ban Type'}</label>
+                            <select
+                              value={banTypeInput}
+                              onChange={(e) => setBanTypeInput(e.target.value as 'temporary' | 'permanent')}
+                              className="w-full h-11 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] focus:border-white/20 text-xs font-bold text-white focus:outline-none"
+                            >
+                              <option value="permanent">{lang === 'ar' ? 'دائم (Permanent)' : 'Permanent'}</option>
+                              <option value="temporary">{lang === 'ar' ? 'مؤقت (Temporary)' : 'Temporary'}</option>
+                            </select>
+                          </div>
+
+                          {banTypeInput === 'temporary' && (
+                            <div className="text-right animate-slide-up">
+                              <label className="block text-[10px] font-bold text-neutral-400 mb-1.5">{lang === 'ar' ? 'تاريخ ووقت انتهاء الحظر' : 'Ban Expiration Date & Time'}</label>
+                              <input
+                                type="datetime-local"
+                                value={banExpiresAtInput}
+                                onChange={(e) => setBanExpiresAtInput(e.target.value)}
+                                className="w-full h-11 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] focus:border-white/20 text-xs font-bold text-white focus:outline-none"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            askConfirm(
+                              lang === 'ar' ? 'تأكيد فرض الحظر' : 'Confirm Ban',
+                              lang === 'ar' ? `هل أنت متأكد من حظر حساب العميل ${selectedAdminCustomer.name}؟` : `Are you sure you want to ban customer ${selectedAdminCustomer.name}?`,
+                              () => handleBanUser(selectedAdminCustomer.id)
+                            );
+                          }}
+                          disabled={isProcessingAdminAction}
+                          className="w-full py-3 bg-red-650 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                        >
+                          <Lock className="w-4 h-4" />
+                          <span>{lang === 'ar' ? 'تأكيد فرض الحظر' : 'Apply Ban'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
               </div>
 
             </div>
           </div>
         </div>
       )}
-      
       {/* Toast Notification Container (Bottom Right) */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="bg-[#0b0c0e]/95 border border-neutral-800 rounded-xl px-4 py-3 shadow-2xl flex items-center gap-3 pointer-events-auto">
             <span className="text-xs font-bold text-white tracking-wide">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Premium Confirm Modal */}
+      {confirmModal && confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="bg-[#0b0c0e]/95 border border-white/[0.08] rounded-2xl p-6 max-w-sm w-full shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-center space-y-4">
+            <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-black text-white">{confirmModal.title}</h3>
+              <p className="text-xs text-neutral-400 font-medium leading-relaxed">{confirmModal.message}</p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => confirmModal.onCancel ? confirmModal.onCancel() : setConfirmModal(null)}
+                className="flex-grow py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                onClick={confirmModal.onConfirm}
+                className="flex-grow py-2.5 bg-white hover:bg-neutral-200 text-black font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-md"
+              >
+                {lang === 'ar' ? 'تأكيد' : 'Confirm'}
+              </button>
+            </div>
           </div>
         </div>
       )}
