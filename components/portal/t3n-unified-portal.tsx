@@ -737,7 +737,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
-        showToast(data.message || (lang === 'ar' ? 'تمت استعادة رتب ديسكورد المرتبطة بتراخيصك.' : 'Your Discord entitlement roles were restored.'), 'success');
+        const restoredCount = Number(data.restoredCount || 0);
+        const successMessage = lang === 'ar'
+          ? (restoredCount > 0 ? `تمت استعادة ${restoredCount} رتبة من رتب ديسكورد القديمة.` : 'تم التحقق من رتب ديسكورد المرتبطة بتراخيصك.')
+          : (restoredCount > 0 ? `${restoredCount} Discord role(s) restored.` : 'Your Discord entitlement roles were checked.');
+        showToast(successMessage, 'success');
       } else {
         showToast(data.message || (lang === 'ar' ? 'تعذر استرجاع رتب ديسكورد الآن.' : 'Unable to restore Discord roles right now.'), 'error');
       }
@@ -1348,18 +1352,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             animation: fadeDown .7s ease both;
           }
           .redeem-page-wrapper .brand-corner .mark {
-            width: 45px;
-            height: 45px;
-            padding: 3px;
-            border: 1px solid rgba(214, 239, 255, 0.42);
+            width: 43px;
+            height: 43px;
+            padding: 0;
+            border: 0;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #dff5ff 0%, #80ccf4 45%, #1e659f 100%);
-            box-shadow: 0 8px 24px rgba(12, 88, 150, 0.34), 0 0 0 4px rgba(124, 205, 255, 0.06);
+            background: transparent;
+            box-shadow: none;
           }
-          .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+          .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border: 0; border-radius: 50%; object-fit: cover; box-shadow: none; }
           .redeem-page-wrapper .brand-corner > div:last-child { padding-inline-start: 0; border-inline-start: 0; }
           .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 21px; line-height: 1; letter-spacing: 0.03em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.28); }
           .redeem-page-wrapper .brand-tag { display: none; }
@@ -2129,7 +2133,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{isSyncingDiscordRoles ? (lang === 'ar' ? 'جارِ استعادة الرتب...' : 'Restoring roles...') : (lang === 'ar' ? 'استعادة رتب ديسكورد' : 'Restore Discord Roles')}</span>
-                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'يعيد رتب الاستحقاق للتراخيص المفعلة فقط' : 'Restores entitlement roles for active licenses only'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'يعيد الرتب القديمة للتراخيص المفعلة بعد الانضمام للسيرفر' : 'Restores old entitlement roles for active licenses after joining the server'}</span>
                     </div>
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
