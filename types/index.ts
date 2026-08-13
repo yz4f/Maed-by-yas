@@ -118,3 +118,79 @@ export interface DiscordRoleConfig {
   roleId: string;
   description: string;
 }
+
+
+export type TicketStatus = 'open' | 'in_progress' | 'awaiting_user' | 'awaiting_staff' | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TicketCategory = 'technical' | 'account' | 'service' | 'suggestion' | 'other';
+
+export interface TicketAttachment {
+  id: string;
+  name: string;
+  url: string;
+  contentType: string;
+  size: number;
+  uploadedAt: string;
+  uploadedById: string;
+}
+
+export interface TicketMessage {
+  id: string;
+  ticketId: string;
+  authorId: string;
+  authorName: string;
+  authorImage?: string | null;
+  authorRole: 'customer' | 'staff';
+  body: string;
+  isInternal: boolean;
+  attachments: TicketAttachment[];
+  createdAt: string;
+}
+
+export interface TicketTimelineEvent {
+  id: string;
+  ticketId: string;
+  type: 'created' | 'claimed' | 'status_changed' | 'priority_changed' | 'assigned' | 'message' | 'note' | 'attachment' | 'closed' | 'reopened';
+  actorId: string;
+  actorName: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  number: string;
+  title: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  userId: string;
+  userName: string;
+  userImage?: string | null;
+  assignedAgentId?: string | null;
+  assignedAgentName?: string | null;
+  assignedAgentImage?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+  closedAt?: string | null;
+  closedById?: string | null;
+  closedByName?: string | null;
+  messageCount: number;
+}
+
+export interface TicketDetail {
+  ticket: SupportTicket;
+  messages: TicketMessage[];
+  timeline: TicketTimelineEvent[];
+}
+
+export interface TicketStats {
+  open: number;
+  unassigned: number;
+  inProgress: number;
+  awaitingUser: number;
+  closedToday: number;
+  urgent: number;
+  recentDays: { date: string; count: number }[];
+}
