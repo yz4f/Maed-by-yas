@@ -1,0 +1,54 @@
+HTML length: 50384
+Found script blocks: 12
+
+--- Script Block 0 (Length 355) ---
+void 0===globalThis.process&&(globalThis.process={env:{},cwd:function(){return"/"}}),void 0===globalThis.global&&(globalThis.global=globalThis),"function"!=typeof URL.parse&&(URL.parse=function(n,o){try{return new URL(n,o)}catch(n){return null}}),"function"!=typeof URL.canParse&&(URL.canParse=function(n,o){try{return new URL(n,o),!0}catch(n){return!1}})...
+
+--- Script Block 1 (Length 674) ---
+{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "name": "Claude",
+            "alternateName": ["Claude.ai", "Claude by Anthropic"],
+            "url": "https://claude.com"
+          },
+          {
+            "@type": "Organization",
+            "name": "Anthropic",
+            "url": "https://www.anthropic.com",
+            "logo": "https://claude.ai/images/claude_ogimage.png",
+            "sameAs": [
+              "https:...
+
+--- Script Block 2 (Length 747) ---
+"use strict";!function(){try{performance.mark?.("rq_cache:preload_start");let e="keyval-store",r="keyval",o="react-query-cache",t=new Promise(t=>{if(!window.indexedDB)return void t(void 0);let a=indexedDB.open(e);a.onupgradeneeded=()=>{a.transaction?.abort()},a.onerror=()=>t(void 0),a.onsuccess=()=>{let c=a.result;if(!c.objectStoreNames.contains(r))return c.close(),indexedDB.deleteDatabase(e),void t(void 0);try{let e=c.transaction(r,"readonly").objectStore(r).get(o);e.onerror=()=>{c.close(),t(vo...
+
+--- Script Block 3 (Length 491) ---
+"use strict";(()=>{function t(t){let e=t+"=";for(let t of document.cookie.split(";")){let o=t.trim();if(o.startsWith(e))try{return decodeURIComponent(o.slice(e.length))}catch{return}}}try{if("/"===location.pathname&&(t("sessionKeyLC")??t("sessionKeyV3LC"))){let e=t("static-composer-on-load");("marlin"===e||"classic"===e)&&(history.replaceState(history.state,"","/new"+location.search+location.hash),"/new"===location.pathname&&performance.mark?.("claude:root_path_rewritten"))}}catch{}})()...
+
+--- Script Block 4 (Length 2518) ---
+"use strict";(()=>{function t(t){let e=t+"=";for(let t of document.cookie.split(";")){let n=t.trim();if(n.startsWith(e))try{return decodeURIComponent(n.slice(e.length))}catch{return}}}function e(t){if(0===t.length)return t;let e=t.replace(/[^\x20-\x7E]/g,"").trim();return e.length>0?e:"invalid"}var n=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,r=/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$/;var a=/[?&]platform=([^&#]*)/,o=/[?&]appVersion=([^&#]*)/,i=/^[0-9A-Za-z][0-9A-Za-z.+-]{...
+
+--- Script Block 5 (Length 1177) ---
+"use strict";(()=>{var e="en-US",t=["en-US","de-DE","fr-FR","ko-KR","ja-JP","es-419","es-ES","it-IT","hi-IN","pt-BR","id-ID"];try{if(window.__SKIP_I18N_CATALOG_PRELOAD__)throw new Error;if(!function(){try{return"1"===localStorage.getItem("spa:i18nEarlyCatalog")}catch{return!1}}())throw new Error;let r=function(){let r=null;try{r=localStorage.getItem("spa:locale")}catch{r=null}return function(r,o=t){let n=new Map;for(let e of o){let t=e.toLowerCase();n.set(t,e);let r=t.split("-")[0];n.has(r)||n.s...
+
+--- Script Block 6 (Length 2336) ---
+"use strict";(()=>{var e=200,t=420;function i(i){return Math.min(t,Math.max(e,i))}var r={collapsed:!1,sidebarWidth:288};function a(e,t){return null==e?t:"true"===e}function n(e,t){return e&&t}function d(e,t){let i=e.split(";");for(let e=0;e<i.length;e++){let[r,a]=i[e].trim().split("=");if(r===t)try{return decodeURIComponent(a)}catch{return null}}return null}var o="data-sidebar-chrome";try{if("/new"===window.location.pathname){let e=/claude(nest|gov)?\/[^ ]/i.test(navigator.userAgent)&&!!window.c...
+
+--- Script Block 7 (Length 243) ---
+{"en-US":"You’re here!","de-DE":"Du bist da!","fr-FR":"Vous voilà !","ko-KR":"안녕하세요!","ja-JP":"ようこそ！","es-419":"¡Aquí estás!","es-ES":"¡Ya estás aquí!","it-IT":"Eccoti!","hi-IN":"नमस्ते!","pt-BR":"Que bom ter você aqui!","id-ID":"Halo, kamu!"}...
+
+--- Script Block 8 (Length 0) ---
+...
+
+--- Script Block 9 (Length 5588) ---
+"use strict";(()=>{function t(t){let e=t+"=";for(let t of document.cookie.split(";")){let n=t.trim();if(n.startsWith(e))try{return decodeURIComponent(n.slice(e.length))}catch{return}}}var e=["sun","mon","tue","wed","thu","fri","sat"];function n(t){return"object"==typeof t&&null!==t&&!Array.isArray(t)}function r(t){return n(t)&&Number.isSafeInteger(t.until)&&"string"==typeof t.text}function a(t){return Array.isArray(t)&&t.every(r)}function i(t){return n(t)&&"string"==typeof t.day&&a(t.slots)}func...
+
+--- Script Block 10 (Length 2176) ---
+"use strict";!function(){let e="remote_reload_attempted:",t=document.documentElement.dataset.buildTimestamp??"",n=0,i=0,o=!1,r=!1;function a(){r=!0,o=!1,clearTimeout(i),document.removeEventListener("visibilitychange",l),window.__CLIENT_HEALTH__={disabled:!0},window.dispatchEvent(new Event("clienthealth"))}function c(){return"hidden"===document.visibilityState?72e5:18e5}function l(){if(clearTimeout(i),r)return;let e=Math.min(c(),n+c()-Date.now());e>0?i=window.setTimeout(l,e):d()}function d(){if(r...
+
+--- Script Block 11 (Length 991) ---
+(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.nonce='GLdpXgAJa5SW9ZQJlsXapA==';d.innerHTML="window.__CF$cv$params={r:'a2a793bb6eb2ba85',t:'MTc4NjYyMjYxMQ=='};var a=document.createElement('script');a.nonce='GLdpXgAJa5SW9ZQJlsXapA==';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body...
+

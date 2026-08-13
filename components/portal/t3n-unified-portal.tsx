@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
@@ -1642,154 +1642,177 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* Subtle Infinite Grid Background */}
       <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0 opacity-100" />
 
-      {/* PREMIUM SAAS SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-[#09090b] shrink-0 h-full relative z-20 border-white/[0.08]" style={{ borderLeftWidth: lang === 'ar' ? '1px' : '0', borderRightWidth: lang === 'ar' ? '0' : '1px' }}>
-        
-        {/* BRAND / LOGO */}
-        <div className="p-6 relative z-10 flex items-center justify-center md:justify-start border-b border-white/[0.05]">
-          <div className="flex items-center gap-3.5 w-full">
-            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
-              <img src="/logo.png" alt="تعن" className="w-full h-full rounded-full object-cover select-none" />
-            </div>
-            <span className="text-[19px] font-extrabold tracking-wider text-white notranslate" translate="no">
-              {renderBrandText('تعن')}
-            </span>
+      {/* PREMIUM DARK SIDEBAR */}
+      <aside
+        className="hidden md:flex flex-col shrink-0 h-full relative z-20"
+        style={{
+          width: '220px',
+          background: '#0a0a0a',
+          borderRight: lang === 'ar' ? 'none' : '1px solid rgba(255,255,255,0.07)',
+          borderLeft: lang === 'ar' ? '1px solid rgba(255,255,255,0.07)' : 'none',
+        }}
+      >
+        {/* BRAND */}
+        <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+            <img src="/logo.png" alt="تعن" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
+          <span className="notranslate" translate="no" style={{ fontSize: '17px', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
+            {renderBrandText('تعن')}
+          </span>
         </div>
 
-        {/* NAVIGATION */}
-        <div className="flex-1 overflow-y-auto scrollbar-none px-4 py-4 space-y-6 relative z-10">
-          
+        {/* NAV */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
           {/* GENERAL */}
           <div>
-            <div className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest mb-2.5 px-3">
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
               {lang === 'ar' ? 'عام' : 'GENERAL'}
             </div>
-            <div className="space-y-1">
-              <button 
-                onClick={() => setActiveTab('overview')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative ${
-                  activeTab === 'overview' 
-                    ? 'bg-white/10 border border-white/15 text-white font-bold shadow-sm' 
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] font-medium'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 transition-colors" />
-                <span className={`text-sm tracking-wide ${activeTab === 'overview' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'الرئيسية' : 'Overview'}</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('overview')}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                background: activeTab === 'overview' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                border: activeTab === 'overview' ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
+                color: activeTab === 'overview' ? '#fff' : '#666',
+              }}
+            >
+              <LayoutDashboard size={15} />
+              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'overview' ? 700 : 500 }}>{lang === 'ar' ? 'الرئيسية' : 'Overview'}</span>
+            </button>
           </div>
 
           {/* LICENSE */}
           <div>
-            <div className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest mb-2.5 px-3">
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
               {lang === 'ar' ? 'الرخص' : 'LICENSE'}
             </div>
-            <div className="space-y-1">
-              <button 
-                onClick={() => setActiveTab('my-products')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative ${
-                  activeTab === 'my-products' 
-                    ? 'bg-white/10 border border-white/15 text-white font-bold shadow-sm' 
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] font-medium'
-                }`}
-              >
-                <Package className="w-4 h-4 transition-colors" />
-                <span className={`text-sm tracking-wide ${activeTab === 'my-products' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
-              </button>
-
-
-            </div>
+            <button
+              onClick={() => setActiveTab('my-products')}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                background: activeTab === 'my-products' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                border: activeTab === 'my-products' ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
+                color: activeTab === 'my-products' ? '#fff' : '#666',
+              }}
+            >
+              <Package size={15} />
+              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'my-products' ? 700 : 500 }}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
+            </button>
           </div>
 
           {/* COMMUNITY */}
           <div>
-            <div className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest mb-2.5 px-3">
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
               {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
             </div>
-            <div className="space-y-1">
-              <a 
-                href="https://discord.gg/t3n"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-neutral-400 hover:text-white hover:bg-white/[0.04] font-medium transition-all duration-200 group cursor-pointer relative"
-              >
-                <MessageSquare className="w-4 h-4 transition-colors" />
-                <span className="text-sm font-medium tracking-wide">{lang === 'ar' ? 'ديسكورد' : 'Discord'}</span>
-              </a>
-            </div>
+            <a
+              href="https://discord.gg/t3n"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                border: '1px solid transparent', color: '#666', textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#aaa'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; e.currentTarget.style.background = 'transparent'; }}
+            >
+              <MessageSquare size={15} />
+              <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{lang === 'ar' ? 'ديسكورد' : 'Forum'}</span>
+            </a>
           </div>
 
           {/* ACCOUNT */}
           <div>
-            <div className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest mb-2.5 px-3">
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
               {lang === 'ar' ? 'الحساب' : 'ACCOUNT'}
             </div>
-            <div className="space-y-1">
-              <button 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <button
                 onClick={() => setActiveTab('profile')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative ${
-                  activeTab === 'profile' 
-                    ? 'bg-white/10 border border-white/15 text-white font-bold shadow-sm' 
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] font-medium'
-                }`}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                  background: activeTab === 'profile' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                  border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
+                  color: activeTab === 'profile' ? '#fff' : '#666',
+                }}
               >
-                <User className="w-4 h-4 transition-colors" />
-                <span className={`text-sm tracking-wide ${activeTab === 'profile' ? 'font-bold' : 'font-medium'}`}>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                <User size={15} />
+                <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'profile' ? 700 : 500 }}>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
               </button>
-
               {isAdmin && (
-                <button 
+                <button
                   onClick={() => setActiveTab('admin')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative ${
-                    activeTab === 'admin' 
-                      ? 'bg-white/10 border border-white/15 text-white font-bold shadow-sm' 
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] font-medium'
-                  }`}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                    background: activeTab === 'admin' ? 'rgba(251,191,36,0.08)' : 'transparent',
+                    border: activeTab === 'admin' ? '1px solid rgba(251,191,36,0.2)' : '1px solid transparent',
+                    color: activeTab === 'admin' ? '#fbbf24' : '#7a6a30',
+                  }}
                 >
-                  <Shield className="w-4 h-4 transition-colors text-amber-400" />
-                  <span className={`text-sm tracking-wide ${activeTab === 'admin' ? 'font-bold text-amber-400' : 'font-medium text-amber-400/90'}`}>{lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control'}</span>
+                  <Shield size={15} />
+                  <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'admin' ? 700 : 500 }}>{lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control'}</span>
                 </button>
               )}
             </div>
           </div>
-
         </div>
 
-        {/* BOTTOM USER AREA */}
-        <div className="p-4 relative z-10 border-t border-white/[0.05] mt-auto w-full flex flex-col gap-2">
-          {/* Profile Card */}
-          <div 
+        {/* BOTTOM — Profile Card + Logout */}
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div
             onClick={() => setActiveTab('profile')}
-            className="w-full bg-[#0e0e11] hover:bg-[#121216] border border-white/[0.08] rounded-xl p-2.5 flex items-center gap-3 cursor-pointer transition-all duration-200 group"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px', borderRadius: '10px', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+              transition: 'all 0.15s',
+            }}
             dir="ltr"
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
           >
             <img
               src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
               alt="Avatar"
-              className="w-9 h-9 rounded-full object-cover border border-white/10 shrink-0"
+              style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
               onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
             />
-            <div className="flex flex-col text-left overflow-hidden">
-              <span className="text-xs font-bold text-white tracking-wide truncate group-hover:text-neutral-200 transition-colors">
+            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser.name}
               </span>
-              <span className="text-[10px] text-neutral-400 font-medium truncate">
-                {currentUser.role === 'Boss' || currentUser.role === 'Co-Boss' || currentUser.role === 'Admin' ? 'Owner' : 'Discord Customer'}
+              <span style={{ fontSize: '10px', color: '#555', fontWeight: 500 }}>
+                {currentUser.role === 'Boss' || currentUser.role === 'Co-Boss' || currentUser.role === 'Admin' ? 'Owner' : 'Discord'}
               </span>
             </div>
           </div>
-
-          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full h-9 rounded-xl bg-[#0e0e11] hover:bg-red-500/10 border border-white/[0.08] hover:border-red-500/30 text-neutral-400 hover:text-red-400 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            style={{
+              width: '100%', height: '34px', borderRadius: '9px', cursor: 'pointer',
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
+              color: '#555', fontSize: '12px', fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.05)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#555'; e.currentTarget.style.background = 'transparent'; }}
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut size={13} />
             <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
           </button>
         </div>
       </aside>
+
+
 
       {/* Main Content Area */}
       <main className="flex-grow h-full overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-none relative z-10">
@@ -2051,240 +2074,178 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {userProducts.map((up) => {
                   const rawKey = up.keyString || 'KEY-ACTIVATED';
                   const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
-                  const displayKey = revealedKeys[up.id] ? fullKey : `${fullKey.substring(0, 5)}••••-••••`;
+                  const displayKey = revealedKeys[up.id] ? fullKey : `${fullKey.substring(0, 14)}...`;
                   const isActive = up.status === 'Active';
                   const productImg = getProductImage(up.product);
 
                   return (
                     <div
                       key={up.id}
-                      className="glass-product-card"
                       style={{
-                        width: '100%',
-                        background: 'rgba(16,23,42,0.65)',
-                        backdropFilter: 'blur(20px) saturate(140%)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(140%)',
-                        border: '1px solid rgba(127,184,255,0.16)',
-                        borderRadius: '22px',
-                        padding: '26px',
-                        boxShadow: '0 30px 70px -24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)',
-                        position: 'relative',
+                        background: '#0f0f0f',
+                        border: '1px solid rgba(255,255,255,0.07)',
+                        borderRadius: '12px',
                         overflow: 'hidden',
-                        transition: 'transform 0.22s ease, box-shadow 0.22s ease',
+                        transition: 'border-color 0.2s, transform 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = '0 36px 80px -20px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
                       }}
                       onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
                         e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 30px 70px -24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)';
                       }}
                     >
-                      {/* Radial glow overlay */}
-                      <div style={{
-                        position: 'absolute', top: '-60%', left: '-10%', width: '130%', height: '130%',
-                        background: 'radial-gradient(circle at 30% 0%, rgba(94,205,240,0.10), transparent 60%)',
-                        pointerEvents: 'none',
-                      }} />
+                      {/* ── BANNER IMAGE ── */}
+                      <div style={{ position: 'relative', height: '160px', overflow: 'hidden', background: '#050505' }}>
+                        <img
+                          src={productImg}
+                          alt={up.product?.name || 'Product'}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(60%) contrast(1.1)', opacity: 0.9 }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        {/* Gradient overlay */}
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, #0f0f0f 100%)' }} />
+                        {/* Status badge top-left */}
+                        <div style={{
+                          position: 'absolute', top: '10px', left: lang === 'ar' ? 'auto' : '10px', right: lang === 'ar' ? '10px' : 'auto',
+                          display: 'flex', alignItems: 'center', gap: '5px',
+                          fontSize: '11px', fontWeight: 600,
+                          color: isActive ? '#d1fae5' : '#fca5a5',
+                          background: isActive ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.7)',
+                          backdropFilter: 'blur(4px)',
+                          padding: '3px 8px', borderRadius: '6px',
+                          border: `1px solid ${isActive ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.2)'}`,
+                        }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: isActive ? '#34d399' : '#f87171', flexShrink: 0 }} />
+                          {isActive ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير مفعّل' : 'Not activated yet')}
+                        </div>
+                      </div>
 
-                      {/* ── CARD HEAD ── */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', position: 'relative', zIndex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {/* Product Icon / Logo */}
-                          <div style={{
-                            width: '42px', height: '42px', borderRadius: '12px',
-                            background: 'linear-gradient(145deg, rgba(94,205,240,0.22), rgba(42,95,216,0.08))',
-                            border: '1px solid rgba(127,184,255,0.16)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            overflow: 'hidden', flexShrink: 0,
-                          }}>
-                            <img
-                              src={productImg}
-                              alt={up.product?.name || 'Product'}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '11px' }}
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                if (e.currentTarget.parentElement) {
-                                  e.currentTarget.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#5ecdf0" stroke-width="2" width="20" height="20"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
-                                }
-                              }}
-                            />
+                      {/* ── BODY ── */}
+                      <div style={{ padding: '16px' }}>
+
+                        {/* Product name + subtitle */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <div style={{ fontSize: '16px', fontWeight: 700, color: '#f0f0f0', marginBottom: '3px' }}>
+                            {up.product?.name || 'Product'}
                           </div>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: '15px', color: '#eef3fb' }}>
-                              {up.product?.name || 'Product'}
-                            </div>
-                            <div style={{ fontSize: '11.5px', color: '#8791a8', marginTop: '2px' }}>
-                              {up.expiresAt
-                                ? `${lang === 'ar' ? 'ينتهي في' : 'Expires'} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
-                                : (lang === 'ar' ? 'اشتراك مدى الحياة' : 'Lifetime License')}
-                            </div>
+                          <div style={{ fontSize: '12px', color: '#555', fontWeight: 500 }}>
+                            {up.expiresAt
+                              ? `${lang === 'ar' ? 'ينتهي في' : 'Expires'} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                              : (lang === 'ar' ? 'مدى الحياة' : 'Lifetime License')}
                           </div>
                         </div>
 
-                        {/* Status Pill */}
+                        {/* Key row */}
                         <div style={{
                           display: 'flex', alignItems: 'center', gap: '6px',
-                          fontSize: '11px', fontWeight: 700,
-                          color: isActive ? '#3ecf8e' : '#ff8a8a',
-                          background: isActive ? 'rgba(62,207,142,0.1)' : 'rgba(230,90,90,0.1)',
-                          border: `1px solid ${isActive ? 'rgba(62,207,142,0.25)' : 'rgba(230,90,90,0.25)'}`,
-                          padding: '5px 12px', borderRadius: '999px',
+                          background: '#080808', border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '8px', padding: '8px 10px', marginBottom: '12px',
                         }}>
-                          <span style={{
-                            width: '6px', height: '6px', borderRadius: '50%',
-                            background: isActive ? '#3ecf8e' : '#ff8a8a',
-                            boxShadow: `0 0 6px ${isActive ? '#3ecf8e' : '#ff8a8a'}`,
-                          }} />
-                          {isActive ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير نشط' : 'Inactive')}
-                        </div>
-                      </div>
-
-                      {/* ── LICENSE KEY ── */}
-                      <div style={{ fontSize: '11.5px', color: '#8791a8', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
-                        {lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}
-                      </div>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        background: 'rgba(255,255,255,0.035)',
-                        border: '1px solid rgba(127,184,255,0.16)',
-                        borderRadius: '14px',
-                        padding: '6px 6px 6px 16px',
-                        marginBottom: '22px',
-                        position: 'relative', zIndex: 1,
-                      }}>
-                        <div style={{
-                          flex: 1, fontFamily: "'IBM Plex Sans Arabic', monospace",
-                          letterSpacing: '0.5px', fontSize: '14px', color: '#eef3fb',
-                          direction: 'ltr', textAlign: 'left', overflow: 'hidden',
-                          textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
-                          {displayKey}
-                        </div>
-                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                          {/* Reveal Toggle */}
+                          <code style={{
+                            flex: 1, fontSize: '12px', fontFamily: 'monospace',
+                            color: '#ccc', direction: 'ltr', textAlign: 'left',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {displayKey}
+                          </code>
                           <button
                             onClick={() => toggleKeyReveal(up.id)}
-                            title={revealedKeys[up.id] ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'إظهار' : 'Show')}
-                            style={{
-                              width: '36px', height: '36px', borderRadius: '10px',
-                              background: 'rgba(127,184,255,0.08)',
-                              border: '1px solid rgba(127,184,255,0.16)',
-                              color: '#7fb8ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              cursor: 'pointer', transition: '0.2s',
-                            }}
+                            title={revealedKeys[up.id] ? 'Hide' : 'Show'}
+                            style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = '#aaa'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = '#444'; }}
                           >
-                            {revealedKeys[up.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {revealedKeys[up.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                           </button>
-                          {/* Copy Button */}
                           <button
                             onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
-                            title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy Key'}
-                            style={{
-                              width: '36px', height: '36px', borderRadius: '10px',
-                              background: copiedKeyId === up.id ? 'rgba(62,207,142,0.15)' : 'rgba(127,184,255,0.08)',
-                              border: `1px solid ${copiedKeyId === up.id ? 'rgba(62,207,142,0.35)' : 'rgba(127,184,255,0.16)'}`,
-                              color: copiedKeyId === up.id ? '#3ecf8e' : '#7fb8ff',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              cursor: 'pointer', transition: '0.2s',
-                            }}
+                            title={lang === 'ar' ? 'نسخ' : 'Copy'}
+                            style={{ background: 'none', border: 'none', color: copiedKeyId === up.id ? '#34d399' : '#444', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+                            onMouseEnter={(e) => { if (copiedKeyId !== up.id) e.currentTarget.style.color = '#aaa'; }}
+                            onMouseLeave={(e) => { if (copiedKeyId !== up.id) e.currentTarget.style.color = '#444'; }}
                           >
-                            {copiedKeyId === up.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
                           </button>
                         </div>
-                      </div>
 
-                      {/* ── ACTION BUTTONS ── */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', position: 'relative', zIndex: 1 }}>
-                        {/* HWID Reset */}
-                        <button
-                          onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
-                            padding: '13px 10px', borderRadius: '13px',
-                            fontSize: '13.5px', fontWeight: 600,
-                            cursor: 'pointer', transition: 'all 0.22s ease',
-                            border: '1px solid rgba(127,184,255,0.16)',
-                            background: 'rgba(255,255,255,0.035)',
-                            color: '#eef3fb',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(127,184,255,0.08)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                        >
-                          <RefreshCw className="w-4 h-4" style={{ flexShrink: 0 }} />
-                          {lang === 'ar' ? 'إعادة تعيين الجهاز' : 'Reset HWID'}
-                        </button>
+                        {/* Action buttons row 1: HWID Reset + Pause Key */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <button
+                            onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                              padding: '9px 8px', borderRadius: '8px', cursor: 'pointer',
+                              fontSize: '12px', fontWeight: 600, color: '#ccc',
+                              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = '#fff'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#ccc'; }}
+                          >
+                            <RefreshCw size={13} />
+                            {lang === 'ar' ? 'إعادة تعيين' : 'HWID Reset'}
+                          </button>
+                          <button
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                              padding: '9px 8px', borderRadius: '8px', cursor: 'pointer',
+                              fontSize: '12px', fontWeight: 600, color: '#ccc',
+                              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = '#fff'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#ccc'; }}
+                          >
+                            <Clock size={13} />
+                            {lang === 'ar' ? 'إيقاف مؤقت' : 'Pause Key'}
+                          </button>
+                        </div>
 
-                        {/* Guide */}
-                        <button
-                          onClick={() => {
-                            setGuideModalProduct(up);
-                            setGuideView('menu');
-                          }}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
-                            padding: '13px 10px', borderRadius: '13px',
-                            fontSize: '13.5px', fontWeight: 600,
-                            cursor: 'pointer', transition: 'all 0.22s ease',
-                            border: '1px solid rgba(127,184,255,0.16)',
-                            background: 'rgba(255,255,255,0.035)',
-                            color: '#eef3fb',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(127,184,255,0.08)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                        >
-                          <HelpCircle className="w-4 h-4" style={{ flexShrink: 0 }} />
-                          {lang === 'ar' ? 'الدليل' : 'Guide'}
-                        </button>
-
-                        {/* Primary Download - full width */}
+                        {/* Download Loader — white primary */}
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
                           style={{
-                            gridColumn: '1 / -1',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
-                            padding: '13px 10px', borderRadius: '13px',
-                            fontSize: '13.5px', fontWeight: 700,
-                            cursor: 'pointer', transition: 'all 0.22s ease',
-                            border: 'none',
-                            background: 'linear-gradient(90deg, #5ecdf0, #2a5fd8)',
-                            color: '#03101f',
-                            boxShadow: '0 10px 26px rgba(94,205,240,0.28)',
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                            padding: '11px', borderRadius: '8px', cursor: 'pointer',
+                            fontSize: '13px', fontWeight: 700, color: '#000',
+                            background: '#fff', border: 'none', marginBottom: '8px',
+                            transition: 'background 0.15s, transform 0.15s',
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = '0 14px 32px rgba(94,205,240,0.4)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = '0 10px 26px rgba(94,205,240,0.28)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = '#e5e5e5'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(0)'; }}
                         >
-                          <Download className="w-4 h-4" style={{ flexShrink: 0 }} />
+                          <Download size={14} />
                           {lang === 'ar' ? 'تحميل اللودر' : 'Download Loader'}
+                        </button>
+
+                        {/* Guide — dark outline */}
+                        <button
+                          onClick={() => { setGuideModalProduct(up); setGuideView('menu'); }}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                            padding: '10px', borderRadius: '8px', cursor: 'pointer',
+                            fontSize: '12.5px', fontWeight: 600, color: '#888',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.09)',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#ccc'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}
+                        >
+                          <HelpCircle size={13} />
+                          {lang === 'ar' ? 'الشروحات والتعليمات' : 'Guide'}
                         </button>
                       </div>
                     </div>
                   );
-                })}
-              </div>
             )}
           </div>
         )}
