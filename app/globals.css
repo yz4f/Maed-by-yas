@@ -209,3 +209,92 @@
     linear-gradient(to right, rgba(184, 224, 248, 0.07) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(184, 224, 248, 0.07) 1px, transparent 1px);
 }
+
+
+/* Graphite dashboard redesign: neutral, restrained, and high-contrast. */
+body {
+  background: #09090a;
+  color: #f4f4f5;
+}
+
+.portal-shell,
+.portal-shell--dark {
+  --portal-ink: #f4f4f5;
+  --portal-muted: #a1a1aa;
+  background:
+    radial-gradient(ellipse 65% 48% at 50% -22%, rgba(255,255,255,0.055), transparent 68%),
+    radial-gradient(ellipse 35% 30% at 92% 104%, rgba(255,255,255,0.025), transparent 73%),
+    linear-gradient(180deg, #09090a 0%, #0c0c0e 52%, #09090a 100%) !important;
+}
+
+.portal-shell--light {
+  --portal-ink: #171719;
+  --portal-muted: #71717a;
+  background:
+    radial-gradient(ellipse 60% 48% at 50% -22%, rgba(255,255,255,0.98), transparent 68%),
+    linear-gradient(180deg, #f7f7f7 0%, #eeeeef 100%) !important;
+}
+
+.portal-shell::before {
+  width: min(68vw, 1000px);
+  height: min(34vw, 500px);
+  top: -27vw;
+  right: -22vw;
+  border-color: rgba(255,255,255,0.10);
+  background: linear-gradient(124deg, rgba(255,255,255,0.045), transparent 44%, rgba(255,255,255,0.018));
+  box-shadow: 0 0 0 12px rgba(255,255,255,0.012), inset 0 0 48px rgba(255,255,255,0.025);
+}
+
+.portal-shell::after {
+  width: min(62vw, 860px);
+  height: min(30vw, 440px);
+  bottom: -23vw;
+  left: -20vw;
+  border-color: rgba(255,255,255,0.075);
+  background: linear-gradient(120deg, rgba(255,255,255,0.035), transparent 48%, rgba(255,255,255,0.012));
+  box-shadow: 0 0 0 11px rgba(255,255,255,0.01), inset 0 0 36px rgba(255,255,255,0.02);
+}
+
+.portal-ambient::before,
+.portal-ambient::after {
+  opacity: 0.34;
+  filter: blur(14px);
+}
+.portal-ambient::before { background: radial-gradient(circle, rgba(255,255,255,0.075), transparent 69%); }
+.portal-ambient::after { background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 70%); }
+.portal-grid { opacity: 0.22; background-image: linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px); }
+.portal-shell--light .portal-grid { opacity: 0.28; background-image: linear-gradient(rgba(24,24,27,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(24,24,27,0.055) 1px, transparent 1px); }
+.portal-sidebar { background: rgba(11,11,12,0.90) !important; border-color: rgba(255,255,255,0.075) !important; box-shadow: 18px 0 50px rgba(0,0,0,0.25), inset -1px 0 0 rgba(255,255,255,0.035) !important; }
+.portal-shell--light .portal-sidebar { background: rgba(250,250,250,0.90) !important; border-color: rgba(24,24,27,0.10) !important; }
+
+/* Remove saturated dashboard chrome; cyan remains only as a subtle state cue. */
+.portal-shell--dark button[class*="from-sky"],
+.portal-shell--dark button[class*="bg-sky-400"] {
+  background: #f4f4f5 !important;
+  color: #111113 !important;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.22) !important;
+}
+.portal-shell--dark [class*="text-sky-"] { color: #d4d4d8 !important; }
+.portal-shell--dark [class*="border-sky-"] { border-color: rgba(255,255,255,0.12) !important; }
+.portal-shell--dark [class*="bg-sky-"]:not(button) { background-color: rgba(255,255,255,0.055) !important; }
+.portal-shell--dark header { border-color: rgba(255,255,255,0.08) !important; }
+.portal-shell--dark header [class*="bg-sky"] { background: rgba(255,255,255,0.045) !important; color: #e4e4e7 !important; border-color: rgba(255,255,255,0.11) !important; }
+.portal-shell--dark header button[class*="from-sky"] { background: #f4f4f5 !important; color: #111113 !important; }
+
+.ticket-center--graphite { --graphite-panel: #111113; --graphite-elevated: #151518; }
+.ticket-center--graphite .ticket-hero { background: linear-gradient(120deg, #151518 0%, #111113 60%, #0e0e10 100%) !important; border-color: rgba(255,255,255,0.10) !important; box-shadow: 0 16px 34px rgba(0,0,0,0.18); }
+.ticket-center--graphite .ticket-hero .pointer-events-none { background: rgba(255,255,255,0.045) !important; }
+.ticket-center--graphite .ticket-primary { background: #f4f4f5 !important; color: #111113 !important; box-shadow: 0 12px 24px rgba(0,0,0,0.24) !important; }
+.ticket-center--graphite .ticket-primary:hover { background: #ffffff !important; }
+.ticket-center--graphite .ticket-filter--active { background: #f4f4f5 !important; color: #111113 !important; }
+.ticket-center--graphite .ticket-list--active { border-color: rgba(255,255,255,0.24) !important; background: rgba(255,255,255,0.075) !important; box-shadow: none !important; }
+.ticket-center--graphite .ticket-empty-icon { background: rgba(255,255,255,0.055) !important; }
+.ticket-center--graphite .ticket-empty-icon svg { color: #d4d4d8 !important; }
+.ticket-center--graphite [class*="text-sky-"] { color: #d4d4d8 !important; }
+.ticket-center--graphite [class*="border-sky-"] { border-color: rgba(255,255,255,0.12) !important; }
+.ticket-center--graphite [class*="bg-sky-"]:not(.ticket-primary):not(.ticket-filter--active) { background-color: rgba(255,255,255,0.05) !important; }
+.ticket-center--graphite select { color-scheme: dark; }
+
+::-webkit-scrollbar-track { background: #09090a; }
+::-webkit-scrollbar-thumb { background: #3f3f46; }
+::-webkit-scrollbar-thumb:hover { background: #71717a; }
