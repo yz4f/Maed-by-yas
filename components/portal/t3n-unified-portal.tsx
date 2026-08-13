@@ -1196,19 +1196,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             overflow: hidden;
             isolation: isolate;
             color: var(--ice);
-            background: var(--night);
+            background: linear-gradient(125deg, rgba(2, 10, 24, 0.18) 0%, rgba(4, 29, 66, 0.12) 49%, rgba(2, 12, 28, 0.22) 100%), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, var(--night);
             font-family: 'IBM Plex Sans Arabic', sans-serif;
           }
-          .redeem-page-wrapper .bg-gfx {
+          .redeem-page-wrapper .login-background {
             position: absolute;
             inset: 0;
-            z-index: -2;
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            pointer-events: none;
+          }
+          .redeem-page-wrapper .bg-gfx {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
             overflow: hidden;
             background:
-              linear-gradient(125deg, rgba(2, 9, 20, 0.50) 0%, rgba(4, 25, 57, 0.42) 48%, rgba(2, 12, 26, 0.54) 100%),
-              radial-gradient(ellipse 64% 78% at 8% 20%, rgba(52, 182, 248, 0.18), transparent 55%),
-              radial-gradient(ellipse 52% 66% at 92% 74%, rgba(108, 210, 250, 0.13), transparent 60%),
-              url('/images/t3n-login-azure-background.png') center center / cover no-repeat,
+              linear-gradient(125deg, rgba(2, 10, 24, 0.24) 0%, rgba(4, 29, 66, 0.16) 49%, rgba(2, 12, 28, 0.28) 100%),
+              url('/images/t3n-login-azure-clean.png') center center / cover no-repeat,
               #061524;
           }
           .redeem-page-wrapper .bg-gfx::before,
@@ -1219,7 +1228,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             pointer-events: none;
           }
           .redeem-page-wrapper .bg-gfx::before {
-            opacity: 0.62;
+            opacity: 0.18;
             filter: blur(28px);
             background:
               radial-gradient(ellipse 42% 28% at 25% 50%, rgba(152, 223, 255, 0.17), transparent 72%),
@@ -1227,10 +1236,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             animation: mistFloat 16s ease-in-out infinite alternate;
           }
           .redeem-page-wrapper .bg-gfx::after {
-            opacity: 0.36;
+            opacity: 0.16;
             background: linear-gradient(118deg, rgba(255,255,255,0.045), transparent 31%, rgba(197,226,248,0.075) 59%, transparent 83%);
           }
           .redeem-page-wrapper .grid-lines {
+            display: none;
             position: absolute;
             inset: 0;
             opacity: 0.18;
@@ -1241,6 +1251,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             mask-image: radial-gradient(ellipse at 50% 46%, black 0%, transparent 72%);
           }
           .redeem-page-wrapper .blue-orb {
+            display: none;
             position: absolute;
             border-radius: 50%;
             filter: blur(2px);
@@ -1264,6 +1275,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             animation: driftTwo 15s ease-in-out infinite;
           }
           .redeem-page-wrapper .silver-ribbon {
+            display: none;
             position: absolute;
             width: 66vw;
             height: 31vw;
@@ -1304,9 +1316,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper .noise {
             position: absolute;
             inset: 0;
-            z-index: -1;
+            z-index: 1;
             pointer-events: none;
-            opacity: 0.045;
+            opacity: 0.035;
             mix-blend-mode: soft-light;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
           }
@@ -1336,21 +1348,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             animation: fadeDown .7s ease both;
           }
           .redeem-page-wrapper .brand-corner .mark {
-            width: 43px;
-            height: 43px;
+            width: 45px;
+            height: 45px;
             padding: 3px;
-            border: 1px solid rgba(214, 239, 255, 0.38);
-            border-radius: 13px;
+            border: 1px solid rgba(214, 239, 255, 0.42);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #dff5ff 0%, #80ccf4 45%, #1e659f 100%);
             box-shadow: 0 8px 24px rgba(12, 88, 150, 0.34), 0 0 0 4px rgba(124, 205, 255, 0.06);
           }
-          .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border-radius: 9px; object-fit: cover; }
-          .redeem-page-wrapper .brand-corner > div:last-child { padding-inline-start: 12px; border-inline-start: 1px solid rgba(215, 239, 255, 0.28); }
-          .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 19px; line-height: 1; letter-spacing: 0.04em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.28); }
-          .redeem-page-wrapper .brand-tag { margin-top: 5px; font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: 0.2em; color: #a8d9f5; }
+          .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+          .redeem-page-wrapper .brand-corner > div:last-child { padding-inline-start: 0; border-inline-start: 0; }
+          .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 21px; line-height: 1; letter-spacing: 0.03em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.28); }
+          .redeem-page-wrapper .brand-tag { display: none; }
           .redeem-page-wrapper .copy { flex: 1; max-width: 554px; animation: fadeRight .8s ease both .1s; }
           .redeem-page-wrapper .eyebrow {
             display: inline-flex;
@@ -1400,8 +1412,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             border-radius: 23px;
             color: var(--ice);
             text-align: center;
-            background: linear-gradient(155deg, rgba(17, 53, 89, 0.80), rgba(5, 15, 29, 0.90) 57%, rgba(19, 56, 86, 0.75));
-            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.47), 0 0 0 5px rgba(208, 234, 252, 0.045), inset 0 1px 0 rgba(255,255,255,0.16);
+            background: linear-gradient(155deg, rgba(10, 42, 78, 0.88), rgba(4, 15, 31, 0.94) 57%, rgba(13, 47, 76, 0.88));
+            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.50), 0 0 0 5px rgba(208, 234, 252, 0.07), inset 0 1px 0 rgba(255,255,255,0.18);
             backdrop-filter: blur(26px) saturate(125%);
             -webkit-backdrop-filter: blur(26px) saturate(125%);
             animation: fadeUp .8s ease both .25s;
@@ -1426,13 +1438,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper .floating-ctrls { position: fixed; top: 26px; z-index: 6; display: flex; align-items: center; gap: 9px; }
           .redeem-page-wrapper .floating-ctrls button { height: 42px; border: 1px solid rgba(218,238,252,0.19); border-radius: 13px; cursor: pointer; color: #e9f7ff; background: rgba(7, 25, 50, 0.58); box-shadow: inset 0 1px 0 rgba(255,255,255,0.09); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
           .redeem-page-wrapper .floating-ctrls button:hover { transform: translateY(-2px); border-color: rgba(182,229,255,0.54); background: rgba(38, 114, 177, 0.38); }
-          .redeem-page-wrapper--light { --night: #eef7fd; --deep-blue: #dceefa; --ice: #102845; --silver: #6e8eaa; --muted: #5d7893; --glass: rgba(255, 255, 255, 0.68); --glass-border: rgba(73, 137, 185, 0.22); color: #102845; }
-          .redeem-page-wrapper--light .bg-gfx { background: radial-gradient(ellipse 70% 80% at 8% 22%, rgba(76, 185, 247, 0.32), transparent 51%), radial-gradient(ellipse 60% 68% at 96% 82%, rgba(98, 166, 223, 0.2), transparent 53%), linear-gradient(125deg, #f7fbff 0%, #d9edf9 48%, #f5fbfe 100%); }
-          .redeem-page-wrapper--light .bg-gfx::before { opacity: 0.58; background: linear-gradient(115deg, rgba(255,255,255,0.7), transparent 35%, rgba(95,168,212,0.12) 66%, transparent 85%); }
+          .redeem-page-wrapper--light { --night: #eef7fd; --deep-blue: #dceefa; --ice: #102845; --silver: #6e8eaa; --muted: #5d7893; --glass: rgba(255, 255, 255, 0.68); --glass-border: rgba(73, 137, 185, 0.22); color: #102845; background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
+          .redeem-page-wrapper--light .bg-gfx { background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
+          .redeem-page-wrapper--light .bg-gfx::before { opacity: 0.10; background: linear-gradient(115deg, rgba(255,255,255,0.7), transparent 35%, rgba(95,168,212,0.12) 66%, transparent 85%); }
           .redeem-page-wrapper--light .grid-lines { opacity: 0.6; background-image: linear-gradient(rgba(56, 125, 175, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 125, 175, 0.1) 1px, transparent 1px); }
           .redeem-page-wrapper--light .silver-ribbon { border-color: rgba(69, 134, 179, 0.28); background: linear-gradient(115deg, rgba(255,255,255,0.46), transparent 18%, rgba(83, 165, 215, 0.09) 50%, rgba(255,255,255,0.42) 82%, transparent); box-shadow: 0 0 0 9px rgba(104, 169, 211, 0.06), 0 0 64px rgba(86, 170, 226, 0.14), inset 0 0 38px rgba(255,255,255,0.32); }
           .redeem-page-wrapper--light .wordmark-ghost { background: linear-gradient(110deg, rgba(36, 104, 151, 0.05), rgba(64, 137, 185, 0.22), rgba(45, 119, 167, 0.04)); -webkit-text-stroke-color: rgba(56, 125, 175, 0.16); }
-          .redeem-page-wrapper--light .brand-corner, .redeem-page-wrapper--light .floating-ctrls button { border-color: rgba(67, 132, 177, 0.2); color: #163754; background: rgba(255, 255, 255, 0.64); box-shadow: 0 14px 40px rgba(50, 111, 153, 0.12), inset 0 1px 0 rgba(255,255,255,0.78); }
+          .redeem-page-wrapper--light .floating-ctrls button { border-color: rgba(67, 132, 177, 0.2); color: #163754; background: rgba(255, 255, 255, 0.64); box-shadow: 0 14px 40px rgba(50, 111, 153, 0.12), inset 0 1px 0 rgba(255,255,255,0.78); }
+          .redeem-page-wrapper--light .brand-corner { border: 0; color: #163754; background: transparent; box-shadow: none; }
           .redeem-page-wrapper--light .brand-name, .redeem-page-wrapper--light .headline, .redeem-page-wrapper--light .card h2 { color: #102845; text-shadow: none; }
           .redeem-page-wrapper--light .brand-tag, .redeem-page-wrapper--light .card-topline { color: #2873a8; }
           .redeem-page-wrapper--light .headline .grad { background: linear-gradient(110deg, #155a90 8%, #2e93ce 48%, #426d90 100%); -webkit-background-clip: text; background-clip: text; }
@@ -1464,7 +1477,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           }
           @media (max-width: 560px) {
             .redeem-page-wrapper .brand-corner { top: 18px; padding: 6px 9px 6px 6px; }
-            .redeem-page-wrapper .brand-corner .mark { width: 39px; height: 39px; border-radius: 11px; }
+            .redeem-page-wrapper .brand-corner .mark { width: 39px; height: 39px; border-radius: 50%; }
             .redeem-page-wrapper .brand-name { font-size: 16px; }
             .redeem-page-wrapper .floating-ctrls { top: 74px !important; }
             .redeem-page-wrapper .stage { padding-top: 150px; }
@@ -1477,6 +1490,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           }
         ` }} />
 
+        <img className="login-background" src="/images/t3n-login-azure-clean.png" alt="" aria-hidden="true" />
         {/* Interwoven blue and silver background */}
         <div className="bg-gfx" aria-hidden="true">
           <div className="grid-lines" />
@@ -1484,7 +1498,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <div className="blue-orb two" />
           <div className="silver-ribbon ribbon-one" />
           <div className="silver-ribbon ribbon-two" />
-          <div className="wordmark-ghost">{lang === 'ar' ? 'تـعـن' : 'T3N'}</div>
         </div>
         <div className="noise" />
 
