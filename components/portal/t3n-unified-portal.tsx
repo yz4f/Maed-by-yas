@@ -1648,10 +1648,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {lang === 'ar' ? 'شراء مفتاح' : 'Buy a Key'}
               </a>
               <span className="alt-link__dot" aria-hidden="true">•</span>
-              <span>{lang === 'ar' ? 'هل أنت جديد؟ ' : 'New member? '}</span>
-              <button onClick={() => setGuestModalOpen(true)}>
-                {lang === 'ar' ? 'تفعيل مفتاح جديد' : 'Activate new key'}
-              </button>
+              <span>{lang === 'ar' ? 'هل أنت جديد؟' : 'New member?'}</span>
             </div>
           </div>
         </div>
@@ -2050,13 +2047,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <button
-              onClick={() => setGuestModalOpen(true)}
-              className="bg-gradient-to-r from-sky-400 via-cyan-300 to-slate-100 hover:from-sky-300 hover:via-cyan-200 hover:to-white text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer shadow-[0_10px_24px_rgba(56,189,248,0.23)] active:scale-95 shrink-0"
-            >
-              <Key className="w-4 h-4" />
-              <span>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
-            </button>
           </div>
         </header>
 
@@ -2145,28 +2135,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </button>
 
                 <button
-                  onClick={() => {
-                    setActiveTab('my-products');
-                    setTimeout(() => {
-                      const el = document.getElementById('my-products-key-input');
-                      if (el) el.focus();
-                    }, 150);
-                  }}
-                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
-                      <Key className="w-[19px] h-[19px]" />
-                    </div>
-                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key'}</span>
-                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'تفعيل رخصة جديدة' : 'Activate a new license'}</span>
-                    </div>
-                  </div>
-                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
-                </button>
-
-                <button
                   onClick={() => handleSyncDiscordRoles()}
                   disabled={isSyncingDiscordRoles}
                   className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group disabled:cursor-wait disabled:opacity-70 ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
@@ -2240,6 +2208,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
           <div className="products-experience space-y-6">
+            <section className={`flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-sky-100/[0.14] bg-[#0d1c2f]/82' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`}>
+              <div>
+                <p className={`text-[10px] font-black tracking-[0.16em] uppercase ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>License Library</p>
+                <h2 className={`mt-1 text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>My Products</h2>
+              </div>
+              <button
+                onClick={() => setGuestModalOpen(true)}
+                className="inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black text-slate-950 shadow-[0_10px_24px_rgba(255,255,255,0.14)] transition-all hover:-translate-y-0.5 hover:bg-slate-100 active:scale-95"
+              >
+                <Key className="h-4 w-4" />
+                <span>Redeem Key</span>
+              </button>
+            </section>
+
             {/* Products Grid */}
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
@@ -4101,7 +4083,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
               <div>
                 <p className={`text-[10px] font-black tracking-[0.14em] ${isDark ? 'text-sky-200/75' : 'text-sky-700/75'}`}>{lang === 'ar' ? 'تفعيل الترخيص' : 'LICENSE ACTIVATION'}</p>
-                <h3 className="mt-0.5 text-base font-black">{lang === 'ar' ? 'فعّل مفتاحك' : 'Activate Your Key'}</h3>
+                <h3 className="mt-0.5 text-base font-black">Redeem Key</h3>
               </div>
             </div>
             <form onSubmit={handleRedeemKey} className="space-y-3">
@@ -4120,7 +4102,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               )}
               <button type="submit" disabled={isRedeeming || !keyInput.trim()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-black text-slate-950 shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50">
                 {isRedeeming ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Activating...') : (lang === 'ar' ? 'تفعيل المفتاح' : 'Activate Key')}
+                {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Redeeming...') : 'Redeem Key'}
               </button>
             </form>
           </div>
