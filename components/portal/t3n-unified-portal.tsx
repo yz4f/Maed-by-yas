@@ -125,14 +125,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const savedTheme = window.localStorage.getItem('self-delivery.theme');
+    const savedLanguage = window.localStorage.getItem('self-delivery.language');
+    if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
+    if (savedLanguage === 'ar' || savedLanguage === 'en') setLang(savedLanguage);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    window.localStorage.setItem('self-delivery.theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    window.localStorage.setItem('self-delivery.language', lang);
+  }, [lang]);
 
   // Demo Local Authentication for instant local testing
   const [demoUser, setDemoUser] = useState<UserType | null>(null);
@@ -238,8 +249,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     centralToast.show({ message, type });
   };
-
-  const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
   // Translations Object
   const t = {
@@ -1798,6 +1807,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <div className="portal-grid" aria-hidden="true" />
       <div className="portal-noise" aria-hidden="true" />
 
+      {/* Compact mobile top bar and navigation drawer */}
+      <div className={`fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
+        <button onClick={() => setMobileMenuOpen(true)} aria-label={lang === 'ar' ? 'فتح القائمة' : 'Open navigation'} className={`sd-icon-button inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}><Menu className="h-4 w-4" /></button>
+        <div className="flex min-w-0 items-center gap-2"><img src="/logo.png" alt="تسليم ذاتي" className="h-7 w-7 rounded-lg object-cover" /><span className="truncate text-sm font-black">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</span></div>
+        <div className="flex items-center gap-1.5"><button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className={`h-8 min-w-8 rounded-lg border px-1.5 text-[9px] font-black ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{lang === 'ar' ? 'EN' : 'AR'}</button><button onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={lang === 'ar' ? 'تبديل المظهر' : 'Toggle theme'} className={`sd-icon-button !h-8 !w-8 inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}</button></div>
+      </div>
+      <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
+        <div className="mb-4 flex items-center justify-between px-1"><div className="flex items-center gap-2"><img src="/logo.png" alt="تسليم ذاتي" className="h-8 w-8 rounded-lg object-cover" /><span className="text-sm font-black">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
+        <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button><button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'تذاكر الدعم' : 'Support tickets'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
+        <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
+      </motion.aside></>}</AnimatePresence>
+
       {/* Premium navigation panel */}
       <aside
         className="portal-sidebar hidden md:flex flex-col shrink-0 h-full relative z-20 transition-colors duration-500"
@@ -1992,7 +2013,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
 
       {/* Main Content Area */}
-      <main className="flex-grow h-full overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-none relative z-10">
+      <main className="flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-6 md:p-8 scrollbar-none relative z-10">
         <div className="max-w-[1440px] mx-auto space-y-6">
 
         {currentUser?.warningMessage && (
@@ -2036,6 +2057,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+              title={lang === 'ar' ? 'English' : 'العربية'}
+              aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+              className={`h-10 min-w-10 rounded-xl border px-2 text-[10px] font-black tracking-wide transition-all duration-200 active:scale-95 ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+            >
+              <span className="inline-flex items-center gap-1"><Globe className="h-3.5 w-3.5" />{lang === 'ar' ? 'EN' : 'AR'}</span>
+            </button>
             <button
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
               title={isDark ? (lang === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (lang === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
