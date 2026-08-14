@@ -368,7 +368,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     if (!currentUser) return;
     setIsLoadingProducts(true);
     try {
-      const res = await fetch(`/api/user/products?userId=${currentUser.id}`);
+      const res = await fetch('/api/user/products', { credentials: 'same-origin' });
       if (res.ok) {
         const data = await res.json();
         setUserProducts(data.products || []);
@@ -698,25 +698,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setRedeemMessage(null);
 
     try {
-      const userPayload = currentUser ? {
-        discordId: currentUser.discordId,
-        name: currentUser.name,
-        email: currentUser.email,
-        image: currentUser.image
-      } : {
-        discordId: '1422761753573593088',
-        name: 'Yaser_VIP',
-        email: 'yaser@t3n-store.com',
-        image: 'https://cdn.discordapp.com/embed/avatars/1.png'
-      };
-
       const res = await fetch('/api/keys/activate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keyString: key.trim(),
-          userProfile: userPayload
-        })
+        credentials: 'same-origin',
+        body: JSON.stringify({ keyString: key.trim() })
       });
 
       const data = await res.json();
@@ -788,7 +774,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch('/api/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId })
+        credentials: 'same-origin',
+        body: JSON.stringify({ productId })
       });
       const data = await res.json();
       if (data.success && data.fileUrl) {
@@ -808,13 +795,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch('/api/user/hwid-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId })
+        credentials: 'same-origin',
+        body: JSON.stringify({ productId })
       });
       const data = await res.json();
       if (data.success) {
         showToast(data.message || (lang === 'ar' ? 'تمت إعادة تعيين الجهاز بنجاح!' : 'HWID reset successful!'), 'success');
       } else {
-        showToast(data.error || (lang === 'ar' ? 'فشل إعادة تعيين الجهاز.' : 'HWID reset failed.'), 'error');
+        showToast(data.message || (lang === 'ar' ? 'فشل إعادة تعيين الجهاز.' : 'HWID reset failed.'), 'error');
       }
     } catch (e) {
       showToast(lang === 'ar' ? 'حدث خطأ في إعادة تعيين الجهاز.' : 'Error resetting HWID.', 'error');
@@ -1792,7 +1780,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }
 
   return (
-    <div className={`portal-shell ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      className={`portal-shell portal-protected-content ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`}
+      dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      onCopy={(event) => {
+        const target = event.target as HTMLElement;
+        if (!target.closest('input, textarea, [contenteditable="true"], [data-allow-copy]')) event.preventDefault();
+      }}
+      onContextMenu={(event) => {
+        const target = event.target as HTMLElement;
+        if (!target.closest('input, textarea, [contenteditable="true"], [data-allow-context-menu]')) event.preventDefault();
+      }}
+      onDragStart={(event) => {
+        const target = event.target as HTMLElement;
+        if (!target.closest('input, textarea, [contenteditable="true"], [data-allow-drag]')) event.preventDefault();
+      }}
+    >
       {/* Layered luxury background */}
       <div className="portal-ambient" aria-hidden="true" />
       <div className="portal-grid" aria-hidden="true" />
@@ -2048,13 +2051,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
-              onClick={() => {
-                setActiveTab('my-products');
-                setTimeout(() => {
-                  const el = document.getElementById('my-products-key-input');
-                  if (el) el.focus();
-                }, 150);
-              }}
+              onClick={() => setGuestModalOpen(true)}
               className="bg-gradient-to-r from-sky-400 via-cyan-300 to-slate-100 hover:from-sky-300 hover:via-cyan-200 hover:to-white text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer shadow-[0_10px_24px_rgba(56,189,248,0.23)] active:scale-95 shrink-0"
             >
               <Key className="w-4 h-4" />
@@ -2243,19 +2240,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
           <div className="products-experience space-y-6">
-            <section className={`product-library-header flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-white/[0.10] bg-[#101722]/82' : 'border-slate-200 bg-white shadow-sm'}`}>
-              <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
-                <p className={`text-[10px] font-black tracking-[0.16em] ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مكتبة التراخيص' : 'LICENSE LIBRARY'}</p>
-                <h2 className={`mt-1 text-lg font-black ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</h2>
-              </div>
-              <button
-                onClick={() => setGuestModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-black text-slate-950 shadow-md transition-transform hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <Key className="h-4 w-4" />
-                {lang === 'ar' ? 'فعّل مفتاحك' : 'Activate Your Key'}
-              </button>
-            </section>
             {/* Products Grid */}
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
