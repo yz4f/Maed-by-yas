@@ -2025,10 +2025,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* Structured portal header */}
         <header className={`flex items-center justify-between pb-6 mb-5 border-b animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
           <div>
-            <div className={`mb-1 flex items-center gap-2 text-[10px] font-black tracking-[0.18em] ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.9)]" />
-              {lang === 'ar' ? 'بوابة تعن' : 'T3N PORTAL'}
-            </div>
             <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
@@ -2085,7 +2081,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </section>
 
               {/* Dashboard statistics: useful context before taking an action. */}
-              <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 <div className={`overview-stat-card rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
                   <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><Package className="w-[18px] h-[18px]" /></div>
                   <p className={`text-2xl sm:text-3xl leading-none font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{activeProductCount}</p>
@@ -2100,11 +2096,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><Clock className="w-[18px] h-[18px]" /></div>
                   <p className={`text-base sm:text-lg leading-none font-black tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-950'}`}>{memberSince}</p>
                   <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</p>
-                </div>
-                <div className={`overview-stat-card rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
-                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-4 ${isDark ? 'border-white/[0.12] bg-white/[0.055] text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><Shield className="w-[18px] h-[18px]" /></div>
-                  <p className={`text-xl sm:text-2xl leading-none font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{currentUser.discordRoles?.length || 0}</p>
-                  <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'رتب ديسكورد' : 'Discord Roles'}</p>
                 </div>
               </section>
             </div>
