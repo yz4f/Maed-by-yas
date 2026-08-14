@@ -3,16 +3,17 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'تعن',
-  description: 'الموقع الرسمي لمنصة تعـن - إدارة المنتجات والمفاتيح وفك حظر الألعاب والتنزيلات.',
+  metadataBase: new URL('https://t3n-store-production.up.railway.app'),
+  title: 'تسليم ذاتي',
+  description: 'منصة تسليم ذاتي لإدارة التراخيص والمنتجات والمفاتيح والتنزيلات.',
   icons: {
     icon: '/logo.png',
     shortcut: '/logo.png',
     apple: '/logo.png',
   },
   openGraph: {
-    title: 'تعن',
-    description: 'الموقع الرسمي لمنصة تعـن - إدارة المنتجات والمفاتيح وفك حظر الألعاب والتنزيلات.',
+    title: 'تسليم ذاتي',
+    description: 'منصة تسليم ذاتي لإدارة التراخيص والمنتجات والمفاتيح والتنزيلات.',
     images: ['/logo.png'],
   },
 };

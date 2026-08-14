@@ -571,3 +571,27 @@ body {
 .toast-card--info .toast-card__icon { color: #c4ebff; }
 .portal-shell--light .toast-card { border-color: rgba(52, 104, 143, 0.16); background: rgba(255,255,255,0.97); color: #132d46; box-shadow: 0 12px 30px rgba(39, 89, 123, 0.16); }
 .portal-shell--light .toast-card span { color: #132d46 !important; }
+
+/* Prevent ordinary selection and copying of interface labels while keeping forms usable. */
+.portal-protected-content,
+.portal-protected-content button,
+.portal-protected-content img,
+.portal-protected-content h1,
+.portal-protected-content h2,
+.portal-protected-content h3,
+.portal-protected-content p,
+.portal-protected-content span,
+.portal-protected-content article {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.portal-protected-content input,
+.portal-protected-content textarea,
+.portal-protected-content [contenteditable="true"],
+.portal-protected-content [data-allow-copy] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
