@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getKeyStockSummary, StoreDB } from '@/lib/store-db';
+import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
 export async function GET(req: Request) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بالوصول إلى المفاتيح.' }, { status: 403 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get('productId');
@@ -20,6 +24,9 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المفاتيح.' }, { status: 403 });
+  }
   try {
     const body = await req.json();
     const { keyId, deleteAllForProductId } = body;
@@ -50,6 +57,9 @@ export async function DELETE(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المفاتيح.' }, { status: 403 });
+  }
   try {
     const body = await req.json();
     const { keyId, newKey } = body;
