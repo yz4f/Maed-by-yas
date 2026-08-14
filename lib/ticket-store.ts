@@ -1,9 +1,9 @@
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
-import { db as getDb } from '@/lib/store-db';
+import { db as getDb, StoreDB } from '@/lib/store-db';
 import { TicketActor, canManageTickets } from '@/lib/ticket-auth';
-import { SupportTicket, TicketAttachment, TicketCategory, TicketDetail, TicketMessage, TicketPriority, TicketStats, TicketStatus, TicketTimelineEvent } from '@/types';
+import { SupportTicket, TicketAttachment, TicketCategory, TicketDepartment, TicketDetail, TicketMessage, TicketPriority, TicketStats, TicketStatus, TicketTimelineEvent } from '@/types';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDrMw5gxptqdancpaoSu2Mg0_C1DcSVqn8',
@@ -16,9 +16,21 @@ const firebaseConfig = {
 
 const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain']);
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
-const STATUS_VALUES: TicketStatus[] = ['open', 'in_progress', 'awaiting_user', 'awaiting_staff', 'closed'];
+const STATUS_VALUES: TicketStatus[] = ['new', 'open', 'in_progress', 'awaiting_user', 'awaiting_staff', 'resolved', 'closed'];
 const PRIORITY_VALUES: TicketPriority[] = ['low', 'medium', 'high', 'urgent'];
+const DEPARTMENT_VALUES: TicketDepartment[] = ['technical_support', 'sales', 'billing', 'accounts'];
 const CATEGORY_VALUES: TicketCategory[] = ['technical', 'account', 'service', 'suggestion', 'other'];
+const STAFF_ROLE_NAMES = new Set(['Boss', 'Co-Boss', 'Admin']);
+const SLA_HOURS: Record<TicketPriority, number> = { low: 24, medium: 12, high: 4, urgent: 1 };
+const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  new: ['open', 'in_progress', 'awaiting_staff', 'closed'],
+  open: ['in_progress', 'awaiting_staff', 'awaiting_user', 'resolved', 'closed'],
+  in_progress: ['open', 'awaiting_user', 'awaiting_staff', 'resolved', 'closed'],
+  awaiting_user: ['in_progress', 'resolved', 'closed'],
+  awaiting_staff: ['open', 'in_progress', 'closed'],
+  resolved: ['closed', 'open'],
+  closed: ['open'],
+};
 
 function hasPrefix(bytes: Uint8Array, prefix: number[]) {
   return prefix.every((value, index) => bytes[index] === value);
@@ -59,7 +71,22 @@ function ticketRef(ticketId: string) {
 }
 
 function displayStatus(status: TicketStatus) {
-  return ({ open: 'مفتوحة', in_progress: 'قيد المعالجة', awaiting_user: 'بانتظار المستخدم', awaiting_staff: 'بانتظار الإدارة', closed: 'مغلقة' } as Record<TicketStatus, string>)[status];
+  return ({ new: 'جديدة', open: 'مفتوحة', in_progress: 'قيد المعالجة', awaiting_user: 'بانتظار المستخدم', awaiting_staff: 'بانتظار الإدارة', resolved: 'تم الحل', closed: 'مغلقة' } as Record<TicketStatus, string>)[status];
+}
+
+function isTicketStaffRole(role: string) {
+  return STAFF_ROLE_NAMES.has(role);
+}
+
+function buildSlaDueAt(priority: TicketPriority, from = Date.now()) {
+  return new Date(from + SLA_HOURS[priority] * 60 * 60 * 1000).toISOString();
+}
+
+function assertStatusTransition(current: TicketStatus, next: TicketStatus) {
+  if (current === next) return;
+  if (!STATUS_TRANSITIONS[current]?.includes(next)) {
+    throw new TicketError(`لا يمكن نقل التذكرة من ${displayStatus(current)} إلى ${displayStatus(next)} مباشرة.`, 409);
+  }
 }
 
 function displayPriority(priority: TicketPriority) {
@@ -84,7 +111,13 @@ function timelineEvent(ticketId: string, actor: TicketActor, type: TicketTimelin
   return { id: makeId('evt'), ticketId, actorId: actor.id, actorName: actor.name, type, message, createdAt: now };
 }
 
-export async function listTickets(actor: TicketActor, options: { status?: string; mine?: boolean; query?: string } = {}) {
+function recordTicketAudit(actor: TicketActor, action: string, details: string) {
+  void StoreDB.addLog(action, details, actor.id, actor.name).catch((error) => {
+    console.error('Ticket audit logging failed:', error);
+  });
+}
+
+export async function listTickets(actor: TicketActor, options: { status?: string; priority?: string; department?: string; mine?: boolean; query?: string } = {}) {
   const db = database();
   const snapshot = canManageTickets(actor)
     ? await getDocs(collection(db, 'tickets'))
@@ -92,6 +125,8 @@ export async function listTickets(actor: TicketActor, options: { status?: string
   let tickets = snapshot.docs.map(mapTicket);
   if (canManageTickets(actor) && options.mine) tickets = tickets.filter(ticket => ticket.assignedAgentId === actor.id);
   if (options.status && STATUS_VALUES.includes(options.status as TicketStatus)) tickets = tickets.filter(ticket => ticket.status === options.status);
+  if (options.priority && PRIORITY_VALUES.includes(options.priority as TicketPriority)) tickets = tickets.filter(ticket => ticket.priority === options.priority);
+  if (options.department && DEPARTMENT_VALUES.includes(options.department as TicketDepartment)) tickets = tickets.filter(ticket => ticket.department === options.department);
   if (options.query) {
     const term = options.query.trim().toLowerCase();
     if (term) tickets = tickets.filter(ticket => [ticket.number, ticket.title, ticket.userName, ticket.assignedAgentName || ''].some(value => value.toLowerCase().includes(term)));
@@ -120,12 +155,13 @@ export async function getTicketDetail(ticketId: string, actor: TicketActor): Pro
   return { ticket, messages, timeline };
 }
 
-export async function createTicket(actor: TicketActor, input: { title: string; category: TicketCategory; priority: TicketPriority; body: string }) {
+export async function createTicket(actor: TicketActor, input: { title: string; department?: TicketDepartment; category: TicketCategory; priority: TicketPriority; body: string }) {
   const title = input.title.trim();
   const body = input.body.trim();
   if (title.length < 4 || title.length > 140) throw new TicketError('عنوان التذكرة يجب أن يكون بين 4 و140 حرفًا.');
   if (body.length < 10 || body.length > 6000) throw new TicketError('شرح المشكلة يجب أن يكون بين 10 و6000 حرف.');
   if (!CATEGORY_VALUES.includes(input.category)) throw new TicketError('نوع المشكلة غير صالح.');
+  if (input.department && !DEPARTMENT_VALUES.includes(input.department)) throw new TicketError('قسم الدعم غير صالح.');
   if (!PRIORITY_VALUES.includes(input.priority)) throw new TicketError('الأولوية غير صالحة.');
 
   const db = database();
@@ -141,19 +177,23 @@ export async function createTicket(actor: TicketActor, input: { title: string; c
     const nextNumber = (counterSnapshot.exists() ? Number(counterSnapshot.data().lastNumber || 10000) : 10000) + 1;
     number = `TK-${nextNumber}`;
     const ticket: SupportTicket = {
-      id: ticketId, number, title, category: input.category, priority: input.priority, status: 'open',
+      id: ticketId, number, title, department: input.department || 'technical_support', category: input.category, tags: [], priority: input.priority, status: 'new',
       userId: actor.id, userName: actor.name, userImage: actor.image || null,
       assignedAgentId: null, assignedAgentName: null, assignedAgentImage: null,
-      createdAt: now, updatedAt: now, lastMessageAt: now, closedAt: null, closedById: null, closedByName: null, messageCount: 1,
+      createdAt: now, updatedAt: now, lastMessageAt: now,
+      resolvedAt: null, resolvedById: null, resolvedByName: null,
+      closedAt: null, closedById: null, closedByName: null, slaDueAt: buildSlaDueAt(input.priority), messageCount: 1,
     };
     const message: TicketMessage = { id: initialMessageId, ticketId, authorId: actor.id, authorName: actor.name, authorImage: actor.image || null, authorRole: 'customer', body, isInternal: false, attachments: [], createdAt: now };
-    const event = timelineEvent(ticketId, actor, 'created', `تم إنشاء التذكرة ${number}.`, now);
+    const event = timelineEvent(ticketId, actor, 'created', `تم إنشاء التذكرة ${number} وإحالتها إلى الدعم الفني.`, now);
     transaction.set(doc(db, 'tickets', ticketId), ticket);
     transaction.set(doc(db, 'tickets', ticketId, 'messages', initialMessageId), message);
     transaction.set(doc(db, 'tickets', ticketId, 'timeline', eventId), event);
     transaction.set(counterRef, { lastNumber: nextNumber, updatedAt: now }, { merge: true });
   });
-  return getTicketDetail(ticketId, actor);
+  const detail = await getTicketDetail(ticketId, actor);
+  recordTicketAudit(actor, 'Ticket Created', `تم إنشاء ${detail.ticket.number} في قسم ${detail.ticket.department || 'technical_support'}.`);
+  return detail;
 }
 
 export async function claimTicket(ticketId: string, actor: TicketActor) {
@@ -171,10 +211,53 @@ export async function claimTicket(ticketId: string, actor: TicketActor) {
     const event = timelineEvent(ticketId, actor, 'claimed', `تم استلام التذكرة بواسطة ${actor.name} وتحويلها إلى قيد المعالجة.`, now);
     transaction.set(doc(db, 'tickets', ticketId, 'timeline', event.id), event);
   });
-  return getTicketDetail(ticketId, actor);
+  const detail = await getTicketDetail(ticketId, actor);
+  recordTicketAudit(actor, 'Ticket Claimed', `تم استلام التذكرة ${detail.ticket.number}.`);
+  return detail;
 }
 
-export async function updateTicket(ticketId: string, actor: TicketActor, input: { status?: TicketStatus; priority?: TicketPriority; assignedAgentId?: string | null; assignedAgentName?: string | null; assignedAgentImage?: string | null }) {
+export async function listTicketAgents(actor: TicketActor) {
+  assertStaff(actor);
+  const users = await StoreDB.getUsers();
+  return users
+    .filter((user) => isTicketStaffRole(user.role))
+    .map((user) => ({ id: user.discordId || user.id, name: user.name, image: user.image || null, role: user.role }));
+}
+
+export async function assignTicket(ticketId: string, actor: TicketActor, assigneeId: string | null) {
+  assertStaff(actor);
+  const db = database();
+  const now = new Date().toISOString();
+  const snapshot = await getDoc(doc(db, 'tickets', ticketId));
+  if (!snapshot.exists()) throw new TicketError('التذكرة غير موجودة.', 404);
+  const ticket = mapTicket(snapshot);
+
+  let assignee: { id: string; name: string; image?: string | null } | null = null;
+  if (assigneeId) {
+    const users = await StoreDB.getUsers();
+    const candidate = users.find((user) => user.id === assigneeId || user.discordId === assigneeId);
+    if (!candidate || !isTicketStaffRole(candidate.role)) throw new TicketError('الموظف المحدد غير صالح لإسناد التذاكر.', 422);
+    assignee = { id: candidate.discordId || candidate.id, name: candidate.name, image: candidate.image || null };
+  }
+
+  const updates: Partial<SupportTicket> = {
+    assignedAgentId: assignee?.id || null,
+    assignedAgentName: assignee?.name || null,
+    assignedAgentImage: assignee?.image || null,
+    updatedAt: now,
+  };
+  if (assignee && ticket.status === 'new') updates.status = 'in_progress';
+  const event = timelineEvent(ticketId, actor, 'assigned', assignee ? `تم إسناد التذكرة إلى ${assignee.name}.` : 'تم إلغاء إسناد التذكرة.', now);
+  await Promise.all([
+    updateDoc(doc(db, 'tickets', ticketId), updates),
+    setDoc(doc(db, 'tickets', ticketId, 'timeline', event.id), event),
+  ]);
+  const detail = await getTicketDetail(ticketId, actor);
+  recordTicketAudit(actor, 'Ticket Assigned', `تم تحديث إسناد التذكرة ${detail.ticket.number}.`);
+  return detail;
+}
+
+export async function updateTicket(ticketId: string, actor: TicketActor, input: { status?: TicketStatus; priority?: TicketPriority; tags?: string[] }) {
   const db = database();
   const now = new Date().toISOString();
   const snapshot = await getDoc(doc(db, 'tickets', ticketId));
@@ -196,8 +279,12 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
   const events: TicketTimelineEvent[] = [];
   if (input.status) {
     if (!STATUS_VALUES.includes(input.status)) throw new TicketError('الحالة غير صالحة.');
+    assertStatusTransition(ticket.status, input.status);
     updates.status = input.status;
-    if (input.status === 'closed') {
+    if (input.status === 'resolved') {
+      updates.resolvedAt = now; updates.resolvedById = actor.id; updates.resolvedByName = actor.name;
+      events.push(timelineEvent(ticketId, actor, 'resolved', 'تم حل التذكرة بانتظار الإغلاق النهائي.', now));
+    } else if (input.status === 'closed') {
       updates.closedAt = now; updates.closedById = actor.id; updates.closedByName = actor.name;
       events.push(timelineEvent(ticketId, actor, 'closed', 'تم إغلاق التذكرة بعد معالجة المشكلة.', now));
     } else if (ticket.status === 'closed') {
@@ -212,21 +299,35 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
     updates.priority = input.priority;
     events.push(timelineEvent(ticketId, actor, 'priority_changed', `تم تغيير الأولوية إلى ${displayPriority(input.priority)}.`, now));
   }
-  if ('assignedAgentId' in input) {
-    updates.assignedAgentId = input.assignedAgentId || null;
-    updates.assignedAgentName = input.assignedAgentName || null;
-    updates.assignedAgentImage = input.assignedAgentImage || null;
-    events.push(timelineEvent(ticketId, actor, 'assigned', input.assignedAgentName ? `تم تحويل التذكرة إلى ${input.assignedAgentName}.` : 'تم إلغاء تعيين الموظف المسؤول.', now));
+  if (input.tags) {
+    const tags = [...new Set(input.tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length >= 2 && tag.length <= 24))].slice(0, 8);
+    updates.tags = tags;
+    events.push(timelineEvent(ticketId, actor, 'status_changed', tags.length ? `تم تحديث الوسوم: ${tags.join('، ')}.` : 'تمت إزالة وسوم التذكرة.', now));
   }
   await updateDoc(doc(db, 'tickets', ticketId), updates);
   await Promise.all(events.map(event => setDoc(doc(db, 'tickets', ticketId, 'timeline', event.id), event)));
-  return getTicketDetail(ticketId, actor);
+  const detail = await getTicketDetail(ticketId, actor);
+  recordTicketAudit(actor, 'Ticket Updated', `تم تحديث التذكرة ${detail.ticket.number}.`);
+  return detail;
 }
 
-export async function addTicketMessage(ticketId: string, actor: TicketActor, input: { body: string; isInternal?: boolean; attachments?: TicketAttachment[] }) {
+async function resolveMessageAttachments(ticketId: string, actor: TicketActor, attachmentIds: string[] = []) {
+  if (attachmentIds.length > 8) throw new TicketError('لا يمكن إرفاق أكثر من 8 ملفات في الرسالة الواحدة.');
+  const uniqueIds = [...new Set(attachmentIds)];
+  const db = database();
+  const records = await Promise.all(uniqueIds.map((id) => getDoc(doc(db, 'tickets', ticketId, 'attachments', id))));
+  return records.map((record, index) => {
+    if (!record.exists()) throw new TicketError('أحد المرفقات لم يعد متاحًا.', 422);
+    const attachment = record.data() as TicketAttachment;
+    if (attachment.uploadedById !== actor.id) throw new TicketError('لا تملك صلاحية استخدام هذا المرفق.', 403);
+    return { ...attachment, id: record.id || uniqueIds[index] } as TicketAttachment;
+  });
+}
+
+export async function addTicketMessage(ticketId: string, actor: TicketActor, input: { body: string; isInternal?: boolean; attachmentIds?: string[] }) {
   const body = input.body.trim();
-  const attachments = input.attachments || [];
-  if (!body && attachments.length === 0) throw new TicketError('اكتب ردًا أو أضف مرفقًا قبل الإرسال.');
+  const attachmentIds = input.attachmentIds || [];
+  if (!body && attachmentIds.length === 0) throw new TicketError('اكتب ردًا أو أضف مرفقًا قبل الإرسال.');
   if (body.length > 6000) throw new TicketError('الرد أطول من الحد المسموح.');
   const db = database();
   const ticketSnapshot = await getDoc(doc(db, 'tickets', ticketId));
@@ -236,6 +337,7 @@ export async function addTicketMessage(ticketId: string, actor: TicketActor, inp
   const isInternal = Boolean(input.isInternal);
   if (isInternal) assertStaff(actor);
   if (ticket.status === 'closed') throw new TicketError('التذكرة مغلقة؛ أعد فتحها قبل إرسال رد.', 409);
+  const attachments = await resolveMessageAttachments(ticketId, actor, attachmentIds);
   const now = new Date().toISOString();
   const message: TicketMessage = { id: makeId('msg'), ticketId, authorId: actor.id, authorName: actor.name, authorImage: actor.image || null, authorRole: canManageTickets(actor) ? 'staff' : 'customer', body, isInternal, attachments, createdAt: now };
   const event = timelineEvent(ticketId, actor, isInternal ? 'note' : 'message', isInternal ? 'تمت إضافة ملاحظة داخلية.' : `تم إرسال رد بواسطة ${actor.name}.`, now);
@@ -244,7 +346,9 @@ export async function addTicketMessage(ticketId: string, actor: TicketActor, inp
     setDoc(doc(db, 'tickets', ticketId, 'timeline', event.id), event),
     updateDoc(doc(db, 'tickets', ticketId), { updatedAt: now, lastMessageAt: now, messageCount: (ticket.messageCount || 0) + 1 }),
   ]);
-  return getTicketDetail(ticketId, actor);
+  const detail = await getTicketDetail(ticketId, actor);
+  recordTicketAudit(actor, isInternal ? 'Ticket Internal Note' : 'Ticket Reply', `تمت إضافة تحديث إلى التذكرة ${detail.ticket.number}.`);
+  return detail;
 }
 
 export async function uploadTicketAttachment(ticketId: string, actor: TicketActor, file: File): Promise<TicketAttachment> {
@@ -264,6 +368,7 @@ export async function uploadTicketAttachment(ticketId: string, actor: TicketActo
   await uploadBytes(storageRef, bytes, { contentType: file.type, customMetadata: { ticketId, uploaderId: actor.id } });
   const url = await getDownloadURL(storageRef);
   const attachment: TicketAttachment = { id: makeId('attachment'), name: file.name.slice(0, 180), url, contentType: file.type, size: file.size, uploadedAt: new Date().toISOString(), uploadedById: actor.id };
+  await setDoc(doc(database(), 'tickets', ticketId, 'attachments', attachment.id), attachment);
   return attachment;
 }
 
@@ -276,12 +381,12 @@ export async function getTicketStats(actor: TicketActor): Promise<TicketStats> {
     return date.toISOString().slice(0, 10);
   });
   return {
-    open: tickets.filter(ticket => ticket.status === 'open').length,
-    unassigned: tickets.filter(ticket => !ticket.assignedAgentId && ticket.status !== 'closed').length,
+    open: tickets.filter(ticket => ticket.status === 'new' || ticket.status === 'open').length,
+    unassigned: tickets.filter(ticket => !ticket.assignedAgentId && ticket.status !== 'closed' && ticket.status !== 'resolved').length,
     inProgress: tickets.filter(ticket => ticket.status === 'in_progress').length,
     awaitingUser: tickets.filter(ticket => ticket.status === 'awaiting_user').length,
     closedToday: tickets.filter(ticket => ticket.status === 'closed' && ticket.closedAt?.slice(0, 10) === today).length,
-    urgent: tickets.filter(ticket => ticket.priority === 'urgent' && ticket.status !== 'closed').length,
+    urgent: tickets.filter(ticket => ticket.priority === 'urgent' && ticket.status !== 'closed' && ticket.status !== 'resolved').length,
     recentDays: days.map(date => ({ date, count: tickets.filter(ticket => ticket.createdAt.slice(0, 10) === date).length })),
   };
 }
