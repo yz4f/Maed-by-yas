@@ -122,8 +122,9 @@ export interface DiscordRoleConfig {
 }
 
 
-export type TicketStatus = 'open' | 'in_progress' | 'awaiting_user' | 'awaiting_staff' | 'closed';
+export type TicketStatus = 'new' | 'open' | 'in_progress' | 'awaiting_user' | 'awaiting_staff' | 'resolved' | 'closed';
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TicketDepartment = 'technical_support' | 'sales' | 'billing' | 'accounts';
 export type TicketCategory = 'technical' | 'account' | 'service' | 'suggestion' | 'other';
 
 export interface TicketAttachment {
@@ -152,7 +153,7 @@ export interface TicketMessage {
 export interface TicketTimelineEvent {
   id: string;
   ticketId: string;
-  type: 'created' | 'claimed' | 'status_changed' | 'priority_changed' | 'assigned' | 'message' | 'note' | 'attachment' | 'closed' | 'reopened';
+  type: 'created' | 'claimed' | 'status_changed' | 'priority_changed' | 'assigned' | 'message' | 'note' | 'attachment' | 'resolved' | 'closed' | 'reopened';
   actorId: string;
   actorName: string;
   message: string;
@@ -163,7 +164,9 @@ export interface SupportTicket {
   id: string;
   number: string;
   title: string;
+  department?: TicketDepartment;
   category: TicketCategory;
+  tags?: string[];
   priority: TicketPriority;
   status: TicketStatus;
   userId: string;
@@ -175,9 +178,13 @@ export interface SupportTicket {
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string;
+  resolvedAt?: string | null;
+  resolvedById?: string | null;
+  resolvedByName?: string | null;
   closedAt?: string | null;
   closedById?: string | null;
   closedByName?: string | null;
+  slaDueAt?: string | null;
   messageCount: number;
 }
 
