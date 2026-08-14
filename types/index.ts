@@ -71,6 +71,8 @@ export interface UserProduct {
   status: ProductStatus;
   activatedAt: string;
   expiresAt?: string | null;
+  hwidResetAt?: string | null;
+  hwidResetCount?: number;
   discordRoleGranted: boolean;
 }
 
