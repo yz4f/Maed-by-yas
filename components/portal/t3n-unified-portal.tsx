@@ -144,17 +144,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setProducts(initialProducts);
   }, [initialProducts]);
 
-  const loadDbProducts = async () => {
+  const loadDbProducts = async (): Promise<boolean> => {
     try {
       const res = await fetch('/api/admin/products');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.products) {
-          setProducts(data.products);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load db products:', e);
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.products) return false;
+      setProducts(data.products);
+      return true;
+    } catch (error) {
+      console.error('Failed to load db products:', error);
+      return false;
     }
   };
 
@@ -180,6 +179,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
+  const [isAdminRefreshing, setIsAdminRefreshing] = useState(false);
+  const [adminLoadError, setAdminLoadError] = useState<string | null>(null);
   const [bulkProductId, setBulkProductId] = useState<string>(initialProducts[0]?.id || '');
   const [bulkKeysText, setBulkKeysText] = useState('');
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
@@ -192,11 +193,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [inventoryProduct, setInventoryProduct] = useState<Product | null>(null);
   const [inventoryTab, setInventoryTab] = useState<'data' | 'custom' | 'codes'>('codes');
   const [inventoryKeys, setInventoryKeys] = useState<KeyType[]>([]);
+  const [inventoryStock, setInventoryStock] = useState({ total: 0, available: 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 });
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
   const [singleAddOpen, setSingleAddOpen] = useState(false);
   const [singleKeyText, setSingleKeyText] = useState('');
   const [isAddingKeys, setIsAddingKeys] = useState(false);
+  const [isAddingSingleKey, setIsAddingSingleKey] = useState(false);
 
   // Extended Inventory Editing States
   const [editProductData, setEditProductData] = useState<{
@@ -377,34 +380,38 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
-  const loadAdminStats = async () => {
+  const loadAdminStats = async (): Promise<boolean> => {
     try {
       const res = await fetch('/api/admin/stats');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.stats) {
-          setAdminStats(data.stats);
-          setAdminLogs(data.stats.recentLogs || []);
-        } else {
-          // If the API somehow directly returns the stats object instead of {success: true, stats}
-          setAdminStats(data.stats || data);
-          setAdminLogs(data.stats?.recentLogs || data.recentLogs || []);
-        }
+      const data = await res.json();
+      if (!res.ok) return false;
+      if (data.success && data.stats) {
+        setAdminStats(data.stats);
+        setAdminLogs(data.stats.recentLogs || []);
+        return true;
       }
-    } catch (e) {
-      console.error('Failed to load admin stats:', e);
+      if (data.stats || data.recentLogs) {
+        setAdminStats(data.stats || data);
+        setAdminLogs(data.stats?.recentLogs || data.recentLogs || []);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to load admin stats:', error);
+      return false;
     }
   };
 
-  const loadAdminCustomersList = async () => {
+  const loadAdminCustomersList = async (): Promise<boolean> => {
     try {
       const res = await fetch('/api/admin/customers');
-      if (res.ok) {
-        const data = await res.json();
-        setAllCustomersList(data.users || []);
-      }
-    } catch (e) {
-      console.error('Failed to load customers:', e);
+      const data = await res.json();
+      if (!res.ok || !data.success && !Array.isArray(data.users)) return false;
+      setAllCustomersList(data.users || []);
+      return true;
+    } catch (error) {
+      console.error('Failed to load customers:', error);
+      return false;
     }
   };
 
@@ -427,15 +434,36 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
-  const loadAllKeysList = async () => {
+  const loadAllKeysList = async (): Promise<boolean> => {
     try {
       const res = await fetch('/api/keys');
-      if (res.ok) {
-        const data = await res.json();
-        setAllKeysList(data.keys || []);
-      }
-    } catch (e) {
-      console.error('Failed to load keys:', e);
+      const data = await res.json();
+      if (!res.ok || !data.success) return false;
+      setAllKeysList(data.keys || []);
+      return true;
+    } catch (error) {
+      console.error('Failed to load keys:', error);
+      return false;
+    }
+  };
+
+  const refreshAdminPanel = async () => {
+    if (!isAdmin || isAdminRefreshing) return;
+    setIsAdminRefreshing(true);
+    setAdminLoadError(null);
+    try {
+      const requests: Promise<boolean>[] = [loadDbProducts()];
+      if (adminSectionTab === 'overview' || adminSectionTab === 'logs' || adminSectionTab === 'products') requests.push(loadAdminStats());
+      if (adminSectionTab === 'customers') requests.push(loadAdminCustomersList());
+      if (adminSectionTab === 'keys') requests.push(loadAllKeysList());
+      const results = await Promise.all(requests);
+      if (results.some((result) => !result)) throw new Error('refresh-failed');
+    } catch (error) {
+      const message = lang === 'ar' ? 'تعذر تحديث هذه القائمة. تحقق من الاتصال ثم حاول مجدداً.' : 'Could not refresh this section. Check your connection and try again.';
+      setAdminLoadError(message);
+      showToast(message, 'error');
+    } finally {
+      setIsAdminRefreshing(false);
     }
   };
 
@@ -780,7 +808,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch('/api/user/hwid-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId })
+        body: JSON.stringify({ userId: currentUser.id, productId })
       });
       const data = await res.json();
       if (data.success) {
@@ -847,9 +875,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setSingleKeyText('');
     setBulkMessage(null);
     if (product.id !== 'new') {
+      setInventoryStock({ total: 0, available: product.stockKeysCount || 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 });
       await loadInventoryKeys(product.id);
     } else {
       setInventoryKeys([]);
+      setInventoryStock({ total: 0, available: 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 });
     }
   };
 
@@ -923,22 +953,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setIsLoadingKeys(true);
     try {
       const res = await fetch(`/api/keys?productId=${productId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setInventoryKeys(data.keys || []);
-        if (inventoryProduct) {
-          inventoryProduct.stockKeysCount = (data.keys || []).length;
-          
-          // Update dynamic products state
-          setProducts(prev => prev.map(p => p.id === inventoryProduct.id ? { ...p, stockKeysCount: (data.keys || []).length } : p));
-          
-          // Fallback
-          const idx = initialProducts.findIndex((p) => p.id === inventoryProduct.id);
-          if (idx !== -1) initialProducts[idx].stockKeysCount = (data.keys || []).length;
-        }
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'تعذر جلب مفاتيح المخزون.');
       }
-    } catch (e) {
-      console.error('Failed to load inventory keys:', e);
+
+      const stock = data.stock || { total: 0, available: 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 };
+      setInventoryKeys(data.keys || []);
+      setInventoryStock(stock);
+      setInventoryProduct((current) => current && current.id === productId
+        ? { ...current, stockKeysCount: Number(stock.available || 0) }
+        : current);
+      setProducts((current) => current.map((product) => product.id === productId
+        ? { ...product, stockKeysCount: Number(stock.available || 0) }
+        : product));
+    } catch (error: any) {
+      console.error('Failed to load inventory keys:', error);
+      showToast(error?.message || 'تعذر تحميل المخزون. حاول مجدداً.', 'error');
     } finally {
       setIsLoadingKeys(false);
     }
@@ -952,14 +983,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         body: JSON.stringify({ keyId })
       });
       const data = await res.json();
-      if (data.success) {
-        setKeyActionMessage('تم حذف الكود بنجاح');
-        if (inventoryProduct) await loadInventoryKeys(inventoryProduct.id);
-        await loadAllKeysList();
-        loadAdminStats();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'تعذر حذف المفتاح.');
       }
-    } catch (e) {
-      console.error('Failed to delete key:', e);
+      setKeyActionMessage(data.message || 'تم حذف المفتاح بنجاح.');
+      if (inventoryProduct) {
+        await Promise.all([
+          loadInventoryKeys(inventoryProduct.id),
+          loadAdminStats(),
+          loadDbProducts(),
+          loadAllKeysList()
+        ]);
+      }
+    } catch (error: any) {
+      console.error('Failed to delete key:', error);
+      showToast(error?.message || 'تعذر حذف المفتاح. حاول مجدداً.', 'error');
     }
   };
 
@@ -994,7 +1032,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     if (!inventoryProduct) return;
     askConfirm(
       lang === 'ar' ? 'حذف جميع الأكواد' : 'Delete All Keys',
-      lang === 'ar' ? `هل أنت متأكد من حذف جميع الأكواد المتاحة (${inventoryKeys.length} كود) لهذا المنتج؟` : `Are you sure you want to delete all available keys (${inventoryKeys.length} keys) for this product?`,
+      lang === 'ar' ? `هل أنت متأكد من حذف جميع المفاتيح غير المستخدمة (${inventoryStock.total - inventoryStock.used} مفتاح) لهذا المنتج؟ لن تُحذف المفاتيح المستخدمة.` : `Are you sure you want to delete all unused keys (${inventoryStock.total - inventoryStock.used} keys) for this product? Used keys will be preserved.`,
       async () => {
         try {
           const res = await fetch('/api/keys', {
@@ -1004,12 +1042,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           });
           const data = await res.json();
           if (data.success) {
-            setKeyActionMessage(lang === 'ar' ? `تم حذف جميع الأكواد بنجاح (${data.count || inventoryKeys.length} كود)` : `Successfully deleted all available keys (${data.count || inventoryKeys.length} keys)`);
-            await loadInventoryKeys(inventoryProduct.id);
-            loadAdminStats();
+            setKeyActionMessage(data.message || (lang === 'ar' ? `تم حذف ${data.count || 0} مفتاح غير مستخدم.` : `Deleted ${data.count || 0} unused keys.`));
+            await Promise.all([
+              loadInventoryKeys(inventoryProduct.id),
+              loadAdminStats(),
+              loadDbProducts(),
+              loadAllKeysList()
+            ]);
+          } else {
+            throw new Error(data.message || 'تعذر حذف المفاتيح غير المستخدمة.');
           }
-        } catch (e) {
-          setKeyActionMessage(lang === 'ar' ? 'حدث خطأ أثناء حذف جميع الأكواد' : 'Error deleting keys');
+        } catch (error: any) {
+          const message = error?.message || (lang === 'ar' ? 'حدث خطأ أثناء حذف جميع المفاتيح غير المستخدمة.' : 'Error deleting unused keys.');
+          showToast(message, 'error');
         }
       }
     );
@@ -1064,75 +1109,82 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   const handleBulkAddKeys = async () => {
-    if (!bulkKeysText.trim() || !inventoryProduct) return;
-    
-    // OPTIMISTIC UI: Instant Zero-Latency Update
-    const rawKeys = bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0);
-    const count = rawKeys.length;
-    if (count === 0) return;
+    if (!bulkKeysText.trim() || !inventoryProduct || isAddingKeys) return;
+
+    const rawKeys = bulkKeysText.split(/[\n,]+/).map((key) => key.trim()).filter(Boolean);
+    if (rawKeys.length === 0) return;
 
     setIsAddingKeys(true);
-    setBulkMessage(`تم معالجة ${count} مفتاح لحظياً!`);
-    
-    // Optimistically create key objects for the UI
-    const optimisticKeys: KeyType[] = rawKeys.map((k, i) => ({
-      id: `temp-${Date.now()}-${i}`,
-      key: k,
-      productId: inventoryProduct.id,
-      productName: inventoryProduct.name,
-      isUsed: false,
-      isDisabled: false,
-      isArchived: false,
-      duration: 'Lifetime',
-      createdAt: new Date().toISOString()
-    }));
-
-    // Update Local States immediately (Zero-Latency)
-    setInventoryKeys(prev => [...optimisticKeys, ...prev]);
-    setAllKeysList(prev => [...optimisticKeys, ...prev]);
-    setInventoryProduct(prev => prev ? { ...prev, stockKeysCount: (prev.stockKeysCount || 0) + count } : null);
-    setBulkKeysText('');
-    
-    // Smooth neon bar effect
-    setTimeout(() => setIsAddingKeys(false), 500);
+    setBulkMessage(`جارٍ التحقق من ${rawKeys.length} مفتاح وإضافتها إلى المخزون...`);
 
     try {
-      // Fire-and-forget background sync
       const res = await fetch('/api/admin/keys/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: rawKeys.join('\n') })
       });
       const data = await res.json();
-      if (data.success) {
-        // Silently reload real keys in background to get real IDs later if needed
-        loadInventoryKeys(inventoryProduct.id);
-        loadAdminStats();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'تعذر إضافة المفاتيح إلى المخزون.');
       }
-    } catch (e) {
-      console.error('Failed to bulk add keys:', e);
-      showToast('حدث خطأ أثناء مزامنة المفاتيح مع الخادم.', 'error');
+
+      const added = Number(data.count || 0);
+      const skipped = Number(data.skipped || 0);
+      setBulkMessage(added > 0
+        ? `تمت إضافة ${added} مفتاح للمخزون الحقيقي${skipped ? `، وتم تجاهل ${skipped} مفتاح مكرر.` : '.'}`
+        : `لم تتم إضافة مفاتيح جديدة${skipped ? ' لأن المفاتيح المدخلة مكررة.' : '.'}`);
+      if (added > 0) setBulkKeysText('');
+
+      await Promise.all([
+        loadInventoryKeys(inventoryProduct.id),
+        loadAdminStats(),
+        loadDbProducts(),
+        loadAllKeysList()
+      ]);
+    } catch (error: any) {
+      console.error('Failed to bulk add keys:', error);
+      const message = error?.message || 'حدث خطأ أثناء مزامنة المفاتيح مع الخادم.';
+      setBulkMessage(message);
+      showToast(message, 'error');
+    } finally {
+      setIsAddingKeys(false);
     }
   };
 
   const handleAddSingleKey = async () => {
-    if (!singleKeyText.trim() || !inventoryProduct) return;
+    if (!singleKeyText.trim() || !inventoryProduct || isAddingSingleKey) return;
+    setIsAddingSingleKey(true);
     try {
       const res = await fetch('/api/admin/keys/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: singleKeyText })
+        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: singleKeyText.trim() })
       });
       const data = await res.json();
-      if (data.success) {
-        setBulkMessage(`تم إضافة المفتاح بنجاح!`);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'تعذر إضافة المفتاح.');
+      }
+
+      if (Number(data.count || 0) > 0) {
+        setBulkMessage('تمت إضافة المفتاح إلى المخزون الحقيقي بنجاح.');
         setSingleKeyText('');
         setSingleAddOpen(false);
-        await loadInventoryKeys(inventoryProduct.id);
-        loadAdminStats();
+      } else {
+        setBulkMessage('لم تتم الإضافة لأن هذا المفتاح موجود بالفعل في المخزون.');
       }
-    } catch (e) {
-      console.error('Failed to add single key:', e);
+      await Promise.all([
+        loadInventoryKeys(inventoryProduct.id),
+        loadAdminStats(),
+        loadDbProducts(),
+        loadAllKeysList()
+      ]);
+    } catch (error: any) {
+      console.error('Failed to add single key:', error);
+      const message = error?.message || 'تعذر إضافة المفتاح. حاول مجدداً.';
+      setBulkMessage(message);
+      showToast(message, 'error');
+    } finally {
+      setIsAddingSingleKey(false);
     }
   };
 
@@ -2530,6 +2582,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </p>
               </div>
 
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <button
+                  onClick={refreshAdminPanel}
+                  disabled={isAdminRefreshing}
+                  className="px-3 py-2 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 border border-indigo-500/20 text-indigo-650 dark:text-primary rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  title={lang === 'ar' ? 'تحديث بيانات القسم الحالي' : 'Refresh current section'}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isAdminRefreshing ? 'animate-spin' : ''}`} />
+                  <span>{isAdminRefreshing ? (lang === 'ar' ? 'جارٍ التحديث' : 'Refreshing') : (lang === 'ar' ? 'تحديث' : 'Refresh')}</span>
+                </button>
               {adminStats && (
                 <div className="flex items-center gap-3 text-xs">
                   <span className="px-4 py-2 bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 text-indigo-650 dark:text-primary rounded-xl font-bold flex items-center gap-2">
@@ -2541,7 +2603,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </span>
                 </div>
               )}
+              </div>
             </div>
+
+            {adminLoadError && (
+              <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-xs font-bold text-rose-600 dark:text-rose-300 flex items-center justify-between gap-3">
+                <span>{adminLoadError}</span>
+                <button onClick={refreshAdminPanel} className="underline underline-offset-4 hover:text-rose-500">{lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}</button>
+              </div>
+            )}
 
             {/* Admin Sub-Tabs Navigation */}
             <div className={`flex flex-wrap items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-fit`}>
@@ -3375,10 +3445,33 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="flex-1 text-right">
                         <h4 className={`text-sm font-extrabold ${styles.textTitle} mb-1`}>إدارة المخزون الذكية</h4>
                         <p className={`text-xs ${styles.textMuted} leading-relaxed`}>
-                          يمكنك إضافة آلاف المفاتيح دفعة واحدة بدون أي تأخير. النظام سيقوم بمعالجتها في الخلفية.
+                          يعرض المخزون المفاتيح القابلة للتفعيل فقط. تُستبعد المفاتيح المستخدمة أو المعطلة أو المكررة تلقائياً من الرصيد المتاح.
                         </p>
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-center">
+                        <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300">متاح للتفعيل</div>
+                        <div className="text-lg font-black text-emerald-600 dark:text-emerald-200">{inventoryStock.available}</div>
+                      </div>
+                      <div className="rounded-lg border border-slate-500/20 bg-slate-500/10 px-3 py-2 text-center">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-300">الإجمالي</div>
+                        <div className={`text-lg font-black ${styles.textTitle}`}>{inventoryStock.total}</div>
+                      </div>
+                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-center">
+                        <div className="text-[10px] font-bold text-amber-600 dark:text-amber-300">مستخدم</div>
+                        <div className="text-lg font-black text-amber-600 dark:text-amber-200">{inventoryStock.used}</div>
+                      </div>
+                      <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-center">
+                        <div className="text-[10px] font-bold text-rose-600 dark:text-rose-300">معطل / مؤرشف</div>
+                        <div className="text-lg font-black text-rose-600 dark:text-rose-200">{inventoryStock.disabled + inventoryStock.archived}</div>
+                      </div>
+                    </div>
+                    {inventoryStock.duplicateCodes > 0 && (
+                      <div className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-[11px] font-bold text-rose-600 dark:text-rose-300">
+                        تم استبعاد {inventoryStock.duplicateCodes} كود مكرر من المخزون المتاح لحماية التفعيل.
+                      </div>
+                    )}
                     {!bulkAddOpen && (
                       <button 
                         onClick={() => setBulkAddOpen(true)}
@@ -3456,8 +3549,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-4 px-1">
                       <h4 className={`text-sm font-bold ${styles.textTitle}`}>المفاتيح الحالية</h4>
-                      <div className="text-xs font-bold text-indigo-650 dark:text-primary bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full shadow-sm">
-                        {inventoryKeys.length} مفتاح
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full shadow-sm">
+                          {inventoryStock.available} متاح
+                        </div>
+                        <div className="text-xs font-bold text-indigo-650 dark:text-primary bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full shadow-sm">
+                          {inventoryStock.total} إجمالي
+                        </div>
                       </div>
                     </div>
 
@@ -3473,6 +3571,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <div className={`flex-1 text-sm ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-black'} font-mono break-all text-left select-all transition-colors`} dir="ltr">
                               {keyItem.key}
                             </div>
+                            <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold ${keyItem.isUsed ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300' : keyItem.isDisabled || keyItem.isArchived ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'}`}>
+                              {keyItem.isUsed ? 'مستخدم' : keyItem.isDisabled || keyItem.isArchived ? 'غير متاح' : 'متاح'}
+                            </span>
                             <button
                               onClick={() => handleDeleteKey(keyItem.id)}
                               className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer"
@@ -3483,7 +3584,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           </div>
                         ))}
 
-                        {inventoryKeys.length === 0 && !bulkAddOpen && !singleAddOpen && (
+                        {inventoryStock.total === 0 && !bulkAddOpen && !singleAddOpen && (
                           <div className={`text-center py-10 border ${styles.borderNormal} border-dashed rounded-xl ${isDark ? 'bg-black/20' : 'bg-slate-50'}`}>
                             <Key className="w-8 h-8 text-slate-450 mx-auto mb-3 opacity-50" />
                             <p className={`text-xs ${styles.textMuted} font-bold`}>لا توجد مفاتيح في المخزون حالياً</p>
@@ -3510,10 +3611,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleAddSingleKey}
-                                  disabled={!singleKeyText.trim()}
+                                  disabled={!singleKeyText.trim() || isAddingSingleKey}
                                   className="px-6 py-3 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
                                 >
-                                  إضافة
+                                  {isAddingSingleKey ? 'جارٍ الإضافة...' : 'إضافة'}
                                 </button>
                                 <button
                                   onClick={() => setSingleAddOpen(false)}
