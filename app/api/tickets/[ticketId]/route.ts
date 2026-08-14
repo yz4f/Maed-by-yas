@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { claimTicket, getTicketDetail, TicketError, updateTicket } from '@/lib/ticket-store';
+import { assignTicket, claimTicket, getTicketDetail, TicketError, updateTicket } from '@/lib/ticket-store';
 import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
 export const dynamic = 'force-dynamic';
 const patchSchema = z.object({
-  action: z.enum(['claim', 'update']),
-  status: z.enum(['open', 'in_progress', 'awaiting_user', 'awaiting_staff', 'closed']).optional(),
+  action: z.enum(['claim', 'assign', 'update']),
+  status: z.enum(['new', 'open', 'in_progress', 'awaiting_user', 'awaiting_staff', 'resolved', 'closed']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
-  assignedAgentId: z.string().nullable().optional(),
-  assignedAgentName: z.string().nullable().optional(),
-  assignedAgentImage: z.string().nullable().optional(),
+  assigneeId: z.string().trim().min(1).max(128).nullable().optional(),
+  tags: z.array(z.string().trim().min(2).max(24)).max(8).optional(),
 });
 
 function fail(error: unknown) {
@@ -39,7 +38,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const input = patchSchema.parse(await request.json());
     const detail = input.action === 'claim'
       ? await claimTicket(ticketId, actor)
-      : await updateTicket(ticketId, actor, input);
+      : input.action === 'assign'
+        ? await assignTicket(ticketId, actor, input.assigneeId || null)
+        : await updateTicket(ticketId, actor, { status: input.status, priority: input.priority, tags: input.tags });
     return NextResponse.json({ success: true, detail });
   } catch (error) { return fail(error); }
 }
