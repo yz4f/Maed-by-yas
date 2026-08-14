@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
-import { StoreDB } from '@/lib/store-db';
+import { getKeyStockSummary, StoreDB } from '@/lib/store-db';
 
 export async function GET() {
-  const products = await StoreDB.getProducts();
-  return NextResponse.json({ success: true, products });
+  try {
+    const [products, keys] = await Promise.all([StoreDB.getProducts(), StoreDB.getKeys()]);
+    const productsWithStock = products.map((product) => {
+      const stock = getKeyStockSummary(keys.filter((key) => key.productId === product.id));
+      return { ...product, stockKeysCount: stock.available, stockSummary: stock };
+    });
+    return NextResponse.json({ success: true, products: productsWithStock });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error?.message || 'تعذر تحميل المنتجات والمخزون.' }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
