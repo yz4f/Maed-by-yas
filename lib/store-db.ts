@@ -137,7 +137,7 @@ function getFallbackData() {
     if (!fs.existsSync(path.dirname(fallbackFilePath))) {
       fs.mkdirSync(path.dirname(fallbackFilePath), { recursive: true });
     }
-    if (!fs.existsSync(fallbackFilePath)) {
+    if (!fs.existsSync(/* turbopackIgnore: true */ fallbackFilePath)) {
       const initialData = {
         products: initialProducts,
         users: [
@@ -223,7 +223,7 @@ function getFallbackData() {
       fs.writeFileSync(fallbackFilePath, JSON.stringify(initialData, null, 2), 'utf8');
       return initialData;
     }
-    const raw = fs.readFileSync(fallbackFilePath, 'utf8');
+    const raw = fs.readFileSync(/* turbopackIgnore: true */ fallbackFilePath, 'utf8');
     return JSON.parse(raw);
   } catch (err) {
     console.error("Failed to read fallback database file:", err);

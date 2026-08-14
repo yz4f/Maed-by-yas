@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest } from 'next/server';
 import { authOptions } from '@/lib/auth';
+import { requestHasTrustedOrigin as isTrustedOrigin } from '@/lib/request-security';
 import { RoleType } from '@/types';
 
 export interface TicketActor {
@@ -31,11 +32,5 @@ export async function getTicketActor(): Promise<TicketActor | null> {
 }
 
 export function requestHasTrustedOrigin(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  if (!origin) return true;
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
+  return isTrustedOrigin(request);
 }

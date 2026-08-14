@@ -20,6 +20,24 @@ const STATUS_VALUES: TicketStatus[] = ['open', 'in_progress', 'awaiting_user', '
 const PRIORITY_VALUES: TicketPriority[] = ['low', 'medium', 'high', 'urgent'];
 const CATEGORY_VALUES: TicketCategory[] = ['technical', 'account', 'service', 'suggestion', 'other'];
 
+function hasPrefix(bytes: Uint8Array, prefix: number[]) {
+  return prefix.every((value, index) => bytes[index] === value);
+}
+
+async function assertAttachmentContent(file: File) {
+  const bytes = new Uint8Array(await file.slice(0, 512).arrayBuffer());
+  const isValid = (() => {
+    if (file.type === 'image/png') return hasPrefix(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    if (file.type === 'image/jpeg') return hasPrefix(bytes, [0xff, 0xd8, 0xff]);
+    if (file.type === 'image/gif') return hasPrefix(bytes, [0x47, 0x49, 0x46, 0x38]) && (bytes[4] === 0x37 || bytes[4] === 0x39) && bytes[5] === 0x61;
+    if (file.type === 'image/webp') return hasPrefix(bytes, [0x52, 0x49, 0x46, 0x46]) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+    if (file.type === 'application/pdf') return hasPrefix(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d]);
+    if (file.type === 'text/plain') return !bytes.some((value) => value === 0);
+    return false;
+  })();
+  if (!isValid) throw new TicketError('محتوى الملف لا يطابق نوعه المسموح.');
+}
+
 export class TicketError extends Error {
   constructor(message: string, public status = 400) {
     super(message);
@@ -237,6 +255,7 @@ export async function uploadTicketAttachment(ticketId: string, actor: TicketActo
   if (ticket.status === 'closed') throw new TicketError('لا يمكن رفع ملف إلى تذكرة مغلقة.', 409);
   if (!ACCEPTED_TYPES.has(file.type)) throw new TicketError('نوع الملف غير مسموح. الملفات المدعومة: صور وPDF وTXT.');
   if (file.size <= 0 || file.size > MAX_ATTACHMENT_BYTES) throw new TicketError('حجم الملف يجب ألا يتجاوز 10 ميغابايت.');
+  await assertAttachmentContent(file);
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const extension = file.name.includes('.') ? file.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') : '';
   const objectPath = `tickets/${ticketId}/${makeId('attachment')}${extension ? `.${extension}` : ''}`;

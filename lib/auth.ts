@@ -3,13 +3,11 @@ import DiscordProvider from 'next-auth/providers/discord';
 import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 
-process.env.NEXTAUTH_URL = 'https://t3n-store-production.up.railway.app';
-
 export const authOptions: NextAuthOptions = {
   providers: [
     DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID || '1421920616382205962',
-      clientSecret: process.env.DISCORD_CLIENT_SECRET || '5VeEEtlWsgSBIRXnVS765rGOMP7dAcvV',
+      clientId: process.env.DISCORD_CLIENT_ID || '',
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || '',
       authorization: { params: { scope: 'identify email guilds' } },
     }),
   ],
@@ -55,5 +53,5 @@ export const authOptions: NextAuthOptions = {
     signIn: '/',
     error: '/',
   },
-  secret: process.env.NEXTAUTH_SECRET || 't3n_super_secret_jwt_key_2026',
+  secret: process.env.NEXTAUTH_SECRET,
 };
