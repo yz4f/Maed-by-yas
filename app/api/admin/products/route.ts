@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getKeyStockSummary, StoreDB } from '@/lib/store-db';
+import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
 export async function GET() {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المنتجات.' }, { status: 403 });
+  }
   try {
     const [products, keys] = await Promise.all([StoreDB.getProducts(), StoreDB.getKeys()]);
     const productsWithStock = products.map((product) => {
@@ -15,6 +19,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المنتجات.' }, { status: 403 });
+  }
   try {
     const data = await req.json();
     const product = await StoreDB.createProduct(data);
@@ -25,6 +32,9 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المنتجات.' }, { status: 403 });
+  }
   try {
     const data = await req.json();
     const { id, ...updates } = data;
@@ -39,6 +49,9 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المنتجات.' }, { status: 403 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
