@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { StoreDB } from '@/lib/store-db';
+import { getKeyStockSummary, StoreDB } from '@/lib/store-db';
 
 export async function GET(req: Request) {
   try {
@@ -8,11 +8,11 @@ export async function GET(req: Request) {
 
     if (productId) {
       const keys = await StoreDB.getKeysByProduct(productId);
-      return NextResponse.json({ success: true, keys });
+      return NextResponse.json({ success: true, keys, stock: getKeyStockSummary(keys) });
     }
 
     const keys = await StoreDB.getKeys();
-    return NextResponse.json({ success: true, keys });
+    return NextResponse.json({ success: true, keys, stock: getKeyStockSummary(keys) });
   } catch (err: any) {
     console.error("Keys API failed:", err);
     return NextResponse.json({ success: false, error: err.message, stack: err.stack }, { status: 500 });
@@ -26,7 +26,13 @@ export async function DELETE(req: Request) {
 
     if (deleteAllForProductId) {
       const deletedCount = await StoreDB.deleteAllKeysForProduct(deleteAllForProductId);
-      return NextResponse.json({ success: true, count: deletedCount, message: `تم حذف جميع الأكواد بنجاح (${deletedCount} كود)` });
+      return NextResponse.json({
+        success: true,
+        count: deletedCount,
+        message: deletedCount > 0
+          ? `تم حذف ${deletedCount} مفتاح غير مستخدم بنجاح.`
+          : 'لا توجد مفاتيح غير مستخدمة للحذف.'
+      });
     }
 
     if (!keyId) {
@@ -34,7 +40,10 @@ export async function DELETE(req: Request) {
     }
 
     const result = await StoreDB.deleteKey(keyId);
-    return NextResponse.json({ success: result, message: result ? 'تم حذف المفتاح بنجاح' : 'لم يتم العثور على المفتاح' });
+    return NextResponse.json({
+      success: result,
+      message: result ? 'تم حذف المفتاح غير المستخدم بنجاح.' : 'تعذر حذف المفتاح لأنه غير موجود أو مستخدم بالفعل.'
+    }, { status: result ? 200 : 400 });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
