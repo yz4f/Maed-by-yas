@@ -1,6 +1,6 @@
 import { Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction } from "firebase/firestore";
 
 // Safe dynamic imports for Server-side filesystem operations
 let fs: any;
@@ -34,6 +34,46 @@ function getDb() {
 }
 
 export { getDb as db };
+
+export type KeyStockSummary = {
+  total: number;
+  available: number;
+  used: number;
+  disabled: number;
+  archived: number;
+  duplicateCodes: number;
+};
+
+/**
+ * المصدر الوحيد لعداد المخزون: مفتاح متاح يعني أنه غير مستخدم أو معطّل أو مؤرشف
+ * ولا يتشارك نفس الكود مع مفتاح آخر، لأن الأكواد المكررة لا تكون آمنة للتفعيل.
+ */
+export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
+  const codeFrequency = new Map<string, number>();
+  for (const key of keys) {
+    const normalized = (key.key || '').trim().toUpperCase();
+    if (normalized) codeFrequency.set(normalized, (codeFrequency.get(normalized) || 0) + 1);
+  }
+
+  const duplicateCodes = Array.from(codeFrequency.values()).filter((count) => count > 1).length;
+  const available = keys.filter((key) => {
+    const normalized = (key.key || '').trim().toUpperCase();
+    return Boolean(normalized)
+      && !key.isUsed
+      && !key.isDisabled
+      && !key.isArchived
+      && codeFrequency.get(normalized) === 1;
+  }).length;
+
+  return {
+    total: keys.length,
+    available,
+    used: keys.filter((key) => key.isUsed).length,
+    disabled: keys.filter((key) => !key.isUsed && key.isDisabled).length,
+    archived: keys.filter((key) => !key.isUsed && !key.isDisabled && key.isArchived).length,
+    duplicateCodes,
+  };
+}
 
 export const DISCORD_ROLES = {
   BOSS: '1396965033316978839',
@@ -313,13 +353,31 @@ const LocalDB = {
     this.addLog('Key Creation', `تم إنشاء ${count} مفاتيح للمنتج ${product.name}`, createdById, 'Admin');
     return { success: true, keys: generatedKeys };
   },
-  bulkAddKeys(productId: string, rawKeysText: string, createdById: string): {success: boolean, count: number} {
+  bulkAddKeys(productId: string, rawKeysText: string, createdById: string): {success: boolean, count: number, skipped: number, message?: string} {
     const d = getFallbackData();
+    if (!d.products.some((product: Product) => product.id === productId)) {
+      return { success: false, count: 0, skipped: 0, message: 'المنتج المطلوب غير موجود.' };
+    }
+
     const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
-    let count = 0;
+    const existingCodes = new Set(d.keys.map((key: Key) => key.key.trim().toUpperCase()));
+    const acceptedCodes: string[] = [];
+    let skipped = 0;
+
     for (const keyString of lines) {
-      const newKey: Key = {
-        id: `key-${Date.now()}-${count}`,
+      const normalized = keyString.toUpperCase();
+      if (existingCodes.has(normalized)) {
+        skipped++;
+        continue;
+      }
+      existingCodes.add(normalized);
+      acceptedCodes.push(keyString);
+    }
+
+    const createdAt = new Date().toISOString();
+    acceptedCodes.forEach((keyString, index) => {
+      d.keys.push({
+        id: `key-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
         key: keyString,
         productId,
         isUsed: false,
@@ -327,13 +385,12 @@ const LocalDB = {
         isArchived: false,
         duration: 'Lifetime',
         createdById,
-        createdAt: new Date().toISOString()
-      };
-      d.keys.push(newKey);
-      count++;
-    }
-    saveFallbackData(d);
-    return { success: true, count };
+        createdAt
+      } as Key);
+    });
+
+    if (acceptedCodes.length > 0) saveFallbackData(d);
+    return { success: true, count: acceptedCodes.length, skipped };
   },
   updateKey(id: string, updates: Partial<Key>): boolean {
     const d = getFallbackData();
@@ -347,7 +404,9 @@ const LocalDB = {
   },
   deleteKey(id: string): boolean {
     const d = getFallbackData();
-    d.keys = d.keys.filter((k: any) => k.id !== id);
+    const key = d.keys.find((item: Key) => item.id === id);
+    if (!key || key.isUsed) return false;
+    d.keys = d.keys.filter((item: Key) => item.id !== id);
     saveFallbackData(d);
     return true;
   },
@@ -358,13 +417,16 @@ const LocalDB = {
     saveFallbackData(d);
     return true;
   },
-  deleteAllKeysForProduct(productId: string): boolean {
+  deleteAllKeysForProduct(productId: string): number {
     const d = getFallbackData();
-    d.keys = d.keys.filter((k: any) => k.productId !== productId);
+    const removableKeys = d.keys.filter((key: Key) => key.productId === productId && !key.isUsed);
+    if (removableKeys.length === 0) return 0;
+    const removableIds = new Set(removableKeys.map((key: Key) => key.id));
+    d.keys = d.keys.filter((key: Key) => !removableIds.has(key.id));
     saveFallbackData(d);
-    return true;
+    return removableKeys.length;
   },
-  activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): {success: boolean, message: string, product?: Product} {
+  activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): { success: true; message: string; product: Product } | { success: false; message: string; product?: undefined } {
     const d = getFallbackData();
     const keyIdx = d.keys.findIndex((k: any) => k.key === keyString);
     if (keyIdx === -1) return { success: false, message: 'المفتاح غير صحيح أو غير موجود' };
@@ -398,6 +460,9 @@ const LocalDB = {
       d.users[userIdx] = { ...d.users[userIdx], lastLogin: new Date().toISOString(), lastIp: ipAddress };
       user = d.users[userIdx];
     }
+
+    const alreadyActivated = d.userProducts.some((item: UserProduct) => item.userId === user.id && item.productId === product.id && item.status === 'Active');
+    if (alreadyActivated) return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
 
     d.keys[keyIdx].isUsed = true;
     d.keys[keyIdx].usedByUserId = user.id;
@@ -442,6 +507,18 @@ const LocalDB = {
       }
     }
     return result;
+  },
+  resetUserProductHwid(userId: string, productId: string): {success: boolean; message?: string; resetAt?: string} {
+    const d = getFallbackData();
+    const product = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId && item.status === 'Active');
+    if (!product) return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.' };
+
+    const resetAt = new Date().toISOString();
+    product.hwidResetAt = resetAt;
+    product.hwidResetCount = (product.hwidResetCount || 0) + 1;
+    saveFallbackData(d);
+    this.addLog('HWID Reset', `تمت إعادة تعيين ربط الجهاز للمنتج ${productId}`, userId, 'Customer');
+    return { success: true, resetAt };
   },
   removeProductFromUser(userId: string, productId: string): {success: boolean} {
     const d = getFallbackData();
@@ -515,15 +592,16 @@ const LocalDB = {
     let activeProducts = products.filter((p: any) => !p.isDisabled && !p.isArchived).length;
     let inactiveProducts = totalProducts - activeProducts;
 
-    let usedKeys = keys.filter((k: any) => k.isUsed).length;
-    let unusedKeys = totalKeys - usedKeys;
+    const globalStock = getKeyStockSummary(keys as Key[]);
+    const usedKeys = globalStock.used;
+    const unusedKeys = globalStock.available;
 
-    let productStockList = products.map((p: any) => {
-      let pKeys = keys.filter((k: any) => k.productId === p.id && !k.isUsed && !k.isDisabled);
+    const productStockList = products.map((p: any) => {
+      const productStock = getKeyStockSummary(keys.filter((k: any) => k.productId === p.id) as Key[]);
       return {
         productId: p.id,
         productName: p.name,
-        stockCount: pKeys.length
+        stockCount: productStock.available
       };
     });
 
@@ -754,21 +832,38 @@ export const StoreDB = {
     );
   },
 
-  async bulkAddKeys(productId: string, rawKeysText: string, createdById: string): Promise<{success: boolean; count: number}> {
+  async bulkAddKeys(productId: string, rawKeysText: string, createdById: string): Promise<{success: boolean; count: number; skipped: number; message?: string}> {
     return runDbOp(
       async () => {
         const db = getDb();
+        const product = await this.getProductById(productId);
+        if (!product) return { success: false, count: 0, skipped: 0, message: 'المنتج المطلوب غير موجود.' };
+
         const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
-        let count = 0;
-        
+        const existingKeys = await this.getKeys();
+        const existingCodes = new Set(existingKeys.map((key) => key.key.trim().toUpperCase()));
+        const acceptedCodes: string[] = [];
+        let skipped = 0;
+
+        for (const keyString of lines) {
+          const normalized = keyString.toUpperCase();
+          if (existingCodes.has(normalized)) {
+            skipped++;
+            continue;
+          }
+          existingCodes.add(normalized);
+          acceptedCodes.push(keyString);
+        }
+
+        const createdAt = new Date().toISOString();
         const BATCH_SIZE = 400;
-        for (let i = 0; i < lines.length; i += BATCH_SIZE) {
+        for (let i = 0; i < acceptedCodes.length; i += BATCH_SIZE) {
           const batch = writeBatch(db);
-          const chunk = lines.slice(i, i + BATCH_SIZE);
-          
-          for (const keyString of chunk) {
+          const chunk = acceptedCodes.slice(i, i + BATCH_SIZE);
+          chunk.forEach((keyString, index) => {
+            const absoluteIndex = i + index;
             const newKey: Key = {
-              id: `key-${Date.now()}-${count}`,
+              id: `key-${Date.now()}-${absoluteIndex}-${Math.random().toString(36).slice(2, 7)}`,
               key: keyString,
               productId,
               isUsed: false,
@@ -776,14 +871,14 @@ export const StoreDB = {
               isArchived: false,
               duration: 'Lifetime',
               createdById,
-              createdAt: new Date().toISOString()
+              createdAt
             };
-            batch.set(doc(getDb(), "keys", newKey.id), newKey);
-            count++;
-          }
+            batch.set(doc(db, "keys", newKey.id), newKey);
+          });
           await batch.commit();
         }
-        return { success: true, count };
+
+        return { success: true, count: acceptedCodes.length, skipped };
       },
       () => LocalDB.bulkAddKeys(productId, rawKeysText, createdById)
     );
@@ -802,7 +897,10 @@ export const StoreDB = {
   async deleteKey(id: string): Promise<boolean> {
     return runDbOp(
       async () => {
-        await deleteDoc(doc(getDb(), "keys", id));
+        const keyRef = doc(getDb(), "keys", id);
+        const keySnap = await getDoc(keyRef);
+        if (!keySnap.exists() || (keySnap.data() as Key).isUsed) return false;
+        await deleteDoc(keyRef);
         return true;
       },
       () => LocalDB.deleteKey(id)
@@ -824,14 +922,13 @@ export const StoreDB = {
     );
   },
   
-  async deleteAllKeysForProduct(productId: string): Promise<boolean> {
+  async deleteAllKeysForProduct(productId: string): Promise<number> {
     return runDbOp(
       async () => {
         const keys = await this.getKeysByProduct(productId);
-        for (const k of keys) {
-          await deleteDoc(doc(getDb(), "keys", k.id));
-        }
-        return true;
+        const removableKeys = keys.filter((key) => !key.isUsed);
+        await Promise.all(removableKeys.map((key) => deleteDoc(doc(getDb(), "keys", key.id))));
+        return removableKeys.length;
       },
       () => LocalDB.deleteAllKeysForProduct(productId)
     );
@@ -844,6 +941,9 @@ export const StoreDB = {
         const keySnap = await getDocs(q);
         if (keySnap.empty) {
           return { success: false, message: 'المفتاح غير صحيح أو غير موجود' };
+        }
+        if (keySnap.size !== 1) {
+          return { success: false, message: 'تم اكتشاف تكرار لهذا المفتاح. تواصل مع الدعم قبل التفعيل.' };
         }
         
         const keyObj = keySnap.docs[0].data() as Key;
@@ -876,25 +976,39 @@ export const StoreDB = {
           await updateDoc(doc(getDb(), "users", user.id), { lastLogin: new Date().toISOString(), lastIp: ipAddress });
         }
 
-        keyObj.isUsed = true;
-        keyObj.usedByUserId = user.id;
-        keyObj.usedAt = new Date().toISOString();
-        await updateDoc(doc(getDb(), "keys", keyObj.id), { isUsed: true, usedByUserId: user.id, usedAt: keyObj.usedAt });
+        const existingLicenses = await this.getUserProducts(user.id);
+        if (existingLicenses.some((license) => license.productId === product.id && license.status === 'Active')) {
+          return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
+        }
 
+        const usedAt = new Date().toISOString();
         const userProduct: UserProduct = {
-          id: `up-${Date.now()}`,
+          id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           userId: user.id,
           productId: product.id,
           keyId: keyObj.id,
           keyString: keyObj.key,
           status: 'Active',
-          activatedAt: new Date().toISOString(),
+          activatedAt: usedAt,
           discordRoleGranted: true
         };
-        await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);
+
+        try {
+          await runTransaction(getDb(), async (transaction) => {
+            const latestKeySnap = await transaction.get(keySnap.docs[0].ref);
+            if (!latestKeySnap.exists()) throw new Error('المفتاح غير صحيح أو غير موجود');
+            const latestKey = latestKeySnap.data() as Key;
+            if (latestKey.isUsed) throw new Error('المفتاح مستخدم مسبقاً');
+            if (latestKey.isDisabled || latestKey.isArchived) throw new Error('المفتاح غير متاح للتفعيل');
+
+            transaction.update(keySnap.docs[0].ref, { isUsed: true, usedByUserId: user.id, usedAt });
+            transaction.set(doc(getDb(), "userProducts", userProduct.id), userProduct);
+          });
+        } catch (error: any) {
+          return { success: false, message: error?.message || 'تعذر تفعيل المفتاح الآن.' };
+        }
 
         await this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
-        
         return { success: true, message: 'تم التفعيل بنجاح', product };
       },
       () => LocalDB.activateProductWithKey(keyString, userDetails, ipAddress)
@@ -945,6 +1059,27 @@ export const StoreDB = {
         return result;
       },
       () => LocalDB.getUserProducts(userId)
+    );
+  },
+
+  async resetUserProductHwid(userId: string, productId: string): Promise<{success: boolean; message?: string; resetAt?: string}> {
+    return runDbOp(
+      async () => {
+        const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId), where("productId", "==", productId));
+        const snapshot = await getDocs(q);
+        const activeLicense = snapshot.docs.find((item) => (item.data() as UserProduct).status === 'Active');
+        if (!activeLicense) return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.' };
+
+        const resetAt = new Date().toISOString();
+        const current = activeLicense.data() as UserProduct;
+        await updateDoc(activeLicense.ref, {
+          hwidResetAt: resetAt,
+          hwidResetCount: (current.hwidResetCount || 0) + 1
+        });
+        await this.addLog('HWID Reset', `تمت إعادة تعيين ربط الجهاز للمنتج ${productId}`, userId, 'Customer');
+        return { success: true, resetAt };
+      },
+      () => LocalDB.resetUserProductHwid(userId, productId)
     );
   },
 
@@ -1068,15 +1203,16 @@ export const StoreDB = {
         let activeProducts = products.filter(p => !p.isDisabled && !p.isArchived).length;
         let inactiveProducts = totalProducts - activeProducts;
 
-        let usedKeys = keys.filter(k => k.isUsed).length;
-        let unusedKeys = totalKeys - usedKeys;
+        const globalStock = getKeyStockSummary(keys);
+        const usedKeys = globalStock.used;
+        const unusedKeys = globalStock.available;
 
-        let productStockList = products.map(p => {
-          let pKeys = keys.filter(k => k.productId === p.id && !k.isUsed && !k.isDisabled);
+        const productStockList = products.map(p => {
+          const productStock = getKeyStockSummary(keys.filter(k => k.productId === p.id));
           return {
             productId: p.id,
             productName: p.name,
-            stockCount: pKeys.length
+            stockCount: productStock.available
           };
         });
 
