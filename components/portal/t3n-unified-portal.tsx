@@ -172,6 +172,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isSyncingDiscordRoles, setIsSyncingDiscordRoles] = useState(false);
+  const [licenseClock, setLicenseClock] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setLicenseClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Key Redemption State
   const [keyInput, setKeyInput] = useState('');
@@ -343,9 +349,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
-  const activeProductCount = userProducts.filter((product) => product.status === 'Active').length;
-  const inactiveProductCount = userProducts.filter((product) => product.status !== 'Active').length;
-  const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived).length;
+  const getLicenseTiming = (license: UserProduct) => {
+    const expiresAtMs = license.expiresAt ? new Date(license.expiresAt).getTime() : null;
+    const remainingMs = expiresAtMs === null || Number.isNaN(expiresAtMs) ? null : Math.max(0, expiresAtMs - licenseClock);
+    const isExpired = remainingMs !== null && remainingMs === 0;
+    const isUsable = license.status === 'Active' && !isExpired;
+    const totalSeconds = remainingMs === null ? null : Math.floor(remainingMs / 1000);
+    const days = totalSeconds === null ? 0 : Math.floor(totalSeconds / 86_400);
+    const hours = totalSeconds === null ? 0 : Math.floor((totalSeconds % 86_400) / 3_600);
+    const minutes = totalSeconds === null ? 0 : Math.floor((totalSeconds % 3_600) / 60);
+    const seconds = totalSeconds === null ? 0 : totalSeconds % 60;
+    const countdown = totalSeconds === null
+      ? (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime license')
+      : (lang === 'ar'
+        ? `${days}ي ${hours}س ${minutes}د ${seconds}ث`
+        : `${days}d ${hours}h ${minutes}m ${seconds}s`);
+    return { expiresAtMs, remainingMs, isExpired, isUsable, countdown };
+  };
+  const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
+  const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
+  const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived && !getLicenseTiming(product).isExpired).length;
   const memberSince = React.useMemo(() => {
     if (!currentUser?.createdAt) return '—';
     const joined = new Date(currentUser.createdAt);
@@ -376,7 +399,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   }, [activeTab, adminSectionTab]);
 
-  const loadUserProducts = async () => {
+  const loadUserProducts = async (): Promise<void> => {
     if (!currentUser) return;
     setIsLoadingProducts(true);
     try {
@@ -776,8 +799,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           setDemoUser(data.user);
         }
 
-        // Refresh user products
-        loadUserProducts();
+        // Refresh the license library before navigating so the newly activated card appears immediately.
+        await loadUserProducts();
         setActiveTab('my-products');
         setGuestModalOpen(false);
       } else {
@@ -1274,15 +1297,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <div className={`redeem-page-wrapper ${isDark ? 'redeem-page-wrapper--dark' : 'redeem-page-wrapper--light'} min-h-screen w-full relative overflow-hidden select-none`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         <style dangerouslySetInnerHTML={{ __html: `
           .redeem-page-wrapper {
-            --night: #050b16;
-            --deep-blue: #0b1f3d;
-            --royal-blue: #195b9b;
-            --sky: #65c9ff;
-            --ice: #e9f4ff;
-            --silver: #cdd9e5;
-            --muted: #a7bbd1;
-            --glass: rgba(8, 20, 42, 0.68);
-            --glass-border: rgba(214, 231, 245, 0.24);
+            --night: #081321;
+            --deep-blue: #10213a;
+            --royal-blue: #4567d8;
+            --sky: #8edbff;
+            --ice: #f4f8fc;
+            --silver: #c8d4e2;
+            --muted: #a8b8ca;
+            --glass: rgba(15, 27, 43, 0.82);
+            --glass-border: rgba(193, 216, 240, 0.19);
             --discord: #5865f2;
             min-height: 100vh;
             width: 100%;
@@ -1293,7 +1316,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             overflow: hidden;
             isolation: isolate;
             color: var(--ice);
-            background: linear-gradient(125deg, rgba(2, 10, 24, 0.18) 0%, rgba(4, 29, 66, 0.12) 49%, rgba(2, 12, 28, 0.22) 100%), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, var(--night);
+            background: linear-gradient(125deg, rgba(4, 12, 24, 0.80) 0%, rgba(9, 31, 61, 0.72) 49%, rgba(4, 14, 28, 0.84) 100%), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, var(--night);
             font-family: 'IBM Plex Sans Arabic', sans-serif;
           }
           .redeem-page-wrapper .login-background {
@@ -1509,8 +1532,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             border-radius: 23px;
             color: var(--ice);
             text-align: center;
-            background: linear-gradient(155deg, rgba(10, 42, 78, 0.88), rgba(4, 15, 31, 0.94) 57%, rgba(13, 47, 76, 0.88));
-            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.50), 0 0 0 5px rgba(208, 234, 252, 0.07), inset 0 1px 0 rgba(255,255,255,0.18);
+            background: linear-gradient(155deg, rgba(22, 37, 57, 0.96), rgba(13, 23, 38, 0.98) 57%, rgba(18, 33, 52, 0.96));
+            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.42), 0 0 0 5px rgba(170, 211, 246, 0.045), inset 0 1px 0 rgba(255,255,255,0.10);
             backdrop-filter: blur(26px) saturate(125%);
             -webkit-backdrop-filter: blur(26px) saturate(125%);
             animation: fadeUp .8s ease both .25s;
@@ -1533,8 +1556,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           .redeem-page-wrapper .alt-link button { border: none; padding: 0; cursor: pointer; color: #bce9ff; background: transparent; font-family: inherit; font-weight: 800; text-decoration: none; }
           .redeem-page-wrapper .alt-link button:hover { color: #fff; text-decoration: underline; }
           .redeem-page-wrapper .floating-ctrls { position: fixed; top: 26px; z-index: 6; display: flex; align-items: center; gap: 9px; }
-          .redeem-page-wrapper .floating-ctrls button { height: 42px; border: 1px solid rgba(218,238,252,0.19); border-radius: 13px; cursor: pointer; color: #e9f7ff; background: rgba(7, 25, 50, 0.58); box-shadow: inset 0 1px 0 rgba(255,255,255,0.09); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
-          .redeem-page-wrapper .floating-ctrls button:hover { transform: translateY(-2px); border-color: rgba(182,229,255,0.54); background: rgba(38, 114, 177, 0.38); }
+          .redeem-page-wrapper .floating-ctrls button { height: 42px; border: 1px solid rgba(203,224,245,0.18); border-radius: 13px; cursor: pointer; color: #eaf4ff; background: rgba(15, 27, 43, 0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+          .redeem-page-wrapper .floating-ctrls button:hover { transform: translateY(-2px); border-color: rgba(142,219,255,0.54); background: rgba(26, 48, 76, 0.94); }
           .redeem-page-wrapper--light { --night: #eef7fd; --deep-blue: #dceefa; --ice: #102845; --silver: #6e8eaa; --muted: #5d7893; --glass: rgba(255, 255, 255, 0.68); --glass-border: rgba(73, 137, 185, 0.22); color: #102845; background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
           .redeem-page-wrapper--light .bg-gfx { background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
           .redeem-page-wrapper--light .bg-gfx::before { opacity: 0.10; background: linear-gradient(115deg, rgba(255,255,255,0.7), transparent 35%, rgba(95,168,212,0.12) 66%, transparent 85%); }
@@ -2361,18 +2384,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="product-library mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
                 {userProducts.map((up) => {
                   const displayKey = up.keyString || (lang === 'ar' ? 'مفتاح الترخيص محفوظ بأمان' : 'License key stored securely');
+                  const timing = getLicenseTiming(up);
                   const isActive = up.status === 'Active';
+                  const canUseProduct = timing.isUsable;
                   const isProductUpdating = updatingProductIds.has(up.id);
-                  const statusLabel = isActive
-                    ? (lang === 'ar' ? 'تم تفعيل المنتج' : 'Product Activated')
-                    : (lang === 'ar' ? 'المنتج غير مفعل' : 'Product Inactive');
+                  const statusLabel = timing.isExpired
+                    ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License Expired')
+                    : isActive
+                      ? (lang === 'ar' ? 'تم تفعيل المنتج' : 'Product Activated')
+                      : (lang === 'ar' ? 'المنتج غير مفعل' : 'Product Inactive');
                   const productImg = getProductImage(up.product);
 
                   return (
                     <article
                       key={up.id}
-                      className="product-license-card group"
-                      data-active={isActive ? 'true' : 'false'}
+                      className={`product-license-card group ${timing.isExpired ? 'product-license-card--expired' : ''}`}
+                      data-active={canUseProduct ? 'true' : 'false'}
                     >
                       {/* ── BANNER IMAGE ── */}
                       <div className="product-license-card__media">
@@ -2386,18 +2413,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         />
                         {/* Gradient overlay */}
                         <div className="product-license-card__media-overlay" />
-                        {/* Status badge top-left */}
-                        <div style={{
-                          position: 'absolute', top: '10px', left: lang === 'ar' ? 'auto' : '10px', right: lang === 'ar' ? '10px' : 'auto',
-                          display: 'flex', alignItems: 'center', gap: '5px',
-                          fontSize: '11px', fontWeight: 600,
-                          color: isActive ? '#d1fae5' : '#fca5a5',
-                          background: isActive ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.7)',
-                          backdropFilter: 'blur(4px)',
-                          padding: '3px 8px', borderRadius: '6px',
-                          border: `1px solid ${isActive ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.2)'}`,
-                        }}>
-                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: isActive ? '#34d399' : '#f87171', flexShrink: 0 }} />
+                        <div className={`product-license-card__expiry ${timing.isExpired ? 'product-license-card__expiry--expired' : ''}`}>
+                          <Clock size={13} />
+                          <span>{timing.isExpired
+                            ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired')
+                            : (timing.remainingMs === null
+                              ? (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime license')
+                              : (lang === 'ar' ? `ينتهي بعد ${timing.countdown}` : `Expires in ${timing.countdown}`))}</span>
+                        </div>
+                        <div className={`product-license-card__status ${canUseProduct ? 'product-license-card__status--active' : ''}`}>
+                          <span className="product-license-card__status-dot" />
                           {statusLabel}
                         </div>
                       </div>
@@ -2416,7 +2441,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           </div>
                           <div className="product-license-card__meta product-license-card__meta--secondary">
                             {up.expiresAt
-                              ? `${lang === 'ar' ? 'ينتهي في' : 'Expires'} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                              ? `${timing.isExpired ? (lang === 'ar' ? 'انتهى في' : 'Expired on') : (lang === 'ar' ? 'ينتهي في' : 'Expires')} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
                               : (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime License')}
                           </div>
                         </div>
@@ -2429,7 +2454,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           {up.keyString && (
                             <button
                               onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
-                              title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}
+                              title={timing.isExpired ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired') : (lang === 'ar' ? 'نسخ المفتاح' : 'Copy key')}
+                              disabled={timing.isExpired}
                               className={`product-key-row__icon ${copiedKeyId === up.id ? 'product-key-row__icon--copied' : ''}`}
                             >
                               {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
@@ -2440,24 +2466,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {/* One reliable activation control per product */}
                         <div className="product-license-card__utilities product-license-card__utilities--activation">
                           <div className="product-activation-state">
-                            <span className={`product-activation-state__dot ${isActive ? 'product-activation-state__dot--on' : ''}`} />
+                            <span className={`product-activation-state__dot ${canUseProduct ? 'product-activation-state__dot--on' : ''}`} />
                             <span>{statusLabel}</span>
                           </div>
                           <button
                             type="button"
                             role="switch"
-                            aria-checked={isActive}
-                            aria-label={lang === 'ar' ? `تبديل حالة ${up.product?.name || 'المنتج'}` : `Toggle ${up.product?.name || 'product'} activation`}
+                            aria-checked={canUseProduct}
+                            aria-label={timing.isExpired ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired') : (lang === 'ar' ? `تبديل حالة ${up.product?.name || 'المنتج'}` : `Toggle ${up.product?.name || 'product'} activation`)}
                             onClick={() => updateUserProductStatus(up, isActive ? 'Inactive' : 'Active')}
-                            disabled={isProductUpdating}
-                            className={`product-activation-toggle ${isActive ? 'product-activation-toggle--on' : ''} ${isProductUpdating ? 'product-activation-toggle--loading' : ''}`}
+                            disabled={isProductUpdating || timing.isExpired}
+                            className={`product-activation-toggle ${canUseProduct ? 'product-activation-toggle--on' : ''} ${isProductUpdating ? 'product-activation-toggle--loading' : ''}`}
                           >
                             <span className="product-activation-toggle__thumb" />
                           </button>
                           <button
                             onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
                             className="product-utility-button"
-                            disabled={isProductUpdating || !isActive}
+                            disabled={isProductUpdating || !canUseProduct}
                           >
                             <RefreshCw size={13} className={isProductUpdating ? 'animate-spin' : ''} />
                             {lang === 'ar' ? 'إعادة تعيين' : 'HWID Reset'}
@@ -2467,6 +2493,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {/* Download Loader — white primary */}
                         <button
                           onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
+                          disabled={!canUseProduct}
                           className="product-download-button"
                         >
                           <Download size={14} />
@@ -2476,6 +2503,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         {/* Guide — dark outline */}
                         <button
                           onClick={() => { setGuideModalProduct(up); setGuideView('menu'); }}
+                          disabled={!canUseProduct}
                           className="product-guide-button"
                         >
                           <HelpCircle size={13} />
@@ -3736,7 +3764,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* ------------------------------------------------------------------------------------------------ */}
       {/* GUIDE MODAL */}
       {/* ------------------------------------------------------------------------------------------------ */}
-      {guideModalProduct && guideView && (
+      {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
           <div className="relative glass-card rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-300">
