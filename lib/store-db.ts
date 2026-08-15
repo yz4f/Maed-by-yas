@@ -75,6 +75,9 @@ export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
   };
 }
 
+// All newly redeemed product licenses are valid for exactly 48 hours from the activation transaction.
+export const PRODUCT_LICENSE_DURATION_MS = 2 * 24 * 60 * 60 * 1000;
+
 export const DISCORD_ROLES = {
   BOSS: '1396965033316978839',
   CO_BOSS: '1510079414422212659',
@@ -188,7 +191,7 @@ function getFallbackData() {
             key: 'KEY-T3N-FORT-DEMO-PERM',
             productId: 'prod-fortnite',
             productName: 'فك باند فورت نايت',
-            duration: 'permanent',
+            duration: '2 Days',
             isUsed: false,
             usedByUserId: null,
             usedByUserName: null,
@@ -200,7 +203,7 @@ function getFallbackData() {
             key: 'KEY-T3N-SPOOF-DEMO-PERM',
             productId: 'prod-hwid-master',
             productName: 'سبوفر تعن',
-            duration: 'permanent',
+            duration: '2 Days',
             isUsed: false,
             usedByUserId: null,
             usedByUserName: null,
@@ -342,7 +345,7 @@ const LocalDB = {
         isUsed: false,
         isDisabled: false,
         isArchived: false,
-        duration: 'Lifetime',
+        duration: '2 Days',
         createdById,
         createdAt: new Date().toISOString()
       };
@@ -383,7 +386,7 @@ const LocalDB = {
         isUsed: false,
         isDisabled: false,
         isArchived: false,
-        duration: 'Lifetime',
+        duration: '2 Days',
         createdById,
         createdAt
       } as Key);
@@ -461,7 +464,10 @@ const LocalDB = {
       user = d.users[userIdx];
     }
 
-    const alreadyActivated = d.userProducts.some((item: UserProduct) => item.userId === user.id && item.productId === product.id && item.status === 'Active');
+    const alreadyActivated = d.userProducts.some((item: UserProduct) => {
+      if (item.userId !== user.id || item.productId !== product.id || item.status !== 'Active') return false;
+      return !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now();
+    });
     if (alreadyActivated) return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
 
     d.keys[keyIdx].isUsed = true;
@@ -476,6 +482,7 @@ const LocalDB = {
       keyString: keyObj.key,
       status: 'Active',
       activatedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + PRODUCT_LICENSE_DURATION_MS).toISOString(),
       discordRoleGranted: true
     };
     d.userProducts.push(userProduct);
@@ -534,6 +541,7 @@ const LocalDB = {
       productId,
       status: 'Active',
       activatedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + PRODUCT_LICENSE_DURATION_MS).toISOString(),
       discordRoleGranted: false
     };
     d.userProducts.push(userProduct);
@@ -817,7 +825,7 @@ export const StoreDB = {
             isUsed: false,
             isDisabled: false,
             isArchived: false,
-            duration: 'Lifetime',
+            duration: '2 Days',
             createdById,
             createdAt: new Date().toISOString()
           };
@@ -869,7 +877,7 @@ export const StoreDB = {
               isUsed: false,
               isDisabled: false,
               isArchived: false,
-              duration: 'Lifetime',
+              duration: '2 Days',
               createdById,
               createdAt
             };
@@ -977,11 +985,15 @@ export const StoreDB = {
         }
 
         const existingLicenses = await this.getUserProducts(user.id);
-        if (existingLicenses.some((license) => license.productId === product.id && license.status === 'Active')) {
+        if (existingLicenses.some((license) => {
+          if (license.productId !== product.id || license.status !== 'Active') return false;
+          return !license.expiresAt || new Date(license.expiresAt).getTime() > Date.now();
+        })) {
           return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
         }
 
         const usedAt = new Date().toISOString();
+        const expiresAt = new Date(Date.parse(usedAt) + PRODUCT_LICENSE_DURATION_MS).toISOString();
         const userProduct: UserProduct = {
           id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           userId: user.id,
@@ -990,6 +1002,7 @@ export const StoreDB = {
           keyString: keyObj.key,
           status: 'Active',
           activatedAt: usedAt,
+          expiresAt,
           discordRoleGranted: true
         };
 
@@ -1106,6 +1119,7 @@ export const StoreDB = {
           productId,
           status: 'Active',
           activatedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + PRODUCT_LICENSE_DURATION_MS).toISOString(),
           discordRoleGranted: false
         };
         await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);
