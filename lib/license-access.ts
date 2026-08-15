@@ -22,7 +22,9 @@ export async function getOwnedActiveLicense(actor: SessionActor, productId: stri
   const licenses = await StoreDB.getUserProducts(user.id);
   const license = licenses.find((item) => {
     if (item.productId !== productId || item.status !== 'Active') return false;
-    return !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now();
+    if (!item.expiresAt) return false;
+    const expiresAtMs = new Date(item.expiresAt).getTime();
+    return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
   });
 
   return license ? { user, license } : null;

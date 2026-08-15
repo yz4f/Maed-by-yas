@@ -510,7 +510,8 @@ const LocalDB = {
 
     const alreadyActivated = d.userProducts.some((item: UserProduct) => {
       if (item.userId !== user.id || item.productId !== product.id || item.status !== 'Active') return false;
-      return !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now();
+      const expiresAt = item.expiresAt;
+      return typeof expiresAt === 'string' && new Date(expiresAt).getTime() > Date.now();
     });
     if (alreadyActivated) return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
 
@@ -1048,7 +1049,8 @@ export const StoreDB = {
         const existingLicenses = await this.getUserProducts(user.id);
         if (existingLicenses.some((license) => {
           if (license.productId !== product.id || license.status !== 'Active') return false;
-          return !license.expiresAt || new Date(license.expiresAt).getTime() > Date.now();
+          const expiresAt = license.expiresAt;
+          return typeof expiresAt === 'string' && new Date(expiresAt).getTime() > Date.now();
         })) {
           return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
         }
