@@ -1,6 +1,6 @@
 export type RoleType = 'Boss' | 'Co-Boss' | 'Admin' | 'Member' | 'Customer';
 export type ProductStatus = 'Active' | 'Inactive' | 'Suspended';
-export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days';
+export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days' | '2 Days';
 
 export interface User {
   id: string;
