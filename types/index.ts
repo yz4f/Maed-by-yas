@@ -1,5 +1,5 @@
 export type RoleType = 'Boss' | 'Co-Boss' | 'Admin' | 'Member' | 'Customer';
-export type ProductStatus = 'Active' | 'Inactive' | 'Suspended';
+export type ProductStatus = 'Active' | 'Inactive' | 'Suspended' | 'Revoked' | 'Expired';
 export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days' | '2 Days';
 
 export interface User {
@@ -19,6 +19,8 @@ export interface User {
   banExpiresAt?: string | null;
   warningMessage?: string | null;
   warningCount?: number;
+  isArchived?: boolean;
+  archivedAt?: string | null;
 }
 
 export interface Product {
@@ -51,6 +53,9 @@ export interface Key {
   isUsed: boolean;
   isDisabled: boolean;
   isArchived: boolean;
+  isRevoked?: boolean;
+  archivedAt?: string | null;
+  revokedAt?: string | null;
   duration: KeyDuration;
   usedByUserId?: string | null;
   usedByUserName?: string | null;
@@ -73,6 +78,8 @@ export interface UserProduct {
   expiresAt?: string | null;
   hwidResetAt?: string | null;
   hwidResetCount?: number;
+  revokedAt?: string | null;
+  revokedById?: string | null;
   discordRoleGranted: boolean;
 }
 
@@ -95,6 +102,25 @@ export interface SystemLog {
   userName?: string | null;
   ipAddress: string;
   createdAt: string;
+  auditEventId?: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  eventType: string;
+  description: string;
+  occurredAt: string;
+  actorUserId?: string | null;
+  actorDiscordId?: string | null;
+  actorName?: string | null;
+  targetUserId?: string | null;
+  targetDiscordId?: string | null;
+  productId?: string | null;
+  keyId?: string | null;
+  ticketId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SystemStats {
