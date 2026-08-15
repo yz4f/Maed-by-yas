@@ -351,20 +351,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
   const getLicenseTiming = (license: UserProduct) => {
-    const expiresAtMs = license.expiresAt ? new Date(license.expiresAt).getTime() : null;
-    const remainingMs = expiresAtMs === null || Number.isNaN(expiresAtMs) ? null : Math.max(0, expiresAtMs - licenseClock);
-    const isExpired = remainingMs !== null && remainingMs === 0;
+    const parsedExpiry = license.expiresAt ? new Date(license.expiresAt).getTime() : Number.NaN;
+    const hasValidExpiry = Number.isFinite(parsedExpiry) && parsedExpiry > 0;
+    const expiresAtMs = hasValidExpiry ? parsedExpiry : 0;
+    const remainingMs = hasValidExpiry ? Math.max(0, expiresAtMs - licenseClock) : 0;
+    const isExpired = remainingMs === 0;
     const isUsable = license.status === 'Active' && !isExpired;
-    const totalSeconds = remainingMs === null ? null : Math.floor(remainingMs / 1000);
-    const days = totalSeconds === null ? 0 : Math.floor(totalSeconds / 86_400);
-    const hours = totalSeconds === null ? 0 : Math.floor((totalSeconds % 86_400) / 3_600);
-    const minutes = totalSeconds === null ? 0 : Math.floor((totalSeconds % 3_600) / 60);
-    const seconds = totalSeconds === null ? 0 : totalSeconds % 60;
-    const countdown = totalSeconds === null
-      ? (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime license')
-      : (lang === 'ar'
-        ? `${days}ي ${hours}س ${minutes}د ${seconds}ث`
-        : `${days}d ${hours}h ${minutes}m ${seconds}s`);
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const days = Math.floor(totalSeconds / 86_400);
+    const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+    const minutes = Math.floor((totalSeconds % 3_600) / 60);
+    const seconds = totalSeconds % 60;
+    const countdown = lang === 'ar'
+      ? `${days}ي ${hours}س ${minutes}د ${seconds}ث`
+      : `${days}d ${hours}h ${minutes}m ${seconds}s`;
     return { expiresAtMs, remainingMs, isExpired, isUsable, countdown };
   };
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
@@ -2375,14 +2375,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {userProducts.map((up) => {
                   const displayKey = up.keyString || (lang === 'ar' ? 'مفتاح الترخيص محفوظ بأمان' : 'License key stored securely');
                   const timing = getLicenseTiming(up);
-                  const isActive = up.status === 'Active';
                   const canUseProduct = timing.isUsable;
                   const isProductUpdating = updatingProductIds.has(up.id);
-                  const statusLabel = timing.isExpired
-                    ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License Expired')
-                    : isActive
-                      ? (lang === 'ar' ? 'تم تفعيل المنتج' : 'Product Activated')
-                      : (lang === 'ar' ? 'المنتج غير مفعل' : 'Product Inactive');
                   const productImg = getProductImage(up.product);
 
                   return (
@@ -2401,30 +2395,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
-                        {/* Gradient overlay */}
+                        {/* The image remains clean; the two-day countdown is shown below the product title. */}
                         <div className="product-license-card__media-overlay" />
-                        <div style={{
-                          position: 'absolute', top: '10px', left: lang === 'ar' ? '10px' : 'auto', right: lang === 'ar' ? 'auto' : '10px',
-                          display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 700,
-                          color: timing.isExpired ? '#fca5a5' : '#d1fae5', background: 'rgba(0,0,0,0.70)',
-                          backdropFilter: 'blur(4px)', padding: '4px 8px', borderRadius: '6px',
-                          border: `1px solid ${timing.isExpired ? 'rgba(248,113,113,0.24)' : 'rgba(52,211,153,0.25)'}`,
-                        }}>
-                          <Clock size={12} />
-                          <span>{timing.isExpired
-                            ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired')
-                            : (timing.remainingMs === null ? (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime license') : (lang === 'ar' ? 'ترخيص مؤقت' : 'Timed license'))}</span>
-                        </div>
-                        <div style={{
-                          position: 'absolute', top: '10px', left: lang === 'ar' ? 'auto' : '10px', right: lang === 'ar' ? '10px' : 'auto',
-                          display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600,
-                          color: canUseProduct ? '#d1fae5' : '#fca5a5', background: 'rgba(0,0,0,0.70)',
-                          backdropFilter: 'blur(4px)', padding: '3px 8px', borderRadius: '6px',
-                          border: `1px solid ${canUseProduct ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.20)'}`,
-                        }}>
-                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: canUseProduct ? '#34d399' : '#f87171', flexShrink: 0 }} />
-                          {statusLabel}
-                        </div>
                       </div>
 
                       {/* ── BODY ── */}
@@ -2442,7 +2414,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <div className="product-license-card__meta product-license-card__meta--secondary">
                             {timing.isExpired
                               ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired')
-                              : (up.expiresAt ? (lang === 'ar' ? 'ترخيص مؤقت' : 'Timed license') : (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime License'))}
+                              : (lang === 'ar' ? `المدة المتبقية: ${timing.countdown}` : `Time remaining: ${timing.countdown}`)}
                           </div>
                         </div>
 
