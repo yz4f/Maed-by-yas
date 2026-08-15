@@ -895,3 +895,75 @@ body {
 .portal-shell--dark [class*="text-emerald-"],
 .portal-shell--dark [class*="text-green-"] { color: #6ee7b7 !important; }
 .portal-shell--dark .product-activation-toggle--on { background: #1678bd; border-color: #62b9ef; }
+
+/* Timed product licenses: live expiry, protected action states, and readable mobile hierarchy. */
+.product-license-card__expiry,
+.product-license-card__status {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  max-width: calc(100% - 1.25rem);
+  padding: 0.42rem 0.62rem;
+  border: 1px solid rgba(91, 223, 174, 0.46);
+  border-radius: 0.48rem;
+  background: rgba(8, 38, 33, 0.84);
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.08);
+  color: #c9ffe9;
+  font-size: 0.69rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(9px);
+}
+.product-license-card__expiry {
+  inset-block-start: 0.68rem;
+  inset-inline-start: 0.68rem;
+}
+.product-license-card__expiry--expired {
+  border-color: rgba(251, 113, 133, 0.48);
+  background: rgba(68, 20, 31, 0.86);
+  color: #fecdd3;
+}
+.product-license-card__status {
+  inset-block-start: 0.68rem;
+  inset-inline-end: 0.68rem;
+  border-color: rgba(186, 205, 224, 0.25);
+  background: rgba(13, 24, 39, 0.78);
+  color: #d7e6f5;
+}
+.product-license-card__status--active { color: #d1fae5; border-color: rgba(52,211,153,0.28); }
+.product-license-card__status-dot {
+  width: 0.34rem;
+  height: 0.34rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #f87171;
+}
+.product-license-card__status--active .product-license-card__status-dot { background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,0.12); }
+.product-license-card--expired { border-color: rgba(251,113,133,0.24); }
+.product-license-card--expired .product-license-card__image { filter: saturate(0.34) contrast(0.94) brightness(0.56); }
+.product-license-card--expired .product-license-card__media-overlay { background: linear-gradient(180deg, rgba(39,8,15,0.10), rgba(28,12,20,0.44) 55%, #171a24 100%); }
+.product-license-card .product-key-row__icon:disabled,
+.product-license-card .product-activation-toggle:disabled,
+.product-license-card .product-utility-button:disabled,
+.product-license-card .product-download-button:disabled,
+.product-license-card .product-guide-button:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.42;
+  filter: grayscale(0.55);
+  transform: none;
+}
+.product-license-card .product-download-button:disabled { background: linear-gradient(135deg, #667484, #4b5563); color: #e2e8f0; box-shadow: none; }
+.portal-shell--light .product-license-card__expiry { background: rgba(238, 255, 248, 0.92); border-color: rgba(16, 140, 99, 0.35); color: #08704b; }
+.portal-shell--light .product-license-card__expiry--expired { background: rgba(255, 241, 242, 0.96); border-color: rgba(225, 70, 90, 0.34); color: #b4233c; }
+.portal-shell--light .product-license-card__status { background: rgba(255,255,255,0.88); color: #334e68; }
+@media (max-width: 520px) {
+  .product-license-card__media { height: 145px; }
+  .product-license-card__expiry,
+  .product-license-card__status { font-size: 0.62rem; padding: 0.36rem 0.48rem; }
+  .product-license-card__expiry span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .product-license-card__status { display: none; }
+}
