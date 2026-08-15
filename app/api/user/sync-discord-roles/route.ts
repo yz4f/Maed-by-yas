@@ -49,7 +49,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'لا توجد استحقاقات مرتبطة بحساب ديسكورد هذا بعد.' }, { status: 404 });
     }
 
-    const activeProducts = (await StoreDB.getUserProducts(user.id)).filter((product) => product.status === 'Active' && product.product?.name);
+    const activeProducts = (await StoreDB.getUserProducts(user.id)).filter((product) => {
+      if (product.status !== 'Active' || !product.product?.name) return false;
+      return !product.expiresAt || new Date(product.expiresAt).getTime() > Date.now();
+    });
     if (activeProducts.length === 0) {
       await StoreDB.addLog('Discord Role Restore', 'تم رفض طلب استرجاع الرتب لعدم وجود تراخيص مفعلة.', user.id, user.name, clientIp(request));
       return NextResponse.json({ success: false, message: 'لا توجد تراخيص مفعلة لاسترجاع رتبها.' }, { status: 403 });
