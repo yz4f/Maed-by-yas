@@ -50,9 +50,17 @@ export async function PATCH(
       );
     }
 
+    const isExpired = Boolean(userProduct.expiresAt && new Date(userProduct.expiresAt).getTime() <= Date.now());
     if (status === 'Active' && (userProduct.product?.isDisabled || userProduct.product?.isArchived)) {
       return NextResponse.json(
         { success: false, message: 'لا يمكن تفعيل منتج غير متاح حالياً.' },
+        { status: 409 },
+      );
+    }
+
+    if (status === 'Active' && isExpired) {
+      return NextResponse.json(
+        { success: false, message: 'انتهت مدة الترخيص ولا يمكن إعادة تفعيله.' },
         { status: 409 },
       );
     }
