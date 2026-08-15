@@ -967,3 +967,8 @@ body {
   .product-license-card__expiry span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .product-license-card__status { display: none; }
 }
+
+/* Restore the original compact mobile product-card proportions while retaining expiry action locks. */
+@media (max-width: 520px) {
+  .product-license-card__media { height: 158px; }
+}
