@@ -2398,7 +2398,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   return (
                     <article
                       key={up.id}
-                      className={`product-license-card group ${timing.isExpired ? 'product-license-card--expired' : ''}`}
+                      className="product-license-card group"
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
                       {/* ── BANNER IMAGE ── */}
@@ -2413,16 +2413,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         />
                         {/* Gradient overlay */}
                         <div className="product-license-card__media-overlay" />
-                        <div className={`product-license-card__expiry ${timing.isExpired ? 'product-license-card__expiry--expired' : ''}`}>
-                          <Clock size={13} />
+                        <div style={{
+                          position: 'absolute', top: '10px', left: lang === 'ar' ? '10px' : 'auto', right: lang === 'ar' ? 'auto' : '10px',
+                          display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 700,
+                          color: timing.isExpired ? '#fca5a5' : '#d1fae5', background: 'rgba(0,0,0,0.70)',
+                          backdropFilter: 'blur(4px)', padding: '4px 8px', borderRadius: '6px',
+                          border: `1px solid ${timing.isExpired ? 'rgba(248,113,113,0.24)' : 'rgba(52,211,153,0.25)'}`,
+                        }}>
+                          <Clock size={12} />
                           <span>{timing.isExpired
                             ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired')
-                            : (timing.remainingMs === null
-                              ? (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime license')
-                              : (lang === 'ar' ? `ينتهي بعد ${timing.countdown}` : `Expires in ${timing.countdown}`))}</span>
+                            : (timing.remainingMs === null ? (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime license') : (lang === 'ar' ? 'ترخيص مؤقت' : 'Timed license'))}</span>
                         </div>
-                        <div className={`product-license-card__status ${canUseProduct ? 'product-license-card__status--active' : ''}`}>
-                          <span className="product-license-card__status-dot" />
+                        <div style={{
+                          position: 'absolute', top: '10px', left: lang === 'ar' ? 'auto' : '10px', right: lang === 'ar' ? '10px' : 'auto',
+                          display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600,
+                          color: canUseProduct ? '#d1fae5' : '#fca5a5', background: 'rgba(0,0,0,0.70)',
+                          backdropFilter: 'blur(4px)', padding: '3px 8px', borderRadius: '6px',
+                          border: `1px solid ${canUseProduct ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.20)'}`,
+                        }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: canUseProduct ? '#34d399' : '#f87171', flexShrink: 0 }} />
                           {statusLabel}
                         </div>
                       </div>
@@ -2440,9 +2450,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             {up.product?.version ? ` • ${lang === 'ar' ? 'الإصدار' : 'Version'} ${up.product.version}` : ''}
                           </div>
                           <div className="product-license-card__meta product-license-card__meta--secondary">
-                            {up.expiresAt
-                              ? `${timing.isExpired ? (lang === 'ar' ? 'انتهى في' : 'Expired on') : (lang === 'ar' ? 'ينتهي في' : 'Expires')} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
-                              : (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime License')}
+                            {timing.isExpired
+                              ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired')
+                              : (up.expiresAt ? (lang === 'ar' ? 'ترخيص مؤقت' : 'Timed license') : (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime License'))}
                           </div>
                         </div>
 
