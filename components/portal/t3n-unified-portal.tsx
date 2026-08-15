@@ -2502,32 +2502,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           )}
                         </div>
 
-                        {/* One reliable activation control per product */}
-                        <div className="product-license-card__utilities product-license-card__utilities--activation">
-                          <div className="product-activation-state">
-                            <span className={`product-activation-state__dot ${canUseProduct ? 'product-activation-state__dot--on' : ''}`} />
-                            <span>{statusLabel}</span>
-                          </div>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={canUseProduct}
-                            aria-label={timing.isExpired ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired') : (lang === 'ar' ? `تبديل حالة ${up.product?.name || 'المنتج'}` : `Toggle ${up.product?.name || 'product'} activation`)}
-                            onClick={() => updateUserProductStatus(up, isActive ? 'Inactive' : 'Active')}
-                            disabled={isProductUpdating || timing.isExpired}
-                            className={`product-activation-toggle ${canUseProduct ? 'product-activation-toggle--on' : ''} ${isProductUpdating ? 'product-activation-toggle--loading' : ''}`}
-                          >
-                            <span className="product-activation-toggle__thumb" />
-                          </button>
-                          <button
-                            onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
-                            className="product-utility-button"
-                            disabled={isProductUpdating || !canUseProduct}
-                          >
-                            <RefreshCw size={13} className={isProductUpdating ? 'animate-spin' : ''} />
-                            {lang === 'ar' ? 'إعادة تعيين' : 'HWID Reset'}
-                          </button>
-                        </div>
+                        {/* License status is displayed in the banner; available actions stay intentionally simple. */}
 
                         {/* Download Loader — white primary */}
                         <button
