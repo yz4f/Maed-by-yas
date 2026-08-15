@@ -180,6 +180,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Copy Key Feedback State
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [updatingProductIds, setUpdatingProductIds] = useState<Set<string>>(() => new Set());
 
   // Guest Key Activation Modal State (Screenshot 2 "Buy / Activate license first")
   const [guestModalOpen, setGuestModalOpen] = useState(false);
@@ -343,6 +344,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
   const activeProductCount = userProducts.filter((product) => product.status === 'Active').length;
+  const inactiveProductCount = userProducts.filter((product) => product.status !== 'Active').length;
+  const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived).length;
   const memberSince = React.useMemo(() => {
     if (!currentUser?.createdAt) return '—';
     const joined = new Date(currentUser.createdAt);
@@ -386,6 +389,53 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       console.error('Failed to load user products:', e);
     } finally {
       setIsLoadingProducts(false);
+    }
+  };
+
+  const updateUserProductStatus = async (userProduct: UserProduct, nextStatus: 'Active' | 'Inactive') => {
+    if (userProduct.status === nextStatus || updatingProductIds.has(userProduct.id)) return;
+
+    const previousStatus = userProduct.status;
+    setUpdatingProductIds((current) => new Set(current).add(userProduct.id));
+    setUserProducts((current) => current.map((item) => (
+      item.id === userProduct.id ? { ...item, status: nextStatus } : item
+    )));
+
+    try {
+      const response = await fetch(`/api/user/products/${encodeURIComponent(userProduct.productId)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'تعذر حفظ حالة المنتج.');
+      }
+
+      setUserProducts((current) => current.map((item) => (
+        item.id === userProduct.id ? { ...item, status: data.status } : item
+      )));
+      showToast(
+        nextStatus === 'Active'
+          ? (lang === 'ar' ? 'تم تفعيل المنتج' : 'Product Activated')
+          : (lang === 'ar' ? 'المنتج غير مفعل' : 'Product Inactive'),
+        'success',
+      );
+    } catch (error) {
+      setUserProducts((current) => current.map((item) => (
+        item.id === userProduct.id ? { ...item, status: previousStatus } : item
+      )));
+      showToast(
+        lang === 'ar' ? 'تعذر حفظ التغيير. تمت استعادة الحالة السابقة.' : 'Could not save the change. The previous status was restored.',
+        'error',
+      );
+    } finally {
+      setUpdatingProductIds((current) => {
+        const next = new Set(current);
+        next.delete(userProduct.id);
+        return next;
+      });
     }
   };
 
@@ -2228,18 +2278,33 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
           <div className="products-experience space-y-6">
-            <section className={`flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-sky-100/[0.14] bg-[#0d1c2f]/82' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`}>
-              <div>
-                <p className={`text-[10px] font-black tracking-[0.16em] uppercase ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>License Library</p>
-                <h2 className={`mt-1 text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>My Products</h2>
+            <section className={`products-page-hero flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-sky-100/[0.14] bg-[#0d1c2f]/82' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`}>
+              <div className="min-w-0">
+                <p className={`text-[10px] font-black tracking-[0.16em] uppercase ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مكتبة التراخيص' : 'License Library'}</p>
+                <h2 className={`mt-1 text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</h2>
+                <p className={`mt-1 text-xs ${isDark ? 'text-slate-300/75' : 'text-slate-600'}`}>{lang === 'ar' ? 'إدارة منتجاتك وحالات التفعيل بسهولة من مكان واحد.' : 'Manage your products and activation states from one place.'}</p>
               </div>
               <button
                 onClick={() => setGuestModalOpen(true)}
-                className="inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black text-slate-950 shadow-[0_10px_24px_rgba(255,255,255,0.14)] transition-all hover:-translate-y-0.5 hover:bg-slate-100 active:scale-95"
+                className="inline-flex w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-slate-950 shadow-[0_10px_24px_rgba(255,255,255,0.14)] transition-all hover:-translate-y-0.5 hover:bg-slate-100 active:scale-95"
               >
                 <Key className="h-4 w-4" />
-                <span>Redeem Key</span>
+                <span>{lang === 'ar' ? 'استرداد مفتاح' : 'Redeem Key'}</span>
               </button>
+            </section>
+
+            <section className="products-stats-grid" aria-label={lang === 'ar' ? 'إحصاءات المنتجات' : 'Product statistics'}>
+              {[
+                { label: lang === 'ar' ? 'إجمالي المنتجات' : 'Total products', value: userProducts.length, tone: 'neutral' },
+                { label: lang === 'ar' ? 'المنتجات المفعلة' : 'Activated products', value: activeProductCount, tone: 'success' },
+                { label: lang === 'ar' ? 'المنتجات غير المفعلة' : 'Inactive products', value: inactiveProductCount, tone: 'warning' },
+                { label: lang === 'ar' ? 'المنتجات المتاحة' : 'Available products', value: availableProductCount, tone: 'info' },
+              ].map((stat) => (
+                <div key={stat.label} className={`products-stat-card products-stat-card--${stat.tone}`}>
+                  <span>{stat.label}</span>
+                  <strong>{stat.value}</strong>
+                </div>
+              ))}
             </section>
 
             {/* Products Grid */}
@@ -2295,10 +2360,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             ) : (
               <div className="product-library mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
                 {userProducts.map((up) => {
-                  const rawKey = up.keyString || 'KEY-ACTIVATED';
-                  const fullKey = rawKey.toUpperCase().startsWith('KEY-') ? rawKey : `KEY-${rawKey}`;
-                    const displayKey = fullKey;
+                  const displayKey = up.keyString || (lang === 'ar' ? 'مفتاح الترخيص محفوظ بأمان' : 'License key stored securely');
                   const isActive = up.status === 'Active';
+                  const isProductUpdating = updatingProductIds.has(up.id);
+                  const statusLabel = isActive
+                    ? (lang === 'ar' ? 'تم تفعيل المنتج' : 'Product Activated')
+                    : (lang === 'ar' ? 'المنتج غير مفعل' : 'Product Inactive');
                   const productImg = getProductImage(up.product);
 
                   return (
@@ -2331,7 +2398,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           border: `1px solid ${isActive ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.2)'}`,
                         }}>
                           <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: isActive ? '#34d399' : '#f87171', flexShrink: 0 }} />
-                          {isActive ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير مفعّل' : 'Not activated yet')}
+                          {statusLabel}
                         </div>
                       </div>
 
@@ -2344,9 +2411,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             {up.product?.name || 'Product'}
                           </div>
                           <div className="product-license-card__meta">
+                            {up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}
+                            {up.product?.version ? ` • ${lang === 'ar' ? 'الإصدار' : 'Version'} ${up.product.version}` : ''}
+                          </div>
+                          <div className="product-license-card__meta product-license-card__meta--secondary">
                             {up.expiresAt
                               ? `${lang === 'ar' ? 'ينتهي في' : 'Expires'} ${new Date(up.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
-                              : (lang === 'ar' ? 'مدى الحياة' : 'Lifetime License')}
+                              : (lang === 'ar' ? 'ترخيص مدى الحياة' : 'Lifetime License')}
                           </div>
                         </div>
 
@@ -2355,27 +2426,41 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <code className="product-key-row__value">
                             {displayKey}
                           </code>
-                          <button
-                            onClick={() => copyKeyToClipboard(up.keyString || 'KEY-ACTIVATED', up.id)}
-                            title={lang === 'ar' ? 'نسخ' : 'Copy'}
-                            className={`product-key-row__icon ${copiedKeyId === up.id ? 'product-key-row__icon--copied' : ''}`}
-                          >
-                            {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
-                          </button>
+                          {up.keyString && (
+                            <button
+                              onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
+                              title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}
+                              className={`product-key-row__icon ${copiedKeyId === up.id ? 'product-key-row__icon--copied' : ''}`}
+                            >
+                              {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                          )}
                         </div>
 
-                        {/* Action buttons row 1: HWID Reset + Pause Key */}
-                        <div className="product-license-card__utilities">
+                        {/* One reliable activation control per product */}
+                        <div className="product-license-card__utilities product-license-card__utilities--activation">
+                          <div className="product-activation-state">
+                            <span className={`product-activation-state__dot ${isActive ? 'product-activation-state__dot--on' : ''}`} />
+                            <span>{statusLabel}</span>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isActive}
+                            aria-label={lang === 'ar' ? `تبديل حالة ${up.product?.name || 'المنتج'}` : `Toggle ${up.product?.name || 'product'} activation`}
+                            onClick={() => updateUserProductStatus(up, isActive ? 'Inactive' : 'Active')}
+                            disabled={isProductUpdating}
+                            className={`product-activation-toggle ${isActive ? 'product-activation-toggle--on' : ''} ${isProductUpdating ? 'product-activation-toggle--loading' : ''}`}
+                          >
+                            <span className="product-activation-toggle__thumb" />
+                          </button>
                           <button
                             onClick={() => handleHwidReset(up.productId, up.product?.name || 'Product')}
                             className="product-utility-button"
+                            disabled={isProductUpdating || !isActive}
                           >
-                            <RefreshCw size={13} />
+                            <RefreshCw size={13} className={isProductUpdating ? 'animate-spin' : ''} />
                             {lang === 'ar' ? 'إعادة تعيين' : 'HWID Reset'}
-                          </button>
-                          <button className="product-utility-button" type="button">
-                            <Clock size={13} />
-                            {lang === 'ar' ? 'إيقاف مؤقت' : 'Pause Key'}
                           </button>
                         </div>
 
