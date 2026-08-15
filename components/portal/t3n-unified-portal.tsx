@@ -2203,32 +2203,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
               </section>
 
-              <section className={`rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
-                <div className={`mb-4 flex items-center justify-between border-b pb-3 ${isDark ? 'border-white/[0.08]' : 'border-slate-100'}`}>
-                  <h3 className={`flex items-center gap-2 text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-950'}`}>
-                    <Activity className="h-4 w-4 text-sky-400" />
-                    {lang === 'ar' ? 'آخر نشاطاتك' : 'Your recent activity'}
-                  </h3>
-                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{lang === 'ar' ? 'محفوظة في سجلك' : 'Saved to your history'}</span>
-                </div>
-                {userActivity.length > 0 ? (
-                  <div className="space-y-3">
-                    {userActivity.slice(0, 5).map((event) => (
-                      <div key={event.id} className={`flex gap-3 rounded-xl border p-3 ${isDark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-slate-100 bg-slate-50/70'}`}>
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.55)]" />
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{event.description}</p>
-                          <p className={`mt-1 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(event.occurredAt))}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={`rounded-xl border border-dashed px-4 py-6 text-center text-xs ${isDark ? 'border-white/[0.10] text-slate-500' : 'border-slate-200 text-slate-500'}`}>
-                    {lang === 'ar' ? 'لا توجد نشاطات مسجلة لحسابك بعد.' : 'No activity has been recorded for your account yet.'}
-                  </div>
-                )}
-              </section>
             </div>
 
             {/* Quick actions: a graphite side panel with a precise white separator system. */}
@@ -2280,7 +2254,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-[#5865F2]/[0.13] border-[#7289da]/35 text-[#c8ceff]' : 'bg-[#5865F2]/10 border-[#5865F2]/20 text-[#4d58d5]'}`}>
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.07] border-white/[0.10] text-neutral-300' : 'bg-slate-100 border-slate-200 text-slate-600'}`}>
                       <DiscordMark className="w-[21px] h-[21px]" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
@@ -2345,19 +2319,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </button>
             </section>
 
-            <section className="products-stats-grid" aria-label={lang === 'ar' ? 'إحصاءات المنتجات' : 'Product statistics'}>
-              {[
-                { label: lang === 'ar' ? 'إجمالي المنتجات' : 'Total products', value: userProducts.length, tone: 'neutral' },
-                { label: lang === 'ar' ? 'المنتجات المفعلة' : 'Activated products', value: activeProductCount, tone: 'success' },
-                { label: lang === 'ar' ? 'المنتجات غير المفعلة' : 'Inactive products', value: inactiveProductCount, tone: 'warning' },
-                { label: lang === 'ar' ? 'المنتجات المتاحة' : 'Available products', value: availableProductCount, tone: 'info' },
-              ].map((stat) => (
-                <div key={stat.label} className={`products-stat-card products-stat-card--${stat.tone}`}>
-                  <span>{stat.label}</span>
-                  <strong>{stat.value}</strong>
-                </div>
-              ))}
-            </section>
 
             {/* Products Grid */}
             {isLoadingProducts ? (
