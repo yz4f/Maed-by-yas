@@ -1,4 +1,4 @@
-import { Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
+import { AuditEvent, Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction } from "firebase/firestore";
 
@@ -130,7 +130,9 @@ export const initialProducts: Product[] = [
   }
 ];
 
-// Fallback DB logic
+// The JSON fallback is strictly a local-development aid. Production must never silently
+// switch to ephemeral filesystem storage because a Railway redeploy can discard it.
+const allowLocalFallback = process.env.NODE_ENV !== 'production' && process.env.ALLOW_LOCAL_DB_FALLBACK !== 'false';
 let useLocalFallback = false;
 const fallbackFilePath = typeof window === 'undefined' ? path.join(process.cwd(), 'data', 'db-fallback.json') : '';
 
@@ -249,12 +251,22 @@ function saveFallbackData(data: any) {
 // Database helper wrapper
 async function runDbOp<T>(firebaseOp: () => Promise<T>, localOp: () => T | Promise<T>): Promise<T> {
   if (useLocalFallback) {
+    if (!allowLocalFallback) {
+      throw new Error('خدمة البيانات الدائمة غير متاحة حالياً. لم يتم استخدام أي تخزين مؤقت في الإنتاج.');
+    }
     return await localOp();
   }
+
   try {
     return await firebaseOp();
   } catch (err: any) {
-    console.warn("Firestore access error, falling back to local JSON database. Error details:", err?.message || err);
+    const detail = err?.message || String(err);
+    if (!allowLocalFallback) {
+      console.error('Persistent Firestore operation failed in production:', detail);
+      throw new Error('تعذر الوصول إلى قاعدة البيانات الدائمة. لم تُنفذ العملية حفاظاً على بياناتك.');
+    }
+
+    console.warn('Firestore access error in local development; using the local development fallback:', detail);
     useLocalFallback = true;
     return await localOp();
   }
@@ -289,7 +301,15 @@ const LocalDB = {
   },
   deleteProduct(id: string): {success: boolean} {
     const d = getFallbackData();
-    d.products = d.products.filter((p: any) => p.id !== id);
+    const product = d.products.find((p: any) => p.id === id);
+    if (!product) return { success: false };
+    Object.assign(product, {
+      isArchived: true,
+      isDisabled: true,
+      isVisible: false,
+      archivedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
     saveFallbackData(d);
     return { success: true };
   },
@@ -318,7 +338,16 @@ const LocalDB = {
   },
   deleteUser(id: string): boolean {
     const d = getFallbackData();
-    d.users = d.users.filter((u: any) => u.id !== id);
+    const user = d.users.find((item: any) => item.id === id);
+    if (!user) return false;
+    Object.assign(user, {
+      isArchived: true,
+      archivedAt: new Date().toISOString(),
+      isBanned: true,
+      banReason: 'تمت أرشفة الحساب إدارياً',
+      banType: 'permanent',
+      banExpiresAt: null,
+    });
     saveFallbackData(d);
     return true;
   },
@@ -409,14 +438,29 @@ const LocalDB = {
     const d = getFallbackData();
     const key = d.keys.find((item: Key) => item.id === id);
     if (!key || key.isUsed) return false;
-    d.keys = d.keys.filter((item: Key) => item.id !== id);
+    Object.assign(key, {
+      isArchived: true,
+      isDisabled: true,
+      archivedAt: new Date().toISOString(),
+    });
     saveFallbackData(d);
     return true;
   },
   revokeKey(keyId: string, userId: string): boolean {
     const d = getFallbackData();
-    d.keys = d.keys.filter((k: any) => k.id !== keyId);
-    d.userProducts = d.userProducts.filter((up: any) => !(up.userId === userId && up.keyId === keyId));
+    const now = new Date().toISOString();
+    const key = d.keys.find((item: Key) => item.id === keyId);
+    if (!key) return false;
+    Object.assign(key, {
+      isArchived: true,
+      isDisabled: true,
+      isRevoked: true,
+      revokedAt: now,
+      archivedAt: now,
+    });
+    d.userProducts
+      .filter((item: UserProduct) => item.userId === userId && item.keyId === keyId)
+      .forEach((item: UserProduct) => Object.assign(item, { status: 'Revoked', revokedAt: now }));
     saveFallbackData(d);
     return true;
   },
@@ -424,8 +468,8 @@ const LocalDB = {
     const d = getFallbackData();
     const removableKeys = d.keys.filter((key: Key) => key.productId === productId && !key.isUsed);
     if (removableKeys.length === 0) return 0;
-    const removableIds = new Set(removableKeys.map((key: Key) => key.id));
-    d.keys = d.keys.filter((key: Key) => !removableIds.has(key.id));
+    const archivedAt = new Date().toISOString();
+    removableKeys.forEach((key: Key) => Object.assign(key, { isArchived: true, isDisabled: true, archivedAt }));
     saveFallbackData(d);
     return removableKeys.length;
   },
@@ -558,7 +602,7 @@ const LocalDB = {
     }
     return { success: false };
   },
-  addLog(action: string, details: string, userId?: string, userName?: string, ipAddress: string = '127.0.0.1'): void {
+  addLog(action: string, details: string, userId?: string, userName?: string, ipAddress: string = '127.0.0.1', auditEvent?: AuditEvent): void {
     const d = getFallbackData();
     const log: SystemLog = {
       id: `log-${Date.now()}-${Math.floor(Math.random()*1000)}`,
@@ -567,8 +611,13 @@ const LocalDB = {
       userId: userId || null,
       userName: userName || null,
       ipAddress,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      auditEventId: auditEvent?.id,
     };
+    if (auditEvent) {
+      if (!Array.isArray(d.auditEvents)) d.auditEvents = [];
+      d.auditEvents.push(auditEvent);
+    }
     d.logs.push(log);
     saveFallbackData(d);
   },
@@ -640,39 +689,13 @@ export const StoreDB = {
         const snapshot = await getDocs(collection(getDb(), "products"));
         let products = snapshot.docs.map(doc => doc.data() as Product);
         
-        if (products.length === 0) {
+        // Seeding must be explicit. A production read must never recreate, overwrite, or
+        // resurrect products from source code after an administrator archives them.
+        if (products.length === 0 && process.env.SEED_INITIAL_PRODUCTS === 'true') {
           for (const prod of initialProducts) {
-            await setDoc(doc(getDb(), "products", prod.id), prod);
+            await setDoc(doc(getDb(), 'products', prod.id), prod);
           }
-          products = initialProducts;
-        } else {
-          for (const initProd of initialProducts) {
-            const existing = products.find(p => p.id === initProd.id);
-            if (!existing) {
-              try {
-                await setDoc(doc(getDb(), "products", initProd.id), initProd);
-                products.push(initProd);
-              } catch (e) {
-                console.error("Auto-seed product failed:", e);
-              }
-            } else if (existing.description !== initProd.description || existing.name !== initProd.name) {
-              try {
-                await updateDoc(doc(getDb(), "products", initProd.id), {
-                  name: initProd.name,
-                  description: initProd.description,
-                  category: initProd.category,
-                  cardColor: initProd.cardColor,
-                  updatedAt: new Date().toISOString()
-                });
-                existing.name = initProd.name;
-                existing.description = initProd.description;
-                existing.category = initProd.category;
-                existing.cardColor = initProd.cardColor;
-              } catch (e) {
-                console.error("Auto-sync product failed:", e);
-              }
-            }
-          }
+          products = [...initialProducts];
         }
         return products.sort((a, b) => a.displayOrder - b.displayOrder);
       },
@@ -722,8 +745,17 @@ export const StoreDB = {
   async deleteProduct(id: string): Promise<{success: boolean; message?: string}> {
     return runDbOp(
       async () => {
-        await deleteDoc(doc(getDb(), "products", id));
-        return { success: true };
+        const productRef = doc(getDb(), 'products', id);
+        const current = await getDoc(productRef);
+        if (!current.exists()) return { success: false, message: 'المنتج غير موجود.' };
+        await updateDoc(productRef, {
+          isArchived: true,
+          isDisabled: true,
+          isVisible: false,
+          archivedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        return { success: true, message: 'تمت أرشفة المنتج مع الاحتفاظ بكامل سجله.' };
       },
       () => LocalDB.deleteProduct(id)
     );
@@ -777,7 +809,17 @@ export const StoreDB = {
   async deleteUser(id: string): Promise<boolean> {
     return runDbOp(
       async () => {
-        await deleteDoc(doc(getDb(), "users", id));
+        const userRef = doc(getDb(), 'users', id);
+        const current = await getDoc(userRef);
+        if (!current.exists()) return false;
+        await updateDoc(userRef, {
+          isArchived: true,
+          archivedAt: new Date().toISOString(),
+          isBanned: true,
+          banReason: 'تمت أرشفة الحساب إدارياً',
+          banType: 'permanent',
+          banExpiresAt: null,
+        });
         return true;
       },
       () => LocalDB.deleteUser(id)
@@ -905,10 +947,14 @@ export const StoreDB = {
   async deleteKey(id: string): Promise<boolean> {
     return runDbOp(
       async () => {
-        const keyRef = doc(getDb(), "keys", id);
+        const keyRef = doc(getDb(), 'keys', id);
         const keySnap = await getDoc(keyRef);
         if (!keySnap.exists() || (keySnap.data() as Key).isUsed) return false;
-        await deleteDoc(keyRef);
+        await updateDoc(keyRef, {
+          isArchived: true,
+          isDisabled: true,
+          archivedAt: new Date().toISOString(),
+        });
         return true;
       },
       () => LocalDB.deleteKey(id)
@@ -918,12 +964,23 @@ export const StoreDB = {
   async revokeKey(keyId: string, userId: string): Promise<boolean> {
     return runDbOp(
       async () => {
-        await deleteDoc(doc(getDb(), "keys", keyId));
-        const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId), where("keyId", "==", keyId));
-        const snapshot = await getDocs(q);
-        for (const d of snapshot.docs) {
-          await deleteDoc(d.ref);
-        }
+        const database = getDb();
+        const keyRef = doc(database, 'keys', keyId);
+        const keySnapshot = await getDoc(keyRef);
+        if (!keySnapshot.exists()) return false;
+        const now = new Date().toISOString();
+        const userProductsQuery = query(collection(database, 'userProducts'), where('userId', '==', userId), where('keyId', '==', keyId));
+        const userProductsSnapshot = await getDocs(userProductsQuery);
+        const batch = writeBatch(database);
+        batch.update(keyRef, {
+          isArchived: true,
+          isDisabled: true,
+          isRevoked: true,
+          revokedAt: now,
+          archivedAt: now,
+        });
+        userProductsSnapshot.docs.forEach((entry) => batch.update(entry.ref, { status: 'Revoked', revokedAt: now }));
+        await batch.commit();
         return true;
       },
       () => LocalDB.revokeKey(keyId, userId)
@@ -935,7 +992,11 @@ export const StoreDB = {
       async () => {
         const keys = await this.getKeysByProduct(productId);
         const removableKeys = keys.filter((key) => !key.isUsed);
-        await Promise.all(removableKeys.map((key) => deleteDoc(doc(getDb(), "keys", key.id))));
+        if (removableKeys.length === 0) return 0;
+        const batch = writeBatch(getDb());
+        const archivedAt = new Date().toISOString();
+        removableKeys.forEach((key) => batch.update(doc(getDb(), 'keys', key.id), { isArchived: true, isDisabled: true, archivedAt }));
+        await batch.commit();
         return removableKeys.length;
       },
       () => LocalDB.deleteAllKeysForProduct(productId)
@@ -1146,21 +1207,44 @@ export const StoreDB = {
   // -------------------------
   // LOGS & STATS
   // -------------------------
-  async addLog(action: string, details: string, userId?: string, userName?: string, ipAddress: string = '127.0.0.1'): Promise<void> {
+  async addLog(action: string, details: string, userId?: string, userName?: string, ipAddress: string = '127.0.0.1', context: Partial<AuditEvent> = {}): Promise<void> {
+    const now = new Date().toISOString();
+    const log: SystemLog = {
+      id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      action,
+      details,
+      userId: userId || null,
+      userName: userName || null,
+      ipAddress,
+      createdAt: now,
+    };
+    const auditEvent: AuditEvent = {
+      id: `audit-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      eventType: context.eventType || action,
+      description: context.description || details,
+      occurredAt: now,
+      actorUserId: context.actorUserId ?? userId ?? null,
+      actorDiscordId: context.actorDiscordId ?? null,
+      actorName: context.actorName ?? userName ?? null,
+      targetUserId: context.targetUserId ?? null,
+      targetDiscordId: context.targetDiscordId ?? null,
+      productId: context.productId ?? null,
+      keyId: context.keyId ?? null,
+      ticketId: context.ticketId ?? null,
+      ipAddress: context.ipAddress ?? ipAddress,
+      userAgent: context.userAgent ?? null,
+      metadata: context.metadata ?? {},
+    };
+    log.auditEventId = auditEvent.id;
+
     return runDbOp(
       async () => {
-        const log: SystemLog = {
-          id: `log-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-          action,
-          details,
-          userId: userId || null,
-          userName: userName || null,
-          ipAddress,
-          createdAt: new Date().toISOString()
-        };
-        await setDoc(doc(getDb(), "logs", log.id), log);
+        const batch = writeBatch(getDb());
+        batch.set(doc(getDb(), 'logs', log.id), log);
+        batch.set(doc(getDb(), 'auditEvents', auditEvent.id), auditEvent);
+        await batch.commit();
       },
-      () => LocalDB.addLog(action, details, userId, userName, ipAddress)
+      () => LocalDB.addLog(action, details, userId, userName, ipAddress, auditEvent)
     );
   },
 
@@ -1172,6 +1256,57 @@ export const StoreDB = {
         return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       },
       () => LocalDB.getLogs()
+    );
+  },
+
+  async getAuditEvents(options: { userId?: string; limit?: number } = {}): Promise<AuditEvent[]> {
+    const max = Math.min(Math.max(options.limit || 50, 1), 200);
+    const matchesUser = (event: AuditEvent) => !options.userId
+      || event.actorUserId === options.userId
+      || event.targetUserId === options.userId;
+    const sortRecent = (events: AuditEvent[]) => events
+      .filter(matchesUser)
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .slice(0, max);
+
+    return runDbOp(
+      async () => {
+        const [auditSnapshot, logSnapshot] = await Promise.all([
+          getDocs(collection(getDb(), 'auditEvents')),
+          getDocs(collection(getDb(), 'logs')),
+        ]);
+        const storedEvents = auditSnapshot.docs.map((entry) => entry.data() as AuditEvent);
+        const legacyEvents: AuditEvent[] = logSnapshot.docs
+          .map((entry) => entry.data() as SystemLog)
+          .filter((log) => !log.auditEventId)
+          .map((log) => ({
+            id: `legacy-${log.id}`,
+            eventType: log.action,
+            description: log.details,
+            occurredAt: log.createdAt,
+            actorUserId: log.userId || null,
+            actorName: log.userName || null,
+            ipAddress: log.ipAddress || null,
+            metadata: { source: 'legacy_log' },
+          }));
+        return sortRecent([...storedEvents, ...legacyEvents]);
+      },
+      () => {
+        const data = getFallbackData();
+        const storedEvents = Array.isArray(data.auditEvents) ? data.auditEvents as AuditEvent[] : [];
+        // Existing system logs remain visible as legacy audit events; no destructive backfill is required.
+        const legacyEvents: AuditEvent[] = (data.logs || []).map((log: SystemLog) => ({
+          id: `legacy-${log.id}`,
+          eventType: log.action,
+          description: log.details,
+          occurredAt: log.createdAt,
+          actorUserId: log.userId || null,
+          actorName: log.userName || null,
+          ipAddress: log.ipAddress || null,
+          metadata: { source: 'legacy_log' },
+        }));
+        return sortRecent([...storedEvents, ...legacyEvents]);
+      }
     );
   },
 
