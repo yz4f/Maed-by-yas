@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
 
     const activeProducts = (await StoreDB.getUserProducts(user.id)).filter((product) => {
       if (product.status !== 'Active' || !product.product?.name) return false;
-      return !product.expiresAt || new Date(product.expiresAt).getTime() > Date.now();
+      const expiresAt = product.expiresAt;
+      return typeof expiresAt === 'string' && new Date(expiresAt).getTime() > Date.now();
     });
     if (activeProducts.length === 0) {
       await StoreDB.addLog('Discord Role Restore', 'تم رفض طلب استرجاع الرتب لعدم وجود تراخيص مفعلة.', user.id, user.name, clientIp(request));
