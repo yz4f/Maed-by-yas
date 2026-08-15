@@ -1,15 +1,37 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { DiscordBotService } from '@/lib/discord';
+import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
+import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { action, userId, productId, status, warningMessage, banReason, banType, banExpiresAt, adminName, adminId } = body;
-    
-    // Get client IP
-    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    if (!requestHasTrustedOrigin(req)) {
+      return NextResponse.json({ success: false, message: 'تم رفض مصدر الطلب غير الموثوق.' }, { status: 403 });
+    }
 
+    const admin = await getSessionActor();
+    if (!admin) return NextResponse.json({ success: false, message: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
+    if (!await isAuthorizedAdmin()) {
+      return NextResponse.json({ success: false, message: 'غير مصرح لك بتنفيذ عمليات إدارة العملاء.' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { action, userId, productId, status, warningMessage, banReason, banType, banExpiresAt } = body;
+    const allowedActions = new Set(['remove_product', 'add_product', 'update_status', 'warn_user', 'ban_user', 'unban_user']);
+    if (!allowedActions.has(action) || typeof userId !== 'string' || !userId.trim()) {
+      return NextResponse.json({ success: false, message: 'بيانات العملية غير صالحة.' }, { status: 400 });
+    }
+    if (['remove_product', 'add_product', 'update_status'].includes(action) && (typeof productId !== 'string' || !productId.trim())) {
+      return NextResponse.json({ success: false, message: 'معرف المنتج مطلوب.' }, { status: 400 });
+    }
+    if (action === 'ban_user' && banType === 'temporary' && (!banExpiresAt || Number.isNaN(new Date(banExpiresAt).getTime()) || new Date(banExpiresAt) <= new Date())) {
+      return NextResponse.json({ success: false, message: 'تاريخ انتهاء الحظر المؤقت غير صالح.' }, { status: 400 });
+    }
+
+    const adminName = admin.name;
+    const adminId = admin.discordId;
+    const ip = getClientIp(req);
     const userDetails = await StoreDB.getUserDetails(userId);
     if (!userDetails) {
       return NextResponse.json({ success: false, message: 'العميل غير موجود في النظام' }, { status: 404 });
@@ -33,7 +55,12 @@ export async function POST(req: Request) {
         `قام المشرف ${adminName || 'Admin'} بسحب منتج (${productName}) من العميل ${userObj.name}`,
         adminId || 'admin-system',
         adminName || 'Admin',
-        ip
+        ip,
+        {
+          eventType: 'product_revoked', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: userObj.discordId || null, productId,
+          metadata: { action, reason: 'admin_remove_product' },
+        }
       );
       
       return NextResponse.json({ success: true, message: 'تم سحب المنتج وتحديث رتب الديسكورد.' });
@@ -50,7 +77,12 @@ export async function POST(req: Request) {
         `قام المشرف ${adminName || 'Admin'} بمنح منتج (${productName}) للعميل ${userObj.name} مباشرة`,
         adminId || 'admin-system',
         adminName || 'Admin',
-        ip
+        ip,
+        {
+          eventType: 'product_granted', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: userObj.discordId || null, productId,
+          metadata: { action, source: 'admin_grant' },
+        }
       );
 
       return NextResponse.json({ success: true, message: 'تم منح المنتج للعميل بنجاح.' });
@@ -67,7 +99,12 @@ export async function POST(req: Request) {
         `قام المشرف ${adminName || 'Admin'} بتعديل حالة منتج (${productName}) للعميل ${userObj.name} إلى: ${status}`,
         adminId || 'admin-system',
         adminName || 'Admin',
-        ip
+        ip,
+        {
+          eventType: 'product_status_changed', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: userObj.discordId || null, productId,
+          metadata: { action, status },
+        }
       );
 
       return NextResponse.json({ success: true, message: 'تم تحديث حالة المنتج.' });
@@ -86,7 +123,12 @@ export async function POST(req: Request) {
         `قام المشرف ${adminName || 'Admin'} بتحذير العميل ${userObj.name}. السبب: ${warningMessage}`,
         adminId || 'admin-system',
         adminName || 'Admin',
-        ip
+        ip,
+        {
+          eventType: 'user_warned', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: userObj.discordId || null,
+          metadata: { action, warningMessage: warningMessage || null },
+        }
       );
 
       return NextResponse.json({ success: true, message: 'تم إرسال التحذير وتوجيهه للعميل بنجاح.' });
@@ -108,7 +150,12 @@ export async function POST(req: Request) {
         `قام المشرف ${adminName || 'Admin'} بحظر العميل ${userObj.name} (${banDisplay}). السبب: ${banReason}`,
         adminId || 'admin-system',
         adminName || 'Admin',
-        ip
+        ip,
+        {
+          eventType: 'user_banned', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: userObj.discordId || null,
+          metadata: { action, banType: banType || 'permanent', banExpiresAt: banType === 'temporary' ? banExpiresAt : null },
+        }
       );
 
       return NextResponse.json({ success: true, message: 'تم حظر العميل بنجاح.' });
@@ -128,7 +175,12 @@ export async function POST(req: Request) {
         `قام المشرف ${adminName || 'Admin'} بفك حظر العميل ${userObj.name}`,
         adminId || 'admin-system',
         adminName || 'Admin',
-        ip
+        ip,
+        {
+          eventType: 'user_unbanned', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: userObj.discordId || null,
+          metadata: { action },
+        }
       );
 
       return NextResponse.json({ success: true, message: 'تم إلغاء حظر العميل بنجاح.' });
@@ -137,6 +189,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'إجراء غير معروف' }, { status: 400 });
   } catch (err: any) {
     console.error("Manage customers API failed:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'تعذر تنفيذ العملية. حاول مرة أخرى.' }, { status: 500 });
   }
 }
