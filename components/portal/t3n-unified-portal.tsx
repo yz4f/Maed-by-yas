@@ -47,7 +47,7 @@ import {
   Hash
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
+import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
 import { TicketCenter } from './ticket-center';
 import { ToastContainer } from '@/components/ui/toast';
@@ -170,6 +170,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // User Products State
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
+  const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isSyncingDiscordRoles, setIsSyncingDiscordRoles] = useState(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
@@ -407,6 +408,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (res.ok) {
         const data = await res.json();
         setUserProducts(data.products || []);
+        setUserActivity(data.activity || []);
       }
     } catch (e) {
       console.error('Failed to load user products:', e);
@@ -2199,6 +2201,33 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <p className={`text-base sm:text-lg leading-none font-black tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-950'}`}>{memberSince}</p>
                   <p className={`text-[11px] sm:text-xs mt-2 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'عضو منذ' : 'Member Since'}</p>
                 </div>
+              </section>
+
+              <section className={`rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-white/[0.13] bg-[#171b22]/90' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.07)]'}`}>
+                <div className={`mb-4 flex items-center justify-between border-b pb-3 ${isDark ? 'border-white/[0.08]' : 'border-slate-100'}`}>
+                  <h3 className={`flex items-center gap-2 text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-950'}`}>
+                    <Activity className="h-4 w-4 text-sky-400" />
+                    {lang === 'ar' ? 'آخر نشاطاتك' : 'Your recent activity'}
+                  </h3>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{lang === 'ar' ? 'محفوظة في سجلك' : 'Saved to your history'}</span>
+                </div>
+                {userActivity.length > 0 ? (
+                  <div className="space-y-3">
+                    {userActivity.slice(0, 5).map((event) => (
+                      <div key={event.id} className={`flex gap-3 rounded-xl border p-3 ${isDark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-slate-100 bg-slate-50/70'}`}>
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.55)]" />
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{event.description}</p>
+                          <p className={`mt-1 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(event.occurredAt))}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`rounded-xl border border-dashed px-4 py-6 text-center text-xs ${isDark ? 'border-white/[0.10] text-slate-500' : 'border-slate-200 text-slate-500'}`}>
+                    {lang === 'ar' ? 'لا توجد نشاطات مسجلة لحسابك بعد.' : 'No activity has been recorded for your account yet.'}
+                  </div>
+                )}
               </section>
             </div>
 
