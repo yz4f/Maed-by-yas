@@ -24,11 +24,14 @@ export async function POST(req: Request) {
     }
 
     const userProducts = await StoreDB.getUserProducts(user.id);
-    const license = userProducts.find((item) => item.productId === productId);
-    const expiresAt = license?.expiresAt ? new Date(license.expiresAt).getTime() : 0;
-    const isUsable = license?.status === 'Active' && Number.isFinite(expiresAt) && expiresAt > Date.now();
+    const now = Date.now();
+    const license = userProducts.find((item) => {
+      if (item.productId !== productId || item.status !== 'Active') return false;
+      const expiresAt = item.expiresAt ? new Date(item.expiresAt).getTime() : Number.NaN;
+      return Number.isFinite(expiresAt) && expiresAt > now;
+    });
 
-    if (!isUsable || !license?.product?.fileUrl) {
+    if (!license?.product?.fileUrl) {
       return NextResponse.json({ success: false, message: 'لا يوجد ترخيص نشط صالح لتحميل هذا المنتج.' }, { status: 403 });
     }
 
