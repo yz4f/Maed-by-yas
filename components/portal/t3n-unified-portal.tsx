@@ -57,7 +57,7 @@ interface T3NUnifiedPortalProps {
   initialProducts: Product[];
 }
 
-const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/pylNhthrMrarDwdx.mp4';
+const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/DFVzDIgljxfLZYwQ.mp4';
 
 function DiscordMark({ className = '' }: { className?: string }) {
   return (
