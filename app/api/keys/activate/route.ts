@@ -1,39 +1,46 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { DiscordBotService } from '@/lib/discord';
+import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { keyString, userProfile } = body;
+    if (!requestHasTrustedOrigin(req)) {
+      return NextResponse.json({ success: false, message: 'طلب غير مسموح.' }, { status: 403 });
+    }
 
-    if (!keyString) {
+    const actor = await getSessionActor();
+    if (!actor) {
+      return NextResponse.json({ success: false, message: 'يجب تسجيل الدخول عبر Discord قبل تفعيل المفتاح.' }, { status: 401 });
+    }
+
+    const { keyString } = await req.json();
+    if (!keyString || typeof keyString !== 'string') {
       return NextResponse.json({ success: false, message: 'مفتاح التفعيل مطلوب.' }, { status: 400 });
     }
 
-    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-
     const res = await StoreDB.activateProductWithKey(
-      keyString,
+      keyString.trim(),
       {
-        discordId: userProfile?.discordId || '1396965033316978839',
-        name: userProfile?.name || 'Customer',
-        email: userProfile?.email,
-        image: userProfile?.image,
+        discordId: actor.discordId,
+        name: actor.name,
+        email: actor.email || undefined,
+        image: actor.image || undefined,
       },
-      ip
+      getClientIp(req),
     );
 
-    if (res.success && res.product && userProfile?.discordId) {
+    if (res.success && res.product) {
       try {
-        await DiscordBotService.syncRolesOnProductActivation(userProfile.discordId, res.product.name);
-      } catch (e) {
-        // Discord bot may not be configured locally
+        await DiscordBotService.syncRolesOnProductActivation(actor.discordId, res.product.name);
+      } catch (error) {
+        console.warn('Discord role synchronization failed after activation:', error);
       }
     }
 
     return NextResponse.json(res, { status: res.success ? 200 : 400 });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'خطأ غير متوقع' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Key activation failed:', error);
+    return NextResponse.json({ success: false, message: error?.message || 'خطأ غير متوقع أثناء تفعيل المفتاح.' }, { status: 500 });
   }
 }
