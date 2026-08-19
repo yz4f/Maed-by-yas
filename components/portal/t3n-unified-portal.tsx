@@ -10,7 +10,7 @@ import {
   Check,
   RefreshCw,
   LogOut,
-  ExternalLink,
+  Play,
   Users,
   Package,
   Activity,
@@ -3782,7 +3782,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all group cursor-pointer shadow-lg hover:shadow-brand-glow hover:-translate-y-1"
                   >
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
-                      <ExternalLink className="w-7 h-7" />
+                      <Play className="w-7 h-7" fill="currentColor" />
                     </div>
                     <div className="text-center">
                       <h4 className="font-extrabold text-white mb-2 text-lg">شرح التفعيل (فيديو)</h4>
@@ -3835,7 +3835,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           className="absolute inset-0 w-full h-full" 
                           allowFullScreen
                         />
-                      ) : guideModalProduct.product.videoUrl.includes('drive.google.com') ? (                        <iframe                          src={guideModalProduct.product.videoUrl.replace(                            /^https?:\/\/drive\.google\.com\/file\/d\/([^/?]+).*/,                            'https://drive.google.com/file/d/$1/preview',                          )}                          title="شرح المنتج"                          className="absolute inset-0 w-full h-full bg-black"                          allow="autoplay; fullscreen"                          allowFullScreen                        />                      ) : (                        <video 
+                      ) : guideModalProduct.product.videoUrl.includes('drive.google.com') ? (
+                        <video
+                          src={guideModalProduct.product.videoUrl.replace(
+                            /^https?:\/\/drive\.google\.com\/file\/d\/([^/?]+).*/,
+                            'https://drive.usercontent.google.com/download?id=$1&export=download&confirm=t',
+                          )}
+                          className="absolute inset-0 w-full h-full object-contain bg-black"
+                          controls
+                          controlsList="nodownload noremoteplayback"
+                          disablePictureInPicture
+                          playsInline
+                          preload="metadata"
+                        />
+                      ) : (                        <video 
                           src={guideModalProduct.product.videoUrl} 
                           className="absolute inset-0 w-full h-full object-contain bg-black" 
                           controls 
