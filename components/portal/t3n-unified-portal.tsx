@@ -57,6 +57,8 @@ interface T3NUnifiedPortalProps {
   initialProducts: Product[];
 }
 
+const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
+
 function DiscordMark({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none">
@@ -3837,13 +3839,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         />
                       ) : guideModalProduct.product.videoUrl.includes('drive.google.com') ? (
                         <video
-                          src={`/api/tutorial/video?productId=${encodeURIComponent(guideModalProduct.productId)}`}
+                          src={DIRECT_TUTORIAL_VIDEO_URL}
                           className="absolute inset-0 w-full h-full object-contain bg-black"
                           controls
                           controlsList="nodownload noremoteplayback"
                           disablePictureInPicture
                           playsInline
-                          preload="metadata"
+                          preload="auto"
+                          autoPlay
                         />
                       ) : (                        <video 
                           src={guideModalProduct.product.videoUrl} 
