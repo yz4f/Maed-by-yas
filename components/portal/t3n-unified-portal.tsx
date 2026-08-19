@@ -370,6 +370,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
   const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
   const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived && !getLicenseTiming(product).isExpired).length;
+  const sortedUserProducts = [...userProducts].sort((a, b) => {
+    const aPriority = getLicenseTiming(a).isUsable ? 0 : 1;
+    const bPriority = getLicenseTiming(b).isUsable ? 0 : 1;
+    if (aPriority !== bPriority) return aPriority - bPriority;
+
+    const aActivatedAt = new Date(a.activatedAt || 0).getTime() || 0;
+    const bActivatedAt = new Date(b.activatedAt || 0).getTime() || 0;
+    return bActivatedAt - aActivatedAt;
+  });
   const memberSince = React.useMemo(() => {
     if (!currentUser?.createdAt) return '—';
     const joined = new Date(currentUser.createdAt);
@@ -2372,17 +2381,42 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             ) : (
               <div className="product-library mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
-                {userProducts.map((up) => {
+                {sortedUserProducts.map((up, index) => {
                   const displayKey = up.keyString || (lang === 'ar' ? 'مفتاح الترخيص محفوظ بأمان' : 'License key stored securely');
                   const timing = getLicenseTiming(up);
                   const canUseProduct = timing.isUsable;
-                  const isProductUpdating = updatingProductIds.has(up.id);
+                  const previousTiming = index > 0 ? getLicenseTiming(sortedUserProducts[index - 1]) : null;
+                  const startsExpiredSection = !canUseProduct && (!previousTiming || previousTiming.isUsable);
                   const productImg = getProductImage(up.product);
 
                   return (
+                    <React.Fragment key={up.id}>
+                      {index === 0 && canUseProduct && (
+                        <div className="md:col-span-2 flex items-center justify-between gap-3 rounded-2xl border border-sky-300/15 bg-sky-300/[0.05] px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-sky-200" />
+                            <div>
+                              <p className="text-sm font-extrabold text-white">{lang === 'ar' ? 'التراخيص النشطة' : 'Active licenses'}</p>
+                              <p className="mt-0.5 text-[11px] text-sky-100/65">{lang === 'ar' ? 'منتجاتك المتاحة للتحميل والمشاهدة الآن.' : 'Products ready to download and view now.'}</p>
+                            </div>
+                          </div>
+                          <span className="rounded-full border border-sky-200/20 bg-sky-200/[0.08] px-2.5 py-1 text-[11px] font-bold text-sky-100">{activeProductCount}</span>
+                        </div>
+                      )}
+                      {startsExpiredSection && (
+                        <div className="md:col-span-2 mt-2 flex items-center justify-between gap-3 border-t border-white/[0.08] pt-7">
+                          <div className="flex items-center gap-2.5">
+                            <Clock className="h-4 w-4 text-slate-400" />
+                            <div>
+                              <p className="text-sm font-extrabold text-slate-300">{lang === 'ar' ? 'التراخيص المنتهية والقديمة' : 'Expired & previous licenses'}</p>
+                              <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'احتفظنا بها لسجلّك، ويمكن تجديدها من خلال الدعم أو مفتاح جديد.' : 'Kept for your records; renew with support or a new key.'}</p>
+                            </div>
+                          </div>
+                          <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-bold text-slate-400">{inactiveProductCount}</span>
+                        </div>
+                      )}
                     <article
-                      key={up.id}
-                      className="product-license-card group"
+                      className={`product-license-card group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
                       {/* ── BANNER IMAGE ── */}
@@ -2458,6 +2492,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </button>
                       </div>
                     </article>
+                    </React.Fragment>
                   );
                 })}
               </div>
