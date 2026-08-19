@@ -3800,8 +3800,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           className="absolute inset-0 w-full h-full" 
                           allowFullScreen
                         />
-                      ) : (
-                        <video 
+                      ) : guideModalProduct.product.videoUrl.includes('drive.google.com') ? (                        <iframe                          src={guideModalProduct.product.videoUrl.replace(                            /\/file\/d\/([^/?]+).*/,                            'https://drive.google.com/file/d/$1/preview',                          )}                          title="شرح المنتج"                          className="absolute inset-0 w-full h-full bg-black"                          allow="autoplay; fullscreen"                          allowFullScreen                        />                      ) : (                        <video 
                           src={guideModalProduct.product.videoUrl} 
                           className="absolute inset-0 w-full h-full object-contain bg-black" 
                           controls 
