@@ -3830,44 +3830,69 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               )}
 
               {guideView === 'notice' && (
-                <div className="animate-slide-up space-y-5" dir="rtl">
-                  <div className="relative overflow-hidden rounded-3xl border border-amber-400/25 bg-gradient-to-br from-amber-400/10 via-slate-950 to-slate-950 p-5 sm:p-7 shadow-[0_18px_46px_rgba(245,158,11,0.12)]">
-                    <div className="absolute -top-16 -left-12 h-40 w-40 rounded-full bg-amber-400/15 blur-[65px]" />
-                    <div className="relative flex items-start gap-3 sm:gap-4">
-                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-300/30 bg-amber-400/15 text-amber-200"><AlertTriangle className="h-5 w-5" /></div>
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold tracking-[0.14em] text-amber-300">تنبيه قبل مشاهدة الشرح</p>
-                        <h4 className="text-xl sm:text-2xl font-black text-white">⚠️ مهم قبل البدء</h4>
-                        <p className="text-sm leading-7 text-slate-200">هنا يتم شرح <strong className="text-white">كامل خطوات منتج فك باند فورت نايت</strong>. يرجى اتباع الشرح بالكامل وبنفس الترتيب <strong className="text-white">دون تخطي أي خطوة</strong>، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.</p>
+                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-4 sm:space-y-5" dir="rtl">
+                  <section className="relative overflow-hidden rounded-[24px] border border-amber-300/[0.22] bg-[linear-gradient(135deg,rgba(251,191,36,.12),rgba(15,23,42,.92)_46%,rgba(2,6,23,.96))] p-5 shadow-[0_20px_48px_rgba(0,0,0,.24),0_0_34px_rgba(245,158,11,.08)] sm:p-6">
+                    <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-amber-300/15 blur-[76px]" />
+                    <div className="pointer-events-none absolute bottom-0 right-0 h-px w-2/3 bg-gradient-to-l from-amber-200/30 to-transparent" />
+                    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+                      <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-200/[0.30] bg-amber-300/[0.12] text-amber-200 shadow-[0_0_0_6px_rgba(251,191,36,.035),0_0_26px_rgba(251,191,36,.15)]">
+                        <AlertTriangle className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1 text-right">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black tracking-[0.14em] text-amber-200/85">
+                          <span>تنبيه قبل مشاهدة الشرح</span>
+                          <span className="h-1 w-1 rounded-full bg-amber-200/60" />
+                          <span className="text-amber-100/55">اقرأ قبل المتابعة</span>
+                        </div>
+                        <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-[25px]">مهم قبل البدء</h4>
+                        <p className="mt-3 max-w-2xl text-[13px] font-medium leading-7 text-slate-200 sm:text-sm">هنا يتم شرح <strong className="font-extrabold text-white">كامل خطوات منتج فك باند فورت نايت</strong>. يرجى اتباع الشرح بالكامل وبنفس الترتيب <strong className="font-extrabold text-white">دون تخطي أي خطوة</strong>، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.</p>
                       </div>
                     </div>
+                  </section>
+
+                  <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-4">
+                    <section className="group rounded-[20px] border border-white/[0.10] bg-white/[0.035] p-5 transition-colors hover:border-white/[0.16]">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/[0.10] bg-white/[0.045] text-[11px] font-black text-slate-300">01</span>
+                        <div className="min-w-0">
+                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><Shield className="h-4 w-4 text-primary" />تنبيه مهم</h5>
+                          <p className="mt-3 text-[13px] leading-6 text-slate-300">إدارة الموقع وكذلك <strong className="font-extrabold text-white">متجر تعن</strong> لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t border-white/[0.08] pt-3.5 text-[12px] leading-6 text-slate-400">في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم <strong className="font-bold text-slate-200">إغلاق التذكرة مباشرة</strong>.</div>
+                    </section>
+                    <section className="group rounded-[20px] border border-primary/[0.20] bg-primary/[0.055] p-5 transition-colors hover:border-primary/[0.34]">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/25 bg-primary/[0.10] text-[11px] font-black text-primary">02</span>
+                        <div className="min-w-0">
+                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><MessageSquare className="h-4 w-4 text-primary" />الدعم الفني</h5>
+                          <p className="mt-3 text-[13px] leading-6 text-slate-300">دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، <strong className="font-extrabold text-white">في حال كان الخطأ من طرفنا</strong>.</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t border-primary/[0.13] pt-3.5 text-[12px] leading-6 text-slate-400">يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.</div>
+                    </section>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                      <h5 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-white"><Shield className="h-4 w-4 text-primary" /> 📌 تنبيه مهم</h5>
-                      <p className="text-sm leading-7 text-slate-300">إدارة الموقع وكذلك <strong className="text-white">متجر تعن</strong> لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.</p>
-                      <p className="mt-3 text-sm leading-7 text-slate-400">في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم <strong className="text-slate-200">إغلاق التذكرة مباشرة</strong>.</p>
-                    </section>
-                    <section className="rounded-2xl border border-primary/20 bg-primary/[0.055] p-5">
-                      <h5 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-white"><MessageSquare className="h-4 w-4 text-primary" /> 🛠️ الدعم الفني</h5>
-                      <p className="text-sm leading-7 text-slate-300">دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، <strong className="text-white">في حال كان الخطأ من طرفنا</strong>.</p>
-                      <p className="mt-3 text-sm leading-7 text-slate-400">يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.</p>
-                    </section>
-                  </div>
-
-                  <div className="flex flex-col items-stretch gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p aria-live="polite" className="text-xs leading-6 text-slate-400">{tutorialCountdown > 0 ? `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${tutorialCountdown} ${tutorialCountdown === 1 ? 'ثانية' : 'ثوانٍ'}.` : 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.'}</p>
+                  <section className="flex flex-col gap-4 rounded-[20px] border border-white/[0.10] bg-black/25 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${tutorialCountdown > 0 ? 'border-amber-300/25 bg-amber-300/[0.10] text-amber-200' : 'border-emerald-300/25 bg-emerald-300/[0.10] text-emerald-200'}`}>
+                        {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      </span>
+                      <div className="min-w-0 text-right">
+                        <p className="text-xs font-black text-slate-200">{tutorialCountdown > 0 ? 'الخطوة الأخيرة قبل الفيديو' : 'أصبح الشرح جاهزًا للمشاهدة'}</p>
+                        <p aria-live="polite" className="mt-1 text-[11px] leading-5 text-slate-400">{tutorialCountdown > 0 ? `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${tutorialCountdown} ${tutorialCountdown === 1 ? 'ثانية' : 'ثوانٍ'}.` : 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.'}</p>
+                      </div>
+                    </div>
                     <button
                       type="button"
                       disabled={tutorialCountdown > 0}
                       onClick={() => setGuideView('full')}
-                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-primary/20 transition-all enabled:hover:scale-[1.02] enabled:hover:bg-primary-hover disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary px-5 py-2.5 text-sm font-black text-white shadow-[0_10px_24px_rgba(37,99,235,.24)] transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:hover:bg-primary-hover enabled:hover:shadow-[0_14px_28px_rgba(37,99,235,.32)] enabled:active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500 sm:min-w-[196px]"
                     >
                       {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                       {tutorialCountdown > 0 ? `انتظر ${tutorialCountdown} ثوانٍ` : 'قرأت التنبيه — متابعة'}
                     </button>
-                  </div>
+                  </section>
                 </div>
               )}
 
