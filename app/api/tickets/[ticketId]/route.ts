@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { assignTicket, claimTicket, getTicketDetail, setTicketCustomerMute, TicketError, updateTicket } from '@/lib/ticket-store';
+import { assignTicket, claimTicket, deleteTicketPermanently, getTicketDetail, setTicketCustomerMute, TicketError, updateTicket } from '@/lib/ticket-store';
 import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
 export const dynamic = 'force-dynamic';
@@ -27,6 +27,17 @@ export async function GET(_: NextRequest, context: RouteContext) {
     const actor = await getTicketActor();
     if (!actor) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولًا.' }, { status: 401 });
     return NextResponse.json({ success: true, detail: await getTicketDetail(ticketId, actor) });
+  } catch (error) { return fail(error); }
+}
+
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const { ticketId } = await context.params;
+    if (!requestHasTrustedOrigin(request)) return NextResponse.json({ success: false, error: 'مصدر الطلب غير موثوق.' }, { status: 403 });
+    const actor = await getTicketActor();
+    if (!actor) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولًا.' }, { status: 401 });
+    const deleted = await deleteTicketPermanently(ticketId, actor);
+    return NextResponse.json({ success: true, deleted });
   } catch (error) { return fail(error); }
 }
 

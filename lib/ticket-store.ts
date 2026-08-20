@@ -1,6 +1,6 @@
 import { getApps, getApp, initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
+import { deleteObject, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import { TicketActor, canManageTickets } from '@/lib/ticket-auth';
 import { SupportTicket, TicketAttachment, TicketCategory, TicketCustomerProfile, TicketDepartment, TicketDetail, TicketMessage, TicketPriority, TicketStats, TicketStatus, TicketTimelineEvent } from '@/types';
@@ -126,7 +126,7 @@ export async function listTickets(actor: TicketActor, options: { status?: string
   const snapshot = canManageTickets(actor)
     ? await getDocs(collection(db, 'tickets'))
     : await getDocs(query(collection(db, 'tickets'), where('userId', '==', actor.id)));
-  let tickets = snapshot.docs.map(mapTicket);
+  let tickets = snapshot.docs.map(mapTicket).filter(ticket => ticket.status !== 'closed');
   if (canManageTickets(actor) && options.mine) tickets = tickets.filter(ticket => ticket.assignedAgentId === actor.id);
   if (options.status && STATUS_VALUES.includes(options.status as TicketStatus)) tickets = tickets.filter(ticket => ticket.status === options.status);
   if (options.priority && PRIORITY_VALUES.includes(options.priority as TicketPriority)) tickets = tickets.filter(ticket => ticket.priority === options.priority);
@@ -307,15 +307,13 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
   const updates: Partial<SupportTicket> = { updatedAt: now };
   const events: TicketTimelineEvent[] = [];
   if (input.status) {
+    if (input.status === 'closed') throw new TicketError('الإغلاق النهائي يتم عبر حذف التذكرة، ولا يمكن حفظ تذكرة مغلقة في قائمة العمل.', 422);
     if (!STATUS_VALUES.includes(input.status)) throw new TicketError('الحالة غير صالحة.');
     assertStatusTransition(ticket.status, input.status);
     updates.status = input.status;
     if (input.status === 'resolved') {
       updates.resolvedAt = now; updates.resolvedById = actor.id; updates.resolvedByName = actor.name;
-      events.push(timelineEvent(ticketId, actor, 'resolved', 'تم حل التذكرة بانتظار الإغلاق النهائي.', now));
-    } else if (input.status === 'closed') {
-      updates.closedAt = now; updates.closedById = actor.id; updates.closedByName = actor.name; updates.finalClosed = true;
-      events.push(timelineEvent(ticketId, actor, 'closed', 'تم إغلاق التذكرة نهائيًا بعد معالجة المشكلة.', now));
+      events.push(timelineEvent(ticketId, actor, 'resolved', 'تم حل التذكرة بانتظار مراجعة الإجراء النهائي.', now));
     } else {
       events.push(timelineEvent(ticketId, actor, 'status_changed', `تم تغيير حالة التذكرة إلى ${displayStatus(input.status)}.`, now));
     }
@@ -335,6 +333,37 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
   const detail = await getTicketDetail(ticketId, actor);
   recordTicketAudit(actor, 'Ticket Updated', `تم تحديث التذكرة ${detail.ticket.number}.`);
   return detail;
+}
+
+export async function deleteTicketPermanently(ticketId: string, actor: TicketActor) {
+  assertStaff(actor);
+  const db = database();
+  const snapshot = await getDoc(doc(db, 'tickets', ticketId));
+  if (!snapshot.exists()) throw new TicketError('التذكرة غير موجودة أو تم حذفها بالفعل.', 404);
+  const ticket = mapTicket(snapshot);
+
+  const [messagesSnapshot, timelineSnapshot, attachmentsSnapshot] = await Promise.all([
+    getDocs(collection(db, 'tickets', ticketId, 'messages')),
+    getDocs(collection(db, 'tickets', ticketId, 'timeline')),
+    getDocs(collection(db, 'tickets', ticketId, 'attachments')),
+  ]);
+
+  const attachments = attachmentsSnapshot.docs.map((item) => item.data() as TicketAttachment);
+  await Promise.all([
+    ...messagesSnapshot.docs.map((item) => deleteDoc(item.ref)),
+    ...timelineSnapshot.docs.map((item) => deleteDoc(item.ref)),
+    ...attachmentsSnapshot.docs.map((item) => deleteDoc(item.ref)),
+  ]);
+  await deleteDoc(doc(db, 'tickets', ticketId));
+
+  if (attachments.length) {
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    await Promise.allSettled(attachments.map((attachment) => deleteObject(ref(storage, attachment.url))));
+  }
+
+  recordTicketAudit(actor, 'Ticket Permanently Deleted', `تم حذف التذكرة ${ticket.number} نهائيًا بواسطة ${actor.name}.`);
+  return { id: ticket.id, number: ticket.number };
 }
 
 export async function setTicketCustomerMute(ticketId: string, actor: TicketActor, muted: boolean, reason = '') {
@@ -435,7 +464,7 @@ export async function getTicketStats(actor: TicketActor): Promise<TicketStats> {
     unassigned: tickets.filter(ticket => !ticket.assignedAgentId && ticket.status !== 'closed' && ticket.status !== 'resolved').length,
     inProgress: tickets.filter(ticket => ticket.status === 'in_progress').length,
     awaitingUser: tickets.filter(ticket => ticket.status === 'awaiting_user').length,
-    closedToday: tickets.filter(ticket => ticket.status === 'closed' && ticket.closedAt?.slice(0, 10) === today).length,
+    closedToday: 0,
     urgent: tickets.filter(ticket => ticket.priority === 'urgent' && ticket.status !== 'closed' && ticket.status !== 'resolved').length,
     recentDays: days.map(date => ({ date, count: tickets.filter(ticket => ticket.createdAt.slice(0, 10) === date).length })),
   };

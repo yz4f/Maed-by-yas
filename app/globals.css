@@ -1086,3 +1086,88 @@ body {
   background: rgba(255, 255, 255, 0.88) !important;
   border-color: rgba(38, 87, 128, 0.13) !important;
 }
+
+
+/* Conversation workspace — calmer ticket queue, stronger message hierarchy. */
+.ticket-center--graphite .ticket-workspace {
+  gap: 0.85rem;
+}
+.ticket-center--graphite .ticket-list-pane {
+  padding: 0.65rem;
+  border-radius: 1.15rem;
+  background: linear-gradient(180deg, rgba(18, 27, 41, 0.98), rgba(9, 14, 24, 0.96)) !important;
+}
+.ticket-center--graphite .ticket-detail-pane {
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(67, 155, 216, 0.10), transparent 29rem),
+    linear-gradient(180deg, rgba(15, 23, 36, 0.98), rgba(8, 12, 21, 0.96)) !important;
+}
+.ticket-center--graphite .ticket-conversation-row {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 0.9rem;
+}
+.ticket-center--graphite .ticket-conversation-row::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.75rem;
+  inset-inline-start: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 180ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.ticket-center--graphite .ticket-conversation-row:hover {
+  border-color: rgba(112, 214, 255, 0.16);
+  transform: none;
+}
+.ticket-center--graphite .ticket-conversation-row.ticket-list--active {
+  border-color: rgba(112, 214, 255, 0.30) !important;
+  background: linear-gradient(100deg, rgba(46, 145, 208, 0.18), rgba(37, 99, 235, 0.055)) !important;
+  box-shadow: inset 0 0 0 1px rgba(112, 214, 255, 0.05), 0 10px 22px rgba(0, 0, 0, 0.14);
+}
+.ticket-center--graphite .ticket-conversation-row.ticket-list--active::before {
+  background: #70d6ff;
+  box-shadow: 0 0 12px rgba(112, 214, 255, 0.78);
+}
+.ticket-center--graphite .ticket-detail-pane > div > section:nth-of-type(2) {
+  min-height: 180px;
+}
+.ticket-center--graphite .ticket-detail-pane textarea {
+  min-height: 66px;
+  line-height: 1.65;
+}
+.ticket-center--graphite .ticket-message > div {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.ticket-center--graphite .ticket-message > div:hover {
+  transform: translateY(-1px);
+}
+.ticket-center--graphite .ticket-metadata {
+  min-width: 238px;
+  background: linear-gradient(180deg, rgba(3, 7, 14, 0.36), rgba(3, 7, 14, 0.18));
+}
+.ticket-center--graphite .ticket-filter--active {
+  background: linear-gradient(135deg, rgba(80, 192, 245, 0.23), rgba(71, 114, 222, 0.14)) !important;
+  color: #eaf8ff !important;
+  box-shadow: inset 0 0 0 1px rgba(112, 214, 255, 0.20);
+}
+@media (max-width: 1279px) {
+  .ticket-center--graphite .ticket-metadata { min-width: 0; }
+}
+@media (max-width: 640px) {
+  .ticket-center--graphite .ticket-list-pane { padding: 0.5rem; }
+  .ticket-center--graphite .ticket-conversation-row > div { padding: 0.7rem; }
+  .ticket-center--graphite .ticket-detail-pane { border-radius: 1rem; }
+  .ticket-center--graphite .ticket-message > div { max-width: 94%; }
+}
+
+.portal-shell--light .ticket-center--graphite .ticket-list-pane {
+  background: rgba(255, 255, 255, 0.94) !important;
+}
+.portal-shell--light .ticket-center--graphite .ticket-detail-pane {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.96)) !important;
+}
