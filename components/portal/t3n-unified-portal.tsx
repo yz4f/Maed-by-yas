@@ -217,6 +217,78 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     return () => window.clearInterval(timer);
   }, [guideView]);
 
+  const guideText = lang === 'ar' ? {
+    modalTitle: 'شرح فك باند فورت',
+    close: 'إغلاق نافذة الشرح',
+    tutorialTitle: 'شرح فك باند فورت',
+    tutorialDescription: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.',
+    supportTitle: 'دعم ومشاكل (ديسكورد)',
+    supportDescription: 'حلول للمشاكل المفاجئة مثل أخطاء الشبكة ومشاكل الوقت.',
+    noticeLabel: 'تنبيه قبل مشاهدة الشرح',
+    noticeHint: 'اقرأ قبل المتابعة',
+    noticeTitle: 'مهم قبل البدء',
+    introBefore: 'هنا يتم شرح ',
+    introProduct: 'كامل خطوات منتج فك باند فورت نايت',
+    introMiddle: '. يرجى اتباع الشرح بالكامل وبنفس الترتيب ',
+    introEmphasis: 'دون تخطي أي خطوة',
+    introAfter: '، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.',
+    importantTitle: 'تنبيه مهم',
+    importantPrimaryBefore: 'إدارة الموقع وكذلك ',
+    storeName: 'متجر تعن',
+    importantPrimaryAfter: ' لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.',
+    importantSecondaryBefore: 'في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم ',
+    importantSecondaryStrong: 'إغلاق التذكرة مباشرة',
+    supportHeading: 'الدعم الفني',
+    supportPrimaryBefore: 'دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، ',
+    supportPrimaryStrong: 'في حال كان الخطأ من طرفنا',
+    supportSecondary: 'يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.',
+    waitingTitle: 'الخطوة الأخيرة قبل الفيديو',
+    readyTitle: 'أصبح الشرح جاهزًا للمشاهدة',
+    waitingMessage: (seconds: number) => `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${seconds} ${seconds === 1 ? 'ثانية' : 'ثوانٍ'}.`,
+    readyMessage: 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.',
+    waitingButton: (seconds: number) => `انتظر ${seconds} ثوانٍ`,
+    continueButton: 'قرأت التنبيه — متابعة',
+    back: 'العودة للقائمة السابقة',
+    unavailableTitle: 'لا يوجد فيديو شرح متاح',
+    unavailableMessage: 'لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.',
+    unavailableHelp: 'الرجاء إبلاغ الدعم الفني أو زيارة سيرفر الديسكورد للمساعدة.',
+  } : {
+    modalTitle: 'Fortnite Unban Guide',
+    close: 'Close tutorial dialog',
+    tutorialTitle: 'Fortnite Unban Guide',
+    tutorialDescription: 'A complete visual walkthrough for activation and setup, step by step.',
+    supportTitle: 'Support & Issues (Discord)',
+    supportDescription: 'Help for unexpected issues, including network and timing errors.',
+    noticeLabel: 'Before you watch',
+    noticeHint: 'Please read before continuing',
+    noticeTitle: 'Important before you begin',
+    introBefore: 'This tutorial explains ',
+    introProduct: 'the complete Fortnite Unban product process',
+    introMiddle: '. Please follow every step in the exact order ',
+    introEmphasis: 'without skipping any step',
+    introAfter: ', to help ensure the process is completed correctly and avoid issues.',
+    importantTitle: 'Important notice',
+    importantPrimaryBefore: 'The website administration and ',
+    storeName: 'Ta3n Store',
+    importantPrimaryAfter: ' are not responsible for lost keys or incorrect use.',
+    importantSecondaryBefore: 'If you encounter an issue, you can contact support and open a ticket explaining the problem. However, tickets or messages asking for steps already covered in this guide will be ',
+    importantSecondaryStrong: 'closed immediately',
+    supportHeading: 'Technical support',
+    supportPrimaryBefore: 'Our support team is dedicated only to product-related problems and errors, ',
+    supportPrimaryStrong: 'when the issue is on our side',
+    supportSecondary: 'Please make sure that you have followed all steps correctly and reviewed all store policies before contacting support.',
+    waitingTitle: 'One final step before the video',
+    readyTitle: 'The tutorial is ready to watch',
+    waitingMessage: (seconds: number) => `Please read this notice. Continue will unlock in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
+    readyMessage: 'You have read the notice. You can now continue to the video tutorial.',
+    waitingButton: (seconds: number) => `Wait ${seconds}s`,
+    continueButton: 'I understand — continue',
+    back: 'Back to guide options',
+    unavailableTitle: 'No tutorial video is available',
+    unavailableMessage: 'The administration has not added a tutorial video for this product yet.',
+    unavailableHelp: 'Please contact technical support or visit the Discord server for assistance.',
+  };
+
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
   const [isAdminRefreshing, setIsAdminRefreshing] = useState(false);
@@ -3770,20 +3842,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
-          <div className="relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
+          <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="min-h-[112px] px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-center justify-center bg-gradient-to-l from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden">
+            <div className={`min-h-[112px] px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-center justify-center ${lang === 'ar' ? 'bg-gradient-to-l' : 'bg-gradient-to-r'} from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden`}>
               <div className="absolute -top-16 -left-10 w-56 h-56 bg-primary/20 rounded-full blur-[70px]" />
               <button
                 onClick={() => { setGuideModalProduct(null); setGuideView(null); }}
-                aria-label="إغلاق نافذة الشرح"
+                aria-label={guideText.close}
                 className="absolute left-5 sm:left-7 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 transition-all duration-200 hover:scale-105 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
               <div className="z-10 flex items-center gap-3 text-center">
                 <span className="grid h-10 w-10 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
-                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">شرح فك باند فورت</h3>
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">{guideText.modalTitle}</h3>
               </div>
             </div>
 
@@ -3802,8 +3874,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <Play className="w-7 h-7" fill="currentColor" />
                     </div>
                     <div className="text-center">
-                      <h4 className="font-extrabold text-white mb-2 text-lg">شرح فك باند فورت</h4>
-                      <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.</p>
+                      <h4 className="font-extrabold text-white mb-2 text-lg">{guideText.tutorialTitle}</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed max-w-[220px]">{guideText.tutorialDescription}</p>
                     </div>
                   </button>
 
@@ -3822,15 +3894,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <HelpCircle className="w-7 h-7" />
                     </div>
                     <div className="text-center">
-                      <h4 className="font-extrabold text-white mb-2 text-lg">دعم ومشاكل (ديسكورد)</h4>
-                      <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">حلول للمشاكل المفاجئة مثل أخطاء الشبكة ومشاكل الوقت.</p>
+                      <h4 className="font-extrabold text-white mb-2 text-lg">{guideText.supportTitle}</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed max-w-[220px]">{guideText.supportDescription}</p>
                     </div>
                   </button>
                 </div>
               )}
 
               {guideView === 'notice' && (
-                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-4 sm:space-y-5" dir="rtl">
+                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-4 sm:space-y-5">
                   <section className="relative overflow-hidden rounded-[24px] border border-amber-300/[0.22] bg-[linear-gradient(135deg,rgba(251,191,36,.12),rgba(15,23,42,.92)_46%,rgba(2,6,23,.96))] p-5 shadow-[0_20px_48px_rgba(0,0,0,.24),0_0_34px_rgba(245,158,11,.08)] sm:p-6">
                     <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-amber-300/15 blur-[76px]" />
                     <div className="pointer-events-none absolute bottom-0 right-0 h-px w-2/3 bg-gradient-to-l from-amber-200/30 to-transparent" />
@@ -3838,14 +3910,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-200/[0.30] bg-amber-300/[0.12] text-amber-200 shadow-[0_0_0_6px_rgba(251,191,36,.035),0_0_26px_rgba(251,191,36,.15)]">
                         <AlertTriangle className="h-6 w-6" />
                       </div>
-                      <div className="min-w-0 flex-1 text-right">
+                      <div className="min-w-0 flex-1 text-start">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black tracking-[0.14em] text-amber-200/85">
-                          <span>تنبيه قبل مشاهدة الشرح</span>
+                          <span>{guideText.noticeLabel}</span>
                           <span className="h-1 w-1 rounded-full bg-amber-200/60" />
-                          <span className="text-amber-100/55">اقرأ قبل المتابعة</span>
+                          <span className="text-amber-100/55">{guideText.noticeHint}</span>
                         </div>
-                        <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-[25px]">مهم قبل البدء</h4>
-                        <p className="mt-3 max-w-2xl text-[13px] font-medium leading-7 text-slate-200 sm:text-sm">هنا يتم شرح <strong className="font-extrabold text-white">كامل خطوات منتج فك باند فورت نايت</strong>. يرجى اتباع الشرح بالكامل وبنفس الترتيب <strong className="font-extrabold text-white">دون تخطي أي خطوة</strong>، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.</p>
+                        <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-[25px]">{guideText.noticeTitle}</h4>
+                        <p className="mt-3 max-w-2xl text-[13px] font-medium leading-7 text-slate-200 sm:text-sm">{guideText.introBefore}<strong className="font-extrabold text-white">{guideText.introProduct}</strong>{guideText.introMiddle}<strong className="font-extrabold text-white">{guideText.introEmphasis}</strong>{guideText.introAfter}</p>
                       </div>
                     </div>
                   </section>
@@ -3855,21 +3927,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="flex items-start gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/[0.10] bg-white/[0.045] text-[11px] font-black text-slate-300">01</span>
                         <div className="min-w-0">
-                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><Shield className="h-4 w-4 text-primary" />تنبيه مهم</h5>
-                          <p className="mt-3 text-[13px] leading-6 text-slate-300">إدارة الموقع وكذلك <strong className="font-extrabold text-white">متجر تعن</strong> لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.</p>
+                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><Shield className="h-4 w-4 text-primary" />{guideText.importantTitle}</h5>
+                          <p className="mt-3 text-[13px] leading-6 text-slate-300">{guideText.importantPrimaryBefore}<strong className="font-extrabold text-white">{guideText.storeName}</strong>{guideText.importantPrimaryAfter}</p>
                         </div>
                       </div>
-                      <div className="mt-4 border-t border-white/[0.08] pt-3.5 text-[12px] leading-6 text-slate-400">في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم <strong className="font-bold text-slate-200">إغلاق التذكرة مباشرة</strong>.</div>
+                      <div className="mt-4 border-t border-white/[0.08] pt-3.5 text-[12px] leading-6 text-slate-400">{guideText.importantSecondaryBefore}<strong className="font-bold text-slate-200">{guideText.importantSecondaryStrong}</strong>.</div>
                     </section>
                     <section className="group rounded-[20px] border border-primary/[0.20] bg-primary/[0.055] p-5 transition-colors hover:border-primary/[0.34]">
                       <div className="flex items-start gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/25 bg-primary/[0.10] text-[11px] font-black text-primary">02</span>
                         <div className="min-w-0">
-                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><MessageSquare className="h-4 w-4 text-primary" />الدعم الفني</h5>
-                          <p className="mt-3 text-[13px] leading-6 text-slate-300">دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، <strong className="font-extrabold text-white">في حال كان الخطأ من طرفنا</strong>.</p>
+                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><MessageSquare className="h-4 w-4 text-primary" />{guideText.supportHeading}</h5>
+                          <p className="mt-3 text-[13px] leading-6 text-slate-300">{guideText.supportPrimaryBefore}<strong className="font-extrabold text-white">{guideText.supportPrimaryStrong}</strong>.</p>
                         </div>
                       </div>
-                      <div className="mt-4 border-t border-primary/[0.13] pt-3.5 text-[12px] leading-6 text-slate-400">يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.</div>
+                      <div className="mt-4 border-t border-primary/[0.13] pt-3.5 text-[12px] leading-6 text-slate-400">{guideText.supportSecondary}</div>
                     </section>
                   </div>
 
@@ -3878,9 +3950,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${tutorialCountdown > 0 ? 'border-amber-300/25 bg-amber-300/[0.10] text-amber-200' : 'border-emerald-300/25 bg-emerald-300/[0.10] text-emerald-200'}`}>
                         {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                       </span>
-                      <div className="min-w-0 text-right">
-                        <p className="text-xs font-black text-slate-200">{tutorialCountdown > 0 ? 'الخطوة الأخيرة قبل الفيديو' : 'أصبح الشرح جاهزًا للمشاهدة'}</p>
-                        <p aria-live="polite" className="mt-1 text-[11px] leading-5 text-slate-400">{tutorialCountdown > 0 ? `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${tutorialCountdown} ${tutorialCountdown === 1 ? 'ثانية' : 'ثوانٍ'}.` : 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.'}</p>
+                      <div className="min-w-0 text-start">
+                        <p className="text-xs font-black text-slate-200">{tutorialCountdown > 0 ? guideText.waitingTitle : guideText.readyTitle}</p>
+                        <p aria-live="polite" className="mt-1 text-[11px] leading-5 text-slate-400">{tutorialCountdown > 0 ? guideText.waitingMessage(tutorialCountdown) : guideText.readyMessage}</p>
                       </div>
                     </div>
                     <button
@@ -3890,7 +3962,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary px-5 py-2.5 text-sm font-black text-white shadow-[0_10px_24px_rgba(37,99,235,.24)] transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:hover:bg-primary-hover enabled:hover:shadow-[0_14px_28px_rgba(37,99,235,.32)] enabled:active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500 sm:min-w-[196px]"
                     >
                       {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                      {tutorialCountdown > 0 ? `انتظر ${tutorialCountdown} ثوانٍ` : 'قرأت التنبيه — متابعة'}
+                      {tutorialCountdown > 0 ? guideText.waitingButton(tutorialCountdown) : guideText.continueButton}
                     </button>
                   </section>
                 </div>
@@ -3898,10 +3970,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {guideView === 'full' && (
                 <div className="space-y-4 animate-slide-up">
-                  <div className="flex items-center justify-end px-1 border-b border-white/10 pb-4" dir="ltr">
-                    <button dir="rtl" onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
-                      <ArrowRight className="w-4 h-4" />
-                      العودة للقائمة السابقة
+                  <div className={`flex items-center px-1 border-b border-white/10 pb-4 ${lang === 'ar' ? 'justify-end' : 'justify-start'}`}>
+                    <button onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
+                      {lang === 'ar' ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                      {guideText.back}
                     </button>
                   </div>
                   <div className="aspect-video w-full rounded-2xl sm:rounded-3xl border border-white/10 ring-1 ring-black/40 overflow-hidden bg-[#030712] flex flex-col items-center justify-center p-0 text-center relative shadow-[0_22px_55px_rgba(0,0,0,0.5)]">
@@ -3942,11 +4014,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10 shadow-inner">
                           <AlertCircle className="w-10 h-10 text-slate-500" />
                         </div>
-                        <h3 className="text-white font-extrabold mb-2 text-lg">لا يوجد فيديو شرح متاح</h3>
+                        <h3 className="text-white font-extrabold mb-2 text-lg">{guideText.unavailableTitle}</h3>
                         <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-                          لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.
+                          {guideText.unavailableMessage}
                           <br /><br />
-                          الرجاء إبلاغ الدعم الفني أو زيارة سيرفر الديسكورد للمساعدة.
+                          {guideText.unavailableHelp}
                         </p>
                       </div>
                     )}
