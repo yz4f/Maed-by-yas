@@ -196,7 +196,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Guide Modal States
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
-  const [guideView, setGuideView] = useState<'menu' | 'full' | 'network' | 'timer' | null>(null);
+  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'network' | 'timer' | null>(null);
+  const [tutorialCountdown, setTutorialCountdown] = useState(0);
+
+  useEffect(() => {
+    if (guideView !== 'notice') return;
+
+    setTutorialCountdown(5);
+    const timer = window.setInterval(() => {
+      setTutorialCountdown((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [guideView]);
 
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
@@ -3775,7 +3787,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
-                      setGuideView('full');
+                      const productName = guideModalProduct.product?.name || '';
+                      setGuideView(productName.includes('فورت') || productName.toLowerCase().includes('fortnite') ? 'notice' : 'full');
                     }}
                     className="relative overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-3xl bg-gradient-to-br from-primary/15 via-slate-900/80 to-slate-950 border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-slate-900 transition-all duration-200 group cursor-pointer shadow-xl hover:shadow-[0_18px_42px_rgba(37,99,235,0.23)] hover:-translate-y-1.5"
                   >
@@ -3807,6 +3820,48 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">حلول للمشاكل المفاجئة مثل أخطاء الشبكة ومشاكل الوقت.</p>
                     </div>
                   </button>
+                </div>
+              )}
+
+              {guideView === 'notice' && (
+                <div className="animate-slide-up space-y-5" dir="rtl">
+                  <div className="relative overflow-hidden rounded-3xl border border-amber-400/25 bg-gradient-to-br from-amber-400/10 via-slate-950 to-slate-950 p-5 sm:p-7 shadow-[0_18px_46px_rgba(245,158,11,0.12)]">
+                    <div className="absolute -top-16 -left-12 h-40 w-40 rounded-full bg-amber-400/15 blur-[65px]" />
+                    <div className="relative flex items-start gap-3 sm:gap-4">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-300/30 bg-amber-400/15 text-amber-200"><AlertTriangle className="h-5 w-5" /></div>
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold tracking-[0.14em] text-amber-300">تنبيه قبل مشاهدة الشرح</p>
+                        <h4 className="text-xl sm:text-2xl font-black text-white">⚠️ مهم قبل البدء</h4>
+                        <p className="text-sm leading-7 text-slate-200">هنا يتم شرح <strong className="text-white">كامل خطوات منتج فك باند فورت نايت</strong>. يرجى اتباع الشرح بالكامل وبنفس الترتيب <strong className="text-white">دون تخطي أي خطوة</strong>، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                      <h5 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-white"><Shield className="h-4 w-4 text-primary" /> 📌 تنبيه مهم</h5>
+                      <p className="text-sm leading-7 text-slate-300">إدارة الموقع وكذلك <strong className="text-white">متجر تعن</strong> لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.</p>
+                      <p className="mt-3 text-sm leading-7 text-slate-400">في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم <strong className="text-slate-200">إغلاق التذكرة مباشرة</strong>.</p>
+                    </section>
+                    <section className="rounded-2xl border border-primary/20 bg-primary/[0.055] p-5">
+                      <h5 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-white"><MessageSquare className="h-4 w-4 text-primary" /> 🛠️ الدعم الفني</h5>
+                      <p className="text-sm leading-7 text-slate-300">دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، <strong className="text-white">في حال كان الخطأ من طرفنا</strong>.</p>
+                      <p className="mt-3 text-sm leading-7 text-slate-400">يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.</p>
+                    </section>
+                  </div>
+
+                  <div className="flex flex-col items-stretch gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p aria-live="polite" className="text-xs leading-6 text-slate-400">{tutorialCountdown > 0 ? `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${tutorialCountdown} ${tutorialCountdown === 1 ? 'ثانية' : 'ثوانٍ'}.` : 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.'}</p>
+                    <button
+                      type="button"
+                      disabled={tutorialCountdown > 0}
+                      onClick={() => setGuideView('full')}
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-primary/20 transition-all enabled:hover:scale-[1.02] enabled:hover:bg-primary-hover disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                    >
+                      {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {tutorialCountdown > 0 ? `انتظر ${tutorialCountdown} ثوانٍ` : 'قرأت التنبيه — متابعة'}
+                    </button>
+                  </div>
                 </div>
               )}
 
