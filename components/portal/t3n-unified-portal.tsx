@@ -203,7 +203,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Guide Modal States
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
-  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'network' | 'timer' | null>(null);
+  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'network' | 'timer' | null>(null);
   const [tutorialCountdown, setTutorialCountdown] = useState(0);
 
   useEffect(() => {
@@ -222,8 +222,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     close: 'إغلاق نافذة الشرح',
     tutorialTitle: 'شرح فك باند فورت',
     tutorialDescription: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.',
-    supportTitle: 'دعم ومشاكل (ديسكورد)',
-    supportDescription: 'حلول للمشاكل المفاجئة مثل أخطاء الشبكة ومشاكل الوقت.',
+    supportTitle: 'حلول المشاكل الشائعة',
+    supportDescription: 'شروحات مرئية داخل الموقع لأخطاء الشبكة والوقت.',
+    issuesLabel: 'مركز الحلول المرئي',
+    issuesTitle: 'اختر المشكلة الظاهرة لديك',
+    issuesDescription: 'كل بطاقة تعرض صورة الخطأ نفسها ثم تفتح فيديو الحل المطابق لها داخل الموقع.',
+    networkIssueTitle: 'مشكلة الشبكة أو إيقاف الواي فاي',
+    networkIssueDescription: 'عند ظهور رسالة عدم الوصول إلى اسم المضيف أو فشل اتصال الشبكة.',
+    timeIssueTitle: 'خطأ الوقت والتحقق',
+    timeIssueDescription: 'عند ظهور تنبيه مزامنة وقت ويندوز أو فشل التحقق من التوقيع.',
+    watchSolution: 'مشاهدة فيديو الحل',
+    solutionVideoLabel: 'فيديو الحل',
+    screenshotLabel: 'صورة الخطأ المرجعية',
     noticeLabel: 'تنبيه قبل مشاهدة الشرح',
     noticeHint: 'اقرأ قبل المتابعة',
     noticeTitle: 'مهم قبل البدء',
@@ -251,14 +261,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     back: 'العودة للقائمة السابقة',
     unavailableTitle: 'لا يوجد فيديو شرح متاح',
     unavailableMessage: 'لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.',
-    unavailableHelp: 'الرجاء إبلاغ الدعم الفني أو زيارة سيرفر الديسكورد للمساعدة.',
+    unavailableHelp: 'الرجاء إبلاغ الدعم الفني عبر تذكرة إذا احتجت إلى مساعدة إضافية.',
   } : {
     modalTitle: 'Fortnite Unban Guide',
     close: 'Close tutorial dialog',
     tutorialTitle: 'Fortnite Unban Guide',
     tutorialDescription: 'A complete visual walkthrough for activation and setup, step by step.',
-    supportTitle: 'Support & Issues (Discord)',
-    supportDescription: 'Help for unexpected issues, including network and timing errors.',
+    supportTitle: 'Common issue fixes',
+    supportDescription: 'In-site visual solutions for network and system-time errors.',
+    issuesLabel: 'VISUAL FIX CENTER',
+    issuesTitle: 'Choose the error you are seeing',
+    issuesDescription: 'Each card shows the matching error screenshot and opens its dedicated solution video inside the site.',
+    networkIssueTitle: 'Network or Wi-Fi connection error',
+    networkIssueDescription: 'For hostname resolution failures or a network connection error.',
+    timeIssueTitle: 'System time and verification error',
+    timeIssueDescription: 'For Windows time-sync prompts or signature verification failures.',
+    watchSolution: 'Watch solution video',
+    solutionVideoLabel: 'SOLUTION VIDEO',
+    screenshotLabel: 'REFERENCE ERROR SCREENSHOT',
     noticeLabel: 'Before you watch',
     noticeHint: 'Please read before continuing',
     noticeTitle: 'Important before you begin',
@@ -286,7 +306,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     back: 'Back to guide options',
     unavailableTitle: 'No tutorial video is available',
     unavailableMessage: 'The administration has not added a tutorial video for this product yet.',
-    unavailableHelp: 'Please contact technical support or visit the Discord server for assistance.',
+    unavailableHelp: 'Please contact technical support through a ticket if you need additional help.',
   };
 
   // Admin Panel States
@@ -3879,15 +3899,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </button>
 
-                  {/* Guide Link Button */}
+                  {/* Visual issue-fix center */}
                   <button
-                    onClick={() => {
-                      if (guideModalProduct.product?.guideUrl) {
-                        window.open(guideModalProduct.product.guideUrl, '_blank');
-                      } else {
-                        window.open('https://discord.gg/t3n', '_blank');
-                      }
-                    }}
+                    onClick={() => setGuideView('issues')}
                     className="relative overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-3xl bg-white/[0.04] border border-white/10 hover:border-emerald-400/45 hover:bg-emerald-400/[0.06] transition-all duration-200 group cursor-pointer shadow-xl hover:shadow-[0_18px_42px_rgba(16,185,129,0.13)] hover:-translate-y-1.5"
                   >
                     <div className="w-16 h-16 rounded-2xl bg-emerald-400/10 border border-emerald-400/25 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(16,185,129,0.13)]">
@@ -3900,6 +3914,69 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </button>
                 </div>
               )}
+
+              {guideView === 'issues' && (
+                <div className="animate-slide-up mx-auto w-full max-w-4xl space-y-5">
+                  <div className="flex flex-col gap-2 border-b border-white/[0.10] pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="text-start">
+                      <p className="text-[10px] font-black tracking-[0.18em] text-emerald-300/80">{guideText.issuesLabel}</p>
+                      <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">{guideText.issuesTitle}</h4>
+                      <p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-400 sm:text-[13px]">{guideText.issuesDescription}</p>
+                    </div>
+                    <button onClick={() => setGuideView('menu')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 text-[11px] font-black text-slate-300 transition-all hover:border-primary/35 hover:bg-primary/10 hover:text-white sm:self-auto">
+                      {lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}
+                    </button>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {[
+                      { view: 'network' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png', title: guideText.networkIssueTitle, description: guideText.networkIssueDescription, accent: 'sky' },
+                      { view: 'timer' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/iUIBJOOTPsAnQTJW.png', title: guideText.timeIssueTitle, description: guideText.timeIssueDescription, accent: 'violet' },
+                    ].map((issue, index) => (
+                      <button key={issue.view} onClick={() => setGuideView(issue.view)} className={`group overflow-hidden rounded-[22px] border text-start transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(0,0,0,0.26)] ${issue.accent === 'sky' ? 'border-sky-300/[0.18] bg-sky-400/[0.045] hover:border-sky-300/40' : 'border-violet-300/[0.18] bg-violet-400/[0.045] hover:border-violet-300/40'}`}>
+                        <div className="relative aspect-[16/8.8] overflow-hidden bg-black">
+                          <img src={issue.image} alt={issue.title} loading="lazy" className="h-full w-full object-cover opacity-80 transition-transform duration-300 group-hover:scale-[1.035] group-hover:opacity-100" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent" />
+                          <span className={`absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border text-[11px] font-black ${issue.accent === 'sky' ? 'border-sky-200/30 bg-sky-400/15 text-sky-100' : 'border-violet-200/30 bg-violet-400/15 text-violet-100'}`}>0{index + 1}</span>
+                          <span className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-black/40 text-white backdrop-blur-sm transition-transform duration-200 group-hover:scale-110"><Play className="h-4 w-4" fill="currentColor" /></span>
+                        </div>
+                        <div className="p-4 sm:p-5">
+                          <h5 className="text-[15px] font-black text-white sm:text-base">{issue.title}</h5>
+                          <p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-400 sm:text-[12px]">{issue.description}</p>
+                          <div className={`mt-4 inline-flex items-center gap-2 text-[11px] font-black ${issue.accent === 'sky' ? 'text-sky-200' : 'text-violet-200'}`}><Play className="h-3.5 w-3.5" fill="currentColor" />{guideText.watchSolution}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(guideView === 'network' || guideView === 'timer') && (() => {
+                const isNetwork = guideView === 'network';
+                const solution = isNetwork ? {
+                  title: guideText.networkIssueTitle,
+                  description: guideText.networkIssueDescription,
+                  image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png',
+                  video: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/YDCQGNGzJcLXDrXO.mp4',
+                  accent: 'sky',
+                } : {
+                  title: guideText.timeIssueTitle,
+                  description: guideText.timeIssueDescription,
+                  image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/iUIBJOOTPsAnQTJW.png',
+                  video: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/dMYRLGIaslnDGgDt.mp4',
+                  accent: 'violet',
+                };
+                return <div className="animate-slide-up mx-auto w-full max-w-4xl space-y-4">
+                  <div className="flex flex-col gap-3 border-b border-white/[0.10] pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 text-start"><p className={`text-[10px] font-black tracking-[0.18em] ${solution.accent === 'sky' ? 'text-sky-300/85' : 'text-violet-300/85'}`}>{guideText.solutionVideoLabel}</p><h4 className="mt-1 truncate text-lg font-black text-white sm:text-xl">{solution.title}</h4></div>
+                    <button onClick={() => setGuideView('issues')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 text-[11px] font-black text-slate-300 transition-all hover:border-primary/35 hover:bg-primary/10 hover:text-white sm:self-auto">{lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}</button>
+                  </div>
+                  <section className={`overflow-hidden rounded-[24px] border bg-black/45 shadow-[0_20px_52px_rgba(0,0,0,0.34)] ${solution.accent === 'sky' ? 'border-sky-300/[0.18]' : 'border-violet-300/[0.18]'}`}>
+                    <div className="relative aspect-video w-full bg-black"><video src={solution.video} className="absolute inset-0 h-full w-full bg-black object-contain" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline preload="metadata" autoPlay /></div>
+                    <div className="flex flex-col gap-3 border-t border-white/[0.09] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><p className="text-start text-[12px] leading-6 text-slate-400">{solution.description}</p><span className={`inline-flex shrink-0 items-center gap-2 self-start rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${solution.accent === 'sky' ? 'border-sky-300/20 bg-sky-400/10 text-sky-100' : 'border-violet-300/20 bg-violet-400/10 text-violet-100'}`}><Play className="h-3 w-3" fill="currentColor" />{guideText.watchSolution}</span></div>
+                  </section>
+                  <section className="overflow-hidden rounded-[20px] border border-white/[0.10] bg-white/[0.025] p-3 sm:p-4"><div className="mb-3 flex items-center gap-2 text-start text-[10px] font-black tracking-[0.14em] text-slate-400"><AlertTriangle className="h-3.5 w-3.5 text-amber-300" />{guideText.screenshotLabel}</div><img src={solution.image} alt={solution.title} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[0.08] bg-black object-contain" /></section>
+                </div>;
+              })()}
 
               {guideView === 'notice' && (
                 <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-4 sm:space-y-5">
