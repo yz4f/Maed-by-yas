@@ -3,7 +3,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import { TicketActor, canManageTickets } from '@/lib/ticket-auth';
-import { SupportTicket, TicketAttachment, TicketCategory, TicketDepartment, TicketDetail, TicketMessage, TicketPriority, TicketStats, TicketStatus, TicketTimelineEvent } from '@/types';
+import { SupportTicket, TicketAttachment, TicketCategory, TicketCustomerProfile, TicketDepartment, TicketDetail, TicketMessage, TicketPriority, TicketStats, TicketStatus, TicketTimelineEvent } from '@/types';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDrMw5gxptqdancpaoSu2Mg0_C1DcSVqn8',
@@ -29,7 +29,7 @@ const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   awaiting_user: ['in_progress', 'resolved', 'closed'],
   awaiting_staff: ['open', 'in_progress', 'closed'],
   resolved: ['closed', 'open'],
-  closed: ['open'],
+  closed: [],
 };
 
 function hasPrefix(bytes: Uint8Array, prefix: number[]) {
@@ -68,6 +68,10 @@ function makeId(prefix: string) {
 
 function ticketRef(ticketId: string) {
   return doc(database(), 'tickets', ticketId);
+}
+
+function ticketModerationRef(userId: string) {
+  return doc(database(), 'ticketModeration', userId);
 }
 
 function displayStatus(status: TicketStatus) {
@@ -134,6 +138,28 @@ export async function listTickets(actor: TicketActor, options: { status?: string
   return tickets.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
+async function getTicketCustomerProfile(ticket: SupportTicket, actor: TicketActor): Promise<TicketCustomerProfile | undefined> {
+  if (!canManageTickets(actor)) return undefined;
+  const [users, moderationSnapshot] = await Promise.all([
+    StoreDB.getUsers(),
+    getDoc(ticketModerationRef(ticket.userId)),
+  ]);
+  const user = users.find((item) => item.id === ticket.userId || item.discordId === ticket.userId);
+  const moderation = moderationSnapshot.exists() ? moderationSnapshot.data() : {};
+  return {
+    id: ticket.userId,
+    name: user?.name || ticket.userName,
+    email: user?.email || null,
+    image: user?.image || ticket.userImage || null,
+    role: user?.role || 'Customer',
+    createdAt: user?.createdAt || null,
+    ticketMuted: moderation.muted === true,
+    mutedAt: moderation.mutedAt || null,
+    mutedByName: moderation.mutedByName || null,
+    muteReason: moderation.reason || null,
+  };
+}
+
 export async function getTicketDetail(ticketId: string, actor: TicketActor): Promise<TicketDetail> {
   const db = database();
   const ticketSnapshot = await getDoc(doc(db, 'tickets', ticketId));
@@ -141,9 +167,10 @@ export async function getTicketDetail(ticketId: string, actor: TicketActor): Pro
   const ticket = mapTicket(ticketSnapshot);
   assertTicketAccess(ticket, actor);
 
-  const [messagesSnapshot, timelineSnapshot] = await Promise.all([
+  const [messagesSnapshot, timelineSnapshot, customer] = await Promise.all([
     getDocs(collection(db, 'tickets', ticketId, 'messages')),
     getDocs(collection(db, 'tickets', ticketId, 'timeline')),
+    getTicketCustomerProfile(ticket, actor),
   ]);
   const messages = messagesSnapshot.docs
     .map(item => ({ id: item.id, ...(item.data() as Omit<TicketMessage, 'id'>) }))
@@ -152,7 +179,7 @@ export async function getTicketDetail(ticketId: string, actor: TicketActor): Pro
   const timeline = timelineSnapshot.docs
     .map(item => ({ id: item.id, ...(item.data() as Omit<TicketTimelineEvent, 'id'>) }))
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as TicketTimelineEvent[];
-  return { ticket, messages, timeline };
+  return { ticket, messages, timeline, customer };
 }
 
 export async function createTicket(actor: TicketActor, input: { title: string; department?: TicketDepartment; category: TicketCategory; priority: TicketPriority; body: string }) {
@@ -165,6 +192,10 @@ export async function createTicket(actor: TicketActor, input: { title: string; d
   if (!PRIORITY_VALUES.includes(input.priority)) throw new TicketError('الأولوية غير صالحة.');
 
   const db = database();
+  const moderationSnapshot = await getDoc(ticketModerationRef(actor.id));
+  if (moderationSnapshot.exists() && moderationSnapshot.data().muted === true) {
+    throw new TicketError('تم كتم حسابك من فتح تذاكر دعم جديدة. راجع فريق الإدارة إذا كان لديك استفسار.', 403);
+  }
   const now = new Date().toISOString();
   const ticketId = makeId('ticket');
   const initialMessageId = makeId('msg');
@@ -182,7 +213,7 @@ export async function createTicket(actor: TicketActor, input: { title: string; d
       assignedAgentId: null, assignedAgentName: null, assignedAgentImage: null,
       createdAt: now, updatedAt: now, lastMessageAt: now,
       resolvedAt: null, resolvedById: null, resolvedByName: null,
-      closedAt: null, closedById: null, closedByName: null, slaDueAt: buildSlaDueAt(input.priority), messageCount: 1,
+      closedAt: null, closedById: null, closedByName: null, finalClosed: false, slaDueAt: buildSlaDueAt(input.priority), messageCount: 1,
     };
     const message: TicketMessage = { id: initialMessageId, ticketId, authorId: actor.id, authorName: actor.name, authorImage: actor.image || null, authorRole: 'customer', body, isInternal: false, attachments: [], createdAt: now };
     const event = timelineEvent(ticketId, actor, 'created', `تم إنشاء التذكرة ${number} وإحالتها إلى الدعم الفني.`, now);
@@ -205,8 +236,9 @@ export async function claimTicket(ticketId: string, actor: TicketActor) {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists()) throw new TicketError('التذكرة غير موجودة.', 404);
     const ticket = mapTicket(snapshot);
+    if (ticket.status === 'closed') throw new TicketError('التذكرة مغلقة نهائيًا ولا يمكن استلامها.', 409);
     if (ticket.assignedAgentId && ticket.assignedAgentId !== actor.id) throw new TicketError('قام موظف آخر باستلام التذكرة بالفعل.', 409);
-    const status: TicketStatus = ticket.status === 'closed' ? 'closed' : 'in_progress';
+    const status: TicketStatus = 'in_progress';
     transaction.update(ref, { assignedAgentId: actor.id, assignedAgentName: actor.name, assignedAgentImage: actor.image || null, status, updatedAt: now });
     const event = timelineEvent(ticketId, actor, 'claimed', `تم استلام التذكرة بواسطة ${actor.name} وتحويلها إلى قيد المعالجة.`, now);
     transaction.set(doc(db, 'tickets', ticketId, 'timeline', event.id), event);
@@ -231,6 +263,7 @@ export async function assignTicket(ticketId: string, actor: TicketActor, assigne
   const snapshot = await getDoc(doc(db, 'tickets', ticketId));
   if (!snapshot.exists()) throw new TicketError('التذكرة غير موجودة.', 404);
   const ticket = mapTicket(snapshot);
+  if (ticket.status === 'closed') throw new TicketError('التذكرة مغلقة نهائيًا ولا يمكن تغيير مسؤولها.', 409);
 
   let assignee: { id: string; name: string; image?: string | null } | null = null;
   if (assigneeId) {
@@ -266,13 +299,9 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
   assertTicketAccess(ticket, actor);
   const isStaff = canManageTickets(actor);
 
-  if (!isStaff) {
-    if (input.status !== 'open' || ticket.status !== 'closed') throw new TicketError('لا تملك صلاحية تغيير هذه التذكرة.', 403);
-    const updates = { status: 'open' as TicketStatus, closedAt: null, closedById: null, closedByName: null, updatedAt: now };
-    await updateDoc(doc(db, 'tickets', ticketId), updates);
-    const event = timelineEvent(ticketId, actor, 'reopened', 'قام المستخدم بإعادة فتح التذكرة.', now);
-    await setDoc(doc(db, 'tickets', ticketId, 'timeline', event.id), event);
-    return getTicketDetail(ticketId, actor);
+  if (!isStaff) throw new TicketError('لا تملك صلاحية تعديل هذه التذكرة.', 403);
+  if (ticket.status === 'closed' && input.status && input.status !== 'closed') {
+    throw new TicketError('هذه التذكرة مغلقة نهائيًا ولا يمكن إعادة فتحها.', 409);
   }
 
   const updates: Partial<SupportTicket> = { updatedAt: now };
@@ -285,11 +314,8 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
       updates.resolvedAt = now; updates.resolvedById = actor.id; updates.resolvedByName = actor.name;
       events.push(timelineEvent(ticketId, actor, 'resolved', 'تم حل التذكرة بانتظار الإغلاق النهائي.', now));
     } else if (input.status === 'closed') {
-      updates.closedAt = now; updates.closedById = actor.id; updates.closedByName = actor.name;
-      events.push(timelineEvent(ticketId, actor, 'closed', 'تم إغلاق التذكرة بعد معالجة المشكلة.', now));
-    } else if (ticket.status === 'closed') {
-      updates.closedAt = null; updates.closedById = null; updates.closedByName = null;
-      events.push(timelineEvent(ticketId, actor, 'reopened', `تمت إعادة فتح التذكرة وتحويلها إلى ${displayStatus(input.status)}.`, now));
+      updates.closedAt = now; updates.closedById = actor.id; updates.closedByName = actor.name; updates.finalClosed = true;
+      events.push(timelineEvent(ticketId, actor, 'closed', 'تم إغلاق التذكرة نهائيًا بعد معالجة المشكلة.', now));
     } else {
       events.push(timelineEvent(ticketId, actor, 'status_changed', `تم تغيير حالة التذكرة إلى ${displayStatus(input.status)}.`, now));
     }
@@ -309,6 +335,30 @@ export async function updateTicket(ticketId: string, actor: TicketActor, input: 
   const detail = await getTicketDetail(ticketId, actor);
   recordTicketAudit(actor, 'Ticket Updated', `تم تحديث التذكرة ${detail.ticket.number}.`);
   return detail;
+}
+
+export async function setTicketCustomerMute(ticketId: string, actor: TicketActor, muted: boolean, reason = '') {
+  assertStaff(actor);
+  const db = database();
+  const snapshot = await getDoc(doc(db, 'tickets', ticketId));
+  if (!snapshot.exists()) throw new TicketError('التذكرة غير موجودة.', 404);
+  const ticket = mapTicket(snapshot);
+  const now = new Date().toISOString();
+  const moderation = {
+    muted,
+    mutedAt: muted ? now : null,
+    mutedById: muted ? actor.id : null,
+    mutedByName: muted ? actor.name : null,
+    reason: muted ? reason.trim().slice(0, 240) || 'تم الكتم من لوحة الدعم.' : null,
+    updatedAt: now,
+  };
+  const event = timelineEvent(ticketId, actor, muted ? 'customer_muted' : 'customer_unmuted', muted ? `تم كتم العميل ${ticket.userName} من فتح تذاكر جديدة.` : `تم رفع كتم التذاكر عن العميل ${ticket.userName}.`, now);
+  await Promise.all([
+    setDoc(ticketModerationRef(ticket.userId), moderation, { merge: true }),
+    setDoc(doc(db, 'tickets', ticketId, 'timeline', event.id), event),
+  ]);
+  recordTicketAudit(actor, muted ? 'Ticket Customer Muted' : 'Ticket Customer Unmuted', `${muted ? 'تم كتم' : 'تم رفع كتم'} العميل ${ticket.userName} من خلال التذكرة ${ticket.number}.`);
+  return getTicketDetail(ticketId, actor);
 }
 
 async function resolveMessageAttachments(ticketId: string, actor: TicketActor, attachmentIds: string[] = []) {

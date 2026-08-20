@@ -5,6 +5,7 @@ import {
   assignTicket,
   claimTicket,
   createTicket,
+  setTicketCustomerMute,
   getTicketDetail,
   getTicketStats,
   listTicketAgents,
@@ -25,11 +26,12 @@ const createTicketSchema = z.object({
   body: z.string().trim().min(10).max(6000),
 });
 const patchSchema = z.object({
-  action: z.enum(['claim', 'assign', 'update']),
+  action: z.enum(['claim', 'assign', 'update', 'mute_customer', 'unmute_customer']),
   status: z.enum(['new', 'open', 'in_progress', 'awaiting_user', 'awaiting_staff', 'resolved', 'closed']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   assigneeId: z.string().trim().min(1).max(128).nullable().optional(),
   tags: z.array(z.string().trim().min(2).max(24)).max(8).optional(),
+  muteReason: z.string().trim().max(240).optional(),
 });
 const messageSchema = z.object({
   body: z.string().max(6000).default(''),
@@ -121,7 +123,11 @@ export async function PATCH(request: NextRequest) {
       ? await claimTicket(ticketId, current)
       : input.action === 'assign'
         ? await assignTicket(ticketId, current, input.assigneeId || null)
-        : await updateTicket(ticketId, current, { status: input.status, priority: input.priority, tags: input.tags });
+        : input.action === 'mute_customer'
+          ? await setTicketCustomerMute(ticketId, current, true, input.muteReason || '')
+          : input.action === 'unmute_customer'
+            ? await setTicketCustomerMute(ticketId, current, false)
+            : await updateTicket(ticketId, current, { status: input.status, priority: input.priority, tags: input.tags });
     return NextResponse.json({ success: true, detail });
   } catch (error) { return failed(error); }
 }

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { assignTicket, claimTicket, getTicketDetail, TicketError, updateTicket } from '@/lib/ticket-store';
+import { assignTicket, claimTicket, getTicketDetail, setTicketCustomerMute, TicketError, updateTicket } from '@/lib/ticket-store';
 import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
 export const dynamic = 'force-dynamic';
 const patchSchema = z.object({
-  action: z.enum(['claim', 'assign', 'update']),
+  action: z.enum(['claim', 'assign', 'update', 'mute_customer', 'unmute_customer']),
   status: z.enum(['new', 'open', 'in_progress', 'awaiting_user', 'awaiting_staff', 'resolved', 'closed']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   assigneeId: z.string().trim().min(1).max(128).nullable().optional(),
   tags: z.array(z.string().trim().min(2).max(24)).max(8).optional(),
+  muteReason: z.string().trim().max(240).optional(),
 });
 
 function fail(error: unknown) {
@@ -40,7 +41,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       ? await claimTicket(ticketId, actor)
       : input.action === 'assign'
         ? await assignTicket(ticketId, actor, input.assigneeId || null)
-        : await updateTicket(ticketId, actor, { status: input.status, priority: input.priority, tags: input.tags });
+        : input.action === 'mute_customer'
+          ? await setTicketCustomerMute(ticketId, actor, true, input.muteReason || '')
+          : input.action === 'unmute_customer'
+            ? await setTicketCustomerMute(ticketId, actor, false)
+            : await updateTicket(ticketId, actor, { status: input.status, priority: input.priority, tags: input.tags });
     return NextResponse.json({ success: true, detail });
   } catch (error) { return fail(error); }
 }

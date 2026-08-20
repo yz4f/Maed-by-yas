@@ -179,7 +179,7 @@ export interface TicketMessage {
 export interface TicketTimelineEvent {
   id: string;
   ticketId: string;
-  type: 'created' | 'claimed' | 'status_changed' | 'priority_changed' | 'assigned' | 'message' | 'note' | 'attachment' | 'resolved' | 'closed' | 'reopened';
+  type: 'created' | 'claimed' | 'status_changed' | 'priority_changed' | 'assigned' | 'message' | 'note' | 'attachment' | 'resolved' | 'closed' | 'reopened' | 'customer_muted' | 'customer_unmuted';
   actorId: string;
   actorName: string;
   message: string;
@@ -210,14 +210,29 @@ export interface SupportTicket {
   closedAt?: string | null;
   closedById?: string | null;
   closedByName?: string | null;
+  finalClosed?: boolean;
   slaDueAt?: string | null;
   messageCount: number;
+}
+
+export interface TicketCustomerProfile {
+  id: string;
+  name: string;
+  email?: string | null;
+  image?: string | null;
+  role?: RoleType;
+  createdAt?: string | null;
+  ticketMuted: boolean;
+  mutedAt?: string | null;
+  mutedByName?: string | null;
+  muteReason?: string | null;
 }
 
 export interface TicketDetail {
   ticket: SupportTicket;
   messages: TicketMessage[];
   timeline: TicketTimelineEvent[];
+  customer?: TicketCustomerProfile;
 }
 
 export interface TicketStats {
