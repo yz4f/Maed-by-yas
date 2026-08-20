@@ -3787,8 +3787,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
-                      const productName = guideModalProduct.product?.name || '';
-                      setGuideView(productName.includes('فورت') || productName.toLowerCase().includes('fortnite') ? 'notice' : 'full');
+                      setGuideView('notice');
                     }}
                     className="relative overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-3xl bg-gradient-to-br from-primary/15 via-slate-900/80 to-slate-950 border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-slate-900 transition-all duration-200 group cursor-pointer shadow-xl hover:shadow-[0_18px_42px_rgba(37,99,235,0.23)] hover:-translate-y-1.5"
                   >
