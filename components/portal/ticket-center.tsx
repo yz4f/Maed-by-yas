@@ -2,8 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   AlertCircle,
   Archive,
+  BarChart3,
+  Bell,
   Ban,
   BadgeCheck,
   ArrowLeft,
@@ -13,6 +16,8 @@ import {
   FileText,
   Filter,
   Flag,
+  Headphones,
+  LayoutDashboard,
   FolderOpen,
   Image as ImageIcon,
   Inbox,
@@ -24,11 +29,13 @@ import {
   Send,
   Search,
   ShieldCheck,
+  Settings2,
   Sparkles,
   Ticket as TicketIcon,
   UserCheck,
   UserRound,
   UsersRound,
+  RefreshCw,
   X,
 } from 'lucide-react';
 import {
@@ -122,6 +129,7 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const [stats, setStats] = useState<TicketStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<'overview' | 'tickets' | 'customers' | 'team' | 'activity'>('tickets');
   const [filter, setFilter] = useState<'all' | TicketStatus | 'unassigned' | 'mine'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | TicketPriority>('all');
   const [departmentFilter, setDepartmentFilter] = useState<'all' | TicketDepartment>('all');
@@ -338,6 +346,25 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
   const statusOptions = useMemo(() => Object.keys(statusMeta) as TicketStatus[], []);
   const priorityOptions = useMemo(() => Object.keys(priorityMeta) as TicketPriority[], []);
   const selectedTicket = detail?.ticket;
+  const customerDirectory = useMemo(() => {
+    const grouped = new Map<string, { id: string; name: string; image?: string | null; total: number; open: number; lastAt: string }>();
+    tickets.forEach(ticket => {
+      const current = grouped.get(ticket.userId) || { id: ticket.userId, name: ticket.userName, image: ticket.userImage, total: 0, open: 0, lastAt: ticket.updatedAt };
+      current.total += 1;
+      if (ticket.status !== 'closed') current.open += 1;
+      if (new Date(ticket.updatedAt) > new Date(current.lastAt)) current.lastAt = ticket.updatedAt;
+      grouped.set(ticket.userId, current);
+    });
+    return [...grouped.values()].sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+  }, [tickets]);
+  const activityBuckets = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(); date.setDate(date.getDate() - (6 - index)); date.setHours(0, 0, 0, 0);
+      return { key: date.toISOString().slice(0, 10), label: new Intl.DateTimeFormat(isRtl ? 'ar-SA' : 'en-US', { weekday: 'short' }).format(date), count: 0 };
+    });
+    tickets.forEach(ticket => { const bucket = days.find(day => day.key === new Date(ticket.updatedAt).toISOString().slice(0, 10)); if (bucket) bucket.count += 1; });
+    return days;
+  }, [tickets, isRtl]);
 
   return (
     <section className="ticket-center--graphite space-y-3 sm:space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
@@ -347,7 +374,20 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
         </div>
       )}
 
-      <header className={`ticket-workspace-header flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2.5 sm:px-4 ${card}`}>
+      <div className="support-command-shell grid gap-4 2xl:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className={`support-command-nav h-fit rounded-2xl border p-3 2xl:sticky 2xl:top-5 ${card}`}>
+          <div className="mb-4 flex items-center gap-2 px-1"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-400 text-slate-950 shadow-[0_0_20px_rgba(56,189,248,0.24)]"><Headphones className="h-4 w-4" /></span><div><p className={`text-[10px] font-black tracking-[0.16em] ${textMuted}`}>{isRtl ? 'دعم تعن' : 'T3N SUPPORT'}</p><p className={`text-xs font-black ${textMain}`}>{isRtl ? 'مساحة العمل' : 'Workspace'}</p></div></div>
+          <nav className="space-y-1">
+            {[['overview', LayoutDashboard, isRtl ? 'نظرة عامة' : 'Overview'], ['tickets', TicketIcon, isRtl ? 'كل التذاكر' : 'All tickets'], ['open', Inbox, isRtl ? 'المفتوحة' : 'Open'], ['in_progress', Activity, isRtl ? 'قيد المعالجة' : 'In progress'], ['awaiting_user', Clock3, isRtl ? 'بانتظار العميل' : 'Waiting'], ['closed', LockKeyhole, isRtl ? 'مغلقة' : 'Closed'], ['customers', UsersRound, isRtl ? 'العملاء' : 'Customers'], ['team', UserCheck, isRtl ? 'فريق الدعم' : 'Support team'], ['activity', BarChart3, isRtl ? 'النشاط' : 'Activity']].map(([value, Icon, label]: any) => {
+              const selected = workspaceView === value || (['open', 'in_progress', 'awaiting_user', 'closed'].includes(value) && workspaceView === 'tickets' && filter === value);
+              const count = value === 'open' ? stats?.open : value === 'in_progress' ? stats?.inProgress : value === 'awaiting_user' ? stats?.awaitingUser : value === 'closed' ? stats?.closedToday : undefined;
+              return <button key={value} onClick={() => { if (['open', 'in_progress', 'awaiting_user', 'closed'].includes(value)) { setWorkspaceView('tickets'); setFilter(value as any); } else { setWorkspaceView(value); if (value === 'tickets') setFilter('all'); } }} className={`support-command-nav__item flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-right text-[11px] font-black transition ${selected ? 'support-command-nav__item--active' : `${textMuted} hover:bg-white/[0.055] hover:${textMain}`}`}><Icon className="h-4 w-4" /><span className="min-w-0 flex-1 truncate">{label}</span>{typeof count === 'number' && <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 text-[9px] tabular-nums">{count}</span>}</button>;
+            })}
+          </nav>
+          <div className={`mt-4 border-t pt-3 ${isDark ? 'border-white/[0.08]' : 'border-slate-900/[0.08]'}`}><button onClick={() => notify(isRtl ? 'إعدادات مركز الدعم ستتبع سياسة صلاحيات الإدارة الحالية.' : 'Support settings follow the existing administrator permission policy.', 'info')} className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[10px] font-bold ${textMuted} hover:bg-white/[0.05]`}><Settings2 className="h-3.5 w-3.5" />{isRtl ? 'إعدادات الدعم' : 'Support settings'}</button></div>
+        </aside>
+        <div className="min-w-0 space-y-4">
+      <header className={`ticket-workspace-header support-command-header flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 sm:px-5 ${card}`}>
         <div className="flex min-w-0 items-center gap-2.5"><span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isDark ? 'bg-sky-400/10 text-sky-200' : 'bg-sky-100 text-sky-700'}`}><TicketIcon className="h-4 w-4" /></span><div className="min-w-0"><h2 className={`truncate text-base font-black tracking-tight ${textMain}`}>{isRtl ? 'إدارة التذاكر' : 'Ticket management'}</h2><p className={`hidden text-[11px] sm:block ${textMuted}`}>{isRtl ? 'الطلبات، الإجراءات، وسجل المتابعة في مساحة واحدة.' : 'Requests, actions, and activity in one workspace.'}</p></div></div>
         <button onClick={() => setNewOpen(true)} className="ticket-primary inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black transition"><Plus className="h-3.5 w-3.5" />{isRtl ? 'تذكرة' : 'Ticket'}</button>
       </header>
@@ -367,7 +407,11 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
         </div>
       )}
 
-      <div className="ticket-workspace grid gap-3 xl:grid-cols-[minmax(245px,0.82fr)_minmax(0,1.72fr)]">
+      {workspaceView === 'overview' && <SupportOverview stats={stats} tickets={tickets} activityBuckets={activityBuckets} customerCount={customerDirectory.length} isRtl={isRtl} isDark={isDark} textMain={textMain} textMuted={textMuted} onOpenTickets={() => setWorkspaceView('tickets')} />}
+      {workspaceView === 'customers' && <CustomerDirectory customers={customerDirectory} isRtl={isRtl} isDark={isDark} textMain={textMain} textMuted={textMuted} onTicketFilter={() => setWorkspaceView('tickets')} />}
+      {workspaceView === 'team' && <SupportTeam agents={agents} tickets={tickets} isRtl={isRtl} isDark={isDark} textMain={textMain} textMuted={textMuted} />}
+      {workspaceView === 'activity' && <SupportActivity tickets={tickets} isRtl={isRtl} isDark={isDark} textMain={textMain} textMuted={textMuted} onSelect={selectTicket} />}
+      {workspaceView === 'tickets' && <div className="ticket-workspace grid gap-3 xl:grid-cols-[minmax(280px,0.88fr)_minmax(0,1.9fr)]">
         <aside className={`ticket-list-pane min-h-[520px] rounded-xl border p-2 ${mobileDetailOpen ? 'max-md:hidden' : ''} ${card}`}>
           <div className="mb-2 flex h-8 items-center gap-2 px-1.5"><Filter className={`h-3.5 w-3.5 ${textMuted}`} /><span className={`text-xs font-black ${textMain}`}>{isRtl ? 'التذاكر' : 'Tickets'}</span><span className={`mr-auto rounded-md px-1.5 py-0.5 text-[10px] font-black ${isDark ? 'bg-sky-400/10 text-sky-200' : 'bg-sky-100 text-sky-700'}`}>{tickets.length}</span></div>
           <div className="space-y-1.5 px-1 pb-2"><div className={`flex h-8 items-center gap-1.5 rounded-lg border px-2 ${field}`}><Search className="h-3.5 w-3.5 opacity-50" /><input ref={searchRef} value={query} onChange={event => setQuery(event.target.value)} placeholder={isRtl ? 'ابحث برقم التذكرة أو العنوان...' : 'Search by ticket or title...'} className="min-w-0 flex-1 bg-transparent text-[11px] outline-none" /></div><div className="grid grid-cols-3 gap-1.5"><select value={priorityFilter} onChange={event => setPriorityFilter(event.target.value as 'all' | TicketPriority)} className={`h-7 rounded-md border px-1.5 text-[9px] font-bold outline-none ${field}`}><option value="all">{isRtl ? 'كل الأولويات' : 'All priorities'}</option>{(Object.keys(priorityMeta) as TicketPriority[]).map(value => <option key={value} value={value}>{isRtl ? priorityMeta[value].ar : priorityMeta[value].en}</option>)}</select><select value={departmentFilter} onChange={event => setDepartmentFilter(event.target.value as 'all' | TicketDepartment)} className={`h-7 rounded-md border px-1.5 text-[9px] font-bold outline-none ${field}`}><option value="all">{isRtl ? 'كل الأقسام' : 'All departments'}</option>{(Object.keys(departmentLabel) as TicketDepartment[]).map(value => <option key={value} value={value}>{isRtl ? departmentLabel[value].ar : departmentLabel[value].en}</option>)}</select><select value={sort} onChange={event => setSort(event.target.value as 'updated' | 'newest' | 'oldest' | 'priority')} className={`h-7 rounded-md border px-1.5 text-[9px] font-bold outline-none ${field}`} aria-label={isRtl ? 'ترتيب التذاكر' : 'Sort tickets'}><option value="updated">{isRtl ? 'آخر تحديث' : 'Updated'}</option><option value="newest">{isRtl ? 'الأحدث' : 'Newest'}</option><option value="oldest">{isRtl ? 'الأقدم' : 'Oldest'}</option><option value="priority">{isRtl ? 'الأولوية' : 'Priority'}</option></select></div></div>
@@ -390,7 +434,10 @@ export function TicketCenter({ lang, isDark, isStaff, onNotify }: TicketCenterPr
         </main>
       </div>
 
+      }
       {newOpen && <NewTicketModal lang={lang} isDark={isDark} field={field} textMain={textMain} textMuted={textMuted} form={newTicket} setForm={setNewTicket} files={newFiles} setFiles={setNewFiles} creating={creating} onClose={() => !creating && setNewOpen(false)} onSubmit={handleCreate} />}
+        </div>
+      </div>
     </section>
   );
 }
@@ -493,4 +540,33 @@ function ConfirmCustomerAction({ action, lang, isDark, customerName, onCancel, o
       <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button onClick={onCancel} className={`rounded-xl px-4 py-2.5 text-sm font-black ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{ar ? 'إلغاء' : 'Cancel'}</button><button onClick={onConfirm} className={`rounded-xl px-4 py-2.5 text-sm font-black ${isMute ? 'bg-rose-400 text-slate-950' : 'bg-emerald-400 text-slate-950'}`}>{isMute ? (ar ? 'تأكيد الكتم' : 'Confirm mute') : (ar ? 'رفع الكتم' : 'Remove mute')}</button></div>
     </div>
   </div>;
+}
+
+function SupportOverview({ stats, tickets, activityBuckets, customerCount, isRtl, isDark, textMain, textMuted, onOpenTickets }: any) {
+  const max = Math.max(1, ...activityBuckets.map((bucket: any) => bucket.count));
+  const active = tickets.filter((ticket: SupportTicket) => ticket.status !== 'closed').length;
+  const cards = [
+    [TicketIcon, tickets.length, isRtl ? 'إجمالي التذاكر' : 'Total tickets', 'text-sky-300'],
+    [Inbox, stats?.open ?? active, isRtl ? 'تذاكر مفتوحة' : 'Open tickets', 'text-emerald-300'],
+    [Activity, stats?.inProgress ?? 0, isRtl ? 'قيد المعالجة' : 'In progress', 'text-violet-300'],
+    [AlertCircle, stats?.urgent ?? tickets.filter((ticket: SupportTicket) => ticket.priority === 'urgent').length, isRtl ? 'عاجلة' : 'Urgent', 'text-rose-300'],
+    [UsersRound, customerCount, isRtl ? 'العملاء' : 'Customers', 'text-amber-300'],
+  ];
+  return <div className="support-overview space-y-4">
+    <section className={`support-hero relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-sky-300/15 bg-[#0b1423]/88' : 'border-sky-500/15 bg-white'}`}><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,rgba(56,189,248,.16),transparent_35%),linear-gradient(135deg,rgba(255,255,255,.04),transparent)]" /><div className="relative flex flex-wrap items-end justify-between gap-5"><div><p className={`text-[10px] font-black tracking-[0.18em] ${textMuted}`}>{isRtl ? 'مركز عمليات الدعم' : 'SUPPORT OPERATIONS CENTER'}</p><h3 className={`mt-2 text-xl font-black tracking-tight sm:text-2xl ${textMain}`}>{isRtl ? 'متابعة الدعم بدون تعقيد' : 'Support clarity, without clutter'}</h3><p className={`mt-2 max-w-2xl text-sm leading-6 ${textMuted}`}>{isRtl ? 'راقب الأولويات، استلم التذاكر، واطّلع على آخر النشاط من مساحة عمل واحدة.' : 'Monitor priorities, claim tickets, and review activity from one focused workspace.'}</p></div><button onClick={onOpenTickets} className="ticket-primary inline-flex h-10 items-center gap-2 rounded-xl px-4 text-xs font-black"><TicketIcon className="h-4 w-4" />{isRtl ? 'فتح قائمة التذاكر' : 'Open ticket queue'}</button></div></section>
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{cards.map(([Icon, value, label, color]: any) => <div key={label} className={`support-metric rounded-2xl border p-4 ${isDark ? 'border-white/[0.09] bg-white/[0.035]' : 'border-slate-900/[0.08] bg-white'}`}><div className="flex items-start justify-between"><Icon className={`h-4 w-4 ${color}`} /><span className={`text-[9px] font-bold ${textMuted}`}>{isRtl ? 'تحديث حي' : 'Live data'}</span></div><div className={`mt-5 text-2xl font-black tabular-nums ${textMain}`}>{value}</div><div className={`mt-1 text-[11px] font-bold ${textMuted}`}>{label}</div></div>)}</section>
+    <section className={`rounded-2xl border p-5 ${isDark ? 'border-white/[0.09] bg-[#101116]' : 'border-slate-900/[0.08] bg-white'}`}><div className="flex items-center justify-between gap-3"><div><h4 className={`text-sm font-black ${textMain}`}>{isRtl ? 'نشاط التذاكر خلال 7 أيام' : 'Ticket activity — 7 days'}</h4><p className={`mt-1 text-[11px] ${textMuted}`}>{isRtl ? 'يعتمد على آخر تحديث فعلي لكل تذكرة.' : 'Based on the latest real update on each ticket.'}</p></div><BarChart3 className="h-5 w-5 text-sky-300" /></div><div className="mt-6 flex h-40 items-end gap-2">{activityBuckets.map((bucket: any) => <div key={bucket.key} className="flex min-w-0 flex-1 flex-col items-center gap-2"><div className="flex h-28 w-full items-end rounded-lg bg-white/[0.025] px-1"><div title={`${bucket.count}`} className="w-full rounded-md bg-gradient-to-t from-sky-500/50 to-cyan-200 transition-all" style={{ height: `${Math.max(7, (bucket.count / max) * 100)}%` }} /></div><span className={`truncate text-[9px] font-bold ${textMuted}`}>{bucket.label}</span></div>)}</div></section>
+  </div>;
+}
+
+function CustomerDirectory({ customers, isRtl, isDark, textMain, textMuted, onTicketFilter }: any) {
+  return <section className={`rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.09] bg-[#101116]' : 'border-slate-900/[0.08] bg-white'}`}><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className={`text-base font-black ${textMain}`}>{isRtl ? 'دليل العملاء' : 'Customer directory'}</h3><p className={`mt-1 text-[11px] ${textMuted}`}>{isRtl ? 'عملاء مستخرجون من سجلات التذاكر الحالية.' : 'Customers derived from current ticket records.'}</p></div><button onClick={onTicketFilter} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black ${isDark ? 'border-white/[0.1] text-slate-200' : 'border-slate-900/[0.1] text-slate-700'}`}><TicketIcon className="h-3.5 w-3.5" />{isRtl ? 'التذاكر' : 'Tickets'}</button></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{customers.length ? customers.map((customer: any) => <article key={customer.id} className={`rounded-2xl border p-4 ${isDark ? 'border-white/[0.08] bg-white/[0.025]' : 'border-slate-900/[0.08] bg-slate-50/60'}`}><div className="flex items-center gap-3"><Avatar image={customer.image} name={customer.name} isDark={isDark} /><div className="min-w-0"><h4 className={`truncate text-[12px] font-black ${textMain}`}>{customer.name}</h4><p className={`mt-0.5 truncate font-mono text-[9px] ${textMuted}`}>…{customer.id.slice(-8)}</p></div></div><div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-xl bg-black/[0.12] p-2"><div className={`text-lg font-black ${textMain}`}>{customer.total}</div><div className={`text-[9px] ${textMuted}`}>{isRtl ? 'الإجمالي' : 'Total'}</div></div><div className="rounded-xl bg-black/[0.12] p-2"><div className="text-lg font-black text-emerald-300">{customer.open}</div><div className={`text-[9px] ${textMuted}`}>{isRtl ? 'مفتوحة' : 'Open'}</div></div></div><p className={`mt-3 text-[9px] ${textMuted}`}>{isRtl ? `آخر نشاط ${relativeTime(customer.lastAt, 'ar')}` : `Last activity ${relativeTime(customer.lastAt, 'en')}`}</p></article>) : <div className={`col-span-full py-16 text-center text-sm ${textMuted}`}>{isRtl ? 'لا توجد بيانات عملاء بعد.' : 'No customer records yet.'}</div>}</div></section>;
+}
+
+function SupportTeam({ agents, tickets, isRtl, isDark, textMain, textMuted }: any) {
+  return <section className={`rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.09] bg-[#101116]' : 'border-slate-900/[0.08] bg-white'}`}><div><h3 className={`text-base font-black ${textMain}`}>{isRtl ? 'فريق الدعم' : 'Support team'}</h3><p className={`mt-1 text-[11px] ${textMuted}`}>{isRtl ? 'ملخص مهام الموظفين الحالي من سجلات التذاكر.' : 'Current workload summary from ticket assignments.'}</p></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{agents.length ? agents.map((agent: any) => { const mine = tickets.filter((ticket: SupportTicket) => ticket.assignedAgentId === agent.id); const closed = mine.filter((ticket: SupportTicket) => ticket.status === 'closed').length; return <article key={agent.id} className={`rounded-2xl border p-4 ${isDark ? 'border-white/[0.08] bg-white/[0.025]' : 'border-slate-900/[0.08] bg-slate-50/60'}`}><div className="flex items-center gap-3"><Avatar image={agent.image} name={agent.name} isDark={isDark} /><div className="min-w-0"><h4 className={`truncate text-[12px] font-black ${textMain}`}>{agent.name}</h4><p className={`mt-0.5 text-[9px] ${textMuted}`}>{agent.role}</p></div><span className="mr-auto h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,.7)]" /></div><div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-xl bg-black/[0.12] p-2"><div className={`text-lg font-black ${textMain}`}>{mine.length}</div><div className={`text-[9px] ${textMuted}`}>{isRtl ? 'قيد المتابعة' : 'Assigned'}</div></div><div className="rounded-xl bg-black/[0.12] p-2"><div className="text-lg font-black text-slate-300">{closed}</div><div className={`text-[9px] ${textMuted}`}>{isRtl ? 'مغلقة' : 'Closed'}</div></div></div></article>; }) : <div className={`col-span-full py-16 text-center text-sm ${textMuted}`}>{isRtl ? 'لا توجد بيانات فريق دعم متاحة.' : 'No support team records available.'}</div>}</div></section>;
+}
+
+function SupportActivity({ tickets, isRtl, isDark, textMain, textMuted, onSelect }: any) {
+  return <section className={`rounded-2xl border p-4 sm:p-5 ${isDark ? 'border-white/[0.09] bg-[#101116]' : 'border-slate-900/[0.08] bg-white'}`}><div><h3 className={`text-base font-black ${textMain}`}>{isRtl ? 'آخر نشاط التذاكر' : 'Recent ticket activity'}</h3><p className={`mt-1 text-[11px] ${textMuted}`}>{isRtl ? 'اختر أي سجل لفتح التذكرة مباشرة.' : 'Select any record to open the ticket instantly.'}</p></div><div className="mt-5 divide-y divide-white/[0.07]">{tickets.slice(0, 12).map((ticket: SupportTicket) => <button key={ticket.id} onClick={() => onSelect(ticket.id)} className={`flex w-full items-center gap-3 px-2 py-3 text-right transition ${isDark ? 'hover:bg-white/[0.04]' : 'hover:bg-slate-900/[0.03]'}`}><span className={`h-2 w-2 rounded-full ${statusMeta[ticket.status].dot}`} /><div className="min-w-0 flex-1"><div className={`truncate text-[11px] font-black ${textMain}`}>{ticket.title}</div><div className={`mt-0.5 text-[9px] ${textMuted}`}>{ticket.number} · {ticket.userName} · {relativeTime(ticket.updatedAt, isRtl ? 'ar' : 'en')}</div></div><ChevronLeft className={`h-4 w-4 ${textMuted}`} /></button>)}</div></section>;
 }
