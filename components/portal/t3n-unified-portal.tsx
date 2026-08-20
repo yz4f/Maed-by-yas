@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import {
   Shield,
@@ -106,24 +106,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     onCancel?: () => void;
   } | null>(null);
+  const [confirmSubmitting, setConfirmSubmitting] = useState(false);
 
-  const askConfirm = (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
-    setConfirmModal({
-      isOpen: true,
-      title,
-      message,
-      onConfirm: () => {
-        onConfirm();
-        setConfirmModal(null);
-      },
-      onCancel: () => {
-        if (onCancel) onCancel();
-        setConfirmModal(null);
-      }
-    });
+  const askConfirm = (title: string, message: string, onConfirm: () => void | Promise<void>, onCancel?: () => void) => {
+    setConfirmSubmitting(false);
+    setConfirmModal({ isOpen: true, title, message, onConfirm, onCancel });
+  };
+
+  const dismissConfirm = () => {
+    if (confirmSubmitting) return;
+    confirmModal?.onCancel?.();
+    setConfirmModal(null);
+  };
+
+  const submitConfirm = async () => {
+    if (!confirmModal || confirmSubmitting) return;
+    setConfirmSubmitting(true);
+    try {
+      await confirmModal.onConfirm();
+      setConfirmModal(null);
+    } finally {
+      setConfirmSubmitting(false);
+    }
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -4289,34 +4296,103 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* Central Toast Container Component (Top Right) */}
       <ToastContainer />
 
-      {/* Custom Premium Confirm Modal */}
-      {confirmModal && confirmModal.isOpen && (
-        <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-          <div className="bg-[#0b0c0e]/95 border border-white/[0.08] rounded-2xl p-6 max-w-sm w-full shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-center space-y-4">
-            <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
-              <AlertTriangle className="w-6 h-6" />
+      {confirmModal?.isOpen && (
+        <PremiumConfirmationModal
+          modal={confirmModal}
+          lang={lang}
+          submitting={confirmSubmitting}
+          onDismiss={dismissConfirm}
+          onConfirm={submitConfirm}
+        />
+      )}
+    </div>
+  );
+}
+
+
+function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfirm }: {
+  modal: { title: string; message: string };
+  lang: 'ar' | 'en';
+  submitting: boolean;
+  onDismiss: () => void;
+  onConfirm: () => void;
+}) {
+  const isRtl = lang === 'ar';
+  const primaryRef = useRef<HTMLButtonElement>(null);
+  const title = modal.title || (isRtl ? 'تأكيد الإجراء' : 'Confirm action');
+  const destructive = /حذف|Delete|إلغاء|Revoke|حظر|Ban/i.test(title);
+  const entity = /حساب|Account/i.test(title) ? (isRtl ? 'الحساب' : 'account') : /مفتاح|Key/i.test(title) ? (isRtl ? 'المفتاح' : 'key') : /منتج|Product/i.test(title) ? (isRtl ? 'المنتج' : 'product') : (isRtl ? 'التذكرة' : 'ticket');
+  const actionLabel = destructive ? (isRtl ? `حذف ${entity}` : `Delete ${entity}`) : (isRtl ? 'تأكيد الإجراء' : 'Confirm action');
+
+  useEffect(() => {
+    primaryRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !submitting) onDismiss();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onDismiss, submitting]);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        onMouseDown={(event) => { if (event.currentTarget === event.target && !submitting) onDismiss(); }}
+        className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#02060d]/72 p-4 backdrop-blur-[10px]"
+        dir={isRtl ? 'rtl' : 'ltr'}
+        role="presentation"
+      >
+        <motion.section
+          initial={{ opacity: 0, scale: 0.95, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: 8 }}
+          transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="premium-confirm-title"
+          aria-describedby="premium-confirm-description"
+          className="relative w-full max-w-[440px] overflow-hidden rounded-[26px] border border-white/[0.13] bg-[linear-gradient(145deg,rgba(26,34,48,.97),rgba(8,12,21,.98))] p-6 text-center shadow-[0_28px_90px_rgba(0,0,0,.62),0_0_0_1px_rgba(112,214,255,.04),0_0_46px_rgba(122,76,100,.14)] sm:p-7"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-18%,rgba(125,211,252,.14),transparent_36%),radial-gradient(circle_at_6%_100%,rgba(244,63,94,.08),transparent_34%)]" />
+          <button
+            type="button"
+            onClick={onDismiss}
+            disabled={submitting}
+            aria-label={isRtl ? 'إغلاق نافذة التأكيد' : 'Close confirmation dialog'}
+            className="absolute left-4 top-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.035] text-slate-300 transition hover:border-white/[0.20] hover:bg-white/[0.09] focus:outline-none focus:ring-2 focus:ring-sky-300/70 disabled:cursor-not-allowed disabled:opacity-45"
+          ><X className="h-4 w-4" /></button>
+
+          <div className="relative">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.82 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.09, duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+              className="mx-auto flex h-[66px] w-[66px] items-center justify-center rounded-full border border-rose-300/25 bg-rose-400/[0.11] text-rose-200 shadow-[0_0_0_8px_rgba(244,63,94,.035),0_0_32px_rgba(244,63,94,.20)]"
+            ><AlertTriangle className="h-7 w-7 stroke-[1.65]" /></motion.div>
+
+            <div className="mt-5">
+              <p className="text-[10px] font-black tracking-[0.19em] text-rose-200/70">{isRtl ? 'إجراء حساس' : 'SENSITIVE ACTION'}</p>
+              <h3 id="premium-confirm-title" className="mt-2 text-xl font-black tracking-tight text-white sm:text-[22px]">{title}</h3>
+              <p id="premium-confirm-description" className="mx-auto mt-3 max-w-[350px] text-[13px] font-medium leading-6 text-slate-300/82">{modal.message}</p>
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-sm font-black text-white">{confirmModal.title}</h3>
-              <p className="text-xs text-neutral-400 font-medium leading-relaxed">{confirmModal.message}</p>
+
+            <div className="mt-5 rounded-2xl border border-amber-200/[0.14] bg-amber-300/[0.055] px-4 py-3 text-right">
+              <div className="flex items-center gap-2 text-[11px] font-black text-amber-100"><AlertCircle className="h-3.5 w-3.5 text-amber-300" />{isRtl ? 'تحذير' : 'Warning'}</div>
+              <p className="mt-1.5 text-[11px] leading-5 text-amber-50/70">{isRtl ? 'هذا الإجراء نهائي ولا يمكن التراجع عنه بعد تنفيذ عملية الحذف.' : 'This action is final and cannot be undone after it is completed.'}</p>
             </div>
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => confirmModal.onCancel ? confirmModal.onCancel() : setConfirmModal(null)}
-                className="flex-grow py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
-              >
-                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
-              </button>
-              <button
-                onClick={confirmModal.onConfirm}
-                className="flex-grow py-2.5 bg-white hover:bg-neutral-200 text-black font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-md"
-              >
-                {lang === 'ar' ? 'تأكيد' : 'Confirm'}
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button type="button" onClick={onDismiss} disabled={submitting} className="inline-flex h-11 items-center justify-center rounded-xl border border-white/[0.11] bg-white/[0.04] px-4 text-xs font-black text-slate-200 transition hover:border-white/[0.18] hover:bg-white/[0.09] focus:outline-none focus:ring-2 focus:ring-sky-300/70 disabled:cursor-not-allowed disabled:opacity-45">{isRtl ? 'إلغاء' : 'Cancel'}</button>
+              <button ref={primaryRef} type="button" onClick={onConfirm} disabled={submitting} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-rose-200/18 bg-[linear-gradient(135deg,#fb7185,#e11d48)] px-4 text-xs font-black text-white shadow-[0_12px_26px_rgba(225,29,72,.24)] transition hover:-translate-y-0.5 hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-rose-200/80 disabled:cursor-not-allowed disabled:opacity-65">
+                {submitting ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" />{isRtl ? 'جارٍ الحذف...' : 'Deleting...'}</> : <><Trash2 className="h-3.5 w-3.5" />{actionLabel}</>}
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        </motion.section>
+      </motion.div>
+    </AnimatePresence>
   );
 }
