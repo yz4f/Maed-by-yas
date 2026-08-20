@@ -224,9 +224,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     tutorialDescription: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.',
     supportTitle: 'حلول المشاكل الشائعة',
     supportDescription: 'شروحات مرئية داخل الموقع لأخطاء الشبكة والوقت.',
-    issuesLabel: 'مركز الحلول المرئي',
-    issuesTitle: 'اختر المشكلة الظاهرة لديك',
-    issuesDescription: 'كل بطاقة تعرض صورة الخطأ نفسها ثم تفتح فيديو الحل المطابق لها داخل الموقع.',
+    issuesLabel: 'مكتبة حلول المشاكل',
+    issuesTitle: 'مكتبة الشروحات المرئية',
+    issuesDescription: 'اختر الشرح المناسب من المكتبة. كل بطاقة تعرض صورة الخطأ ثم تفتح فيديو الحل المطابق لها داخل الموقع.',
+    libraryAvailable: 'شرحان متاحان',
+    videoGuide: 'شرح فيديو',
+    downloadWarp: 'تحميل Cloudflare WARP لنظام Windows',
+    downloadWarpHint: 'قد يساعد في استعادة اتصال الشبكة قبل متابعة الشرح.',
     networkIssueTitle: 'مشكلة الشبكة أو إيقاف الواي فاي',
     networkIssueDescription: 'عند ظهور رسالة عدم الوصول إلى اسم المضيف أو فشل اتصال الشبكة.',
     timeIssueTitle: 'خطأ الوقت والتحقق',
@@ -269,9 +273,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     tutorialDescription: 'A complete visual walkthrough for activation and setup, step by step.',
     supportTitle: 'Common issue fixes',
     supportDescription: 'In-site visual solutions for network and system-time errors.',
-    issuesLabel: 'VISUAL FIX CENTER',
-    issuesTitle: 'Choose the error you are seeing',
-    issuesDescription: 'Each card shows the matching error screenshot and opens its dedicated solution video inside the site.',
+    issuesLabel: 'TROUBLESHOOTING LIBRARY',
+    issuesTitle: 'Visual troubleshooting library',
+    issuesDescription: 'Choose the relevant guide from the library. Each card shows the error screenshot and opens its dedicated solution video inside the site.',
+    libraryAvailable: '2 guides available',
+    videoGuide: 'Video guide',
+    downloadWarp: 'Download Cloudflare WARP for Windows',
+    downloadWarpHint: 'It may help restore your network connection before continuing the guide.',
     networkIssueTitle: 'Network or Wi-Fi connection error',
     networkIssueDescription: 'For hostname resolution failures or a network connection error.',
     timeIssueTitle: 'System time and verification error',
@@ -3919,7 +3927,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <div className="animate-slide-up mx-auto w-full max-w-4xl space-y-5">
                   <div className="flex flex-col gap-2 border-b border-white/[0.10] pb-5 sm:flex-row sm:items-end sm:justify-between">
                     <div className="text-start">
-                      <p className="text-[10px] font-black tracking-[0.18em] text-emerald-300/80">{guideText.issuesLabel}</p>
+                      <div className="flex flex-wrap items-center gap-2"><p className="text-[10px] font-black tracking-[0.18em] text-emerald-300/80">{guideText.issuesLabel}</p><span className="rounded-md border border-emerald-300/20 bg-emerald-400/[0.08] px-2 py-1 text-[9px] font-black text-emerald-100">{guideText.libraryAvailable}</span></div>
                       <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">{guideText.issuesTitle}</h4>
                       <p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-400 sm:text-[13px]">{guideText.issuesDescription}</p>
                     </div>
@@ -3927,22 +3935,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       {lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}
                     </button>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
                     {[
                       { view: 'network' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png', title: guideText.networkIssueTitle, description: guideText.networkIssueDescription, accent: 'sky' },
                       { view: 'timer' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/iUIBJOOTPsAnQTJW.png', title: guideText.timeIssueTitle, description: guideText.timeIssueDescription, accent: 'violet' },
                     ].map((issue, index) => (
-                      <button key={issue.view} onClick={() => setGuideView(issue.view)} className={`group overflow-hidden rounded-[22px] border text-start transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(0,0,0,0.26)] ${issue.accent === 'sky' ? 'border-sky-300/[0.18] bg-sky-400/[0.045] hover:border-sky-300/40' : 'border-violet-300/[0.18] bg-violet-400/[0.045] hover:border-violet-300/40'}`}>
+                      <button key={issue.view} onClick={() => setGuideView(issue.view)} className={`group flex h-full flex-col overflow-hidden rounded-[22px] border text-start transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(0,0,0,0.26)] ${issue.accent === 'sky' ? 'border-sky-300/[0.18] bg-sky-400/[0.045] hover:border-sky-300/40' : 'border-violet-300/[0.18] bg-violet-400/[0.045] hover:border-violet-300/40'}`}>
                         <div className="relative aspect-[16/8.8] overflow-hidden bg-black">
                           <img src={issue.image} alt={issue.title} loading="lazy" className="h-full w-full object-cover opacity-80 transition-transform duration-300 group-hover:scale-[1.035] group-hover:opacity-100" />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent" />
                           <span className={`absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border text-[11px] font-black ${issue.accent === 'sky' ? 'border-sky-200/30 bg-sky-400/15 text-sky-100' : 'border-violet-200/30 bg-violet-400/15 text-violet-100'}`}>0{index + 1}</span>
-                          <span className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-black/40 text-white backdrop-blur-sm transition-transform duration-200 group-hover:scale-110"><Play className="h-4 w-4" fill="currentColor" /></span>
+                          <span className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-black/40 text-white backdrop-blur-sm transition-transform duration-200 group-hover:scale-110"><Play className="h-4 w-4" fill="currentColor" /></span><span className="absolute bottom-4 left-4 rounded-lg border border-white/[0.18] bg-slate-950/65 px-2 py-1 text-[9px] font-black tracking-[0.12em] text-white/90 backdrop-blur-sm">{guideText.videoGuide}</span>
                         </div>
-                        <div className="p-4 sm:p-5">
+                        <div className="flex flex-1 flex-col p-4 sm:p-5">
                           <h5 className="text-[15px] font-black text-white sm:text-base">{issue.title}</h5>
                           <p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-400 sm:text-[12px]">{issue.description}</p>
-                          <div className={`mt-4 inline-flex items-center gap-2 text-[11px] font-black ${issue.accent === 'sky' ? 'text-sky-200' : 'text-violet-200'}`}><Play className="h-3.5 w-3.5" fill="currentColor" />{guideText.watchSolution}</div>
+                          <div className={`mt-auto pt-4 inline-flex items-center gap-2 text-[11px] font-black ${issue.accent === 'sky' ? 'text-sky-200' : 'text-violet-200'}`}><Play className="h-3.5 w-3.5" fill="currentColor" />{guideText.watchSolution}</div>
                         </div>
                       </button>
                     ))}
@@ -3972,7 +3980,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
                   <section className={`overflow-hidden rounded-[24px] border bg-black/45 shadow-[0_20px_52px_rgba(0,0,0,0.34)] ${solution.accent === 'sky' ? 'border-sky-300/[0.18]' : 'border-violet-300/[0.18]'}`}>
                     <div className="relative aspect-video w-full bg-black"><video src={solution.video} className="absolute inset-0 h-full w-full bg-black object-contain" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline preload="metadata" autoPlay /></div>
-                    <div className="flex flex-col gap-3 border-t border-white/[0.09] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><p className="text-start text-[12px] leading-6 text-slate-400">{solution.description}</p><span className={`inline-flex shrink-0 items-center gap-2 self-start rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${solution.accent === 'sky' ? 'border-sky-300/20 bg-sky-400/10 text-sky-100' : 'border-violet-300/20 bg-violet-400/10 text-violet-100'}`}><Play className="h-3 w-3" fill="currentColor" />{guideText.watchSolution}</span></div>
+                    <div className="flex flex-col gap-3 border-t border-white/[0.09] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><div className="min-w-0 text-start"><p className="text-[12px] leading-6 text-slate-400">{solution.description}</p>{isNetwork && <p className="mt-1 text-[10px] leading-5 text-sky-200/75">{guideText.downloadWarpHint}</p>}</div><div className="flex shrink-0 flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-2 self-start rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${solution.accent === 'sky' ? 'border-sky-300/20 bg-sky-400/10 text-sky-100' : 'border-violet-300/20 bg-violet-400/10 text-violet-100'}`}><Play className="h-3 w-3" fill="currentColor" />{guideText.watchSolution}</span>{isNetwork && <a href="https://downloads.cloudflareclient.com/v1/download/windows/ga" target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-sky-300/30 bg-sky-400 px-3 py-1.5 text-[10px] font-black text-slate-950 transition-all hover:-translate-y-0.5 hover:bg-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200/70"><ArrowLeft className={`h-3.5 w-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} />{guideText.downloadWarp}</a>}</div></div>
                   </section>
                   <section className="overflow-hidden rounded-[20px] border border-white/[0.10] bg-white/[0.025] p-3 sm:p-4"><div className="mb-3 flex items-center gap-2 text-start text-[10px] font-black tracking-[0.14em] text-slate-400"><AlertTriangle className="h-3.5 w-3.5 text-amber-300" />{guideText.screenshotLabel}</div><img src={solution.image} alt={solution.title} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[0.08] bg-black object-contain" /></section>
                 </div>;
