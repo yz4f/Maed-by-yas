@@ -3751,39 +3751,39 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
-          <div className="relative glass-card rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+          <div className="relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-white/10 flex items-start justify-between bg-black/40 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -z-10" />
-              <div className="flex flex-col items-end w-full pr-2 z-10">
-                <h3 className="text-lg font-black text-white flex items-center gap-2 mb-1 flex-row-reverse">
-                  <HelpCircle className="w-5 h-5 text-primary" />
+            <div className="px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-start justify-between bg-gradient-to-l from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden">
+              <div className="absolute -top-16 -left-10 w-56 h-56 bg-primary/20 rounded-full blur-[70px]" />
+              <div className="flex flex-col items-end w-full pr-3 z-10">
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5 mb-2 flex-row-reverse">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
                   {guideView === 'menu' ? 'قائمة الشروحات والمساعدة' : 
                    guideView === 'full' ? 'شرح خطوات التفعيل والتشغيل' :
                    guideView === 'network' ? 'حل مشكلة إغلاق البرنامج أو خطأ الشبكة' : 'حل مشكلة الوقت (Timer)'}
                 </h3>
-                <p className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">{guideModalProduct.product?.name || ''}</p>
+                <div className="flex flex-row-reverse flex-wrap items-center gap-2"><p className="text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full border border-primary/20">{guideModalProduct.product?.name || ''}</p><span className="text-[10px] font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-full">مشاهدة داخل الموقع</span></div>
               </div>
               <button
                 onClick={() => { setGuideModalProduct(null); setGuideView(null); }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 transition-colors cursor-pointer shrink-0 z-10"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 z-10"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto scrollbar-thin">
+            <div className="p-4 sm:p-6 lg:p-7 overflow-y-auto scrollbar-thin bg-gradient-to-b from-slate-950/15 to-slate-950/55">
               {guideView === 'menu' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-slide-up">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 animate-slide-up">
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
                       setGuideView('full');
                     }}
-                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all group cursor-pointer shadow-lg hover:shadow-brand-glow hover:-translate-y-1"
+                    className="relative overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-3xl bg-gradient-to-br from-primary/15 via-slate-900/80 to-slate-950 border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-slate-900 transition-all duration-200 group cursor-pointer shadow-xl hover:shadow-[0_18px_42px_rgba(37,99,235,0.23)] hover:-translate-y-1.5"
                   >
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(59,130,246,0.2)]">
                       <Play className="w-7 h-7" fill="currentColor" />
                     </div>
                     <div className="text-center">
@@ -3801,9 +3801,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         window.open('https://discord.gg/t3n', '_blank');
                       }
                     }}
-                    className="flex flex-col items-center justify-center gap-5 p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all group cursor-pointer shadow-lg hover:shadow-brand-glow hover:-translate-y-1"
+                    className="relative overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-3xl bg-white/[0.04] border border-white/10 hover:border-emerald-400/45 hover:bg-emerald-400/[0.06] transition-all duration-200 group cursor-pointer shadow-xl hover:shadow-[0_18px_42px_rgba(16,185,129,0.13)] hover:-translate-y-1.5"
                   >
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-400/10 border border-emerald-400/25 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(16,185,129,0.13)]">
                       <HelpCircle className="w-7 h-7" />
                     </div>
                     <div className="text-center">
@@ -3816,13 +3816,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {guideView === 'full' && (
                 <div className="space-y-4 animate-slide-up">
-                  <div className="flex justify-between items-center px-1 border-b border-white/10 pb-4">
-                    <button onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-primary-hover flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 hover:scale-105">
+                  <div className="flex flex-wrap justify-between items-center gap-3 px-1 border-b border-white/10 pb-4">
+                    <div className="order-2 sm:order-1 text-xs font-bold text-slate-400">شرح مرئي كامل داخل البوابة</div>
+                    <button onClick={() => setGuideView('menu')} className="order-1 sm:order-2 text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
                       <ArrowRight className="w-4 h-4" />
                       العودة للقائمة السابقة
                     </button>
                   </div>
-                  <div className="aspect-video w-full rounded-2xl border border-white/10 overflow-hidden bg-[#050505] flex flex-col items-center justify-center p-0 text-center relative shadow-2xl">
+                  <div className="aspect-video w-full rounded-2xl sm:rounded-3xl border border-white/10 ring-1 ring-black/40 overflow-hidden bg-[#030712] flex flex-col items-center justify-center p-0 text-center relative shadow-[0_22px_55px_rgba(0,0,0,0.5)]">
                     {guideModalProduct.product?.videoUrl ? (
                       guideModalProduct.product.videoUrl.includes('youtube.com') || guideModalProduct.product.videoUrl.includes('youtu.be') ? (
                         <iframe 
