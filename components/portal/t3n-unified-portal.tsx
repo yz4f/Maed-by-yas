@@ -3753,23 +3753,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
           <div className="relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-start justify-between bg-gradient-to-l from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden">
+            <div className="min-h-[112px] px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-center justify-center bg-gradient-to-l from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden">
               <div className="absolute -top-16 -left-10 w-56 h-56 bg-primary/20 rounded-full blur-[70px]" />
-              <div className="flex flex-col items-end w-full pr-3 z-10">
-                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5 mb-2 flex-row-reverse">
-                  <span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
-                  {guideView === 'menu' ? 'قائمة الشروحات والمساعدة' : 
-                   guideView === 'full' ? 'شرح خطوات التفعيل والتشغيل' :
-                   guideView === 'network' ? 'حل مشكلة إغلاق البرنامج أو خطأ الشبكة' : 'حل مشكلة الوقت (Timer)'}
-                </h3>
-                <div className="flex flex-row-reverse flex-wrap items-center gap-2"><p className="text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full border border-primary/20">{guideModalProduct.product?.name || ''}</p><span className="text-[10px] font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-full">مشاهدة داخل الموقع</span></div>
-              </div>
               <button
                 onClick={() => { setGuideModalProduct(null); setGuideView(null); }}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 z-10"
+                aria-label="إغلاق نافذة الشرح"
+                className="absolute left-5 sm:left-7 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 transition-all duration-200 hover:scale-105 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
+              <div className="z-10 flex items-center gap-3 text-center">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">شرح فك باند فورت</h3>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -3787,7 +3783,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <Play className="w-7 h-7" fill="currentColor" />
                     </div>
                     <div className="text-center">
-                      <h4 className="font-extrabold text-white mb-2 text-lg">شرح التفعيل (فيديو)</h4>
+                      <h4 className="font-extrabold text-white mb-2 text-lg">شرح فك باند فورت</h4>
                       <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.</p>
                     </div>
                   </button>
@@ -3816,9 +3812,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
               {guideView === 'full' && (
                 <div className="space-y-4 animate-slide-up">
-                  <div className="flex flex-wrap justify-between items-center gap-3 px-1 border-b border-white/10 pb-4">
-                    <div className="order-2 sm:order-1 text-xs font-bold text-slate-400">شرح مرئي كامل داخل البوابة</div>
-                    <button onClick={() => setGuideView('menu')} className="order-1 sm:order-2 text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
+                  <div className="flex items-center justify-end px-1 border-b border-white/10 pb-4" dir="ltr">
+                    <button dir="rtl" onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
                       <ArrowRight className="w-4 h-4" />
                       العودة للقائمة السابقة
                     </button>
