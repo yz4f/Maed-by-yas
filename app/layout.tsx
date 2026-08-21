@@ -3,18 +3,36 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://t3n-store-production.up.railway.app'),
-  title: 'تسليم ذاتي',
-  description: 'منصة تسليم ذاتي لإدارة التراخيص والمنتجات والمفاتيح والتنزيلات.',
+  metadataBase: new URL('https://t3nn.wtf'),
+  title: 'T3N | منصة تسليم ذاتي',
+  description: 'منصة تسليم ذاتي لإدارة التراخيص والمنتجات والمفاتيح والتنزيلات في مكان واحد.',
+  applicationName: 'T3N',
   icons: {
     icon: '/logo.png',
     shortcut: '/logo.png',
     apple: '/logo.png',
   },
   openGraph: {
-    title: 'تسليم ذاتي',
-    description: 'منصة تسليم ذاتي لإدارة التراخيص والمنتجات والمفاتيح والتنزيلات.',
-    images: ['/logo.png'],
+    type: 'website',
+    locale: 'ar_SA',
+    url: 'https://t3nn.wtf',
+    siteName: 'T3N',
+    title: 'T3N | منصة تسليم ذاتي',
+    description: 'إدارة التراخيص والمنتجات والمفاتيح والتنزيلات بسهولة وأمان.',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'T3N — منصة تسليم ذاتي للتراخيص والمنتجات',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'T3N | منصة تسليم ذاتي',
+    description: 'إدارة التراخيص والمنتجات والمفاتيح والتنزيلات بسهولة وأمان.',
+    images: ['/opengraph-image'],
   },
 };
 
