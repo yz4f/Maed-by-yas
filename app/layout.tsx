@@ -21,10 +21,10 @@ export const metadata: Metadata = {
     description: 'إدارة التراخيص والمنتجات والمفاتيح والتنزيلات بسهولة وأمان.',
     images: [
       {
-        url: '/opengraph-image',
-        width: 1200,
-        height: 630,
-        alt: 'T3N — منصة تسليم ذاتي للتراخيص والمنتجات',
+        url: '/t3n-social-preview.png',
+        width: 1672,
+        height: 941,
+        alt: 'T3N — t3nn.wtf',
       },
     ],
   },
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'T3N | منصة تسليم ذاتي',
     description: 'إدارة التراخيص والمنتجات والمفاتيح والتنزيلات بسهولة وأمان.',
-    images: ['/opengraph-image'],
+    images: ['/t3n-social-preview.png'],
   },
 };
 
