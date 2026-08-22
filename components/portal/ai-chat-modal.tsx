@@ -55,14 +55,12 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [initializing, setInitializing] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     let active = true;
     const loadConversation = async () => {
-      setInitializing(true);
       try {
         const response = await fetch('/api/ai?view=conversation', { credentials: 'same-origin' });
         const data = await response.json();
@@ -70,8 +68,6 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
         if (active) setMessages(Array.isArray(data.messages) ? data.messages : []);
       } catch (error) {
         if (active) onNotify?.(error instanceof Error ? error.message : t.error, 'error');
-      } finally {
-        if (active) setInitializing(false);
       }
     };
     void loadConversation();
@@ -117,7 +113,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
       </header>
 
       <div className={`flex-1 overflow-y-auto px-4 py-5 sm:px-6 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`}>
-        {initializing ? <div className="grid h-full place-items-center"><Loader2 className="h-6 w-6 animate-spin text-cyan-300" /></div> : <div className="space-y-3.5">
+        <div className="space-y-3.5">
           {messages.length === 0 && <div className={`mx-auto max-w-md rounded-2xl border p-4 text-center ${isDark ? 'border-cyan-300/[.13] bg-cyan-400/[.045]' : 'border-sky-100 bg-white'}`}><Bot className="mx-auto h-5 w-5 text-cyan-300" /><p className={`mt-2 text-xs leading-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{t.start}</p><div className="mt-3 flex flex-wrap justify-center gap-2">{t.quick.map((quick) => <button key={quick} onClick={() => void submit(quick)} className={`rounded-xl border px-2.5 py-1.5 text-[10px] font-bold transition ${isDark ? 'border-white/[.1] bg-white/[.035] text-cyan-100 hover:bg-cyan-400/[.12]' : 'border-slate-200 bg-slate-50 text-sky-700 hover:bg-sky-50'}`}>{quick}</button>)}</div></div>}
           {messages.map((message) => {
             const mine = message.role === 'customer';
@@ -126,10 +122,10 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
           })}
           {loading && <div className="flex justify-end"><div className={`flex items-center gap-2 rounded-2xl rounded-tl-md border px-3 py-2 text-[11px] ${isDark ? 'border-white/[.09] bg-white/[.045] text-slate-300' : 'border-slate-100 bg-white text-slate-500'}`}><Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-300" />{t.loading}</div></div>}
           <div ref={endRef} />
-        </div>}
+        </div>
       </div>
 
-      <form className={`border-t p-3 sm:p-4 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`} onSubmit={(event) => { event.preventDefault(); void submit(); }}><div className={`flex items-end gap-2 rounded-2xl border p-2 ${isDark ? 'border-white/[.1] bg-slate-950/45 focus-within:border-cyan-300/35' : 'border-slate-200 bg-slate-50 focus-within:border-sky-300'}`}><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={1} maxLength={1800} disabled={loading || initializing} placeholder={t.placeholder} className={`min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-xs outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submit(); } }} /><button type="submit" disabled={loading || initializing || input.trim().length < 2} className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40" aria-label={t.send}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div></form>
+      <form className={`border-t p-3 sm:p-4 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`} onSubmit={(event) => { event.preventDefault(); void submit(); }}><div className={`flex items-end gap-2 rounded-2xl border p-2 ${isDark ? 'border-white/[.1] bg-slate-950/45 focus-within:border-cyan-300/35' : 'border-slate-200 bg-slate-50 focus-within:border-sky-300'}`}><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={1} maxLength={1800} disabled={loading} placeholder={t.placeholder} className={`min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-xs outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submit(); } }} /><button type="submit" disabled={loading || input.trim().length < 2} className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40" aria-label={t.send}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div></form>
     </motion.section>
   </motion.div>}</AnimatePresence>;
 }
