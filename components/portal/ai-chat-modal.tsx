@@ -32,7 +32,7 @@ interface AiChatModalProps {
 }
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
-const MAX_PREVIEW_CHARS = 790_000;
+const MAX_PREVIEW_CHARS = 320_000;
 const IMAGE_TYPES = new Set<ImageContentType>(['image/jpeg', 'image/png', 'image/webp']);
 
 const copy = {
@@ -106,12 +106,12 @@ function createImageAttachment(file: File): Promise<ChatAttachment> {
     const objectUrl = URL.createObjectURL(file);
     image.onload = () => {
       try {
-        const maxDimension = 1440;
+        const maxDimension = 768;
         const ratio = Math.min(1, maxDimension / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
         let width = Math.max(1, Math.round((image.naturalWidth || 1) * ratio));
         let height = Math.max(1, Math.round((image.naturalHeight || 1) * ratio));
         let contentType: ImageContentType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-        let quality = 0.86;
+        let quality = 0.78;
         let previewData = '';
 
         for (let attempt = 0; attempt < 7; attempt += 1) {
@@ -276,7 +276,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
     setLoading(true);
     try {
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), outgoingAttachment ? 33_000 : 17_000);
+      const timeout = window.setTimeout(() => controller.abort(), outgoingAttachment ? 26_000 : 17_000);
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
