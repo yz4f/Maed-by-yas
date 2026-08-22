@@ -50,6 +50,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
 import { HelpCenter } from './help-center';
+import { AiAdminConversations } from './ai-admin-conversations';
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -443,7 +444,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'keys' | 'logs'>('products');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'conversations' | 'keys' | 'logs'>('products');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -2587,6 +2588,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 })}
               </div>
             )}
+
+            <section className={`rounded-[24px] border p-5 sm:p-6 ${isDark ? 'border-white/[.08] bg-[#0c1422]' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,.06)]'}`}>
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cyan-400/10 text-cyan-300"><HelpCircle className="h-5 w-5" /></span>
+                <div><p className={`text-[10px] font-black tracking-[.15em] ${isDark ? 'text-cyan-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مساعدة سريعة' : 'QUICK HELP'}</p><h3 className={`mt-1 text-base font-black ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</h3><p className={`mt-1 text-xs leading-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'إجابات واضحة لأكثر الأسئلة المتعلقة بمنتجاتك.' : 'Clear answers to the most common questions about your products.'}</p></div>
+              </div>
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                {(lang === 'ar' ? [
+                  ['أين أجد شرح المنتج؟', 'افتح بطاقة المنتج المطلوبة ثم اضغط «الشروحات والتعليمات». ستجد الفيديو والمكتبة الخاصة بحلول مشاكل هذا المنتج داخل الموقع.'],
+                  ['كيف أحمّل اللودر؟', 'من بطاقة المنتج الفعّال اضغط «تحميل اللودر». يظهر الزر فقط للتراخيص النشطة وغير المنتهية.'],
+                  ['ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ آخر؟', 'افتح «الشروحات والتعليمات» ثم «حلول المشاكل» واختر المشكلة المطابقة للصورة أو الخطأ الذي تراه. إذا لم تُحل المشكلة، افتح مساعد تعن وأرسل صورة واضحة للخطأ.'],
+                  ['كيف أتابع مع الإدارة؟', 'افتح مساعد تعن واكتب تفاصيل المشكلة. عند الحاجة يمكن لفريق الإدارة الدخول للمحادثة والرد عليك مباشرة، ثم تعود المحادثة تلقائياً إلى مساعد تعن بعد انتهاء المتابعة.'],
+                ] : [
+                  ['Where is my product guide?', 'Open the relevant product card and choose “Guide”. Its video and product-specific troubleshooting library are available inside the site.'],
+                  ['How do I download the loader?', 'Use “Download Loader” on an active product card. The button is available only for active, non-expired licenses.'],
+                  ['What should I do if Spoofer or another issue appears?', 'Open “Guide”, choose “Issue fixes”, and select the entry matching your error. If it remains unresolved, open Ta3n Assistant and send a clear screenshot.'],
+                  ['How do I follow up with administration?', 'Open Ta3n Assistant and describe the issue. When needed, administration can enter the conversation and reply directly, then return it to the assistant after follow-up.'],
+                ]).map(([question, answer]) => <details key={question} className={`group rounded-2xl border px-4 py-3 transition ${isDark ? 'border-white/[.08] bg-white/[.025] open:border-cyan-300/[.2] open:bg-cyan-400/[.04]' : 'border-slate-100 bg-slate-50 open:border-sky-200 open:bg-sky-50/50'}`}><summary className={`flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-black ${isDark ? 'text-slate-100' : 'text-slate-800'}`}><span>{question}</span><span className="text-cyan-300 transition group-open:rotate-45">+</span></summary><p className={`mt-3 border-t pt-3 text-[11px] leading-6 ${isDark ? 'border-white/[.07] text-slate-400' : 'border-slate-200 text-slate-600'}`}>{answer}</p></details>)}
+              </div>
+            </section>
           </div>
         )}
         {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
@@ -2733,6 +2754,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'overview' && <Activity className="w-6 h-6 text-sky-500 dark:text-sky-400" />}
                     {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />}
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
+                    {adminSectionTab === 'conversations' && <MessageSquare className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-indigo-600 dark:text-primary" />}
                     {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
                   </div>
@@ -2740,6 +2762,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'overview' && (lang === 'ar' ? 'نظرة عامة وإحصائيات' : 'Overview & Stats')}
                     {adminSectionTab === 'products' && (lang === 'ar' ? 'إدارة المنتجات والمخزون' : 'Products & Inventory')}
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
+                    {adminSectionTab === 'conversations' && (lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Conversations')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
                     {adminSectionTab === 'logs' && (lang === 'ar' ? 'سجلات النظام' : 'System Logs')}
                   </span>
@@ -2748,6 +2771,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'overview' && (lang === 'ar' ? <>إحصائيات شاملة ومباشرة لمنصة {renderBrandText('تعن')} الرقمية.</> : 'Comprehensive live stats for the TA3N portal.')}
                   {adminSectionTab === 'products' && (lang === 'ar' ? 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.' : 'Full control over product settings and manual key addition.')}
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
+                  {adminSectionTab === 'conversations' && (lang === 'ar' ? 'راجع محادثات العملاء، استلم الحالة عند الحاجة، ثم أعد الرد إلى مساعد تعن بعد المتابعة.' : 'Review customer conversations, take over when needed, then return replies to Ta3n Assistant after follow-up.')}
                   {adminSectionTab === 'keys' && (lang === 'ar' ? 'تتبع سريع للمفاتيح المباعة والمتاحة في النظام.' : 'Quick tracking of sold and available license keys in the system.')}
                   {adminSectionTab === 'logs' && (lang === 'ar' ? 'مراقبة حية لجميع حركات دخول وخروج واستخدام الموقع.' : 'Live auditing of all logins, transactions, and site usage.')}
                 </p>
@@ -2790,6 +2814,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
+                { id: 'conversations', label: lang === 'ar' ? 'محادثات المساعد' : 'Assistant Chats', icon: MessageSquare },
                 { id: 'keys', label: lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search', icon: Key },
                 { id: 'logs', label: lang === 'ar' ? 'سجلات النظام' : 'System Logs', icon: FileText },
               ].map((tab) => {
@@ -3024,7 +3049,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             )}
 
-            {/* ==================== SUB-TAB 3: SEARCH ALL KEYS ==================== */}
+            {/* ==================== SUB-TAB 3: TA3N ASSISTANT CONVERSATIONS ==================== */}
+            {adminSectionTab === 'conversations' && (
+              <div className="animate-slide-up">
+                <AiAdminConversations lang={lang} isDark={isDark} onNotify={showToast} />
+              </div>
+            )}
+
+            {/* ==================== SUB-TAB 4: SEARCH ALL KEYS ==================== */}
             {adminSectionTab === 'keys' && (
               <div className="space-y-4 animate-slide-up">
                 <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6">

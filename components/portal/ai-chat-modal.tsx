@@ -47,6 +47,9 @@ const copy = {
     quick: ['أين أجد شرح منتجي؟', 'قائمة Spoofer لا تظهر', 'كيف أرفع طلب Reset؟'],
     close: 'إغلاق المحادثة',
     handoff: 'تم تحويل هذه الحالة للمراجعة المختصة.',
+    humanActive: 'فريق الإدارة يتابع محادثتك الآن. ستصل رسائلك إليه مباشرة.',
+    humanLabel: 'متابعة الإدارة',
+    staffLabel: 'فريق الإدارة',
     attach: 'إرفاق صورة',
     removeImage: 'إزالة الصورة',
     imageReady: 'الصورة جاهزة للإرسال',
@@ -69,6 +72,9 @@ const copy = {
     quick: ['Where is my product guide?', 'The Spoofer list is not showing', 'How do I request a reset?'],
     close: 'Close chat',
     handoff: 'This case has been sent for specialist review.',
+    humanActive: 'The administration team is handling your conversation now. Your messages are delivered directly to them.',
+    humanLabel: 'Administration active',
+    staffLabel: 'Administration',
     attach: 'Attach image',
     removeImage: 'Remove image',
     imageReady: 'Image ready to send',
@@ -160,6 +166,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
   const [loading, setLoading] = useState(false);
   const [preparingImage, setPreparingImage] = useState(false);
+  const [conversationStatus, setConversationStatus] = useState<'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'HUMAN_ACTIVE' | 'CLOSED'>('AI_ACTIVE');
   const endRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -173,6 +180,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
         if (!response.ok || !data.success) throw new Error(data.error || t.error);
         if (active) {
           const remote = Array.isArray(data.messages) ? data.messages : [];
+          setConversationStatus(data.conversation?.status || 'AI_ACTIVE');
           setMessages((current) => {
             const local = current.filter((item) => item.id.startsWith('local-'));
             const known = new Set(remote.map((item: ChatMessage) => item.id));
@@ -184,7 +192,8 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
       }
     };
     void loadConversation();
-    return () => { active = false; };
+    const interval = window.setInterval(() => { void loadConversation(); }, 7_000);
+    return () => { active = false; window.clearInterval(interval); };
   }, [open, t.error, onNotify]);
 
   useEffect(() => {
@@ -266,6 +275,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
         return [...withoutOptimistic, { ...optimistic, id: data.customerMessage?.id || optimistic.id }, ...(data.message ? [data.message as ChatMessage] : [])];
       });
       if (data.handoff) onNotify?.(t.handoff, 'info');
+      if (data.humanActive) { setConversationStatus('HUMAN_ACTIVE'); onNotify?.(t.humanActive, 'info'); }
     } catch (error) {
       setMessages((current) => current.filter((item) => item.id !== optimistic.id));
       setAttachment(outgoingAttachment);
@@ -281,7 +291,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
     <motion.section className={`flex h-[min(740px,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-[30px] border shadow-[0_30px_100px_rgba(0,0,0,.52)] ${isDark ? 'border-cyan-300/[.18] bg-[#0a1321] text-slate-100' : 'border-white bg-white text-slate-900'}`} initial={{ opacity: 0, scale: .97, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .97, y: 12 }} onMouseDown={(event) => event.stopPropagation()}>
       <header className={`relative overflow-hidden border-b px-5 py-4 sm:px-6 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(34,211,238,.16),transparent_36%),radial-gradient(circle_at_95%_95%,rgba(139,92,246,.13),transparent_38%)]" />
-        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.subtitle}</p></div></div><button onClick={onClose} disabled={loading || preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
+        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'HUMAN_ACTIVE' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-violet-300/20 bg-violet-400/[.1] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700'}`}>{t.humanLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversationStatus === 'HUMAN_ACTIVE' ? t.humanActive : t.subtitle}</p></div></div><button onClick={onClose} disabled={loading || preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
       </header>
 
       <div className={`flex-1 overflow-y-auto px-4 py-5 sm:px-6 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`} onDragOver={(event) => event.preventDefault()} onDrop={onDrop}>
@@ -290,7 +300,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
           {messages.map((message) => {
             const mine = message.role === 'customer';
             const system = message.role === 'system';
-            return <div key={message.id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}><div className={`max-w-[88%] rounded-2xl px-4 py-3 text-xs leading-6 shadow-sm ${mine ? 'rounded-tr-md bg-gradient-to-l from-cyan-400 to-sky-500 font-medium text-slate-950' : system ? (isDark ? 'border border-amber-300/[.16] bg-amber-400/[.07] text-amber-100' : 'border border-amber-100 bg-amber-50 text-amber-900') : (isDark ? 'rounded-tl-md border border-white/[.09] bg-white/[.045] text-slate-200' : 'rounded-tl-md border border-slate-100 bg-white text-slate-700')}`}>{!mine && !system && <span className="mb-1 flex items-center gap-1.5 text-[9px] font-black tracking-[.12em] text-cyan-300"><Bot className="h-3 w-3" />{t.title}</span>}{message.attachments?.map((item) => item.previewData ? <a key={item.id} href={item.previewData} target="_blank" rel="noreferrer" className="mb-2 block overflow-hidden rounded-xl border border-black/10 bg-slate-950/10"><img src={item.previewData} alt={item.name} className="max-h-64 w-full object-contain" /><span className="flex items-center gap-1.5 px-2 py-1 text-[9px] opacity-75"><FileImage className="h-3 w-3" />{item.name}</span></a> : null)}<p className="whitespace-pre-wrap">{message.body}</p></div></div>;
+            return <div key={message.id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}><div className={`max-w-[88%] rounded-2xl px-4 py-3 text-xs leading-6 shadow-sm ${mine ? 'rounded-tr-md bg-gradient-to-l from-cyan-400 to-sky-500 font-medium text-slate-950' : system ? (isDark ? 'border border-amber-300/[.16] bg-amber-400/[.07] text-amber-100' : 'border border-amber-100 bg-amber-50 text-amber-900') : (isDark ? 'rounded-tl-md border border-white/[.09] bg-white/[.045] text-slate-200' : 'rounded-tl-md border border-slate-100 bg-white text-slate-700')}`}>{!mine && !system && <span className={`mb-1 flex items-center gap-1.5 text-[9px] font-black tracking-[.12em] ${message.role === 'staff' ? 'text-violet-300' : 'text-cyan-300'}`}>{message.role === 'staff' ? <ShieldCheck className="h-3 w-3" /> : <Bot className="h-3 w-3" />}{message.role === 'staff' ? t.staffLabel : t.title}</span>}{message.attachments?.map((item) => item.previewData ? <a key={item.id} href={item.previewData} target="_blank" rel="noreferrer" className="mb-2 block overflow-hidden rounded-xl border border-black/10 bg-slate-950/10"><img src={item.previewData} alt={item.name} className="max-h-64 w-full object-contain" /><span className="flex items-center gap-1.5 px-2 py-1 text-[9px] opacity-75"><FileImage className="h-3 w-3" />{item.name}</span></a> : null)}<p className="whitespace-pre-wrap">{message.body}</p></div></div>;
           })}
           {loading && <div className="flex justify-end"><div className={`flex items-center gap-2 rounded-2xl rounded-tl-md border px-3 py-2 text-[11px] ${isDark ? 'border-white/[.09] bg-white/[.045] text-slate-300' : 'border-slate-100 bg-white text-slate-500'}`}><Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-300" />{t.loading}</div></div>}
           <div ref={endRef} />

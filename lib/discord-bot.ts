@@ -39,7 +39,7 @@ async function discordApi(path: string, token: string, init: RequestInit = {}) {
 
 function commands() {
   return [
-    { name: 'مساعد', description: 'فتح مساعد تعن ومركز المساعدة', type: 1 },
+    { name: 'مساعد', description: 'فتح مساعد تعن للحلول السريعة', type: 1 },
     { name: 'موقعي', description: 'فتح منصة تعن ومنتجاتك', type: 1 },
   ];
 }
@@ -57,13 +57,14 @@ function assistantEmbed() {
   return {
     color: 0x22d3ee,
     author: { name: 'مساعد تعن' },
-    title: 'مركز مساعدة تعن',
-    description: 'ادخل إلى المنصة لفتح مساعد تعن، مراجعة منتجاتك، مشاهدة الشروحات، أو رفع طلب Reset بشكل منظم.',
+    title: 'مساعد تعن',
+    description: 'لإجابة سريعة عن المنتج أو التفعيل أو التحميل، افتح مساعد تعن داخل المنصة وأرسل سؤالك أو صورة واضحة للخطأ.',
     fields: [
-      { name: 'مساعد تعن', value: 'يراجع أسئلتك وصور الأخطاء المتعلقة بالمنتجات داخل المنصة.', inline: false },
-      { name: 'المنصة', value: `[فتح t3nn.wtf](${websiteUrl})`, inline: false },
+      { name: 'فتح مساعد تعن', value: `[افتح المحادثة داخل t3nn.wtf](${websiteUrl})`, inline: false },
+      { name: 'الشروحات وحلول المشاكل', value: 'تجدها في قسم «منتجاتي» داخل الموقع، تحت كل منتج تملكه.', inline: false },
+      { name: 'متابعة الإدارة', value: 'إذا احتاجت الحالة متابعة مباشرة، يستطيع فريق الإدارة الدخول إلى نفس المحادثة داخل المنصة والرد عليك.', inline: false },
     ],
-    footer: { text: 'تعن • دعم منظم وآمن' },
+    footer: { text: 'تعن • رد سريع داخل المنصة' },
   };
 }
 
@@ -71,7 +72,7 @@ async function answerInteraction(interaction: any, token: string) {
   if (interaction.type !== 2) return;
   const commandName = interaction.data?.name;
   const data = commandName === 'موقعي'
-    ? { content: `منصة تعن: ${websiteUrl}`, flags: 64 }
+    ? { content: `منصة تعن ومنتجاتك: ${websiteUrl}\nافتح «منتجاتي» للشروحات والتحميل، أو «مساعد تعن» للسؤال السريع.`, flags: 64 }
     : commandName === 'مساعد'
       ? { embeds: [assistantEmbed()], flags: 64 }
       : null;

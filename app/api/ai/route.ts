@@ -5,7 +5,11 @@ import {
   createResetRequest,
   getHelpOverview,
   getAiConversation,
+  getAiConversationForStaff,
+  listAiConversations,
   sendAiMessage,
+  sendStaffAiMessage,
+  setConversationHumanMode,
   listCustomerResetRequests,
   listResetRequests,
   processResetRequest,
@@ -39,11 +43,21 @@ const chatSchema = z.object({
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'اكتب رسالتك أو أرفق صورة واحدة على الأقل.' });
   }
 });
-const adminPatchSchema = z.object({
+const adminResetPatchSchema = z.object({
   action: z.literal('process_reset'),
   requestId: z.string().trim().min(1).max(180),
   decision: z.enum(['approve', 'reject', 'request_info', 'complete']),
   note: z.string().trim().max(1000).optional(),
+});
+const conversationModeSchema = z.object({
+  action: z.literal('conversation_mode'),
+  conversationId: z.string().trim().min(1).max(180),
+  mode: z.enum(['human', 'ai']),
+});
+const staffReplySchema = z.object({
+  action: z.literal('staff_reply'),
+  conversationId: z.string().trim().min(1).max(180),
+  body: z.string().trim().min(2).max(1800),
 });
 
 function enforceRateLimit(actorId: string, action: string, limit: number, windowMs: number) {
@@ -87,6 +101,16 @@ export async function GET(request: NextRequest) {
       if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه البيانات مخصصة للإدارة.' }, { status: 403 });
       return NextResponse.json({ success: true, requests: await listResetRequests(current) });
     }
+    if (view === 'admin_conversations') {
+      if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه البيانات مخصصة للإدارة.' }, { status: 403 });
+      return NextResponse.json({ success: true, conversations: await listAiConversations(current) });
+    }
+    if (view === 'admin_conversation') {
+      if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه البيانات مخصصة للإدارة.' }, { status: 403 });
+      const conversationId = request.nextUrl.searchParams.get('conversationId')?.trim();
+      if (!conversationId) return NextResponse.json({ success: false, error: 'معرف المحادثة مطلوب.' }, { status: 400 });
+      return NextResponse.json({ success: true, ...(await getAiConversationForStaff(current, conversationId)) });
+    }
     return NextResponse.json({ success: true, ...(await getHelpOverview(current)) });
   } catch (error) { return failed(error); }
 }
@@ -102,6 +126,12 @@ export async function POST(request: NextRequest) {
       enforceRateLimit(current.id, 'chat', 16, 10 * 60 * 1000);
       return NextResponse.json({ success: true, ...(await sendAiMessage(current, input)) });
     }
+    if (body?.action === 'staff_reply') {
+      if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه العملية مخصصة للإدارة.' }, { status: 403 });
+      const input = staffReplySchema.parse(body);
+      enforceRateLimit(current.id, 'staff_reply', 40, 10 * 60 * 1000);
+      return NextResponse.json({ success: true, ...(await sendStaffAiMessage(current, input)) });
+    }
     const input = resetSchema.parse(body);
     enforceRateLimit(current.id, 'reset_request', 4, 60 * 60 * 1000);
     return NextResponse.json({ success: true, ...(await createResetRequest(current, input)) }, { status: 201 });
@@ -114,7 +144,12 @@ export async function PATCH(request: NextRequest) {
     const current = await actor();
     if (!current) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
     if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه العملية مخصصة للإدارة.' }, { status: 403 });
-    const input = adminPatchSchema.parse(await request.json());
+    const body = await request.json();
+    if (body?.action === 'conversation_mode') {
+      const input = conversationModeSchema.parse(body);
+      return NextResponse.json({ success: true, ...(await setConversationHumanMode(current, input.conversationId, input.mode === 'human' ? 'HUMAN_ACTIVE' : 'AI_ACTIVE')) });
+    }
+    const input = adminResetPatchSchema.parse(body);
     return NextResponse.json({ success: true, request: await processResetRequest(current, { requestId: input.requestId, action: input.decision, note: input.note }) });
   } catch (error) { return failed(error); }
 }
