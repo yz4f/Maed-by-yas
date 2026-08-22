@@ -154,6 +154,11 @@ export class DiscordBotService {
     const roleIds = new Set<string>([DISCORD_ROLES.CUSTOMER]);
     for (const productName of activeProductNames) {
       const lowerName = productName.toLowerCase();
+      const isVipProduct = lowerName.includes('vip');
+      if (isVipProduct) {
+        roleIds.add(DISCORD_ROLES.VIP);
+        continue;
+      }
       if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass')) {
         roleIds.add(DISCORD_ROLES.FORTNITE);
       }
@@ -194,15 +199,21 @@ export class DiscordBotService {
     );
 
     const lowerName = productName.toLowerCase();
-    if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass')) {
+    const isVipProduct = lowerName.includes('vip');
+
+    if (isVipProduct) {
+      promises.push(
+        this.addRoleToMember(discordUserId, DISCORD_ROLES.VIP).then((res) => {
+          if (res.success) rolesAdded.push('عميل VIP');
+        })
+      );
+    } else if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass')) {
       promises.push(
         this.addRoleToMember(discordUserId, DISCORD_ROLES.FORTNITE).then((res) => {
           if (res.success) rolesAdded.push('فورت نايت');
         })
       );
-    }
-
-    if (lowerName.includes('سبوفر') || lowerName.includes('spoofer') || lowerName.includes('تعن') || lowerName.includes('ta3n')) {
+    } else if (lowerName.includes('سبوفر') || lowerName.includes('spoofer') || lowerName.includes('تعن') || lowerName.includes('ta3n')) {
       promises.push(
         this.addRoleToMember(discordUserId, DISCORD_ROLES.PERM).then((res) => {
           if (res.success) rolesAdded.push('بيرم');

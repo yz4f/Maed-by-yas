@@ -24,8 +24,8 @@ export async function POST(req: Request) {
   }
   try {
     const data = await req.json();
-    const product = await StoreDB.createProduct(data);
-    return NextResponse.json({ success: true, product });
+    const result = await StoreDB.createProduct(data);
+    return NextResponse.json(result);
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
