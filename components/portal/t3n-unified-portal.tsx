@@ -2589,25 +2589,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             )}
 
-            <section className={`rounded-[24px] border p-5 sm:p-6 ${isDark ? 'border-white/[.08] bg-[#0c1422]' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,.06)]'}`}>
-              <div className="flex items-start gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cyan-400/10 text-cyan-300"><HelpCircle className="h-5 w-5" /></span>
-                <div><p className={`text-[10px] font-black tracking-[.15em] ${isDark ? 'text-cyan-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مساعدة سريعة' : 'QUICK HELP'}</p><h3 className={`mt-1 text-base font-black ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</h3><p className={`mt-1 text-xs leading-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'إجابات واضحة لأكثر الأسئلة المتعلقة بمنتجاتك.' : 'Clear answers to the most common questions about your products.'}</p></div>
+            {activeProductCount > 0 && <section className={`relative isolate overflow-hidden rounded-[26px] border p-4 sm:p-5 ${isDark ? 'border-white/[.09] bg-[#0b1523]' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,.06)]'}`}>
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_98%_0%,rgba(34,211,238,.10),transparent_31%),radial-gradient(circle_at_0%_100%,rgba(59,130,246,.06),transparent_30%)]" />
+              <div className="relative flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-cyan-300/10 bg-cyan-400/[.08] text-cyan-300"><HelpCircle className="h-5 w-5" /></span>
+                <div className="min-w-0"><p className={`text-[9px] font-black tracking-[.16em] ${isDark ? 'text-cyan-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مساعدة سريعة' : 'QUICK HELP'}</p><h3 className={`mt-1 text-base font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</h3><p className={`mt-1 text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'إجابات واضحة لأكثر الأسئلة المتعلقة بمنتجاتك المفعلة.' : 'Clear answers to common questions about your active products.'}</p></div>
               </div>
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="relative mt-5 grid gap-3 md:grid-cols-2">
                 {(lang === 'ar' ? [
-                  ['أين أجد شرح المنتج؟', 'افتح بطاقة المنتج المطلوبة ثم اضغط «الشروحات والتعليمات». ستجد الفيديو والمكتبة الخاصة بحلول مشاكل هذا المنتج داخل الموقع.'],
-                  ['كيف أحمّل اللودر؟', 'من بطاقة المنتج الفعّال اضغط «تحميل اللودر». يظهر الزر فقط للتراخيص النشطة وغير المنتهية.'],
-                  ['ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ آخر؟', 'افتح «الشروحات والتعليمات» ثم «حلول المشاكل» واختر المشكلة المطابقة للصورة أو الخطأ الذي تراه. إذا لم تُحل المشكلة، افتح مساعد تعن وأرسل صورة واضحة للخطأ.'],
-                  ['كيف أتابع مع الإدارة؟', 'افتح مساعد تعن واكتب تفاصيل المشكلة. عند الحاجة يمكن لفريق الإدارة الدخول للمحادثة والرد عليك مباشرة، ثم تعود المحادثة تلقائياً إلى مساعد تعن بعد انتهاء المتابعة.'],
+                  ['أين أجد شرح المنتج؟', 'افتح بطاقة المنتج المطلوبة ثم اضغط «الشروحات والتعليمات». ستجد الفيديو ومكتبة حلول المشاكل الخاصة بمنتجك داخل الموقع.'],
+                  ['كيف أحمّل اللودر؟', 'من بطاقة المنتج المفعّل اضغط «تحميل اللودر». يظهر هذا الخيار للتراخيص النشطة وغير المنتهية فقط.'],
+                  ['ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ آخر؟', 'افتح «الشروحات والتعليمات» ثم «حلول المشاكل» واختر المشكلة المطابقة لما يظهر لديك. إذا استمرت المشكلة، افتح مساعد تعن وأرسل صورة واضحة للخطأ.'],
+                  ['كيف أتابع مع الإدارة؟', 'افتح مساعد تعن واكتب تفاصيل المشكلة. عند الحاجة يستطيع فريق الإدارة الدخول لنفس المحادثة والرد عليك مباشرة، ثم يعيدها إلى مساعد تعن بعد المتابعة.'],
                 ] : [
                   ['Where is my product guide?', 'Open the relevant product card and choose “Guide”. Its video and product-specific troubleshooting library are available inside the site.'],
-                  ['How do I download the loader?', 'Use “Download Loader” on an active product card. The button is available only for active, non-expired licenses.'],
-                  ['What should I do if Spoofer or another issue appears?', 'Open “Guide”, choose “Issue fixes”, and select the entry matching your error. If it remains unresolved, open Ta3n Assistant and send a clear screenshot.'],
-                  ['How do I follow up with administration?', 'Open Ta3n Assistant and describe the issue. When needed, administration can enter the conversation and reply directly, then return it to the assistant after follow-up.'],
-                ]).map(([question, answer]) => <details key={question} className={`group rounded-2xl border px-4 py-3 transition ${isDark ? 'border-white/[.08] bg-white/[.025] open:border-cyan-300/[.2] open:bg-cyan-400/[.04]' : 'border-slate-100 bg-slate-50 open:border-sky-200 open:bg-sky-50/50'}`}><summary className={`flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-black ${isDark ? 'text-slate-100' : 'text-slate-800'}`}><span>{question}</span><span className="text-cyan-300 transition group-open:rotate-45">+</span></summary><p className={`mt-3 border-t pt-3 text-[11px] leading-6 ${isDark ? 'border-white/[.07] text-slate-400' : 'border-slate-200 text-slate-600'}`}>{answer}</p></details>)}
+                  ['How do I download the loader?', 'Use “Download Loader” on an active product card. This option is available only for active, non-expired licenses.'],
+                  ['What should I do if Spoofer or another issue appears?', 'Open “Guide”, choose “Issue fixes”, and select the entry matching your issue. If it remains unresolved, open Ta3n Assistant and send a clear screenshot.'],
+                  ['How do I follow up with administration?', 'Open Ta3n Assistant and describe the issue. When needed, administration can enter the same conversation and reply directly, then return it to the assistant after follow-up.'],
+                ]).map(([question, answer]) => <details key={question} className={`group rounded-2xl border px-4 py-3.5 transition-[background-color,border-color,transform] duration-200 ease-out hover:-translate-y-px ${isDark ? 'border-white/[.08] bg-white/[.025] open:border-cyan-300/[.24] open:bg-cyan-400/[.055]' : 'border-slate-100 bg-slate-50 open:border-sky-200 open:bg-sky-50/50'}`}><summary className={`flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-black ${isDark ? 'text-slate-100' : 'text-slate-800'}`}><span>{question}</span><span className="grid h-5 w-5 shrink-0 place-items-center rounded-lg border border-cyan-300/10 bg-cyan-400/[.06] text-sm font-medium leading-none text-cyan-300 transition-transform duration-200 ease-out group-open:rotate-45">+</span></summary><p className={`mt-3 border-t pt-3 text-[11px] leading-6 ${isDark ? 'border-white/[.07] text-slate-400' : 'border-slate-200 text-slate-600'}`}>{answer}</p></details>)}
               </div>
-            </section>
+            </section>}
           </div>
         )}
         {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
