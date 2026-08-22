@@ -4,6 +4,8 @@ import {
   actorCanManageAi,
   createResetRequest,
   getHelpOverview,
+  getAiConversation,
+  sendAiMessage,
   listCustomerResetRequests,
   listResetRequests,
   processResetRequest,
@@ -18,6 +20,11 @@ const resetSchema = z.object({
   action: z.literal('reset_request'),
   productId: z.string().trim().min(1).max(180).optional(),
   reason: z.string().trim().min(3).max(500),
+  language: z.enum(['ar', 'en']).default('ar'),
+});
+const chatSchema = z.object({
+  action: z.literal('chat'),
+  body: z.string().trim().min(2).max(1800),
   language: z.enum(['ar', 'en']).default('ar'),
 });
 const adminPatchSchema = z.object({
@@ -55,6 +62,9 @@ export async function GET(request: NextRequest) {
     const current = await actor();
     if (!current) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
     const view = request.nextUrl.searchParams.get('view') || 'conversation';
+    if (view === 'conversation') {
+      return NextResponse.json({ success: true, ...(await getAiConversation(current)) });
+    }
     if (view === 'help') {
       return NextResponse.json({ success: true, ...(await getHelpOverview(current)) });
     }
@@ -74,7 +84,13 @@ export async function POST(request: NextRequest) {
     if (!requestHasTrustedOrigin(request)) return NextResponse.json({ success: false, error: 'مصدر الطلب غير موثوق.' }, { status: 403 });
     const current = await actor();
     if (!current) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
-    const input = resetSchema.parse(await request.json());
+    const body = await request.json();
+    if (body?.action === 'chat') {
+      const input = chatSchema.parse(body);
+      enforceRateLimit(current.id, 'chat', 16, 10 * 60 * 1000);
+      return NextResponse.json({ success: true, ...(await sendAiMessage(current, input)) });
+    }
+    const input = resetSchema.parse(body);
     enforceRateLimit(current.id, 'reset_request', 4, 60 * 60 * 1000);
     return NextResponse.json({ success: true, ...(await createResetRequest(current, input)) }, { status: 201 });
   } catch (error) { return failed(error); }
