@@ -276,7 +276,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
     setLoading(true);
     try {
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 17_000);
+      const timeout = window.setTimeout(() => controller.abort(), outgoingAttachment ? 33_000 : 17_000);
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
