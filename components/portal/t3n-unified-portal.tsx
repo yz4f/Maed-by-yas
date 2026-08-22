@@ -50,6 +50,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
 import { HelpCenter } from './help-center';
+import { FaqPage } from './faq-page';
 import { AiAdminConversations } from './ai-admin-conversations';
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
@@ -100,7 +101,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'redeem' | 'tickets' | 'admin' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'faqs' | 'redeem' | 'tickets' | 'admin' | 'profile'>('overview');
 
   // Custom Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -499,6 +500,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
   const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
   const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived && !getLicenseTiming(product).isExpired).length;
+  useEffect(() => {
+    if (activeTab === 'faqs' && activeProductCount === 0) setActiveTab('my-products');
+  }, [activeTab, activeProductCount]);
   const sortedUserProducts = [...userProducts].sort((a, b) => {
     const aPriority = getLicenseTiming(a).isUsable ? 0 : 1;
     const bPriority = getLicenseTiming(b).isUsable ? 0 : 1;
@@ -2001,7 +2005,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       </div>
       <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
         <div className="mb-4 flex items-center justify-between px-1"><div className="flex items-center gap-2"><img src="/logo.png" alt="تسليم ذاتي" className="h-8 w-8 rounded-lg object-cover" /><span className="text-sm font-black">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
-        <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button><button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
+        <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
         <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
       </motion.aside></>}</AnimatePresence>
 
@@ -2066,6 +2070,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <Package size={15} />
               <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'my-products' ? 700 : 500 }}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
             </button>
+            {activeProductCount > 0 && <button
+              onClick={() => setActiveTab('faqs')}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px',
+                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                background: activeTab === 'faqs' ? (isDark ? 'rgba(94, 211, 255, 0.11)' : 'rgba(56, 154, 215, 0.10)') : 'transparent',
+                border: activeTab === 'faqs' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.25)' : 'rgba(46, 132, 190, 0.20)'}` : '1px solid transparent',
+                color: activeTab === 'faqs' ? (isDark ? '#bcecff' : '#155c8b') : (isDark ? '#7e99ad' : '#597187'),
+              }}
+            >
+              <HelpCircle size={15} />
+              <span style={{ fontSize: '13px', fontWeight: activeTab === 'faqs' ? 700 : 500 }}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</span>
+            </button>}
           </div>
 
           {/* SUPPORT */}
@@ -2235,6 +2252,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
+              {activeTab === 'faqs' && (lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
               {activeTab === 'tickets' && (lang === 'ar' ? 'مركز المساعدة' : 'Help Center')}
               {activeTab === 'profile' && (lang === 'ar' ? 'الملف الشخصي' : 'Profile')}
@@ -2589,28 +2607,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             )}
 
-            {activeProductCount > 0 && <section className={`relative isolate overflow-hidden rounded-[26px] border p-4 sm:p-5 ${isDark ? 'border-white/[.09] bg-[#0b1523]' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,.06)]'}`}>
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_98%_0%,rgba(34,211,238,.10),transparent_31%),radial-gradient(circle_at_0%_100%,rgba(59,130,246,.06),transparent_30%)]" />
-              <div className="relative flex items-start gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-cyan-300/10 bg-cyan-400/[.08] text-cyan-300"><HelpCircle className="h-5 w-5" /></span>
-                <div className="min-w-0"><p className={`text-[9px] font-black tracking-[.16em] ${isDark ? 'text-cyan-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مساعدة سريعة' : 'QUICK HELP'}</p><h3 className={`mt-1 text-base font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</h3><p className={`mt-1 text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lang === 'ar' ? 'إجابات واضحة لأكثر الأسئلة المتعلقة بمنتجاتك المفعلة.' : 'Clear answers to common questions about your active products.'}</p></div>
-              </div>
-              <div className="relative mt-5 grid gap-3 md:grid-cols-2">
-                {(lang === 'ar' ? [
-                  ['أين أجد شرح المنتج؟', 'افتح بطاقة المنتج المطلوبة ثم اضغط «الشروحات والتعليمات». ستجد الفيديو ومكتبة حلول المشاكل الخاصة بمنتجك داخل الموقع.'],
-                  ['كيف أحمّل اللودر؟', 'من بطاقة المنتج المفعّل اضغط «تحميل اللودر». يظهر هذا الخيار للتراخيص النشطة وغير المنتهية فقط.'],
-                  ['ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ آخر؟', 'افتح «الشروحات والتعليمات» ثم «حلول المشاكل» واختر المشكلة المطابقة لما يظهر لديك. إذا استمرت المشكلة، افتح مساعد تعن وأرسل صورة واضحة للخطأ.'],
-                  ['كيف أتابع مع الإدارة؟', 'افتح مساعد تعن واكتب تفاصيل المشكلة. عند الحاجة يستطيع فريق الإدارة الدخول لنفس المحادثة والرد عليك مباشرة، ثم يعيدها إلى مساعد تعن بعد المتابعة.'],
-                ] : [
-                  ['Where is my product guide?', 'Open the relevant product card and choose “Guide”. Its video and product-specific troubleshooting library are available inside the site.'],
-                  ['How do I download the loader?', 'Use “Download Loader” on an active product card. This option is available only for active, non-expired licenses.'],
-                  ['What should I do if Spoofer or another issue appears?', 'Open “Guide”, choose “Issue fixes”, and select the entry matching your issue. If it remains unresolved, open Ta3n Assistant and send a clear screenshot.'],
-                  ['How do I follow up with administration?', 'Open Ta3n Assistant and describe the issue. When needed, administration can enter the same conversation and reply directly, then return it to the assistant after follow-up.'],
-                ]).map(([question, answer]) => <details key={question} className={`group rounded-2xl border px-4 py-3.5 transition-[background-color,border-color,transform] duration-200 ease-out hover:-translate-y-px ${isDark ? 'border-white/[.08] bg-white/[.025] open:border-cyan-300/[.24] open:bg-cyan-400/[.055]' : 'border-slate-100 bg-slate-50 open:border-sky-200 open:bg-sky-50/50'}`}><summary className={`flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-black ${isDark ? 'text-slate-100' : 'text-slate-800'}`}><span>{question}</span><span className="grid h-5 w-5 shrink-0 place-items-center rounded-lg border border-cyan-300/10 bg-cyan-400/[.06] text-sm font-medium leading-none text-cyan-300 transition-transform duration-200 ease-out group-open:rotate-45">+</span></summary><p className={`mt-3 border-t pt-3 text-[11px] leading-6 ${isDark ? 'border-white/[.07] text-slate-400' : 'border-slate-200 text-slate-600'}`}>{answer}</p></details>)}
-              </div>
-            </section>}
           </div>
         )}
+        {activeTab === 'faqs' && activeProductCount > 0 && <FaqPage lang={lang} isDark={isDark} onOpenProducts={() => setActiveTab('my-products')} onOpenAssistant={() => setActiveTab('tickets')} />}
+
         {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
         {/* TAB 5: PROFILE */}
         {activeTab === 'profile' && (
