@@ -7,32 +7,27 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { key, discordId, name, email, image } = body;
 
-    if (!key) {
-      return NextResponse.json({ success: false, message: 'مفتاح التفعيل مطلوب.' }, { status: 400 });
+    if (!key || !discordId || typeof discordId !== 'string') {
+      return NextResponse.json({ success: false, message: 'مفتاح التفعيل وحساب ديسكورد صالحان مطلوبان.' }, { status: 400 });
     }
 
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-
-    // Process activation in DB
     const res = await StoreDB.activateProductWithKey(
-      key,
+      key.trim(),
       {
-        discordId: discordId || '1396965033316978839',
-        name: name || 'Customer',
+        discordId,
+        name: typeof name === 'string' && name.trim() ? name.trim() : 'Customer',
         email,
         image,
       },
-      ip
+      ip,
     );
 
-    if (res.success && res.product && discordId) {
-      // Trigger automated Discord roles assignment in the background (non-blocking)
-      DiscordBotService.syncRolesOnProductActivation(discordId, res.product.name).catch((err) => {
-        console.error('[Discord Sync Error] Failed to sync roles:', err);
-      });
-    }
+    const discordRoleSync = res.success && res.product
+      ? await DiscordBotService.syncRolesOnProductActivation(discordId, res.product.name)
+      : null;
 
-    return NextResponse.json(res, { status: res.success ? 200 : 400 });
+    return NextResponse.json({ ...res, discordRoleSync }, { status: res.success ? 200 : 400 });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message || 'خطأ غير متوقع' }, { status: 500 });
   }

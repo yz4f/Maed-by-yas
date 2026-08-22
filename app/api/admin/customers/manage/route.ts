@@ -71,6 +71,9 @@ export async function POST(req: Request) {
       await StoreDB.addProductToUser(userId, productId);
       const prod = await StoreDB.getProductById(productId);
       const productName = prod ? prod.name : productId;
+      const discordRoleSync = userObj.discordId
+        ? await DiscordBotService.syncRolesOnProductActivation(userObj.discordId, productName)
+        : null;
 
       await StoreDB.addLog(
         'Product Granted',
@@ -81,11 +84,14 @@ export async function POST(req: Request) {
         {
           eventType: 'product_granted', actorDiscordId: admin.discordId, actorName: adminName,
           targetUserId: userId, targetDiscordId: userObj.discordId || null, productId,
-          metadata: { action, source: 'admin_grant' },
+          metadata: { action, source: 'admin_grant', discordRoleSync: discordRoleSync?.success ?? false },
         }
       );
 
-      return NextResponse.json({ success: true, message: 'تم منح المنتج للعميل بنجاح.' });
+      const message = discordRoleSync && !discordRoleSync.success
+        ? `تم منح المنتج، لكن ${discordRoleSync.message}`
+        : 'تم منح المنتج ورتبه المستحقة للعميل بنجاح.';
+      return NextResponse.json({ success: true, message, discordRoleSync });
     }
 
     // 3. UPDATE PRODUCT STATUS

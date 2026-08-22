@@ -12,6 +12,13 @@ export interface DiscordRoleRestoreResult {
   message: string;
 }
 
+export interface DiscordRoleSyncResult {
+  success: boolean;
+  grantedRoleIds: string[];
+  failedRoleIds: string[];
+  message: string;
+}
+
 export class DiscordBotService {
   private static botToken = process.env.DISCORD_BOT_TOKEN || '';
   private static guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
@@ -20,146 +27,96 @@ export class DiscordBotService {
     return Boolean(this.botToken && this.guildId);
   }
 
-  /**
-   * Helper to perform fetches with a fast timeout to prevent blocking server threads
-   */
-  private static async fetchWithTimeout(url: string, options: any = {}, timeout = 4000): Promise<Response> {
+  private static async fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 4000): Promise<Response> {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
       clearTimeout(id);
-      return response;
-    } catch (err) {
-      clearTimeout(id);
-      throw err;
     }
   }
 
-  /**
-   * Fetches the roles of a Discord user in the target Guild
-   */
   static async getMemberRoles(discordUserId: string): Promise<string[]> {
-    if (!this.botToken || !this.guildId) return [];
-
+    if (!this.isConfigured()) return [];
     try {
-      const response = await this.fetchWithTimeout(`https://discord.com/api/v10/guilds/${this.guildId}/members/${discordUserId}`, {
-        headers: {
-          Authorization: `Bot ${this.botToken}`,
-          'Content-Type': 'application/json',
-        },
-      }, 3000); // 3 seconds timeout for checking roles on login
-
+      const response = await this.fetchWithTimeout(
+        `https://discord.com/api/v10/guilds/${this.guildId}/members/${discordUserId}`,
+        { headers: { Authorization: `Bot ${this.botToken}`, 'Content-Type': 'application/json' } },
+        3000,
+      );
       if (!response.ok) {
         console.error(`[Discord API] Failed to fetch member ${discordUserId}: ${response.statusText}`);
         return [];
       }
-
       const data = await response.json();
-      return data.roles || [];
+      return Array.isArray(data.roles) ? data.roles : [];
     } catch (error) {
       console.error('[Discord API] Error fetching member roles:', error);
       return [];
     }
   }
 
-  /**
-   * Adds a role to a Discord user in the target Guild
-   */
   static async addRoleToMember(discordUserId: string, roleId: string): Promise<DiscordRoleResult> {
     if (!this.isConfigured()) {
       return { success: false, message: 'خدمة ديسكورد غير مهيأة حاليًا.' };
     }
 
     try {
-      const url = `https://discord.com/api/v10/guilds/${this.guildId}/members/${discordUserId}/roles/${roleId}`;
-      const res = await this.fetchWithTimeout(url, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bot ${this.botToken}`,
-          'Content-Type': 'application/json',
+      const response = await this.fetchWithTimeout(
+        `https://discord.com/api/v10/guilds/${this.guildId}/members/${discordUserId}/roles/${roleId}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bot ${this.botToken}`, 'Content-Type': 'application/json' },
         },
-      }, 4000);
+      );
 
-      if (res.ok || res.status === 204) {
-        return { success: true, message: `تمت إضافة رتبة الديسكورد (${roleId}) بنجاح!` };
+      if (response.ok || response.status === 204) {
+        return { success: true, message: `تمت إضافة رتبة ديسكورد (${roleId}) بنجاح.` };
       }
 
-      const errorText = await res.text();
-      console.error('Discord API Error:', errorText);
-      if (res.status === 404) {
-        return { success: false, message: 'لم يتم العثور على حسابك داخل خادم ديسكورد. انضم إلى الخادم أولًا ثم أعد المحاولة.' };
-      }
-      if (res.status === 403) {
-        return { success: false, message: 'لا يملك بوت ديسكورد صلاحية منح هذه الرتبة أو أن الرتبة أعلى من البوت.' };
-      }
-      if (res.status === 401) {
-        return { success: false, message: 'تعذر مصادقة بوت ديسكورد. تواصل مع الإدارة.' };
-      }
-      if (res.status === 429) {
-        return { success: false, message: 'ديسكورد يحد الطلبات مؤقتًا. أعد المحاولة بعد قليل.' };
-      }
-      return { success: false, message: 'تعذر منح رتبة ديسكورد حاليًا. حاول مرة أخرى لاحقًا.' };
-    } catch (err: any) {
-      console.error('Discord Bot Fetch Error:', err);
-      return { success: false, message: err.message || 'فشل الاتصال بـ Discord Bot' };
+      const errorText = await response.text();
+      console.error('[Discord API] Role assignment failed:', response.status, errorText);
+      if (response.status === 404) return { success: false, message: 'لم يتم العثور على حساب العميل داخل خادم ديسكورد. يجب أن ينضم للخادم أولًا.' };
+      if (response.status === 403) return { success: false, message: 'البوت لا يملك صلاحية منح هذه الرتبة أو أن الرتبة أعلى من البوت.' };
+      if (response.status === 401) return { success: false, message: 'تعذر مصادقة بوت ديسكورد.' };
+      if (response.status === 429) return { success: false, message: 'ديسكورد يحد الطلبات مؤقتًا. أعد المحاولة بعد قليل.' };
+      return { success: false, message: 'تعذر منح رتبة ديسكورد حاليًا.' };
+    } catch (error) {
+      console.error('[Discord API] Role assignment error:', error);
+      return { success: false, message: 'تعذر الاتصال بخدمة ديسكورد لمنح الرتبة.' };
     }
   }
 
-  /**
-   * Removes a role from a Discord user in the target Guild
-   */
   static async removeRoleFromMember(discordUserId: string, roleId: string): Promise<DiscordRoleResult> {
-    if (!this.botToken || !this.guildId) {
-      console.log(`[Discord Bot Simulation] Removed Role ID ${roleId} from User ID ${discordUserId}`);
-      return { success: true, message: `(محاكاة) تم إزالة رتبة الديسكورد ${roleId} بنجاح.` };
+    if (!this.isConfigured()) {
+      return { success: false, message: 'خدمة ديسكورد غير مهيأة حاليًا.' };
     }
 
     try {
-      const url = `https://discord.com/api/v10/guilds/${this.guildId}/members/${discordUserId}/roles/${roleId}`;
-      const res = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bot ${this.botToken}`,
-        },
-      });
-
-      if (res.ok || res.status === 204) {
-        return { success: true, message: `تمت إزالة رتبة الديسكورد (${roleId}) بنجاح!` };
-      } else {
-        return { success: false, message: `خطأ في إزالة رتبة الديسكورد.` };
-      }
-    } catch (err: any) {
-      return { success: false, message: err.message || 'فشل الاتصال بـ Discord Bot' };
+      const response = await this.fetchWithTimeout(
+        `https://discord.com/api/v10/guilds/${this.guildId}/members/${discordUserId}/roles/${roleId}`,
+        { method: 'DELETE', headers: { Authorization: `Bot ${this.botToken}` } },
+      );
+      if (response.ok || response.status === 204) return { success: true, message: `تمت إزالة رتبة الديسكورد (${roleId}) بنجاح.` };
+      return { success: false, message: 'تعذر إزالة رتبة ديسكورد.' };
+    } catch (error) {
+      console.error('[Discord API] Role removal error:', error);
+      return { success: false, message: 'تعذر الاتصال بخدمة ديسكورد لإزالة الرتبة.' };
     }
   }
 
-  /**
-   * Restores only roles that are derived from currently active product entitlements.
-   * It never grants administrative roles and does not modify licenses or product records.
-   */
-  static async restoreEntitledRoles(discordUserId: string, activeProductNames: string[]): Promise<DiscordRoleRestoreResult> {
-    if (!this.isConfigured()) {
-      return {
-        success: false,
-        restoredRoleIds: [],
-        failedRoleIds: [],
-        message: 'خدمة رتب ديسكورد غير مهيأة حاليًا. تواصل مع الإدارة.'
-      };
-    }
-
+  /** Returns only entitlement roles. It never includes staff or administrative roles. */
+  static getEntitlementRoleIds(activeProductNames: string[]): string[] {
     const roleIds = new Set<string>([DISCORD_ROLES.CUSTOMER]);
+
     for (const productName of activeProductNames) {
-      const lowerName = productName.toLowerCase();
-      const isVipProduct = lowerName.includes('vip');
-      if (isVipProduct) {
+      const lowerName = productName.toLocaleLowerCase();
+      if (lowerName.includes('vip')) {
         roleIds.add(DISCORD_ROLES.VIP);
         continue;
       }
-      if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass')) {
+      if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass') || lowerName.includes('unban')) {
         roleIds.add(DISCORD_ROLES.FORTNITE);
       }
       if (lowerName.includes('سبوفر') || lowerName.includes('spoofer') || lowerName.includes('تعن') || lowerName.includes('ta3n')) {
@@ -167,66 +124,51 @@ export class DiscordBotService {
       }
     }
 
-    const attemptedRoleIds = Array.from(roleIds);
+    return [...roleIds];
+  }
+
+  /** Synchronizes Customer plus every role earned from the supplied active products. */
+  static async syncEntitledRoles(discordUserId: string, activeProductNames: string[]): Promise<DiscordRoleSyncResult> {
+    if (!this.isConfigured()) {
+      return {
+        success: false,
+        grantedRoleIds: [],
+        failedRoleIds: [],
+        message: 'خدمة رتب ديسكورد غير مهيأة حاليًا.',
+      };
+    }
+
+    const roleIds = this.getEntitlementRoleIds(activeProductNames);
     const settled = await Promise.all(
-      attemptedRoleIds.map(async (roleId) => ({ roleId, result: await this.addRoleToMember(discordUserId, roleId) }))
+      roleIds.map(async (roleId) => ({ roleId, result: await this.addRoleToMember(discordUserId, roleId) })),
     );
-    const restoredRoleIds = settled.filter(({ result }) => result.success).map(({ roleId }) => roleId);
+    const grantedRoleIds = settled.filter(({ result }) => result.success).map(({ roleId }) => roleId);
     const failedRoleIds = settled.filter(({ result }) => !result.success).map(({ roleId }) => roleId);
 
     return {
-      success: restoredRoleIds.length > 0 && failedRoleIds.length === 0,
-      restoredRoleIds,
+      success: failedRoleIds.length === 0,
+      grantedRoleIds,
       failedRoleIds,
       message: failedRoleIds.length === 0
-        ? 'تمت استعادة رتب الاستحقاق المرتبطة بتراخيصك المفعلة.'
-        : 'تعذر استعادة بعض الرتب. تأكد من وجودك في خادم ديسكورد ومن أن البوت يملك صلاحية إدارة الرتب.'
+        ? 'تمت مزامنة رتبة Customer ورتب المنتجات المستحقة بنجاح.'
+        : 'تعذر منح بعض الرتب. تأكد من أن العميل موجود في خادم ديسكورد ومن أن رتبة البوت أعلى من الرتب المطلوبة.',
     };
   }
 
-  /**
-   * Automatically synchronizes roles for product activation in parallel
-   */
-  static async syncRolesOnProductActivation(discordUserId: string, productName: string): Promise<string[]> {
-    const rolesAdded: string[] = [];
-    const promises: Promise<any>[] = [];
+  static async restoreEntitledRoles(discordUserId: string, activeProductNames: string[]): Promise<DiscordRoleRestoreResult> {
+    const result = await this.syncEntitledRoles(discordUserId, activeProductNames);
+    return {
+      success: result.success,
+      restoredRoleIds: result.grantedRoleIds,
+      failedRoleIds: result.failedRoleIds,
+      message: result.success
+        ? 'تمت استعادة رتب الاستحقاق المرتبطة بالتراخيص المفعلة.'
+        : result.message,
+    };
+  }
 
-    // Always add customer role
-    promises.push(
-      this.addRoleToMember(discordUserId, DISCORD_ROLES.CUSTOMER).then((res) => {
-        if (res.success) rolesAdded.push('عميل');
-      })
-    );
-
-    const lowerName = productName.toLowerCase();
-    const isVipProduct = lowerName.includes('vip');
-
-    if (isVipProduct) {
-      promises.push(
-        this.addRoleToMember(discordUserId, DISCORD_ROLES.VIP).then((res) => {
-          if (res.success) rolesAdded.push('عميل VIP');
-        })
-      );
-    } else if (lowerName.includes('فورت') || lowerName.includes('fortnite') || lowerName.includes('bypass')) {
-      promises.push(
-        this.addRoleToMember(discordUserId, DISCORD_ROLES.FORTNITE).then((res) => {
-          if (res.success) rolesAdded.push('فورت نايت');
-        })
-      );
-    } else if (lowerName.includes('سبوفر') || lowerName.includes('spoofer') || lowerName.includes('تعن') || lowerName.includes('ta3n')) {
-      promises.push(
-        this.addRoleToMember(discordUserId, DISCORD_ROLES.PERM).then((res) => {
-          if (res.success) rolesAdded.push('بيرم');
-        })
-      );
-    }
-
-    try {
-      await Promise.all(promises);
-    } catch (err) {
-      console.error('[Discord Bot] Error syncing roles in parallel:', err);
-    }
-
-    return rolesAdded;
+  /** Called immediately after a valid key activation or an administrator product grant. */
+  static async syncRolesOnProductActivation(discordUserId: string, productName: string): Promise<DiscordRoleSyncResult> {
+    return this.syncEntitledRoles(discordUserId, [productName]);
   }
 }

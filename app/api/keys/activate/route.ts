@@ -30,15 +30,25 @@ export async function POST(req: Request) {
       getClientIp(req),
     );
 
+    let discordRoleSync: { success: boolean; message: string; grantedRoleIds: string[]; failedRoleIds: string[] } | null = null;
     if (res.success && res.product) {
       try {
-        await DiscordBotService.syncRolesOnProductActivation(actor.discordId, res.product.name);
+        discordRoleSync = await DiscordBotService.syncRolesOnProductActivation(actor.discordId, res.product.name);
+        if (!discordRoleSync.success) {
+          console.warn('Discord role synchronization was incomplete after activation:', discordRoleSync);
+        }
       } catch (error) {
-        console.warn('Discord role synchronization failed after activation:', error);
+        console.error('Discord role synchronization failed after activation:', error);
+        discordRoleSync = {
+          success: false,
+          message: 'تم تفعيل المنتج، لكن تعذر مزامنة رتب ديسكورد حالياً.',
+          grantedRoleIds: [],
+          failedRoleIds: [],
+        };
       }
     }
 
-    return NextResponse.json(res, { status: res.success ? 200 : 400 });
+    return NextResponse.json({ ...res, discordRoleSync }, { status: res.success ? 200 : 400 });
   } catch (error: any) {
     console.error('Key activation failed:', error);
     return NextResponse.json({ success: false, message: error?.message || 'خطأ غير متوقع أثناء تفعيل المفتاح.' }, { status: 500 });

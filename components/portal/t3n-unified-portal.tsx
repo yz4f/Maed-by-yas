@@ -451,6 +451,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [banExpiresAtInput, setBanExpiresAtInput] = useState('');
   const [warningMessageInput, setWarningMessageInput] = useState('');
   const [isProcessingAdminAction, setIsProcessingAdminAction] = useState(false);
+  const [isBackfillingDiscordRoles, setIsBackfillingDiscordRoles] = useState(false);
   const [allKeysList, setAllKeysList] = useState<KeyType[]>([]);
   const [searchKeysQuery, setSearchKeysQuery] = useState('');
   const [keyStatusFilter, setKeyStatusFilter] = useState<'all' | 'unused' | 'used'>('all');
@@ -762,6 +763,38 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     } finally {
       setIsProcessingAdminAction(false);
     }
+  };
+
+  const handleBackfillDiscordRoles = () => {
+    askConfirm(
+      lang === 'ar' ? 'مزامنة رتب العملاء السابقين' : 'Sync previous customer roles',
+      lang === 'ar'
+        ? 'سيتم منح رتبة Customer ورتبة المنتج فقط لكل عميل يملك ترخيصاً نشطاً. لن يتم تعديل المفاتيح أو المنتجات أو الرتب الإدارية.'
+        : 'This grants only Customer and earned product roles to customers with active licenses. It does not change keys, products, or staff roles.',
+      async () => {
+        setIsBackfillingDiscordRoles(true);
+        try {
+          const response = await fetch('/api/admin/discord/sync-active', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirm: true }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'تعذر مزامنة الرتب.');
+
+          const report = data.report;
+          const summary = lang === 'ar'
+            ? `اكتملت المزامنة: ${report.synced} كاملة، ${report.partial} جزئية، ${report.failed} فاشلة.`
+            : `Sync completed: ${report.synced} complete, ${report.partial} partial, ${report.failed} failed.`;
+          showToast(summary, data.success ? 'success' : 'warning');
+          loadAdminStats();
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر مزامنة الرتب.' : 'Role sync failed.'), 'error');
+        } finally {
+          setIsBackfillingDiscordRoles(false);
+        }
+      },
+    );
   };
 
   const handleWarnUser = async (userId: string) => {
@@ -3377,6 +3410,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <div className="text-xs text-emerald-800 dark:text-emerald-300 mt-1">{lang === 'ar' ? 'لا توجد مشاكل حالية في الخوادم.' : 'All servers are running smoothly.'}</div>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="flex flex-col gap-4 rounded-xl border border-sky-500/20 bg-sky-500/[0.08] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-sky-400">
+                            <UserCheck className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className={`text-sm font-extrabold ${styles.textTitle}`}>{lang === 'ar' ? 'مزامنة رتب العملاء السابقة' : 'Sync previous customer roles'}</div>
+                            <div className={`mt-1 text-xs ${styles.textMuted}`}>{lang === 'ar' ? 'يمنح Customer ورتبة المنتج للتراخيص النشطة فقط، دون تعديل أي منتجات أو مفاتيح.' : 'Grants Customer and earned product roles for active licenses only; no keys or products are changed.'}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleBackfillDiscordRoles}
+                          disabled={isBackfillingDiscordRoles}
+                          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-xs font-black text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${isBackfillingDiscordRoles ? 'animate-spin' : ''}`} />
+                          {isBackfillingDiscordRoles ? (lang === 'ar' ? 'جارٍ المزامنة' : 'Syncing') : (lang === 'ar' ? 'مزامنة الرتب الآن' : 'Sync roles now')}
+                        </button>
                       </div>
 
                       {adminStats.unusedKeys < 5 && (
