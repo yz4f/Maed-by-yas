@@ -6,7 +6,7 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint app/api/tickets lib/ticket-store.ts lib/ticket-auth.ts types/index.ts"
+    "lint": "eslint app/api/ai lib/t3n-ai.ts lib/ticket-auth.ts types/index.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

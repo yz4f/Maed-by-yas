@@ -318,11 +318,25 @@ export async function sendAiMessage(actor: TicketActor, input: { body: string; l
   return { message: reply, handoff };
 }
 
+export async function getHelpOverview(actor: TicketActor) {
+  const context = await getCustomerContext(actor);
+  return {
+    products: context.products.map((product) => ({
+      id: product.id,
+      productId: product.productId,
+      name: product.name,
+      status: product.status,
+      expiresAt: product.expiresAt,
+      guideAvailable: product.guideAvailable,
+    })),
+  };
+}
+
 export async function createResetRequest(actor: TicketActor, input: { productId?: string; reason: string; language: 'ar' | 'en' }) {
   const reason = input.reason.trim();
   if (reason.length < 3 || reason.length > 500) throw new Error('يرجى توضيح سبب طلب Reset في 3 إلى 500 حرف.');
-  const workspace = await getAiConversation(actor);
-  const products = workspace.customer.products.filter((product) => product.status === 'Active' && (!product.expiresAt || new Date(product.expiresAt).getTime() > Date.now()));
+  const context = await getCustomerContext(actor);
+  const products = context.products.filter((product) => product.status === 'Active' && (!product.expiresAt || new Date(product.expiresAt).getTime() > Date.now()));
   const product = (input.productId ? products.find((item) => item.productId === input.productId) : undefined) || products[0];
   if (!product) throw new Error('لا يوجد ترخيص نشط يمكن رفع طلب Reset له.');
 
@@ -335,10 +349,10 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
   const request: ResetRequest = {
     id,
     reference: `RST-${String(Date.now()).slice(-7)}`,
-    customerId: workspace.customer.user.id,
+    customerId: context.user.id,
     customerDiscordId: actor.id,
-    customerName: workspace.customer.user.name,
-    customerEmail: workspace.customer.user.email || null,
+    customerName: context.user.name,
+    customerEmail: context.user.email || null,
     productId: product.productId,
     productName: product.name,
     keyId: product.keyId,
@@ -357,13 +371,16 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
     processedByName: null,
   };
   await setDoc(doc(database(), RESET_COLLECTION, id), request);
-  await updateConversationStatus(workspace.conversation.id, 'WAITING_FOR_SUPPORT');
-  const text = input.language === 'ar'
-    ? `تم رفع طلب Reset رقم ${request.reference} لفريق الدعم لمراجعته. لن يتم تنفيذ أي Reset تلقائياً قبل موافقة الإدارة.`
-    : `Reset request ${request.reference} has been sent to support for review. No reset will be performed automatically before an administrator approves it.`;
-  await addConversationMessage(workspace.conversation.id, { conversationId: workspace.conversation.id, role: 'system', body: text, visibleToCustomer: true, resetRequestId: request.id });
-  await StoreDB.addLog('AI Reset Request Created', `تم إنشاء طلب ${request.reference} لمنتج ${request.productName}`, workspace.customer.user.id, workspace.customer.user.name);
+  await StoreDB.addLog('Reset Request Created', `تم إنشاء طلب ${request.reference} لمنتج ${request.productName}`, context.user.id, context.user.name);
   return { request, duplicate: false };
+}
+
+export async function listCustomerResetRequests(actor: TicketActor) {
+  const snapshot = await getDocs(collection(database(), RESET_COLLECTION));
+  return snapshot.docs
+    .map(toResetRequest)
+    .filter((request) => request.customerDiscordId === actor.id)
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 export async function listResetRequests(actor: TicketActor) {
@@ -392,24 +409,19 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
   const note = input.note?.trim().slice(0, 1000) || '';
   const now = new Date().toISOString();
   let status: ResetRequestStatus;
-  let customerMessage = '';
 
   if (input.action === 'approve') {
     status = 'APPROVED';
-    customerMessage = 'تمت الموافقة المبدئية على طلب Reset الخاص بك. ستنفذ الإدارة العملية بعد المراجعة النهائية.';
   } else if (input.action === 'reject') {
     status = 'REJECTED';
-    customerMessage = `تمت مراجعة طلب Reset ولم تتم الموافقة عليه.${note ? ` السبب: ${note}` : ''}`;
   } else if (input.action === 'request_info') {
     if (!note) throw new Error('اكتب المعلومات المطلوبة من العميل أولاً.');
     status = 'WAITING_FOR_CUSTOMER';
-    customerMessage = `يحتاج فريق الدعم معلومات إضافية لمراجعة طلب Reset: ${note}`;
   } else {
     if (request.status !== 'APPROVED') throw new Error('يجب الموافقة على الطلب أولاً قبل تنفيذ Reset.');
     const result = await StoreDB.resetUserProductHwid(request.customerId, request.productId);
     if (!result.success) throw new Error(result.message || 'تعذر تنفيذ Reset للمفتاح.');
     status = 'COMPLETED';
-    customerMessage = 'تمت معالجة طلب Reset الخاص بك بنجاح. يمكنك الآن إكمال استخدام المنتج من قسم منتجاتي.';
   }
 
   await updateDoc(requestRef, {
@@ -420,12 +432,6 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     processedById: actor.id,
     processedByName: actor.name,
   });
-  const conversationRef = doc(database(), AI_COLLECTION, request.customerDiscordId);
-  if ((await getDoc(conversationRef)).exists()) {
-    const nextConversationStatus: AiConversationStatus = status === 'WAITING_FOR_CUSTOMER' ? 'HUMAN_ACTIVE' : status === 'COMPLETED' || status === 'REJECTED' ? 'AI_ACTIVE' : 'WAITING_FOR_SUPPORT';
-    await updateConversationStatus(request.customerDiscordId, nextConversationStatus, { humanAgentId: actor.id, humanAgentName: actor.name });
-    await addConversationMessage(request.customerDiscordId, { conversationId: request.customerDiscordId, role: 'staff', body: customerMessage, visibleToCustomer: true, resetRequestId: request.id });
-  }
   await StoreDB.addLog(`AI Reset ${status}`, `طلب ${request.reference} — ${request.productName}`, actor.id, actor.name);
   return { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name };
 }
