@@ -318,7 +318,7 @@ async function callGemini(input: { message: string; attachments: AiImageAttachme
       model: 'gemini-3.7-flash',
       input: [{ type: 'text', text: prompt }, ...imageInputForGemini(input.attachments)],
       store: false,
-      generation_config: input.attachments.length > 0 ? { thinking_level: 'minimal' } : undefined,
+      generation_config: input.attachments.length > 0 ? { thinking_level: 'low' } : undefined,
     }),
     signal: AbortSignal.timeout(input.attachments.length > 0 ? 22_000 : 14_000),
   });
