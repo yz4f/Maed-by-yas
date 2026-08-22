@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, CheckCircle2, Clock3, Loader2, MessageCircle, RefreshCw, Send, UserRound, UsersRound } from 'lucide-react';
 
@@ -105,6 +105,13 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const [loadingThread, setLoadingThread] = useState(false);
   const [working, setWorking] = useState(false);
   const [draft, setDraft] = useState('');
+  const notifyRef = useRef(onNotify);
+  const selectedIdRef = useRef<string | null>(null);
+  const threadAbortRef = useRef<AbortController | null>(null);
+  const threadRequestRef = useRef(0);
+
+  useEffect(() => { notifyRef.current = onNotify; }, [onNotify]);
+  useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
 
   const activeStatus = useMemo(() => ({
     AI_ACTIVE: { label: t.ai, className: isDark ? 'border-cyan-300/15 bg-cyan-400/[.08] text-cyan-100' : 'border-cyan-200 bg-cyan-50 text-cyan-700' },
@@ -113,47 +120,68 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     CLOSED: { label: t.closed, className: isDark ? 'border-slate-300/15 bg-slate-400/[.08] text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-600' },
   }), [isDark, t]);
 
-  const loadList = useCallback(async (quiet = false) => {
-    if (!quiet) setLoadingList(true);
+  const loadList = useCallback(async (options: { showSpinner?: boolean; notify?: boolean } = {}) => {
+    if (options.showSpinner) setLoadingList(true);
     try {
       const response = await fetch('/api/ai?view=admin_conversations', { credentials: 'same-origin', cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to load conversations.');
       const next = Array.isArray(data.conversations) ? data.conversations as Conversation[] : [];
-      setConversations(next);
+      setConversations((current) => {
+        const currentSignature = current.map((item) => `${item.id}:${item.updatedAt}:${item.status}:${item.messageCount}`).join('|');
+        const nextSignature = next.map((item) => `${item.id}:${item.updatedAt}:${item.status}:${item.messageCount}`).join('|');
+        return currentSignature === nextSignature ? current : next;
+      });
       setSelectedId((current) => current && next.some((item) => item.id === current) ? current : next[0]?.id || null);
-      if (!quiet) onNotify?.(t.updated, 'success');
+      if (options.notify) notifyRef.current?.(t.updated, 'success');
     } catch (error) {
-      if (!quiet) onNotify?.(error instanceof Error ? error.message : 'Unable to load conversations.', 'error');
+      if (options.notify) notifyRef.current?.(error instanceof Error ? error.message : 'Unable to load conversations.', 'error');
     } finally {
-      if (!quiet) setLoadingList(false);
+      if (options.showSpinner) setLoadingList(false);
     }
-  }, [onNotify, t.updated]);
+  }, [t.updated]);
 
-  const loadThread = useCallback(async (conversationId: string, quiet = false) => {
-    if (!quiet) setLoadingThread(true);
+  const loadThread = useCallback(async (conversationId: string, options: { showSpinner?: boolean; notify?: boolean } = {}) => {
+    const requestId = ++threadRequestRef.current;
+    threadAbortRef.current?.abort();
+    const controller = new AbortController();
+    threadAbortRef.current = controller;
+    if (options.showSpinner) setLoadingThread(true);
     try {
-      const response = await fetch(`/api/ai?view=admin_conversation&conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'same-origin', cache: 'no-store' });
+      const response = await fetch(`/api/ai?view=admin_conversation&conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to load conversation.');
+      if (requestId !== threadRequestRef.current || selectedIdRef.current !== conversationId) return;
+      const nextMessages = Array.isArray(data.messages) ? data.messages as Message[] : [];
       setSelected(data.conversation as Conversation);
-      setMessages(Array.isArray(data.messages) ? data.messages as Message[] : []);
+      setMessages((current) => {
+        const currentSignature = current.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
+        const nextSignature = nextMessages.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
+        return currentSignature === nextSignature ? current : nextMessages;
+      });
     } catch (error) {
-      if (!quiet) onNotify?.(error instanceof Error ? error.message : 'Unable to load conversation.', 'error');
+      if (options.notify && !(error instanceof DOMException && error.name === 'AbortError')) notifyRef.current?.(error instanceof Error ? error.message : 'Unable to load conversation.', 'error');
     } finally {
-      if (!quiet) setLoadingThread(false);
+      if (requestId === threadRequestRef.current && options.showSpinner) setLoadingThread(false);
     }
-  }, [onNotify]);
+  }, []);
 
-  useEffect(() => { void loadList(true); }, [loadList]);
-  useEffect(() => { if (selectedId) void loadThread(selectedId); else { setSelected(null); setMessages([]); } }, [selectedId, loadThread]);
+  useEffect(() => { void loadList({ showSpinner: true }); }, [loadList]);
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      void loadList(true);
-      if (selectedId) void loadThread(selectedId, true);
-    }, 8_000);
-    return () => window.clearInterval(interval);
+    if (selectedId) { setSelected(null); setMessages([]); void loadThread(selectedId, { showSpinner: true }); }
+    else { setSelected(null); setMessages([]); }
+  }, [selectedId, loadThread]);
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      void loadList();
+      if (selectedId) void loadThread(selectedId);
+    };
+    const interval = window.setInterval(refresh, 15_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(interval); document.removeEventListener('visibilitychange', refresh); };
   }, [loadList, loadThread, selectedId]);
+  useEffect(() => () => threadAbortRef.current?.abort(), []);
 
   const changeMode = async (mode: 'human' | 'ai') => {
     if (!selected || working) return;
@@ -167,7 +195,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to update conversation.');
       setSelected(data.conversation as Conversation);
       setMessages(Array.isArray(data.messages) ? data.messages as Message[] : []);
-      await loadList(true);
+      void loadList();
       onNotify?.(mode === 'human' ? t.takeSuccess : t.returnSuccess, 'success');
     } catch (error) {
       onNotify?.(error instanceof Error ? error.message : 'Unable to update conversation.', 'error');
@@ -188,7 +216,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to send reply.');
       setMessages((current) => [...current, data.message as Message]);
       setDraft('');
-      await loadList(true);
+      void loadList();
       onNotify?.(t.replySuccess, 'success');
     } catch (error) {
       onNotify?.(error instanceof Error ? error.message : 'Unable to send reply.', 'error');
@@ -199,7 +227,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     <aside className={`overflow-hidden rounded-[24px] border ${isDark ? 'border-white/[.08] bg-[#0c1422]' : 'border-slate-200 bg-white'}`}>
       <div className={`flex items-center justify-between gap-3 border-b px-4 py-4 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
         <div className="flex min-w-0 items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-400/10 text-cyan-300"><UsersRound className="h-4 w-4" /></span><div><h3 className="text-sm font-black">{t.title}</h3><p className={`mt-0.5 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversations.length}</p></div></div>
-        <button onClick={() => void loadList()} disabled={loadingList} className={`grid h-9 w-9 place-items-center rounded-xl border transition ${isDark ? 'border-white/[.1] text-slate-300 hover:bg-white/[.06]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`} title={t.refresh}>{loadingList ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button>
+        <button onClick={() => void loadList({ showSpinner: true, notify: true })} disabled={loadingList} className={`grid h-9 w-9 place-items-center rounded-xl border transition ${isDark ? 'border-white/[.1] text-slate-300 hover:bg-white/[.06]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`} title={t.refresh}>{loadingList ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button>
       </div>
       <div className="max-h-[620px] overflow-y-auto p-2">
         {loadingList && conversations.length === 0 ? <div className="p-6 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-cyan-300" /></div> : conversations.length === 0 ? <p className={`p-5 text-center text-xs leading-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.empty}</p> : conversations.map((conversation) => {
@@ -220,7 +248,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
         </header>
 
         <div className={`flex-1 overflow-y-auto px-4 py-5 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`}>
-          {loadingThread ? <div className="grid h-full place-items-center"><Loader2 className="h-5 w-5 animate-spin text-cyan-300" /></div> : <div className="space-y-3">{messages.map((message) => {
+          {loadingThread && messages.length === 0 ? <div className={`grid h-full place-items-center gap-2 text-center text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}><Loader2 className="h-5 w-5 animate-spin text-cyan-300" /><span>{t.loading}</span></div> : <div className="space-y-3">{messages.map((message) => {
             const customer = message.role === 'customer';
             const system = message.role === 'system';
             const staff = message.role === 'staff';

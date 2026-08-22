@@ -169,37 +169,51 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
   const [conversationStatus, setConversationStatus] = useState<'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'HUMAN_ACTIVE' | 'CLOSED'>('AI_ACTIVE');
   const endRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const notifyRef = useRef(onNotify);
+  const refreshInFlightRef = useRef(false);
+
+  useEffect(() => { notifyRef.current = onNotify; }, [onNotify]);
 
   useEffect(() => {
     if (!open) return;
     let active = true;
-    const loadConversation = async () => {
+    let controller: AbortController | null = null;
+    const loadConversation = async (initial = false) => {
+      if (refreshInFlightRef.current) return;
+      refreshInFlightRef.current = true;
+      controller?.abort();
+      controller = new AbortController();
       try {
-        const response = await fetch('/api/ai?view=conversation', { credentials: 'same-origin' });
+        const response = await fetch('/api/ai?view=conversation', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || t.error);
-        if (active) {
-          const remote = Array.isArray(data.messages) ? data.messages : [];
-          setConversationStatus(data.conversation?.status || 'AI_ACTIVE');
-          setMessages((current) => {
-            const local = current.filter((item) => item.id.startsWith('local-'));
-            const known = new Set(remote.map((item: ChatMessage) => item.id));
-            return [...remote, ...local.filter((item) => !known.has(item.id))];
-          });
-        }
+        if (!active) return;
+        const remote = Array.isArray(data.messages) ? data.messages as ChatMessage[] : [];
+        setConversationStatus((current) => data.conversation?.status === current ? current : (data.conversation?.status || 'AI_ACTIVE'));
+        setMessages((current) => {
+          const local = current.filter((item) => item.id.startsWith('local-'));
+          const known = new Set(remote.map((item) => item.id));
+          const next = [...remote, ...local.filter((item) => !known.has(item.id))];
+          const unchanged = current.length === next.length && current.every((item, index) => item.id === next[index]?.id && item.body === next[index]?.body && item.createdAt === next[index]?.createdAt);
+          return unchanged ? current : next;
+        });
       } catch (error) {
-        if (active) onNotify?.(error instanceof Error ? error.message : t.error, 'error');
+        if (active && initial && !(error instanceof DOMException && error.name === 'AbortError')) notifyRef.current?.(error instanceof Error ? error.message : t.error, 'error');
+      } finally {
+        refreshInFlightRef.current = false;
       }
     };
-    void loadConversation();
-    const interval = window.setInterval(() => { void loadConversation(); }, 7_000);
-    return () => { active = false; window.clearInterval(interval); };
-  }, [open, t.error, onNotify]);
+    void loadConversation(true);
+    const interval = window.setInterval(() => { void loadConversation(); }, 12_000);
+    const onFocus = () => { void loadConversation(); };
+    window.addEventListener('focus', onFocus);
+    return () => { active = false; controller?.abort(); window.clearInterval(interval); window.removeEventListener('focus', onFocus); refreshInFlightRef.current = false; };
+  }, [open, t.error]);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !loading && !preparingImage) onClose();
+      if (event.key === 'Escape' && !preparingImage) onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -262,12 +276,15 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
     setAttachment(null);
     setLoading(true);
     try {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 17_000);
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
+        signal: controller.signal,
         body: JSON.stringify({ action: 'chat', body, attachments: outgoingAttachment ? [outgoingAttachment] : [], language: lang }),
-      });
+      }).finally(() => window.clearTimeout(timeout));
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || t.error);
       setMessages((current) => {
@@ -287,11 +304,11 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
 
   const attachmentUrl = attachment?.previewData || null;
 
-  return <AnimatePresence>{open && <motion.div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => !loading && !preparingImage && onClose()}>
+  return <AnimatePresence>{open && <motion.div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => !preparingImage && onClose()}>
     <motion.section className={`flex h-[min(740px,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-[30px] border shadow-[0_30px_100px_rgba(0,0,0,.52)] ${isDark ? 'border-cyan-300/[.18] bg-[#0a1321] text-slate-100' : 'border-white bg-white text-slate-900'}`} initial={{ opacity: 0, scale: .97, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .97, y: 12 }} onMouseDown={(event) => event.stopPropagation()}>
       <header className={`relative overflow-hidden border-b px-5 py-4 sm:px-6 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(34,211,238,.16),transparent_36%),radial-gradient(circle_at_95%_95%,rgba(139,92,246,.13),transparent_38%)]" />
-        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'HUMAN_ACTIVE' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-violet-300/20 bg-violet-400/[.1] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700'}`}>{t.humanLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversationStatus === 'HUMAN_ACTIVE' ? t.humanActive : t.subtitle}</p></div></div><button onClick={onClose} disabled={loading || preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
+        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'HUMAN_ACTIVE' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-violet-300/20 bg-violet-400/[.1] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700'}`}>{t.humanLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversationStatus === 'HUMAN_ACTIVE' ? t.humanActive : t.subtitle}</p></div></div><button onClick={onClose} disabled={preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
       </header>
 
       <div className={`flex-1 overflow-y-auto px-4 py-5 sm:px-6 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`} onDragOver={(event) => event.preventDefault()} onDrop={onDrop}>

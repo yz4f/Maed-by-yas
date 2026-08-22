@@ -1112,27 +1112,20 @@ export const StoreDB = {
       async () => {
         const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId));
         const snapshot = await getDocs(q);
-        const result: UserProduct[] = [];
-        
-        for (const d of snapshot.docs) {
-          const up = d.data() as UserProduct;
-          if (up.keyId && !up.keyString) {
-            try {
-              const keyDoc = await getDoc(doc(getDb(), "keys", up.keyId));
-              if (keyDoc.exists()) {
-                up.keyString = (keyDoc.data() as Key).key;
-              }
-            } catch (e) {
-              console.error("Failed to fetch key for user product:", e);
-            }
-          }
-          const p = await this.getProductById(up.productId);
-          if (p) {
-            up.product = p;
-            result.push(up);
-          }
-        }
-        return result;
+        const result = await Promise.all(snapshot.docs.map(async (d) => {
+          const up = { ...(d.data() as UserProduct) };
+          const [keyResult, product] = await Promise.all([
+            up.keyId && !up.keyString
+              ? getDoc(doc(getDb(), "keys", up.keyId)).catch((error) => { console.error("Failed to fetch key for user product:", error); return null; })
+              : Promise.resolve(null),
+            this.getProductById(up.productId),
+          ]);
+          if (keyResult?.exists()) up.keyString = (keyResult.data() as Key).key;
+          if (!product) return null;
+          up.product = product;
+          return up;
+        }));
+        return result.filter((item): item is UserProduct => item !== null);
       },
       () => LocalDB.getUserProducts(userId)
     );
