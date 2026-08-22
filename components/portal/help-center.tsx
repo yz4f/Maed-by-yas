@@ -74,7 +74,7 @@ export function HelpCenter({ lang, isDark, isStaff, onNotify, onOpenProducts }: 
     } catch (error) {
       onNotify?.(error instanceof Error ? error.message : t.error, 'error');
     } finally { setLoading(false); }
-  }, [isStaff, onNotify, t.error]);
+  }, [isStaff, lang]);
 
   useEffect(() => { void load(); }, [load]);
 
