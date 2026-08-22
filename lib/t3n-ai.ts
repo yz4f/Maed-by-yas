@@ -1,13 +1,16 @@
 import { collection, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import type { AiConversation, AiConversationStatus, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, User, UserProduct } from '@/types';
+import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
 const KNOWLEDGE_COLLECTION = 'aiKnowledge';
 const RESET_COLLECTION = 'resetRequests';
 const STAFF_ROLES = new Set(['Boss', 'Co-Boss', 'Admin']);
 const MAX_CHAT_LENGTH = 1800;
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+const MAX_IMAGE_PREVIEW_CHARS = 850_000;
+const IMAGE_MIME_TYPES = new Set<AiImageAttachment['contentType']>(['image/jpeg', 'image/png', 'image/webp']);
 
 const DEFAULT_KNOWLEDGE: Omit<AiKnowledgeEntry, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
@@ -256,7 +259,30 @@ function safeModelText(value: unknown): string {
   return values.find((item) => item.trim().length > 0)?.trim() || '';
 }
 
-async function callGemini(input: { message: string; language: 'ar' | 'en'; customerContext: Awaited<ReturnType<typeof getCustomerContext>>; knowledge: AiKnowledgeEntry[]; history: AiMessage[] }) {
+function validateAiAttachments(attachments: AiImageAttachment[] = []) {
+  if (attachments.length > 1) throw new Error('يمكن إرفاق صورة واحدة فقط مع كل رسالة.');
+  for (const attachment of attachments) {
+    if (!attachment?.id || !attachment?.name || !IMAGE_MIME_TYPES.has(attachment.contentType)) {
+      throw new Error('صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP.');
+    }
+    if (!Number.isFinite(attachment.size) || attachment.size < 1 || attachment.size > MAX_IMAGE_BYTES) {
+      throw new Error('يجب ألا يتجاوز حجم الصورة 4 ميغابايت.');
+    }
+    if (!attachment.previewData || !attachment.previewData.startsWith(`data:${attachment.contentType};base64,`) || attachment.previewData.length > MAX_IMAGE_PREVIEW_CHARS) {
+      throw new Error('تعذر التحقق من معاينة الصورة المرفقة. حاول اختيار صورة أصغر.');
+    }
+  }
+  return attachments;
+}
+
+function imageInputForGemini(attachments: AiImageAttachment[]) {
+  return attachments.flatMap((attachment) => {
+    const base64 = attachment.previewData?.split(',')[1] || '';
+    return base64 ? [{ type: 'image', data: base64, mime_type: attachment.contentType }] : [];
+  });
+}
+
+async function callGemini(input: { message: string; attachments: AiImageAttachment[]; language: 'ar' | 'en'; customerContext: Awaited<ReturnType<typeof getCustomerContext>>; knowledge: AiKnowledgeEntry[]; history: AiMessage[] }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('لم يتم ضبط مفتاح خدمة الذكاء الاصطناعي بعد.');
 
@@ -272,7 +298,11 @@ async function callGemini(input: { message: string; language: 'ar' | 'en'; custo
   const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify({ model: 'gemini-3.7-flash', input: prompt, store: false }),
+    body: JSON.stringify({
+      model: 'gemini-3.7-flash',
+      input: [{ type: 'text', text: prompt }, ...imageInputForGemini(input.attachments)],
+      store: false,
+    }),
     signal: AbortSignal.timeout(25_000),
   });
   const payload = await response.json().catch(() => ({}));
@@ -290,32 +320,35 @@ function shouldHandoff(message: string) {
   return normalized.includes('التواصل مع الدعم') || normalized.includes('موظف') || normalized.includes('دعم بشري') || normalized.includes('human support') || normalized.includes('agent');
 }
 
-export async function sendAiMessage(actor: TicketActor, input: { body: string; language: 'ar' | 'en' }) {
+export async function sendAiMessage(actor: TicketActor, input: { body: string; language: 'ar' | 'en'; attachments?: AiImageAttachment[] }) {
   const body = input.body.trim();
-  if (body.length < 2 || body.length > MAX_CHAT_LENGTH) throw new Error(`الرسالة يجب أن تكون بين 2 و${MAX_CHAT_LENGTH} حرفاً.`);
+  const attachments = validateAiAttachments(input.attachments || []);
+  if (body.length > MAX_CHAT_LENGTH) throw new Error(`يجب ألا تتجاوز الرسالة ${MAX_CHAT_LENGTH} حرفاً.`);
+  if (body.length < 2 && attachments.length === 0) throw new Error('اكتب رسالتك أو أرفق صورة واحدة على الأقل.');
+  const messageBody = body || (input.language === 'ar' ? 'صورة مرفقة لشرح المشكلة.' : 'An image is attached to explain the issue.');
   const workspace = await getAiConversation(actor);
   const { conversation } = workspace;
 
-  await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'customer', body, visibleToCustomer: true });
+  const customerMessage = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'customer', body: messageBody, attachments, visibleToCustomer: true });
 
   if (conversation.status === 'HUMAN_ACTIVE') {
     const reply = input.language === 'ar' ? 'يتابع موظف الدعم هذه المحادثة الآن. ستصل رسالتك إليه مباشرة.' : 'A support agent is currently handling this conversation. Your message has been delivered.';
-    return { message: await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: reply, visibleToCustomer: true }), handoff: false };
+    return { customerMessage, message: await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: reply, visibleToCustomer: true }), handoff: false };
   }
 
-  if (shouldHandoff(body)) {
+  if (shouldHandoff(messageBody)) {
     await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT');
     const reply = input.language === 'ar' ? 'تم تحويل طلبك إلى فريق الدعم المختص. سيتم مراجعة المحادثة وبيانات حسابك من دون الحاجة إلى إعادة إرسال معلوماتك.' : 'Your request has been sent to the appropriate support team. They can review this conversation and your account context without asking you to resend it.';
-    return { message: await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: reply, visibleToCustomer: true }), handoff: true };
+    return { customerMessage, message: await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: reply, visibleToCustomer: true }), handoff: true };
   }
 
   const knowledge = await listKnowledge();
-  const response = await callGemini({ message: body, language: input.language, customerContext: workspace.customer, knowledge, history: workspace.messages });
+  const response = await callGemini({ message: messageBody, attachments, language: input.language, customerContext: workspace.customer, knowledge, history: workspace.messages });
   const handoff = response.includes('[HANDOFF]');
   const cleanReply = response.replace(/\[HANDOFF\]/g, '').trim();
   if (handoff) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT');
   const reply = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'assistant', body: cleanReply || (input.language === 'ar' ? 'تم تحويل طلبك إلى الدعم المختص.' : 'Your request has been passed to support.'), visibleToCustomer: true });
-  return { message: reply, handoff };
+  return { customerMessage, message: reply, handoff };
 }
 
 export async function getHelpOverview(actor: TicketActor) {

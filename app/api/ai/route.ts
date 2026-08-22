@@ -22,10 +22,22 @@ const resetSchema = z.object({
   reason: z.string().trim().min(3).max(500),
   language: z.enum(['ar', 'en']).default('ar'),
 });
+const imageAttachmentSchema = z.object({
+  id: z.string().trim().min(4).max(100),
+  name: z.string().trim().min(1).max(180),
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+  size: z.number().int().positive().max(4 * 1024 * 1024),
+  previewData: z.string().min(40).max(850_000),
+});
 const chatSchema = z.object({
   action: z.literal('chat'),
-  body: z.string().trim().min(2).max(1800),
+  body: z.string().trim().max(1800).default(''),
+  attachments: z.array(imageAttachmentSchema).max(1).default([]),
   language: z.enum(['ar', 'en']).default('ar'),
+}).superRefine((value, context) => {
+  if (value.body.length < 2 && value.attachments.length === 0) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'اكتب رسالتك أو أرفق صورة واحدة على الأقل.' });
+  }
 });
 const adminPatchSchema = z.object({
   action: z.literal('process_reset'),

@@ -276,6 +276,15 @@ export interface AiConversation {
   humanAgentName?: string | null;
 }
 
+export interface AiImageAttachment {
+  id: string;
+  name: string;
+  contentType: 'image/jpeg' | 'image/png' | 'image/webp';
+  size: number;
+  /** A small compressed preview only; the original image is never stored in Firestore. */
+  previewData?: string | null;
+}
+
 export interface AiMessage {
   id: string;
   conversationId: string;
@@ -284,6 +293,7 @@ export interface AiMessage {
   visibleToCustomer: boolean;
   createdAt: string;
   resetRequestId?: string | null;
+  attachments?: AiImageAttachment[];
 }
 
 export interface ResetRequest {
