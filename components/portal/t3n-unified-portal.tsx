@@ -181,7 +181,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [isSyncingDiscordRoles, setIsSyncingDiscordRoles] = useState(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
   useEffect(() => {
@@ -948,33 +947,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       showToast('Failed to activate license.', 'error');
     } finally {
       setIsRedeeming(false);
-    }
-  };
-
-  // Restores only entitlement roles for the authenticated Discord account.
-  const handleSyncDiscordRoles = async () => {
-    if (isSyncingDiscordRoles) return;
-    setIsSyncingDiscordRoles(true);
-    try {
-      const res = await fetch('/api/user/sync-discord-roles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin'
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        const restoredCount = Number(data.restoredCount || 0);
-        const successMessage = lang === 'ar'
-          ? (restoredCount > 0 ? `تمت استعادة ${restoredCount} رتبة من رتب ديسكورد القديمة.` : 'تم التحقق من رتب ديسكورد المرتبطة بتراخيصك.')
-          : (restoredCount > 0 ? `${restoredCount} Discord role(s) restored.` : 'Your Discord entitlement roles were checked.');
-        showToast(successMessage, 'success');
-      } else {
-        showToast(data.message || (lang === 'ar' ? 'تعذر استرجاع رتب ديسكورد الآن.' : 'Unable to restore Discord roles right now.'), 'error');
-      }
-    } catch {
-      showToast(lang === 'ar' ? 'تعذر الاتصال بخدمة ديسكورد. حاول لاحقًا.' : 'Could not reach the Discord role service. Please try again later.', 'error');
-    } finally {
-      setIsSyncingDiscordRoles(false);
     }
   };
 
@@ -2365,23 +2337,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
                       <span className={`text-xs font-medium mt-1 ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>{lang === 'ar' ? 'عرض المفاتيح والتحميلات' : 'View keys & downloads'}</span>
-                    </div>
-                  </div>
-                  <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
-                </button>
-
-                <button
-                  onClick={() => handleSyncDiscordRoles()}
-                  disabled={isSyncingDiscordRoles}
-                  className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group disabled:cursor-wait disabled:opacity-70 ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-white/[0.045] border-white/[0.11] text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-700'}`}>
-                      {isSyncingDiscordRoles ? <RefreshCw className="w-[19px] h-[19px] animate-spin" /> : <Users className="w-[19px] h-[19px]" />}
-                    </div>
-                    <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{isSyncingDiscordRoles ? (lang === 'ar' ? 'جارِ استعادة الرتب...' : 'Restoring roles...') : (lang === 'ar' ? 'استعادة رتب ديسكورد' : 'Restore Discord Roles')}</span>
-                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'يعيد الرتب القديمة للتراخيص المفعلة بعد الانضمام للسيرفر' : 'Restores old entitlement roles for active licenses after joining the server'}</span>
                     </div>
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
