@@ -50,6 +50,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
 import { TicketCenter } from './ticket-center';
+import { AiSupportCenter } from './ai-support-center';
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -2259,7 +2260,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
               {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
-              {activeTab === 'tickets' && (lang === 'ar' ? 'مركز التذاكر' : 'Ticket Center')}
+              {activeTab === 'tickets' && (lang === 'ar' ? 'الدعم وذكاء تعن' : 'Support & Ta3n AI')}
               {activeTab === 'profile' && (lang === 'ar' ? 'الملف الشخصي' : 'Profile')}
               {activeTab === 'admin' && (lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control')}
             </h1>
@@ -2286,7 +2287,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TICKETS */}
         {activeTab === 'tickets' && (
-          <TicketCenter lang={lang} isDark={isDark} isStaff={isAdmin} onNotify={showToast} />
+          <div className="space-y-6">
+            <AiSupportCenter
+              lang={lang}
+              isDark={isDark}
+              isStaff={isAdmin}
+              onNotify={showToast}
+              onOpenProducts={() => setActiveTab('my-products')}
+            />
+            <TicketCenter lang={lang} isDark={isDark} isStaff={isAdmin} onNotify={showToast} />
+          </div>
         )}
 
         {/* TAB 1: OVERVIEW */}

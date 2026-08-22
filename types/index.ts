@@ -244,3 +244,69 @@ export interface TicketStats {
   urgent: number;
   recentDays: { date: string; count: number }[];
 }
+
+export type AiConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'HUMAN_ACTIVE' | 'CLOSED';
+export type AiMessageRole = 'customer' | 'assistant' | 'staff' | 'system';
+export type AiKnowledgeCategory = 'ABOUT_STORE' | 'PRODUCTS' | 'PRODUCT_GUIDES' | 'FAQ' | 'TROUBLESHOOTING' | 'ACTIVATION' | 'KEYS' | 'ORDERS' | 'PAYMENTS' | 'REFUNDS' | 'SUPPORT_POLICY' | 'TERMS';
+export type ResetRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITING_FOR_CUSTOMER' | 'COMPLETED' | 'CANCELLED';
+
+export interface AiKnowledgeEntry {
+  id: string;
+  category: AiKnowledgeCategory;
+  title: string;
+  content: string;
+  enabled: boolean;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiConversation {
+  id: string;
+  customerId: string;
+  customerDiscordId: string;
+  customerName: string;
+  customerImage?: string | null;
+  status: AiConversationStatus;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+  messageCount: number;
+  humanAgentId?: string | null;
+  humanAgentName?: string | null;
+}
+
+export interface AiMessage {
+  id: string;
+  conversationId: string;
+  role: AiMessageRole;
+  body: string;
+  visibleToCustomer: boolean;
+  createdAt: string;
+  resetRequestId?: string | null;
+}
+
+export interface ResetRequest {
+  id: string;
+  reference: string;
+  customerId: string;
+  customerDiscordId: string;
+  customerName: string;
+  customerEmail?: string | null;
+  productId: string;
+  productName: string;
+  keyId?: string | null;
+  keyMasked: string;
+  purchasedAt?: string | null;
+  expiresAt?: string | null;
+  resetCount: number;
+  lastResetAt?: string | null;
+  reason: string;
+  status: ResetRequestStatus;
+  adminNotes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  processedAt?: string | null;
+  processedById?: string | null;
+  processedByName?: string | null;
+}
