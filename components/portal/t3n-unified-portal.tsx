@@ -2513,7 +2513,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             ) : (
               <div className="product-library mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
                 {sortedUserProducts.map((up, index) => {
-                  const displayKey = up.keyString || (lang === 'ar' ? 'مفتاح الترخيص محفوظ بأمان' : 'License key stored securely');
+                  const displayKey = up.keyString || (lang === 'ar' ? 'من تعن' : 'From TA3N');
                   const timing = getLicenseTiming(up);
                   const canUseProduct = timing.isUsable;
                   const previousTiming = index > 0 ? getLicenseTiming(sortedUserProducts[index - 1]) : null;
