@@ -3,6 +3,7 @@ import type { SiteUpdate } from '@/types';
 
 const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
 const websiteUrl = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/, '');
+const productStatusChannelId = '1499633005008916551';
 
 type GatewayPacket = { op: number; d: any; s?: number | null; t?: string | null };
 
@@ -52,6 +53,48 @@ async function registerCommands(applicationId: string, token: string) {
   });
   if (!response.ok) throw new Error(`Discord commands HTTP ${response.status}: ${await response.text()}`);
   console.info(`[Discord Bot] Commands registered in guild ${guildId}.`);
+}
+
+export async function sendDiscordProductStatus(): Promise<{ messageId: string }> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال بطاقة الحالة.');
+  const asset = (name: string) => `${websiteUrl}/assets/product-status/${name}`;
+  const embeds = [
+    {
+      color: 0x22c55e,
+      author: { name: 'تعن • حالة المنتجات', icon_url: asset('ta3n-spoofer.png') },
+      title: 'حالة منتجات تعن',
+      description: 'متابعة مباشرة لحالة المنتجات والخدمات الحالية. يتم تحديث البطاقة عند وجود تغيير مؤثر.',
+      fields: [
+        { name: '🟢 سبوفر تعن', value: '```diff\n+ فعال\n```', inline: true },
+        { name: '🟢 فك باند فورت', value: '```diff\n+ فعال\n```', inline: true },
+        { name: '🟡 سبوفر تيمب', value: '```fix\nتحديث • يمكنك استعماله على مسؤوليتك الشخصية\n```', inline: false },
+      ],
+      image: { url: asset('ta3n-spoofer.png') },
+      footer: { text: 'تعن • آخر حالة معلنة للمنتجات' },
+      timestamp: new Date().toISOString(),
+    },
+    {
+      color: 0x38bdf8,
+      title: 'فك باند فورت',
+      description: 'الحالة الحالية: **فعال**',
+      image: { url: asset('fortnite-unban.png') },
+    },
+    {
+      color: 0xfbbf24,
+      title: 'سبوفر تيمب',
+      description: 'الحالة الحالية: **تحديث**\n\n> يمكنك الاستعمال على مسؤوليتك الشخصية.',
+      image: { url: asset('temp-spoofer.png') },
+    },
+  ];
+  const response = await discordApi(`/channels/${productStatusChannelId}/messages`, token, {
+    method: 'POST',
+    body: JSON.stringify({ embeds }),
+  });
+  if (!response.ok) throw new Error(`تعذر إرسال بطاقة حالة المنتجات (HTTP ${response.status}).`);
+  const message = await response.json() as { id?: string };
+  if (!message.id) throw new Error('لم يعرض Discord معرف رسالة بطاقة الحالة.');
+  return { messageId: message.id };
 }
 
 export async function sendDiscordSiteUpdate(update: SiteUpdate, channelId: string): Promise<{ messageId: string }> {

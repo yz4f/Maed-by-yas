@@ -71,6 +71,7 @@ export function SiteUpdatesAdmin({ lang, isDark, onNotify }: SiteUpdatesAdminPro
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
+  const [publishingStatus, setPublishingStatus] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const isArabic = lang === 'ar';
   const surface = isDark ? 'border-white/[.08] bg-[#0c1422] text-slate-100' : 'border-slate-200 bg-white text-slate-900';
@@ -146,6 +147,19 @@ export function SiteUpdatesAdmin({ lang, isDark, onNotify }: SiteUpdatesAdminPro
     } finally { setSaving(false); }
   };
 
+  const publishProductStatus = async () => {
+    if (!window.confirm(isArabic ? 'سيتم إرسال بطاقة حالة المنتجات بالصور إلى قناة Discord المحددة. هل تريد المتابعة؟' : 'This will send the product status card with images to the configured Discord channel. Continue?')) return;
+    setPublishingStatus(true);
+    try {
+      const response = await fetch('/api/admin/product-status', { method: 'POST', credentials: 'same-origin' });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Unable to publish product status.');
+      onNotify?.(isArabic ? 'تم إرسال بطاقة حالة المنتجات إلى Discord.' : 'Product status card sent to Discord.', 'success');
+    } catch (error) {
+      onNotify?.(error instanceof Error ? error.message : 'تعذر إرسال بطاقة حالة المنتجات.', 'error');
+    } finally { setPublishingStatus(false); }
+  };
+
   const edit = (update: SiteUpdate) => {
     setEditingId(update.id);
     setDraft({ title: update.title, summary: update.summary, highlights: update.highlights.join('\n'), imageUrl: update.imageUrl, imageAlt: update.imageAlt || '', kind: update.kind });
@@ -156,7 +170,7 @@ export function SiteUpdatesAdmin({ lang, isDark, onNotify }: SiteUpdatesAdminPro
     <div className={`rounded-[24px] border p-5 md:p-6 ${surface}`}>
       <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div><div className="flex items-center gap-2"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-cyan-400/10 text-cyan-300"><Megaphone className="h-5 w-5" /></span><div><h3 className="text-base font-black">{isArabic ? 'سجل تحديثات الموقع' : 'Website updates'}</h3><p className={`mt-1 text-xs ${muted}`}>{isArabic ? 'مسودة → اعتماد → نشر صريح مع صورة مرتبطة. لا يوجد إرسال تلقائي أو مكرر.' : 'Draft → approval → explicit image-backed publishing. No automatic or duplicate sending.'}</p></div></div></div>
-        <button onClick={() => void loadUpdates()} disabled={loading} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-black transition disabled:opacity-50 ${isDark ? 'border-white/[.1] text-slate-200 hover:bg-white/[.06]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}><RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{isArabic ? 'تحديث السجل' : 'Refresh'}</button>
+        <div className="flex flex-wrap items-center gap-2"><button onClick={() => void publishProductStatus()} disabled={publishingStatus} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-emerald-400 to-cyan-400 px-3.5 py-2 text-xs font-black text-slate-950 shadow-[0_10px_24px_rgba(34,211,238,.14)] transition hover:brightness-110 disabled:opacity-50">{publishingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}{isArabic ? 'نشر حالة المنتجات' : 'Publish product status'}</button><button onClick={() => void loadUpdates()} disabled={loading} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-black transition disabled:opacity-50 ${isDark ? 'border-white/[.1] text-slate-200 hover:bg-white/[.06]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}><RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{isArabic ? 'تحديث السجل' : 'Refresh'}</button></div>
       </div>
 
       <form onSubmit={saveDraft} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
