@@ -2147,6 +2147,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <div style={{ fontSize: '10px', fontWeight: 700, color: isDark ? '#7490a8' : '#5f7890', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
               {lang === 'ar' ? 'الدعم' : 'SUPPORT'}
             </div>
+            {isAdmin && <button
+              onClick={() => { setActiveTab('admin'); setAdminSectionTab('conversations'); }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px',
+                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+                background: activeTab === 'admin' && adminSectionTab === 'conversations' ? (isDark ? 'linear-gradient(135deg, rgba(99,102,241,.22), rgba(34,211,238,.12))' : 'linear-gradient(135deg, rgba(99,102,241,.13), rgba(34,211,238,.09))') : 'transparent',
+                border: activeTab === 'admin' && adminSectionTab === 'conversations' ? `1px solid ${isDark ? 'rgba(139, 130, 255, .35)' : 'rgba(99,102,241,.24)'}` : '1px solid transparent',
+                color: activeTab === 'admin' && adminSectionTab === 'conversations' ? (isDark ? '#e5e2ff' : '#4338ca') : (isDark ? '#94a8bc' : '#597187'),
+                boxShadow: activeTab === 'admin' && adminSectionTab === 'conversations' ? '0 8px 20px rgba(79,70,229,.12)' : 'none',
+              }}
+            >
+              <MessageSquare size={15} />
+              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'admin' && adminSectionTab === 'conversations' ? 700 : 500 }}>{lang === 'ar' ? 'محادثات مساعد تعن' : 'Assistant Chats'}</span>
+              <span style={{ marginInlineStart: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: activeTab === 'admin' && adminSectionTab === 'conversations' ? '#a78bfa' : (isDark ? '#35536b' : '#9ab3c7'), boxShadow: activeTab === 'admin' && adminSectionTab === 'conversations' ? '0 0 12px rgba(167,139,250,.82)' : 'none' }} />
+            </button>}
             <button
               onClick={() => setActiveTab('tickets')}
               style={{
@@ -2881,10 +2896,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {/* Admin Sub-Tabs Navigation */}
             <div className={`flex flex-wrap items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-fit`}>
               {[
+                { id: 'conversations', label: lang === 'ar' ? 'محادثات المساعد' : 'Assistant Chats', icon: MessageSquare },
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
-                { id: 'conversations', label: lang === 'ar' ? 'محادثات المساعد' : 'Assistant Chats', icon: MessageSquare },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },
                 { id: 'keys', label: lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search', icon: Key },
