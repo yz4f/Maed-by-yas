@@ -1212,3 +1212,42 @@ body {
 .portal-shell--light .ticket-center--graphite .ticket-detail-pane {
   background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.96)) !important;
 }
+
+/* Help center and navigation polish */
+.portal-sidebar {
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.025), -14px 0 46px rgba(2, 13, 30, 0.10);
+}
+
+.portal-sidebar button,
+.portal-sidebar a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.portal-sidebar button:focus-visible,
+.portal-sidebar a:focus-visible {
+  outline: 2px solid rgba(94, 211, 255, 0.78);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .portal-sidebar button,
+  .portal-sidebar a {
+    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out !important;
+  }
+
+  .portal-sidebar button:not(:disabled):hover,
+  .portal-sidebar a:hover {
+    transform: translateX(-1px);
+  }
+
+  [dir='ltr'] .portal-sidebar button:not(:disabled):hover,
+  [dir='ltr'] .portal-sidebar a:hover {
+    transform: translateX(1px);
+  }
+}
+
+@media (max-width: 767px) {
+  .portal-sidebar {
+    box-shadow: none;
+  }
+}
