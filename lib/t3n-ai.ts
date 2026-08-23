@@ -891,6 +891,20 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     processedById: actor.id,
     processedByName: actor.name,
   });
+  if (status === 'COMPLETED') {
+    const notificationRef = doc(database(), SUPPORT_NOTIFICATIONS_COLLECTION, `reset-completed-${request.id}`);
+    await setDoc(notificationRef, {
+      id: notificationRef.id,
+      customerDiscordId: request.customerDiscordId,
+      conversationId: `reset:${request.id}`,
+      type: 'RESET_COMPLETED',
+      priority: 'high',
+      title: 'تم رستات مفتاحك بنجاح',
+      message: `تمت إعادة ضبط مفتاح ${request.productName}. يمكنك الآن التسجيل أو تشغيل المنتج من صفحة منتجاتي.`,
+      createdAt: now,
+      seenAt: null,
+    } satisfies SupportNotification);
+  }
   await StoreDB.addLog(`AI Reset ${status}`, `طلب ${request.reference} — ${request.productName}`, actor.id, actor.name);
   return { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name };
 }

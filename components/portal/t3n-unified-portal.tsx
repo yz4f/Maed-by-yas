@@ -194,6 +194,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     return () => window.clearInterval(timer);
   }, []);
 
+
   // Key Redemption State
   const [keyInput, setKeyInput] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -208,10 +209,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Guide Modal States
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
-  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'network' | 'timer' | 'spoofer' | null>(null);
+  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'format' | 'network' | 'timer' | 'spoofer' | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
   const [resetRequestReason, setResetRequestReason] = useState('');
   const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
+  const [resetCompletionNotice, setResetCompletionNotice] = useState<{ id: string; title: string; message: string } | null>(null);
+  const [isAcknowledgingResetCompletion, setIsAcknowledgingResetCompletion] = useState(false);
   const [tutorialCountdown, setTutorialCountdown] = useState(0);
 
   useEffect(() => {
@@ -275,6 +278,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     watchPreparation: 'مشاهدة شرح التجهيز',
     motherboardTitle: 'تنبيه توافق اللوحة الأم',
     motherboardDescription: 'إذا لم تكتمل العملية بعد اتباع الدليل وتجهيز Windows، فقد يرتبط ذلك بقيود توافق في اللوحة الأم. لا يمكن للدعم تجاوز هذه القيود أو ضمان إمكانية تغيير معلومات الجهاز.',
+    formatSectionTitle: 'تجهيز فلاش Windows',
+    formatSectionDescription: 'قسم مستقل لتحضير فلاش USB بنسخة Windows المناسبة قبل متابعة دليل المنتج.',
+    formatSectionAction: 'فتح قسم تجهيز الفلاش',
     waitingTitle: 'الخطوة الأخيرة قبل الفيديو',
     readyTitle: 'أصبح الشرح جاهزًا للمشاهدة',
     waitingMessage: (seconds: number) => `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${seconds} ${seconds === 1 ? 'ثانية' : 'ثوانٍ'}.`,
@@ -335,6 +341,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     watchPreparation: 'Watch preparation guide',
     motherboardTitle: 'Motherboard compatibility notice',
     motherboardDescription: 'If the process does not complete after following the guide and preparing Windows, it may relate to motherboard compatibility restrictions. Support cannot bypass these restrictions or guarantee changes to device information.',
+    formatSectionTitle: 'Prepare a Windows USB',
+    formatSectionDescription: 'A separate section for preparing a USB drive with the appropriate Windows version before the product guide.',
+    formatSectionAction: 'Open USB preparation',
     waitingTitle: 'One final step before the video',
     readyTitle: 'The tutorial is ready to watch',
     waitingMessage: (seconds: number) => `Please read this notice. Continue will unlock in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
@@ -501,6 +510,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
+
+  useEffect(() => {
+    if (activeTab !== 'my-products' || !currentUser) return;
+    let active = true;
+    const loadResetCompletion = async () => {
+      try {
+        const response = await fetch('/api/ai?view=notifications', { credentials: 'same-origin', cache: 'no-store' });
+        const data = await response.json();
+        if (!response.ok || !data.success || !active) return;
+        const next = (Array.isArray(data.notifications) ? data.notifications : []).find((item: any) => item.type === 'RESET_COMPLETED' && !item.seenAt) || null;
+        setResetCompletionNotice((current) => current?.id === next?.id ? current : next);
+      } catch {
+        // A reset completion notice is non-blocking and will be retried on the next visit.
+      }
+    };
+    void loadResetCompletion();
+    return () => { active = false; };
+  }, [activeTab, currentUser?.id]);
   const getLicenseTiming = (license: UserProduct) => {
     const parsedExpiry = license.expiresAt ? new Date(license.expiresAt).getTime() : Number.NaN;
     const hasValidExpiry = Number.isFinite(parsedExpiry) && parsedExpiry > 0;
@@ -2518,6 +2545,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
           <div className="products-experience space-y-6">
+            {resetCompletionNotice && <section dir={lang === 'ar' ? 'rtl' : 'ltr'} role="alert" className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_22px_48px_rgba(16,185,129,.14)] sm:p-6 ${isDark ? 'border-emerald-300/[.28] bg-[linear-gradient(135deg,rgba(6,78,59,.88),rgba(10,36,42,.94))] text-emerald-50' : 'border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5,#f0fdfa)] text-emerald-950'}`}>
+              <div className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
+              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-4"><span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border ${isDark ? 'border-emerald-200/25 bg-emerald-300/[.14] text-emerald-100' : 'border-emerald-200 bg-white text-emerald-600'}`}><CheckCircle2 className="h-6 w-6" /></span><div><p className={`text-[10px] font-black tracking-[.16em] ${isDark ? 'text-emerald-200/75' : 'text-emerald-700/75'}`}>{lang === 'ar' ? 'تحديث الترخيص' : 'LICENSE UPDATE'}</p><h3 className="mt-1 text-base font-black sm:text-lg">{lang === 'ar' ? 'تم رستات المفتاح الخاص بك بنجاح' : 'Your license key was reset successfully'}</h3><p className={`mt-1.5 max-w-2xl text-xs leading-6 ${isDark ? 'text-emerald-50/80' : 'text-emerald-900/75'}`}>{resetCompletionNotice.message}</p><p className={`mt-1 text-[11px] font-bold ${isDark ? 'text-emerald-200' : 'text-emerald-700'}`}>{lang === 'ar' ? 'يمكنك الآن التسجيل أو تشغيل المنتج من جديد.' : 'You can now register or start the product again.'}</p></div></div>
+                <button type="button" disabled={isAcknowledgingResetCompletion} onClick={async () => { const notice = resetCompletionNotice; if (!notice || isAcknowledgingResetCompletion) return; setIsAcknowledgingResetCompletion(true); setResetCompletionNotice(null); try { const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ action: 'notification_seen', notificationId: notice.id }) }); const data = await response.json(); if (!response.ok || !data.success) throw new Error('mark-seen-failed'); } catch { setResetCompletionNotice(notice); } finally { setIsAcknowledgingResetCompletion(false); } }} className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60 ${isDark ? 'bg-emerald-300 text-emerald-950 hover:bg-emerald-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}>{isAcknowledgingResetCompletion ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{isAcknowledgingResetCompletion ? (lang === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : (lang === 'ar' ? 'متابعة' : 'Continue')}</button>
+              </div>
+            </section>}
+
             <section className={`products-page-hero flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-sky-100/[0.14] bg-[#0d1c2f]/82' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`}>
               <div className="min-w-0">
                 <p className={`text-[10px] font-black tracking-[0.16em] uppercase ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مكتبة التراخيص' : 'License Library'}</p>
@@ -4023,14 +4058,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </button>
               <div className="z-10 flex items-center gap-3 text-center">
                 <span className="grid h-10 w-10 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
-                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideText.modalTitle}</h3>
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideView === 'format' ? guideText.formatSectionTitle : guideText.modalTitle}</h3>
               </div>
             </div>
 
             {/* Modal Body */}
             <div className="p-4 sm:p-6 lg:p-7 overflow-y-auto scrollbar-thin bg-gradient-to-b from-slate-950/15 to-slate-950/55">
               {guideView === 'menu' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 animate-slide-up">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5 animate-slide-up">
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
@@ -4047,6 +4082,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </button>
 
+                  <button
+                    onClick={() => setGuideView('format')}
+                    className="relative overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-3xl bg-[linear-gradient(135deg,rgba(14,116,144,.18),rgba(15,23,42,.88))] border border-sky-300/[.22] hover:border-sky-300/55 hover:bg-sky-400/[.10] transition-all duration-200 group cursor-pointer shadow-xl hover:shadow-[0_18px_42px_rgba(14,116,144,.18)] hover:-translate-y-1.5"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-sky-400/[.12] border border-sky-300/[.25] flex items-center justify-center text-sky-200 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(56,189,248,.15)]">
+                      <Play className="w-7 h-7" fill="currentColor" />
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-extrabold text-white mb-2 text-lg">{guideText.formatSectionTitle}</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed max-w-[220px]">{guideText.formatSectionDescription}</p>
+                    </div>
+                    <span className="inline-flex rounded-lg border border-sky-200/20 bg-sky-400/[.08] px-3 py-1.5 text-[10px] font-black text-sky-100">{guideText.formatSectionAction}</span>
+                  </button>
+
                   {/* Visual issue-fix center */}
                   <button
                     onClick={() => setGuideView('issues')}
@@ -4060,6 +4109,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <p className="text-xs text-slate-400 leading-relaxed max-w-[220px]">{guideText.supportDescription}</p>
                     </div>
                   </button>
+                </div>
+              )}
+
+              {guideView === 'format' && (
+                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-5">
+                  <section className="relative overflow-hidden rounded-[26px] border border-sky-300/[.22] bg-[linear-gradient(135deg,rgba(8,47,73,.90),rgba(15,23,42,.96))] p-5 shadow-[0_22px_52px_rgba(8,47,73,.22)] sm:p-6">
+                    <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-sky-300/15 blur-[70px]" />
+                    <div className="relative flex flex-col gap-5"><div className="flex flex-col gap-3 border-b border-sky-200/[.12] pb-5 sm:flex-row sm:items-start sm:justify-between"><div className="flex gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-sky-200/20 bg-sky-400/[.12] text-sky-100"><Play className="h-5 w-5" fill="currentColor" /></span><div><p className="text-[10px] font-black tracking-[.16em] text-sky-200/80">{lang === 'ar' ? 'قسم تحضيري مستقل' : 'SEPARATE PREPARATION'}</p><h4 className="mt-1 text-xl font-black text-white">{guideText.formatSectionTitle}</h4><p className="mt-2 max-w-xl text-[12px] leading-6 text-slate-300">{guideText.preparationDescription}</p></div></div><button onClick={() => setGuideView('menu')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[.10] bg-white/[.04] px-3 text-[11px] font-black text-slate-300 transition hover:border-sky-300/35 hover:bg-sky-400/[.10] hover:text-white sm:self-auto">{lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}</button></div>
+                    <div className="grid gap-3 sm:grid-cols-2">{[{ label: guideText.windows11Label, url: 'https://youtu.be/XZ-9RbqlA2k', number: '01' }, { label: guideText.windows10Label, url: 'https://youtu.be/WaFxvUmsNWs', number: '02' }].map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer" className="group flex min-h-28 flex-col justify-between rounded-2xl border border-white/[.10] bg-slate-950/45 p-4 transition hover:-translate-y-0.5 hover:border-sky-300/45 hover:bg-sky-400/[.08]"><div className="flex items-center justify-between gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl border border-sky-200/15 bg-sky-400/[.10] text-[10px] font-black text-sky-100">{item.number}</span><span className="grid h-8 w-8 place-items-center rounded-lg bg-white/[.06] text-sky-200 transition group-hover:scale-105"><Play className="h-3.5 w-3.5" fill="currentColor" /></span></div><div><h5 className="text-sm font-black text-white">{item.label}</h5><p className="mt-1 text-[10px] text-slate-400">{guideText.watchPreparation}</p></div></a>)}</div>
+                    <div className="rounded-2xl border border-amber-300/[.16] bg-amber-300/[.06] p-3.5"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" /><p className="text-[11px] leading-6 text-amber-100/80"><strong className="font-black text-amber-100">{guideText.motherboardTitle}:</strong> {guideText.motherboardDescription}</p></div></div>
+                    </div>
+                  </section>
                 </div>
               )}
 
@@ -4151,16 +4212,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-[25px]">{guideText.noticeTitle}</h4>
                         <p className="mt-3 max-w-2xl text-[13px] font-medium leading-7 text-slate-200 sm:text-sm">{guideText.introBefore}<strong className="font-extrabold text-white">{guideText.introProduct}</strong>{guideText.introMiddle}<strong className="font-extrabold text-white">{guideText.introEmphasis}</strong>{guideText.introAfter}</p>
                       </div>
-                    </div>
-                  </section>
-
-                  <section className="overflow-hidden rounded-[22px] border border-sky-300/[0.18] bg-[linear-gradient(135deg,rgba(14,116,144,.14),rgba(15,23,42,.56))] p-5 shadow-[0_18px_42px_rgba(14,116,144,.09)]">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex min-w-0 gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-sky-200/20 bg-sky-400/[.12] text-[11px] font-black text-sky-100">01</span><div><h5 className="text-sm font-black text-white">{guideText.preparationTitle}</h5><p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-300">{guideText.preparationDescription}</p></div></div>
-                      <span className="rounded-full border border-sky-200/15 bg-sky-400/[.08] px-2.5 py-1 text-[9px] font-black text-sky-100">{lang === 'ar' ? 'قبل فيديو المنتج' : 'Before the product video'}</span>
-                    </div>
-                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                      {[{ label: guideText.windows11Label, url: 'https://youtu.be/XZ-9RbqlA2k' }, { label: guideText.windows10Label, url: 'https://youtu.be/WaFxvUmsNWs' }].map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer" className="group flex items-center justify-between gap-3 rounded-xl border border-white/[.10] bg-slate-950/50 px-3.5 py-3 text-start transition hover:border-sky-300/35 hover:bg-sky-400/[.08]"><span className="flex min-w-0 items-center gap-2"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[.06] text-sky-200"><Play className="h-3.5 w-3.5" fill="currentColor" /></span><span className="truncate text-[11px] font-black text-slate-100">{item.label}</span></span><span className="shrink-0 text-[10px] font-black text-sky-200">{guideText.watchPreparation}</span></a>)}
                     </div>
                   </section>
 

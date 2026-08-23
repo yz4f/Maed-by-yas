@@ -6,6 +6,7 @@ import { AlertTriangle, X } from 'lucide-react';
 type Language = 'ar' | 'en';
 type SupportNotification = {
   id: string;
+  type?: 'INACTIVITY_WARNING' | 'CONVERSATION_AUTO_CLOSED' | 'RESET_COMPLETED';
   title: string;
   message: string;
   seenAt?: string | null;
@@ -29,7 +30,7 @@ export function SupportNotificationBanner({ lang, isDark }: SupportNotificationB
         const response = await fetch('/api/ai?view=notifications', { credentials: 'same-origin', cache: 'no-store' });
         const data = await response.json();
         if (!response.ok || !data.success || !active) return;
-        const next = (Array.isArray(data.notifications) ? data.notifications : []).find((item: SupportNotification) => !item.seenAt) || null;
+        const next = (Array.isArray(data.notifications) ? data.notifications : []).find((item: SupportNotification) => !item.seenAt && item.type !== 'RESET_COMPLETED') || null;
         setNotification((current) => current?.id === next?.id ? current : next);
       } catch {
         // A non-critical notification check must never interrupt the current page.

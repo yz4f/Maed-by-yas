@@ -248,7 +248,7 @@ export interface TicketStats {
 export type AiConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
 export type AiConversationCloseReason = 'INACTIVITY' | 'MANUAL' | null;
 export type AiMessageRole = 'customer' | 'assistant' | 'staff' | 'system';
-export type SupportNotificationType = 'INACTIVITY_WARNING' | 'CONVERSATION_AUTO_CLOSED';
+export type SupportNotificationType = 'INACTIVITY_WARNING' | 'CONVERSATION_AUTO_CLOSED' | 'RESET_COMPLETED';
 export type SupportNotificationPriority = 'high';
 export type AiKnowledgeCategory = 'ABOUT_STORE' | 'PRODUCTS' | 'PRODUCT_GUIDES' | 'FAQ' | 'TROUBLESHOOTING' | 'ACTIVATION' | 'KEYS' | 'ORDERS' | 'PAYMENTS' | 'REFUNDS' | 'SUPPORT_POLICY' | 'TERMS';
 export type ResetRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITING_FOR_CUSTOMER' | 'COMPLETED' | 'CANCELLED';
