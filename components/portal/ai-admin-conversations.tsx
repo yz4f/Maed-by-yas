@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, CheckCircle2, Clock3, Loader2, MessageCircle, RefreshCw, Send, UserRound, UsersRound } from 'lucide-react';
 
 type Language = 'ar' | 'en';
-type ConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'HUMAN_ACTIVE' | 'CLOSED';
+type ConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
 type MessageRole = 'customer' | 'assistant' | 'staff' | 'system';
 
 type Conversation = {
@@ -48,6 +48,7 @@ const copy = {
     sending: 'جارٍ الإرسال...',
     ai: 'مساعد تعن',
     waiting: 'بانتظار الإدارة',
+    waitingCustomer: 'بانتظار رد العميل',
     human: 'متابعة الإدارة',
     closed: 'مغلقة',
     customer: 'العميل',
@@ -74,6 +75,7 @@ const copy = {
     sending: 'Sending...',
     ai: 'Ta3n Assistant',
     waiting: 'Waiting for staff',
+    waitingCustomer: 'Waiting for customer',
     human: 'Administration active',
     closed: 'Closed',
     customer: 'Customer',
@@ -119,6 +121,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const activeStatus = useMemo(() => ({
     AI_ACTIVE: { label: t.ai, className: isDark ? 'border-cyan-300/15 bg-cyan-400/[.08] text-cyan-100' : 'border-cyan-200 bg-cyan-50 text-cyan-700' },
     WAITING_FOR_SUPPORT: { label: t.waiting, className: isDark ? 'border-amber-300/15 bg-amber-400/[.08] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-700' },
+    WAITING_FOR_CUSTOMER: { label: t.waitingCustomer, className: isDark ? 'border-orange-300/15 bg-orange-400/[.08] text-orange-100' : 'border-orange-200 bg-orange-50 text-orange-700' },
     HUMAN_ACTIVE: { label: t.human, className: isDark ? 'border-violet-300/15 bg-violet-400/[.08] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700' },
     CLOSED: { label: t.closed, className: isDark ? 'border-slate-300/15 bg-slate-400/[.08] text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-600' },
   }), [isDark, t]);

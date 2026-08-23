@@ -245,8 +245,11 @@ export interface TicketStats {
   recentDays: { date: string; count: number }[];
 }
 
-export type AiConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'HUMAN_ACTIVE' | 'CLOSED';
+export type AiConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
+export type AiConversationCloseReason = 'INACTIVITY' | 'MANUAL' | null;
 export type AiMessageRole = 'customer' | 'assistant' | 'staff' | 'system';
+export type SupportNotificationType = 'INACTIVITY_WARNING' | 'CONVERSATION_AUTO_CLOSED';
+export type SupportNotificationPriority = 'high';
 export type AiKnowledgeCategory = 'ABOUT_STORE' | 'PRODUCTS' | 'PRODUCT_GUIDES' | 'FAQ' | 'TROUBLESHOOTING' | 'ACTIVATION' | 'KEYS' | 'ORDERS' | 'PAYMENTS' | 'REFUNDS' | 'SUPPORT_POLICY' | 'TERMS';
 export type ResetRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITING_FOR_CUSTOMER' | 'COMPLETED' | 'CANCELLED';
 
@@ -271,6 +274,17 @@ export interface AiConversation {
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string;
+  /** وقت آخر رسالة من العميل فقط، وهو الأساس الوحيد لمؤقت الإغلاق. */
+  lastCustomerMessageAt?: string | null;
+  /** آخر قسم داخل البوابة سجله العميل؛ يستخدم للسياق فقط ولا يغيّر تبويبه تلقائياً. */
+  lastClientPage?: string | null;
+  lastClientPageAt?: string | null;
+  /** يضبط عند انتظار رد العميل ويستمر بعد إعادة تحميل الصفحة أو فتح الحساب من جهاز آخر. */
+  idleCloseAt?: string | null;
+  inactivityWarningAt?: string | null;
+  closedAt?: string | null;
+  closedReason?: AiConversationCloseReason;
+  reopenAt?: string | null;
   messageCount: number;
   humanAgentId?: string | null;
   humanAgentName?: string | null;
@@ -294,6 +308,18 @@ export interface AiMessage {
   createdAt: string;
   resetRequestId?: string | null;
   attachments?: AiImageAttachment[];
+}
+
+export interface SupportNotification {
+  id: string;
+  customerDiscordId: string;
+  conversationId: string;
+  type: SupportNotificationType;
+  priority: SupportNotificationPriority;
+  title: string;
+  message: string;
+  createdAt: string;
+  seenAt?: string | null;
 }
 
 export interface ResetRequest {

@@ -1,11 +1,18 @@
-import { collection, doc, getDoc, getDocs, increment, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, User, UserProduct } from '@/types';
+import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
 const KNOWLEDGE_COLLECTION = 'aiKnowledge';
 const RESET_COLLECTION = 'resetRequests';
+const SUPPORT_NOTIFICATIONS_COLLECTION = 'supportNotifications';
+const CUSTOMER_IDLE_CLOSE_MS = 3 * 60 * 1000;
+const CUSTOMER_IDLE_WARNING_MS = 2 * 60 * 1000;
+const CUSTOMER_REOPEN_DELAY_MS = 60 * 60 * 1000;
+const AI_CONVERSATION_MAINTENANCE_INTERVAL_MS = 15 * 1000;
+let aiConversationMaintenanceTimer: ReturnType<typeof setInterval> | null = null;
+let aiConversationMaintenanceRunning = false;
 const STAFF_ROLES = new Set(['Boss', 'Co-Boss', 'Admin']);
 const MAX_CHAT_LENGTH = 1800;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -134,6 +141,39 @@ function toResetRequest(snapshot: any): ResetRequest {
   return { id: snapshot.id, ...(snapshot.data() as Omit<ResetRequest, 'id'>) };
 }
 
+function toSupportNotification(snapshot: any): SupportNotification {
+  return { id: snapshot.id, ...(snapshot.data() as Omit<SupportNotification, 'id'>) };
+}
+
+function idleCloseCopy(language: 'ar' | 'en') {
+  return language === 'ar'
+    ? {
+      warningTitle: 'تنبيه: المحادثة بانتظار ردك',
+      warningMessage: 'لم نتلقَّ رداً جديداً منك. أرسل أي رسالة خلال دقيقة واحدة لمتابعة المحادثة.',
+      closeTitle: 'تم إغلاق محادثة الدعم',
+      closeMessage: 'تم إغلاق المحادثة تلقائياً لعدم وجود رد جديد منك خلال 3 دقائق. يمكنك فتح محادثة جديدة بعد ساعة من الآن.',
+    }
+    : {
+      warningTitle: 'Action needed: chat is waiting for your reply',
+      warningMessage: 'We have not received a new reply. Send any message within one minute to keep this conversation open.',
+      closeTitle: 'Support chat closed',
+      closeMessage: 'This conversation was closed automatically because no new reply was received for 3 minutes. You can open a new conversation in one hour.',
+    };
+}
+
+async function armCustomerIdleTimer(conversationId: string, customerMessageAt: string) {
+  const closeAt = new Date(new Date(customerMessageAt).getTime() + CUSTOMER_IDLE_CLOSE_MS).toISOString();
+  await updateConversationStatus(conversationId, 'WAITING_FOR_CUSTOMER', {
+    lastCustomerMessageAt: customerMessageAt,
+    idleCloseAt: closeAt,
+    inactivityWarningAt: null,
+    closedAt: null,
+    closedReason: null,
+    reopenAt: null,
+  });
+  return closeAt;
+}
+
 export async function listKnowledge(): Promise<AiKnowledgeEntry[]> {
   if (knowledgeCache && knowledgeCache.expiresAt > Date.now()) return knowledgeCache.entries;
   const snapshot = await getDocs(collection(database(), KNOWLEDGE_COLLECTION));
@@ -225,6 +265,14 @@ export async function getAiConversation(actor: TicketActor, options: { includeCu
       createdAt: now,
       updatedAt: now,
       lastMessageAt: now,
+      lastCustomerMessageAt: null,
+      lastClientPage: null,
+      lastClientPageAt: null,
+      idleCloseAt: null,
+      inactivityWarningAt: null,
+      closedAt: null,
+      closedReason: null,
+      reopenAt: null,
       messageCount: 0,
       humanAgentId: null,
       humanAgentName: null,
@@ -248,6 +296,188 @@ async function addConversationMessage(conversationId: string, message: Omit<AiMe
 async function updateConversationStatus(conversationId: string, status: AiConversationStatus, updates: Partial<AiConversation> = {}) {
   const now = new Date().toISOString();
   await updateDoc(doc(database(), AI_COLLECTION, conversationId), { status, updatedAt: now, ...updates });
+}
+
+export async function processDueAiConversationClosures(nowMs = Date.now()) {
+  const snapshot = await getDocs(collection(database(), AI_COLLECTION));
+  const due = snapshot.docs.map(toConversation).filter((conversation) => {
+    if (conversation.status !== 'WAITING_FOR_CUSTOMER' || !conversation.idleCloseAt) return false;
+    return new Date(conversation.idleCloseAt).getTime() <= nowMs;
+  });
+  const copy = idleCloseCopy('ar');
+  let closedCount = 0;
+
+  for (const conversation of due) {
+    const closeAt = conversation.idleCloseAt!;
+    const closedAt = new Date(nowMs).toISOString();
+    const reopenAt = new Date(nowMs + CUSTOMER_REOPEN_DELAY_MS).toISOString();
+    const conversationRef = doc(database(), AI_COLLECTION, conversation.id);
+    const notificationRef = doc(database(), SUPPORT_NOTIFICATIONS_COLLECTION, `chat-closed-${conversation.id}-${new Date(closeAt).getTime()}`);
+    const messageRefForClose = messageRef(conversation.id, `auto-close-${new Date(closeAt).getTime()}`);
+    let closed = false;
+
+    await runTransaction(database(), async (transaction) => {
+      const latestSnapshot = await transaction.get(conversationRef);
+      if (!latestSnapshot.exists()) return;
+      const latest = toConversation(latestSnapshot);
+      if (latest.status !== 'WAITING_FOR_CUSTOMER' || latest.idleCloseAt !== closeAt || new Date(closeAt).getTime() > nowMs) return;
+      transaction.update(conversationRef, {
+        status: 'CLOSED',
+        updatedAt: closedAt,
+        lastMessageAt: closedAt,
+        messageCount: increment(1),
+        closedAt,
+        closedReason: 'INACTIVITY',
+        reopenAt,
+        idleCloseAt: null,
+        inactivityWarningAt: latest.inactivityWarningAt || null,
+        humanAgentId: null,
+        humanAgentName: null,
+      });
+      transaction.set(messageRefForClose, {
+        id: messageRefForClose.id,
+        conversationId: conversation.id,
+        role: 'system',
+        body: copy.closeMessage,
+        visibleToCustomer: true,
+        createdAt: closedAt,
+      } satisfies AiMessage);
+      transaction.set(notificationRef, {
+        id: notificationRef.id,
+        customerDiscordId: latest.customerDiscordId,
+        conversationId: conversation.id,
+        type: 'CONVERSATION_AUTO_CLOSED',
+        priority: 'high',
+        title: copy.closeTitle,
+        message: copy.closeMessage,
+        createdAt: closedAt,
+        seenAt: null,
+      } satisfies SupportNotification);
+      closed = true;
+    });
+
+    if (closed) {
+      closedCount += 1;
+      await StoreDB.addLog('AI Conversation Auto Closed', `تم إغلاق محادثة العميل ${conversation.customerName} لعدم الرد خلال 3 دقائق`, conversation.customerId, conversation.customerName);
+    }
+  }
+
+  return { closedCount };
+}
+
+export async function processAiConversationInactivityWarnings(nowMs = Date.now()) {
+  const snapshot = await getDocs(collection(database(), AI_COLLECTION));
+  const warningAt = new Date(nowMs).toISOString();
+  const copy = idleCloseCopy('ar');
+  let warningCount = 0;
+
+  for (const conversation of snapshot.docs.map(toConversation)) {
+    if (conversation.status !== 'WAITING_FOR_CUSTOMER' || !conversation.idleCloseAt || conversation.inactivityWarningAt) continue;
+    const closeAtMs = new Date(conversation.idleCloseAt).getTime();
+    if (closeAtMs - nowMs > CUSTOMER_IDLE_CLOSE_MS - CUSTOMER_IDLE_WARNING_MS || closeAtMs <= nowMs) continue;
+    const conversationRef = doc(database(), AI_COLLECTION, conversation.id);
+    const notificationRef = doc(database(), SUPPORT_NOTIFICATIONS_COLLECTION, `chat-warning-${conversation.id}-${closeAtMs}`);
+    let warned = false;
+
+    await runTransaction(database(), async (transaction) => {
+      const latestSnapshot = await transaction.get(conversationRef);
+      if (!latestSnapshot.exists()) return;
+      const latest = toConversation(latestSnapshot);
+      if (latest.status !== 'WAITING_FOR_CUSTOMER' || latest.inactivityWarningAt || latest.idleCloseAt !== conversation.idleCloseAt) return;
+      transaction.update(conversationRef, { inactivityWarningAt: warningAt, updatedAt: warningAt });
+      transaction.set(notificationRef, {
+        id: notificationRef.id,
+        customerDiscordId: latest.customerDiscordId,
+        conversationId: latest.id,
+        type: 'INACTIVITY_WARNING',
+        priority: 'high',
+        title: copy.warningTitle,
+        message: copy.warningMessage,
+        createdAt: warningAt,
+        seenAt: null,
+      } satisfies SupportNotification);
+      warned = true;
+    });
+    if (warned) warningCount += 1;
+  }
+
+  return { warningCount };
+}
+
+export async function runAiConversationMaintenance(nowMs = Date.now()) {
+  const warnings = await processAiConversationInactivityWarnings(nowMs);
+  const closures = await processDueAiConversationClosures(nowMs);
+  return { ...warnings, ...closures };
+}
+
+export function startAiConversationMaintenance() {
+  if (aiConversationMaintenanceTimer) return;
+  const run = async () => {
+    if (aiConversationMaintenanceRunning) return;
+    aiConversationMaintenanceRunning = true;
+    try {
+      const result = await runAiConversationMaintenance();
+      if (result.warningCount || result.closedCount) console.info('[AI Conversations] Maintenance completed', result);
+    } catch (error) {
+      console.error('[AI Conversations] Maintenance failed:', error);
+    } finally {
+      aiConversationMaintenanceRunning = false;
+    }
+  };
+  void run();
+  aiConversationMaintenanceTimer = setInterval(() => { void run(); }, AI_CONVERSATION_MAINTENANCE_INTERVAL_MS);
+}
+
+export async function listCustomerSupportNotifications(actor: TicketActor) {
+  const snapshot = await getDocs(query(collection(database(), SUPPORT_NOTIFICATIONS_COLLECTION), where('customerDiscordId', '==', actor.id)));
+  return snapshot.docs.map(toSupportNotification).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export async function markCustomerSupportNotificationSeen(actor: TicketActor, notificationId: string) {
+  const notificationRef = doc(database(), SUPPORT_NOTIFICATIONS_COLLECTION, notificationId);
+  const snapshot = await getDoc(notificationRef);
+  if (!snapshot.exists()) throw new Error('التنبيه غير موجود.');
+  const notification = toSupportNotification(snapshot);
+  if (notification.customerDiscordId !== actor.id) throw new Error('لا تملك صلاحية لهذا التنبيه.');
+  const seenAt = notification.seenAt || new Date().toISOString();
+  if (!notification.seenAt) await updateDoc(notificationRef, { seenAt });
+  return { ...notification, seenAt };
+}
+
+export async function recordAiCustomerPage(actor: TicketActor, page: string) {
+  const conversationRef = doc(database(), AI_COLLECTION, actor.id);
+  const snapshot = await getDoc(conversationRef);
+  if (!snapshot.exists()) return null;
+  await updateDoc(conversationRef, { lastClientPage: page.slice(0, 80), lastClientPageAt: new Date().toISOString() });
+  return { recorded: true };
+}
+
+export async function reopenAiConversation(actor: TicketActor) {
+  const workspace = await getAiConversation(actor);
+  const { conversation } = workspace;
+  const now = Date.now();
+  if (conversation.status !== 'CLOSED') return workspace;
+  if (conversation.reopenAt && new Date(conversation.reopenAt).getTime() > now) {
+    throw new Error('لا تزال مهلة فتح محادثة جديدة فعّالة.');
+  }
+  const openedAt = new Date(now).toISOString();
+  await updateConversationStatus(conversation.id, 'AI_ACTIVE', {
+    closedAt: null,
+    closedReason: null,
+    reopenAt: null,
+    idleCloseAt: null,
+    inactivityWarningAt: null,
+    humanAgentId: null,
+    humanAgentName: null,
+  });
+  await addConversationMessage(conversation.id, {
+    conversationId: conversation.id,
+    role: 'system',
+    body: 'تم فتح محادثة جديدة. اكتب موضوع المشكلة وتفاصيلها بوضوح، ثم انتظر الرد.',
+    visibleToCustomer: true,
+  });
+  await StoreDB.addLog('AI Conversation Reopened', `تم فتح محادثة جديدة للعميل ${conversation.customerName}`, conversation.customerId, conversation.customerName);
+  return { ...(await getAiConversation(actor)), openedAt };
 }
 
 function safeModelText(value: unknown): string {
@@ -362,15 +592,24 @@ export async function sendAiMessage(actor: TicketActor, input: { body: string; l
   const messageBody = body || (input.language === 'ar' ? 'صورة مرفقة لشرح المشكلة.' : 'An image is attached to explain the issue.');
   const workspace = await getAiConversation(actor);
   const { conversation } = workspace;
+  const now = Date.now();
+  if (conversation.status === 'CLOSED' && conversation.reopenAt && new Date(conversation.reopenAt).getTime() > now) {
+    throw new Error('تم إغلاق هذه المحادثة تلقائياً. يمكنك فتح محادثة جديدة بعد انتهاء مهلة ساعة واحدة.');
+  }
+  if (conversation.status === 'CLOSED') {
+    await updateConversationStatus(conversation.id, 'AI_ACTIVE', { closedAt: null, closedReason: null, reopenAt: null, idleCloseAt: null, inactivityWarningAt: null });
+  }
 
   const customerMessage = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'customer', body: messageBody, attachments, visibleToCustomer: true });
 
-  if (conversation.status === 'HUMAN_ACTIVE') {
-    return { customerMessage, message: null, handoff: false, humanActive: true };
+  if (conversation.status === 'HUMAN_ACTIVE' || conversation.status === 'WAITING_FOR_SUPPORT') {
+    return { customerMessage, message: null, handoff: false, humanActive: conversation.status === 'HUMAN_ACTIVE' };
   }
 
+  await armCustomerIdleTimer(conversation.id, customerMessage.createdAt);
+
   if (shouldHandoff(messageBody)) {
-    await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT');
+    await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT', { idleCloseAt: null, inactivityWarningAt: null });
     const reply = input.language === 'ar' ? 'تم تحويل طلبك إلى فريق الدعم المختص. سيتم مراجعة المحادثة وبيانات حسابك من دون الحاجة إلى إعادة إرسال معلوماتك.' : 'Your request has been sent to the appropriate support team. They can review this conversation and your account context without asking you to resend it.';
     return { customerMessage, message: await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: reply, visibleToCustomer: true }), handoff: true };
   }
@@ -389,13 +628,13 @@ export async function sendAiMessage(actor: TicketActor, input: { body: string; l
     const response = await callGemini({ message: messageBody, attachments, language: input.language, customerContext, knowledge, history: workspace.messages });
     const handoff = response.includes('[HANDOFF]');
     const cleanReply = response.replace(/\[HANDOFF\]/g, '').trim();
-    if (handoff) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT');
+    if (handoff) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT', { idleCloseAt: null, inactivityWarningAt: null });
     const reply = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'assistant', body: cleanReply || (input.language === 'ar' ? 'تم تحويل طلبك إلى الدعم المختص.' : 'Your request has been passed to support.'), visibleToCustomer: true });
     return { customerMessage, message: reply, handoff };
   } catch (error) {
     console.error('Ta3n Assistant response fallback:', error);
     const needsHumanReview = attachments.length > 0;
-    if (needsHumanReview) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT');
+    if (needsHumanReview) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT', { idleCloseAt: null, inactivityWarningAt: null });
     const fallback = input.language === 'ar'
       ? (needsHumanReview
         ? 'تم استلام الصورة في سجلك، لكن لم يكتمل تحليلها الآلي الآن. حوّلت الحالة إلى فريق الإدارة لمراجعة الصورة ومتابعة المشكلة.'
@@ -518,6 +757,8 @@ export async function setConversationHumanMode(actor: TicketActor, conversationI
   await updateConversationStatus(conversationId, status, {
     humanAgentId: status === 'HUMAN_ACTIVE' ? actor.id : null,
     humanAgentName: status === 'HUMAN_ACTIVE' ? actor.name : null,
+    idleCloseAt: null,
+    inactivityWarningAt: null,
   });
   const notice = status === 'HUMAN_ACTIVE'
     ? 'انضم فريق الإدارة إلى المحادثة. يمكنك متابعة إرسال التفاصيل هنا.'

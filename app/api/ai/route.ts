@@ -13,6 +13,10 @@ import {
   listCustomerResetRequests,
   listResetRequests,
   processResetRequest,
+  listCustomerSupportNotifications,
+  markCustomerSupportNotificationSeen,
+  reopenAiConversation,
+  recordAiCustomerPage,
 } from '@/lib/t3n-ai';
 import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
@@ -49,6 +53,12 @@ const adminResetPatchSchema = z.object({
   decision: z.enum(['approve', 'reject', 'request_info', 'complete']),
   note: z.string().trim().max(1000).optional(),
 });
+const notificationSeenSchema = z.object({
+  action: z.literal('notification_seen'),
+  notificationId: z.string().trim().min(1).max(220),
+});
+const reopenConversationSchema = z.object({ action: z.literal('reopen_conversation') });
+const pageActivitySchema = z.object({ action: z.literal('page_activity'), page: z.string().trim().min(1).max(80) });
 const conversationModeSchema = z.object({
   action: z.literal('conversation_mode'),
   conversationId: z.string().trim().min(1).max(180),
@@ -97,6 +107,9 @@ export async function GET(request: NextRequest) {
     if (view === 'reset_requests') {
       return NextResponse.json({ success: true, requests: await listCustomerResetRequests(current) });
     }
+    if (view === 'notifications') {
+      return NextResponse.json({ success: true, notifications: await listCustomerSupportNotifications(current) });
+    }
     if (view === 'admin_resets') {
       if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه البيانات مخصصة للإدارة.' }, { status: 403 });
       return NextResponse.json({ success: true, requests: await listResetRequests(current) });
@@ -121,6 +134,18 @@ export async function POST(request: NextRequest) {
     const current = await actor();
     if (!current) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
     const body = await request.json();
+    if (body?.action === 'notification_seen') {
+      const input = notificationSeenSchema.parse(body);
+      return NextResponse.json({ success: true, notification: await markCustomerSupportNotificationSeen(current, input.notificationId) });
+    }
+    if (body?.action === 'reopen_conversation') {
+      reopenConversationSchema.parse(body);
+      return NextResponse.json({ success: true, ...(await reopenAiConversation(current)) });
+    }
+    if (body?.action === 'page_activity') {
+      const input = pageActivitySchema.parse(body);
+      return NextResponse.json({ success: true, ...(await recordAiCustomerPage(current, input.page)) });
+    }
     if (body?.action === 'chat') {
       const input = chatSchema.parse(body);
       enforceRateLimit(current.id, 'chat', 16, 10 * 60 * 1000);

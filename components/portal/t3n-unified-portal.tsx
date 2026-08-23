@@ -55,6 +55,7 @@ import { FaqPage } from './faq-page';
 import { AiAdminConversations } from './ai-admin-conversations';
 import { SiteUpdatesAdmin } from './site-updates-admin';
 import { ResetKeyRequestsAdmin } from './reset-key-requests-admin';
+import { SupportNotificationBanner } from './support-notification-banner';
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -559,6 +560,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (adminSectionTab === 'logs') loadAdminStats();
     }
   }, [activeTab, adminSectionTab]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    void fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: 'page_activity', page: activeTab }),
+    }).catch(() => undefined);
+  }, [activeTab, currentUser?.id]);
 
   const loadUserProducts = async (): Promise<void> => {
     if (!currentUser) return;
@@ -2041,6 +2052,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <div className="portal-ambient" aria-hidden="true" />
       <div className="portal-grid" aria-hidden="true" />
       <div className="portal-noise" aria-hidden="true" />
+      <SupportNotificationBanner lang={lang} isDark={isDark} />
 
       {/* Compact mobile top bar and navigation drawer */}
       <div className={`fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
@@ -2261,7 +2273,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
 
       {/* Main Content Area */}
-      <main className="flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-6 md:p-8 scrollbar-none relative z-10">
+      <main className="flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-20 scrollbar-none relative z-10">
         <div className="max-w-[1440px] mx-auto space-y-6">
 
         {currentUser?.warningMessage && (
