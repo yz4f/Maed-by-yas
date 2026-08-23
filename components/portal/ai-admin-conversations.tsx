@@ -107,6 +107,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const [draft, setDraft] = useState('');
   const notifyRef = useRef(onNotify);
   const selectedIdRef = useRef<string | null>(null);
+  const displayedThreadIdRef = useRef<string | null>(null);
   const threadAbortRef = useRef<AbortController | null>(null);
   const threadRequestRef = useRef(0);
 
@@ -152,8 +153,13 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to load conversation.');
       if (requestId !== threadRequestRef.current || selectedIdRef.current !== conversationId) return;
+      const nextConversation = data.conversation as Conversation;
       const nextMessages = Array.isArray(data.messages) ? data.messages as Message[] : [];
-      setSelected(data.conversation as Conversation);
+      setSelected((current) => {
+        const unchanged = current?.id === nextConversation.id && current.updatedAt === nextConversation.updatedAt && current.status === nextConversation.status && current.messageCount === nextConversation.messageCount;
+        return unchanged ? current : nextConversation;
+      });
+      displayedThreadIdRef.current = conversationId;
       setMessages((current) => {
         const currentSignature = current.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
         const nextSignature = nextMessages.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
@@ -162,14 +168,24 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     } catch (error) {
       if (options.notify && !(error instanceof DOMException && error.name === 'AbortError')) notifyRef.current?.(error instanceof Error ? error.message : 'Unable to load conversation.', 'error');
     } finally {
-      if (requestId === threadRequestRef.current && options.showSpinner) setLoadingThread(false);
+      if (requestId === threadRequestRef.current) setLoadingThread(false);
     }
   }, []);
 
   useEffect(() => { void loadList({ showSpinner: true }); }, [loadList]);
   useEffect(() => {
-    if (selectedId) { setSelected(null); setMessages([]); void loadThread(selectedId, { showSpinner: true }); }
-    else { setSelected(null); setMessages([]); }
+    if (selectedId) {
+      const isNewSelection = displayedThreadIdRef.current !== selectedId;
+      if (isNewSelection) {
+        setSelected(null);
+        setMessages([]);
+      }
+      void loadThread(selectedId, { showSpinner: isNewSelection });
+    } else {
+      displayedThreadIdRef.current = null;
+      setSelected(null);
+      setMessages([]);
+    }
   }, [selectedId, loadThread]);
   useEffect(() => {
     const refresh = () => {

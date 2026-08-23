@@ -219,9 +219,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }, [guideView]);
 
   const guideText = lang === 'ar' ? {
-    modalTitle: 'شرح فك باند فورت',
+    modalTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
     close: 'إغلاق نافذة الشرح',
-    tutorialTitle: 'شرح فك باند فورت',
+    tutorialTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
     tutorialDescription: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.',
     supportTitle: 'حلول المشاكل الشائعة',
     supportDescription: 'شروحات مرئية داخل الموقع لأخطاء الشبكة والوقت.',
@@ -247,7 +247,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     noticeHint: 'اقرأ قبل المتابعة',
     noticeTitle: 'مهم قبل البدء',
     introBefore: 'هنا يتم شرح ',
-    introProduct: 'كامل خطوات منتج فك باند فورت نايت',
+    introProduct: `كامل خطوات منتج ${guideModalProduct?.product?.name || 'المنتج'}`,
     introMiddle: '. يرجى اتباع الشرح بالكامل وبنفس الترتيب ',
     introEmphasis: 'دون تخطي أي خطوة',
     introAfter: '، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.',
@@ -272,9 +272,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     unavailableMessage: 'لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.',
     unavailableHelp: 'الرجاء إبلاغ الدعم الفني عبر تذكرة إذا احتجت إلى مساعدة إضافية.',
   } : {
-    modalTitle: 'Fortnite Unban Guide',
+    modalTitle: `${guideModalProduct?.product?.name || 'Product'} Guide`,
     close: 'Close tutorial dialog',
-    tutorialTitle: 'Fortnite Unban Guide',
+    tutorialTitle: `${guideModalProduct?.product?.name || 'Product'} Guide`,
     tutorialDescription: 'A complete visual walkthrough for activation and setup, step by step.',
     supportTitle: 'Common issue fixes',
     supportDescription: 'In-site visual solutions for network and system-time errors.',
@@ -300,7 +300,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     noticeHint: 'Please read before continuing',
     noticeTitle: 'Important before you begin',
     introBefore: 'This tutorial explains ',
-    introProduct: 'the complete Fortnite Unban product process',
+    introProduct: `the complete ${guideModalProduct?.product?.name || 'product'} process`,
     introMiddle: '. Please follow every step in the exact order ',
     introEmphasis: 'without skipping any step',
     introAfter: ', to help ensure the process is completed correctly and avoid issues.',
@@ -2287,6 +2287,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             isStaff={isAdmin}
             onNotify={showToast}
             onOpenProducts={() => setActiveTab('my-products')}
+            onOpenGuide={(destination) => {
+              const availableProduct = sortedUserProducts.find((product) => getLicenseTiming(product).isUsable);
+              if (!availableProduct) {
+                showToast(lang === 'ar' ? 'لا يوجد منتج مفعّل لفتح الشرح.' : 'There is no active product guide to open.', 'warning');
+                return;
+              }
+              setGuideModalProduct(availableProduct);
+              setGuideView(destination === 'issues' ? 'issues' : 'notice');
+            }}
           />
         )}
 

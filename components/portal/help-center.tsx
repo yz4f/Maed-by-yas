@@ -11,6 +11,7 @@ interface HelpCenterProps {
   isStaff: boolean;
   onNotify?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
   onOpenProducts: () => void;
+  onOpenGuide?: (destination: 'guide' | 'issues') => void;
 }
 
 const copy = {
@@ -30,7 +31,7 @@ const copy = {
   },
 };
 
-export function HelpCenter({ lang, isDark, onNotify }: HelpCenterProps) {
+export function HelpCenter({ lang, isDark, onNotify, onOpenGuide }: HelpCenterProps) {
   const [showChat, setShowChat] = useState(false);
   const t = copy[lang];
   const muted = isDark ? 'text-slate-400' : 'text-slate-500';
@@ -47,6 +48,6 @@ export function HelpCenter({ lang, isDark, onNotify }: HelpCenterProps) {
         <p className={`mt-4 inline-flex items-center gap-1.5 text-[10px] ${muted}`}><Bot className="h-3.5 w-3.5 text-cyan-300" />{t.note}</p>
       </motion.div>
     </div>
-    <AiChatModal open={showChat} onClose={() => setShowChat(false)} lang={lang} isDark={isDark} onNotify={onNotify} />
+    <AiChatModal open={showChat} onClose={() => setShowChat(false)} lang={lang} isDark={isDark} onNotify={onNotify} onOpenGuide={(destination) => { setShowChat(false); onOpenGuide?.(destination); }} />
   </section>;
 }

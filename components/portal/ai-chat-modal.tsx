@@ -2,7 +2,7 @@
 
 import { ChangeEvent, ClipboardEvent, DragEvent, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, FileImage, ImagePlus, Loader2, Paperclip, Send, ShieldCheck, Trash2, X } from 'lucide-react';
+import { BookOpen, Bot, FileImage, ImagePlus, Loader2, Paperclip, Send, ShieldCheck, Trash2, Wrench, X } from 'lucide-react';
 
 type ChatRole = 'customer' | 'assistant' | 'system' | 'staff';
 type ImageContentType = 'image/jpeg' | 'image/png' | 'image/webp';
@@ -29,6 +29,7 @@ interface AiChatModalProps {
   lang: 'ar' | 'en';
   isDark: boolean;
   onNotify?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
+  onOpenGuide?: (destination: 'guide' | 'issues') => void;
 }
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
@@ -60,6 +61,8 @@ const copy = {
     imageProcess: 'تعذر تجهيز الصورة. جرّب صورة مختلفة.',
     imageLimit: 'يمكن إرفاق صورة واحدة فقط مع كل رسالة.',
     protected: 'تُرسل الصورة للمساعد فقط لمراجعة المشكلة.',
+    openGuide: 'فتح الشرح',
+    openFixes: 'حلول المشاكل',
   },
   en: {
     title: 'Ta3n Assistant',
@@ -85,6 +88,8 @@ const copy = {
     imageProcess: 'Unable to prepare this image. Please try a different one.',
     imageLimit: 'You can attach one image per message.',
     protected: 'The image is only sent to the assistant to review this issue.',
+    openGuide: 'Open guide',
+    openFixes: 'Troubleshooting',
   },
 };
 
@@ -159,7 +164,7 @@ function createImageAttachment(file: File): Promise<ChatAttachment> {
   });
 }
 
-export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatModalProps) {
+export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide }: AiChatModalProps) {
   const t = copy[lang];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -316,7 +321,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify }: AiChatMod
           {messages.map((message) => {
             const mine = message.role === 'customer';
             const system = message.role === 'system';
-            return <div key={message.id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}><div className={`max-w-[88%] rounded-2xl px-4 py-3 text-xs leading-6 shadow-sm ${mine ? 'rounded-tr-md bg-gradient-to-l from-cyan-400 to-sky-500 font-medium text-slate-950' : system ? (isDark ? 'border border-amber-300/[.16] bg-amber-400/[.07] text-amber-100' : 'border border-amber-100 bg-amber-50 text-amber-900') : (isDark ? 'rounded-tl-md border border-white/[.09] bg-white/[.045] text-slate-200' : 'rounded-tl-md border border-slate-100 bg-white text-slate-700')}`}>{!mine && !system && <span className={`mb-1 flex items-center gap-1.5 text-[9px] font-black tracking-[.12em] ${message.role === 'staff' ? 'text-violet-300' : 'text-cyan-300'}`}>{message.role === 'staff' ? <ShieldCheck className="h-3 w-3" /> : <Bot className="h-3 w-3" />}{message.role === 'staff' ? t.staffLabel : t.title}</span>}{message.attachments?.map((item) => item.previewData ? <a key={item.id} href={item.previewData} target="_blank" rel="noreferrer" className="mb-2 block overflow-hidden rounded-xl border border-black/10 bg-slate-950/10"><img src={item.previewData} alt={item.name} className="max-h-64 w-full object-contain" /><span className="flex items-center gap-1.5 px-2 py-1 text-[9px] opacity-75"><FileImage className="h-3 w-3" />{item.name}</span></a> : null)}<p className="whitespace-pre-wrap">{message.body}</p></div></div>;
+            return <div key={message.id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}><div className={`max-w-[88%] rounded-2xl px-4 py-3 text-xs leading-6 shadow-sm ${mine ? 'rounded-tr-md bg-gradient-to-l from-cyan-400 to-sky-500 font-medium text-slate-950' : system ? (isDark ? 'border border-amber-300/[.16] bg-amber-400/[.07] text-amber-100' : 'border border-amber-100 bg-amber-50 text-amber-900') : (isDark ? 'rounded-tl-md border border-white/[.09] bg-white/[.045] text-slate-200' : 'rounded-tl-md border border-slate-100 bg-white text-slate-700')}`}>{!mine && !system && <span className={`mb-1 flex items-center gap-1.5 text-[9px] font-black tracking-[.12em] ${message.role === 'staff' ? 'text-violet-300' : 'text-cyan-300'}`}>{message.role === 'staff' ? <ShieldCheck className="h-3 w-3" /> : <Bot className="h-3 w-3" />}{message.role === 'staff' ? t.staffLabel : t.title}</span>}{message.attachments?.map((item) => item.previewData ? <a key={item.id} href={item.previewData} target="_blank" rel="noreferrer" className="mb-2 block overflow-hidden rounded-xl border border-black/10 bg-slate-950/10"><img src={item.previewData} alt={item.name} className="max-h-64 w-full object-contain" /><span className="flex items-center gap-1.5 px-2 py-1 text-[9px] opacity-75"><FileImage className="h-3 w-3" />{item.name}</span></a> : null)}<p className="whitespace-pre-wrap">{message.body}</p>{message.role === 'assistant' && onOpenGuide && <div className={`mt-3 flex flex-wrap gap-2 border-t pt-2.5 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}><button type="button" onClick={() => onOpenGuide('guide')} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black transition ${isDark ? 'border-cyan-300/20 bg-cyan-400/[.08] text-cyan-100 hover:bg-cyan-400/[.16]' : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'}`}><BookOpen className="h-3.5 w-3.5" />{t.openGuide}</button><button type="button" onClick={() => onOpenGuide('issues')} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black transition ${isDark ? 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-100 hover:bg-emerald-400/[.16]' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}><Wrench className="h-3.5 w-3.5" />{t.openFixes}</button></div>}</div></div>;
           })}
           {loading && <div className="flex justify-end"><div className={`flex items-center gap-2 rounded-2xl rounded-tl-md border px-3 py-2 text-[11px] ${isDark ? 'border-white/[.09] bg-white/[.045] text-slate-300' : 'border-slate-100 bg-white text-slate-500'}`}><Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-300" />{t.loading}</div></div>}
           <div ref={endRef} />
