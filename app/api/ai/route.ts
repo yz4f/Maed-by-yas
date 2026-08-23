@@ -17,6 +17,7 @@ import {
   markCustomerSupportNotificationSeen,
   reopenAiConversation,
   recordAiCustomerPage,
+  closeAiConversation,
 } from '@/lib/t3n-ai';
 import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
@@ -67,7 +68,16 @@ const conversationModeSchema = z.object({
 const staffReplySchema = z.object({
   action: z.literal('staff_reply'),
   conversationId: z.string().trim().min(1).max(180),
-  body: z.string().trim().min(2).max(1800),
+  body: z.string().trim().max(1800).default(''),
+  attachments: z.array(imageAttachmentSchema).max(1).default([]),
+}).superRefine((value, context) => {
+  if (value.body.length < 2 && value.attachments.length === 0) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'اكتب رداً أو أرفق صورة واحدة على الأقل.' });
+  }
+});
+const conversationCloseSchema = z.object({
+  action: z.literal('conversation_close'),
+  conversationId: z.string().trim().min(1).max(180),
 });
 
 function enforceRateLimit(actorId: string, action: string, limit: number, windowMs: number) {
@@ -173,6 +183,10 @@ export async function PATCH(request: NextRequest) {
     if (body?.action === 'conversation_mode') {
       const input = conversationModeSchema.parse(body);
       return NextResponse.json({ success: true, ...(await setConversationHumanMode(current, input.conversationId, input.mode === 'human' ? 'HUMAN_ACTIVE' : 'AI_ACTIVE')) });
+    }
+    if (body?.action === 'conversation_close') {
+      const input = conversationCloseSchema.parse(body);
+      return NextResponse.json({ success: true, ...(await closeAiConversation(current, input.conversationId)) });
     }
     const input = adminResetPatchSchema.parse(body);
     return NextResponse.json({ success: true, request: await processResetRequest(current, { requestId: input.requestId, action: input.decision, note: input.note }) });

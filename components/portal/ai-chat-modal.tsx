@@ -7,9 +7,9 @@ import { AlertTriangle, BookOpen, Bot, Clock3, FileImage, ImagePlus, Loader2, Pa
 type ChatRole = 'customer' | 'assistant' | 'system' | 'staff';
 type ConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
 type ConversationState = { status: ConversationStatus; idleCloseAt?: string | null; reopenAt?: string | null; closedReason?: 'INACTIVITY' | 'MANUAL' | null };
-type ImageContentType = 'image/jpeg' | 'image/png' | 'image/webp';
+export type ImageContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
-type ChatAttachment = {
+export type ChatAttachment = {
   id: string;
   name: string;
   contentType: ImageContentType;
@@ -118,7 +118,7 @@ function baseName(name: string) {
   return dot > 0 ? name.slice(0, dot) : name || 'image';
 }
 
-function createImageAttachment(file: File): Promise<ChatAttachment> {
+export function createImageAttachment(file: File): Promise<ChatAttachment> {
   if (!IMAGE_TYPES.has(file.type as ImageContentType)) return Promise.reject(new Error('image_type'));
   if (file.size > MAX_SOURCE_IMAGE_BYTES) return Promise.reject(new Error('image_size'));
 

@@ -1,8 +1,9 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, CheckCircle2, Clock3, Loader2, MessageCircle, RefreshCw, Send, UserRound, UsersRound } from 'lucide-react';
+import { createImageAttachment, type ChatAttachment } from './ai-chat-modal';
+import { Bot, CheckCircle2, Clock3, ImagePlus, Loader2, MessageCircle, RefreshCw, Send, Trash2, UserRound, UsersRound, XCircle } from 'lucide-react';
 
 type Language = 'ar' | 'en';
 type ConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
@@ -60,7 +61,16 @@ const copy = {
     takeSuccess: 'تم استلام المحادثة. أصبح بإمكانك الرد على العميل الآن.',
     returnSuccess: 'تم تحويل الرد على مساعد ذكاء تعن.',
     replySuccess: 'تم إرسال الرد للعميل.',
-    unavailable: 'لا يمكن الرد قبل استلام المحادثة من الإدارة.',
+    unavailable: 'استلم المحادثة أولاً قبل إرسال رد من الإدارة.',
+    close: 'إنهاء المحادثة',
+    closeConfirm: 'تأكيد الإنهاء',
+    closeCancel: 'إلغاء',
+    closeSuccess: 'تم إنهاء المحادثة وحفظ سجلها.',
+    quickReplies: ['مرحباً، اكتب تفاصيل المشكلة بوضوح وسأتابع معك هنا.', 'جرّب الخطوات الموجودة في الشرح ثم أرسل صورة واضحة للنتيجة.', 'تم استلام التفاصيل، يرجى الانتظار قليلاً وسيتم الرد عند توفر فريق الدعم.'],
+    attachImage: 'إرفاق صورة',
+    removeImage: 'إزالة الصورة',
+    imageReady: 'الصورة جاهزة للإرسال',
+    imageError: 'تعذر تجهيز الصورة. استخدم PNG أو JPG أو WEBP بحجم أصغر.',
   },
   en: {
     title: 'Ta3n Assistant Conversations',
@@ -87,7 +97,16 @@ const copy = {
     takeSuccess: 'Conversation taken. You can reply to the customer now.',
     returnSuccess: 'Replies are now handled by Ta3n Assistant.',
     replySuccess: 'Reply sent to the customer.',
-    unavailable: 'Take the conversation before replying.',
+    unavailable: 'Take the conversation before sending an administration reply.',
+    close: 'Close conversation',
+    closeConfirm: 'Confirm close',
+    closeCancel: 'Cancel',
+    closeSuccess: 'Conversation closed and its history was preserved.',
+    quickReplies: ['Hello. Describe the issue clearly and I will follow it up here.', 'Try the steps in the guide, then send a clear image of the result.', 'The details were received. Please wait and support will reply when available.'],
+    attachImage: 'Attach image',
+    removeImage: 'Remove image',
+    imageReady: 'Image ready to send',
+    imageError: 'Unable to prepare the image. Use a smaller PNG, JPG, or WEBP image.',
   },
 };
 
@@ -107,6 +126,9 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const [loadingThread, setLoadingThread] = useState(false);
   const [working, setWorking] = useState(false);
   const [draft, setDraft] = useState('');
+  const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
+  const [preparingImage, setPreparingImage] = useState(false);
+  const [closeConfirm, setCloseConfirm] = useState(false);
   const notifyRef = useRef(onNotify);
   const selectedIdRef = useRef<string | null>(null);
   const displayedThreadIdRef = useRef<string | null>(null);
@@ -192,6 +214,9 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
 
   useEffect(() => { void loadList({ showSpinner: true }); }, [loadList]);
   useEffect(() => {
+    setCloseConfirm(false);
+    setAttachment(null);
+    setDraft('');
     if (selectedId) {
       const cached = threadCacheRef.current.get(selectedId);
       if (cached) applyThread(selectedId, cached.conversation, cached.messages);
@@ -233,20 +258,36 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     } finally { setWorking(false); }
   };
 
+  const selectImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || attachment || preparingImage || working) return;
+    setPreparingImage(true);
+    try {
+      setAttachment(await createImageAttachment(file));
+    } catch {
+      onNotify?.(t.imageError, 'error');
+    } finally {
+      setPreparingImage(false);
+    }
+  };
+
   const sendReply = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selected || !draft.trim() || working) return;
+    if (!selected || (!draft.trim() && !attachment) || working || preparingImage) return;
     if (selected.status !== 'HUMAN_ACTIVE') { onNotify?.(t.unavailable, 'warning'); return; }
+    const outgoingAttachment = attachment;
     setWorking(true);
     try {
       const response = await fetch('/api/ai', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-        body: JSON.stringify({ action: 'staff_reply', conversationId: selected.id, body: draft.trim() }),
+        body: JSON.stringify({ action: 'staff_reply', conversationId: selected.id, body: draft.trim(), attachments: outgoingAttachment ? [outgoingAttachment] : [] }),
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to send reply.');
       setMessages((current) => [...current, data.message as Message]);
       setDraft('');
+      setAttachment(null);
       void loadList();
       onNotify?.(t.replySuccess, 'success');
     } catch (error) {
@@ -254,13 +295,34 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     } finally { setWorking(false); }
   };
 
-  return <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
+  const closeConversation = async () => {
+    if (!selected || working) return;
+    setWorking(true);
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'conversation_close', conversationId: selected.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Unable to close conversation.');
+      if (data.conversation) setSelected(data.conversation as Conversation);
+      if (Array.isArray(data.messages)) setMessages(data.messages as Message[]);
+      setCloseConfirm(false);
+      setAttachment(null);
+      void loadList();
+      onNotify?.(t.closeSuccess, 'success');
+    } catch (error) {
+      onNotify?.(error instanceof Error ? error.message : 'Unable to close conversation.', 'error');
+    } finally { setWorking(false); }
+  };
+
+  return <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="grid gap-4 xl:grid-cols-[296px_minmax(0,1fr)]">
     <aside className={`overflow-hidden rounded-[24px] border ${isDark ? 'border-white/[.08] bg-[#0c1422]' : 'border-slate-200 bg-white'}`}>
       <div className={`flex items-center justify-between gap-3 border-b px-4 py-4 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
         <div className="flex min-w-0 items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-400/10 text-cyan-300"><UsersRound className="h-4 w-4" /></span><div><h3 className="text-sm font-black">{t.title}</h3><p className={`mt-0.5 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversations.length}</p></div></div>
         <button onClick={() => void loadList({ showSpinner: true, notify: true })} disabled={loadingList} className={`grid h-9 w-9 place-items-center rounded-xl border transition ${isDark ? 'border-white/[.1] text-slate-300 hover:bg-white/[.06]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`} title={t.refresh}>{loadingList ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button>
       </div>
-      <div className="max-h-[620px] overflow-y-auto p-2">
+      <div className="max-h-[630px] overflow-y-auto p-2">
         {loadingList && conversations.length === 0 ? <div className="p-6 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-cyan-300" /></div> : conversations.length === 0 ? <p className={`p-5 text-center text-xs leading-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.empty}</p> : conversations.map((conversation) => {
           const status = activeStatus[conversation.status];
           return <button key={conversation.id} onClick={() => {
@@ -272,20 +334,20 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
             setSelectedId(conversation.id);
           }} className={`mb-1.5 w-full rounded-2xl border p-3 text-start transition ${selectedId === conversation.id ? (isDark ? 'border-cyan-300/25 bg-cyan-400/[.08]' : 'border-cyan-200 bg-cyan-50') : (isDark ? 'border-transparent hover:bg-white/[.04]' : 'border-transparent hover:bg-slate-50')}`}>
             <div className="flex items-center gap-2.5"><img src={conversation.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-9 w-9 rounded-xl object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{conversation.customerName}</p><p className={`mt-0.5 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{formatDate(conversation.lastMessageAt, lang)}</p></div></div>
-            <div className="mt-2 flex items-center justify-between gap-2"><span className={`rounded-full border px-2 py-1 text-[9px] font-black ${status.className}`}>{status.label}</span><span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{conversation.messageCount || 0}</span></div>
+            <div className="mt-2 flex items-center justify-between gap-2"><span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black ${status.className}`}>{conversation.status === 'WAITING_FOR_CUSTOMER' && <Clock3 className="h-3 w-3" />}{status.label}</span><span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{conversation.messageCount || 0}</span></div>
           </button>;
         })}
       </div>
     </aside>
 
-    <section className={`flex min-h-[620px] flex-col overflow-hidden rounded-[24px] border ${isDark ? 'border-white/[.08] bg-[#0a1321] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
+    <section className={`flex h-[min(630px,calc(100vh-210px))] min-h-[500px] flex-col overflow-hidden rounded-[24px] border ${isDark ? 'border-white/[.08] bg-[#0a1321] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
       {!selected ? <div className={`m-auto px-6 text-center text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}><MessageCircle className="mx-auto mb-3 h-7 w-7 text-cyan-300" />{t.select}</div> : <>
         <header className={`flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
-          <div className="flex min-w-0 items-center gap-3"><img src={selected.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-10 w-10 rounded-2xl object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} /><div className="min-w-0"><h3 className="truncate text-sm font-black">{selected.customerName}</h3><div className="mt-1 flex flex-wrap items-center gap-2"><span className={`rounded-full border px-2 py-1 text-[9px] font-black ${activeStatus[selected.status].className}`}>{activeStatus[selected.status].label}</span>{selected.status === 'HUMAN_ACTIVE' && selected.humanAgentName && <span className={`text-[10px] ${isDark ? 'text-violet-200' : 'text-violet-700'}`}>{t.takenBy(selected.humanAgentName)}</span>}</div></div></div>
-          <button onClick={() => void changeMode(selected.status === 'HUMAN_ACTIVE' ? 'ai' : 'human')} disabled={working} className={`inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2.5 text-[11px] font-black transition disabled:opacity-50 ${selected.status === 'HUMAN_ACTIVE' ? 'bg-violet-500 text-white hover:bg-violet-400' : 'bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 hover:brightness-110'}`}>{working ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : selected.status === 'HUMAN_ACTIVE' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <UserRound className="h-3.5 w-3.5" />}{selected.status === 'HUMAN_ACTIVE' ? t.returnAi : t.take}</button>
+          <div className="flex min-w-0 items-center gap-3"><img src={selected.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-10 w-10 rounded-2xl object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} /><div className="min-w-0"><h3 className="truncate text-sm font-black">{selected.customerName}</h3><div className="mt-1 flex flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black ${activeStatus[selected.status].className}`}>{selected.status === 'WAITING_FOR_CUSTOMER' && <Clock3 className="h-3 w-3" />}{activeStatus[selected.status].label}</span>{selected.status === 'HUMAN_ACTIVE' && selected.humanAgentName && <span className={`text-[10px] ${isDark ? 'text-violet-200' : 'text-violet-700'}`}>{t.takenBy(selected.humanAgentName)}</span>}</div></div></div>
+          <div className="flex flex-wrap items-center gap-2">{selected.status !== 'CLOSED' && <button onClick={() => void changeMode(selected.status === 'HUMAN_ACTIVE' ? 'ai' : 'human')} disabled={working} className={`inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2.5 text-[11px] font-black transition disabled:opacity-50 ${selected.status === 'HUMAN_ACTIVE' ? 'bg-violet-500 text-white hover:bg-violet-400' : 'bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 hover:brightness-110'}`}>{working ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : selected.status === 'HUMAN_ACTIVE' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <UserRound className="h-3.5 w-3.5" />}{selected.status === 'HUMAN_ACTIVE' ? t.returnAi : t.take}</button>}{selected.status !== 'CLOSED' && (closeConfirm ? <div className={`flex items-center gap-1 rounded-xl border p-1 ${isDark ? 'border-rose-300/20 bg-rose-400/[.08]' : 'border-rose-200 bg-rose-50'}`}><button onClick={() => void closeConversation()} disabled={working} className="rounded-lg bg-rose-500 px-2.5 py-2 text-[10px] font-black text-white transition hover:bg-rose-400 disabled:opacity-50">{t.closeConfirm}</button><button onClick={() => setCloseConfirm(false)} disabled={working} className={`rounded-lg px-2 py-2 text-[10px] font-bold ${isDark ? 'text-slate-300 hover:bg-white/[.06]' : 'text-slate-600 hover:bg-white'}`}>{t.closeCancel}</button></div> : <button onClick={() => setCloseConfirm(true)} disabled={working} className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3 text-[10px] font-black transition disabled:opacity-50 ${isDark ? 'border-rose-300/20 text-rose-200 hover:bg-rose-400/[.09]' : 'border-rose-200 text-rose-700 hover:bg-rose-50'}`}><XCircle className="h-3.5 w-3.5" />{t.close}</button>)}</div>
         </header>
 
-        <div className={`flex-1 overflow-y-auto px-4 py-5 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`}>
+        <div className={`min-h-0 flex-1 overflow-y-auto px-4 py-4 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`}>
           {loadingThread && messages.length === 0 ? <div className={`grid h-full place-items-center gap-2 text-center text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}><Loader2 className="h-5 w-5 animate-spin text-cyan-300" /><span>{t.loading}</span></div> : <div className="space-y-3">{messages.map((message) => {
             const customer = message.role === 'customer';
             const system = message.role === 'system';
@@ -295,7 +357,11 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
           })}</div>}
         </div>
 
-        <form onSubmit={sendReply} className={`border-t p-3 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`}><div className={`flex items-end gap-2 rounded-2xl border p-2 ${isDark ? 'border-white/[.1] bg-slate-950/45 focus-within:border-violet-300/35' : 'border-slate-200 bg-slate-50'}`}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} disabled={working || selected.status !== 'HUMAN_ACTIVE'} rows={2} maxLength={1800} placeholder={t.reply} className={`min-h-[46px] flex-1 resize-none bg-transparent px-2 py-2 text-xs outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><button type="submit" disabled={working || selected.status !== 'HUMAN_ACTIVE' || draft.trim().length < 2} className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500 text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-40" title={t.send}>{working ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div></form>
+        <form onSubmit={sendReply} className={`shrink-0 border-t p-3 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`}>
+          {selected.status === 'HUMAN_ACTIVE' && <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">{t.quickReplies.map((reply) => <button key={reply} type="button" onClick={() => setDraft(reply)} disabled={working || preparingImage} className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[9px] font-bold transition active:scale-95 ${isDark ? 'border-violet-300/[.16] bg-violet-400/[.06] text-violet-100 hover:bg-violet-400/[.13]' : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'}`}>{reply}</button>)}</div>}
+          {attachment && <div className={`mb-2 flex items-center gap-2 rounded-xl border p-2 ${isDark ? 'border-violet-300/[.16] bg-violet-400/[.06]' : 'border-violet-100 bg-violet-50'}`}><img src={attachment.previewData || ''} alt={attachment.name} className="h-10 w-10 rounded-lg border border-white/10 object-cover" /><div className="min-w-0 flex-1"><p className={`truncate text-[10px] font-black ${isDark ? 'text-violet-100' : 'text-violet-800'}`}>{t.imageReady}</p><p className={`truncate text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{attachment.name}</p></div><button type="button" onClick={() => setAttachment(null)} disabled={working} className={`grid h-8 w-8 place-items-center rounded-lg ${isDark ? 'text-slate-400 hover:bg-rose-400/10 hover:text-rose-200' : 'text-slate-500 hover:bg-rose-50 hover:text-rose-600'}`} aria-label={t.removeImage}><Trash2 className="h-3.5 w-3.5" /></button></div>}
+          <div className={`flex items-end gap-2 rounded-2xl border p-2 ${isDark ? 'border-white/[.1] bg-slate-950/45 focus-within:border-violet-300/35' : 'border-slate-200 bg-slate-50'}`}><label title={t.attachImage} className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition ${working || preparingImage || attachment || selected.status !== 'HUMAN_ACTIVE' ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${isDark ? 'border-white/[.1] text-violet-200 hover:bg-violet-400/[.12]' : 'border-slate-200 text-violet-700 hover:bg-violet-50'}`}><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={selectImage} disabled={working || preparingImage || Boolean(attachment) || selected.status !== 'HUMAN_ACTIVE'} /><ImagePlus className="h-4 w-4" /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} disabled={working || preparingImage || selected.status !== 'HUMAN_ACTIVE'} rows={1} maxLength={1800} placeholder={t.reply} className={`min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-xs outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><button type="submit" disabled={working || preparingImage || selected.status !== 'HUMAN_ACTIVE' || (draft.trim().length < 2 && !attachment)} className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500 text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-40" title={t.send}>{working || preparingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div>
+        </form>
       </>}
     </section>
   </div>;
