@@ -54,6 +54,7 @@ import { HelpCenter } from './help-center';
 import { FaqPage } from './faq-page';
 import { AiAdminConversations } from './ai-admin-conversations';
 import { SiteUpdatesAdmin } from './site-updates-admin';
+import { ResetKeyRequestsAdmin } from './reset-key-requests-admin';
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -207,6 +208,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // Guide Modal States
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
   const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'network' | 'timer' | 'spoofer' | null>(null);
+  const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
+  const [resetRequestReason, setResetRequestReason] = useState('');
+  const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
   const [tutorialCountdown, setTutorialCountdown] = useState(0);
 
   useEffect(() => {
@@ -447,7 +451,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'conversations' | 'updates' | 'keys' | 'logs'>('products');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'conversations' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('products');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -966,6 +970,33 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     navigator.clipboard.writeText(keyStr);
     setCopiedKeyId(id);
     setTimeout(() => setCopiedKeyId(null), 2000);
+  };
+
+  const submitResetRequest = async () => {
+    if (!resetRequestProduct || isSubmittingResetRequest) return;
+    const reason = resetRequestReason.trim();
+    if (reason.length < 3) {
+      showToast(lang === 'ar' ? 'اكتب سبب الرستات بشكل مختصر.' : 'Please provide a short reset reason.', 'error');
+      return;
+    }
+    setIsSubmittingResetRequest(true);
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: 'reset_request', productId: resetRequestProduct.productId, reason, language: lang }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'تعذر إرسال الطلب.');
+      showToast(data.duplicate ? (lang === 'ar' ? 'لديك طلب رستات مفتوح لهذا المنتج بالفعل.' : 'You already have an open reset request for this product.') : (lang === 'ar' ? 'تم إرسال طلب رستات المفتاح إلى الإدارة.' : 'Key reset request sent to staff.'), data.duplicate ? 'info' : 'success');
+      setResetRequestProduct(null);
+      setResetRequestReason('');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر إرسال الطلب.' : 'Could not send the request.'), 'error');
+    } finally {
+      setIsSubmittingResetRequest(false);
+    }
   };
 
   // Download Handler
@@ -2599,6 +2630,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <HelpCircle size={13} />
                           {lang === 'ar' ? 'الشروحات والتعليمات' : 'Guide'}
                         </button>
+                        <button
+                          onClick={() => { setResetRequestProduct(up); setResetRequestReason(''); }}
+                          disabled={!canUseProduct}
+                          className="mt-1 inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-3 text-[10px] font-black text-amber-100 transition hover:bg-amber-300/[0.14] disabled:cursor-not-allowed disabled:opacity-45"
+                        >
+                          <RefreshCw size={12} />
+                          {lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}
+                        </button>
                       </div>
                     </article>
                     </React.Fragment>
@@ -2757,6 +2796,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
                     {adminSectionTab === 'conversations' && <MessageSquare className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'updates' && <Megaphone className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
+                    {adminSectionTab === 'resetRequests' && <RefreshCw className="w-6 h-6 text-amber-500 dark:text-amber-300" />}
                     {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-indigo-600 dark:text-primary" />}
                     {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
                   </div>
@@ -2766,6 +2806,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
                     {adminSectionTab === 'conversations' && (lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Conversations')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
+                    {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
                     {adminSectionTab === 'logs' && (lang === 'ar' ? 'سجلات النظام' : 'System Logs')}
                   </span>
@@ -2776,6 +2817,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
                   {adminSectionTab === 'conversations' && (lang === 'ar' ? 'راجع محادثات العملاء، استلم الحالة عند الحاجة، ثم أعد الرد إلى مساعد تعن بعد المتابعة.' : 'Review customer conversations, take over when needed, then return replies to Ta3n Assistant after follow-up.')}
                   {adminSectionTab === 'updates' && (lang === 'ar' ? 'أنشئ تحديثاً موثقاً بصورة، اعتمده، ثم انشره مرة واحدة إلى Discord.' : 'Create an image-backed update, approve it, then publish it once to Discord.')}
+                  {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات العملاء لإعادة ضبط الترخيص، مع السبب والمفتاح ووقت الطلب.' : 'Customer license reset requests with their reason, key, and request time.')}
                   {adminSectionTab === 'keys' && (lang === 'ar' ? 'تتبع سريع للمفاتيح المباعة والمتاحة في النظام.' : 'Quick tracking of sold and available license keys in the system.')}
                   {adminSectionTab === 'logs' && (lang === 'ar' ? 'مراقبة حية لجميع حركات دخول وخروج واستخدام الموقع.' : 'Live auditing of all logins, transactions, and site usage.')}
                 </p>
@@ -2820,6 +2862,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
                 { id: 'conversations', label: lang === 'ar' ? 'محادثات المساعد' : 'Assistant Chats', icon: MessageSquare },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
+                { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },
                 { id: 'keys', label: lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search', icon: Key },
                 { id: 'logs', label: lang === 'ar' ? 'سجلات النظام' : 'System Logs', icon: FileText },
               ].map((tab) => {
@@ -3063,6 +3106,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {adminSectionTab === 'updates' && (
               <SiteUpdatesAdmin lang={lang} isDark={isDark} onNotify={showToast} />
+            )}
+
+            {adminSectionTab === 'resetRequests' && (
+              <div className="animate-slide-up">
+                <ResetKeyRequestsAdmin lang={lang} isDark={isDark} onNotify={showToast} />
+              </div>
             )}
 
             {/* ==================== SUB-TAB 4: SEARCH ALL KEYS ==================== */}
@@ -3877,6 +3926,26 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* ------------------------------------------------------------------------------------------------ */}
       {/* GUIDE MODAL */}
       {/* ------------------------------------------------------------------------------------------------ */}
+      {resetRequestProduct && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <button className="absolute inset-0 bg-black/80 backdrop-blur-sm" aria-label={lang === 'ar' ? 'إغلاق' : 'Close'} onClick={() => { if (!isSubmittingResetRequest) { setResetRequestProduct(null); setResetRequestReason(''); } }} />
+          <div className="relative w-full max-w-md rounded-[24px] border border-amber-300/20 bg-[#0b111b] p-5 shadow-2xl">
+            <button onClick={() => { if (!isSubmittingResetRequest) { setResetRequestProduct(null); setResetRequestReason(''); } }} className={`absolute top-4 ${lang === 'ar' ? 'left-4' : 'right-4'} grid h-8 w-8 place-items-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-slate-400 transition hover:bg-white/[0.1]`}><X size={15} /></button>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/[0.1] text-amber-100"><RefreshCw size={20} /></div>
+              <div>
+                <h3 className="text-base font-black text-white">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</h3>
+                <p className="mt-1 text-[11px] text-slate-400">{resetRequestProduct.product?.name || resetRequestProduct.productId}</p>
+              </div>
+            </div>
+            <label className="mb-2 block text-xs font-bold text-slate-300">{lang === 'ar' ? 'سبب طلب الرستات' : 'Reason for reset'}</label>
+            <textarea value={resetRequestReason} onChange={(event) => setResetRequestReason(event.target.value)} maxLength={500} placeholder={lang === 'ar' ? 'مثال: تم تغيير الجهاز وأحتاج رستات للترخيص.' : 'Example: I changed my device and need a license reset.'} className="min-h-28 w-full resize-none rounded-2xl border border-white/[0.09] bg-black/25 p-3 text-xs leading-6 text-white outline-none placeholder:text-slate-600 focus:border-amber-300/35" />
+            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500"><span>{lang === 'ar' ? 'سيظهر الطلب للإدارة مع المفتاح وبيانات الحساب.' : 'Staff will see the request with the key and account details.'}</span><span>{resetRequestReason.length}/500</span></div>
+            <button disabled={isSubmittingResetRequest || resetRequestReason.trim().length < 3} onClick={() => void submitResetRequest()} className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-300 text-xs font-black text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-45 active:scale-[0.98]">{isSubmittingResetRequest ? <RefreshCw size={15} className="animate-spin" /> : <RefreshCw size={15} />}{isSubmittingResetRequest ? (lang === 'ar' ? 'جارٍ إرسال الطلب...' : 'Sending request...') : (lang === 'ar' ? 'إرسال طلب الرستات' : 'Send reset request')}</button>
+          </div>
+        </div>
+      )}
+
       {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />

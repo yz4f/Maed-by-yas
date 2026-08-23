@@ -434,6 +434,7 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
   const duplicate = existing.docs.map(toResetRequest).find((item) => item.customerDiscordId === actor.id && item.productId === product.productId && ['PENDING', 'APPROVED', 'WAITING_FOR_CUSTOMER'].includes(item.status));
   if (duplicate) return { request: duplicate, duplicate: true };
 
+  const ownedProduct = (await StoreDB.getUserProducts(context.user.id)).find((item) => item.productId === product.productId && item.keyId === product.keyId);
   const now = new Date().toISOString();
   const id = makeId('rst');
   const request: ResetRequest = {
@@ -442,10 +443,12 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
     customerId: context.user.id,
     customerDiscordId: actor.id,
     customerName: context.user.name,
+    customerImage: context.user.image || null,
     customerEmail: context.user.email || null,
     productId: product.productId,
     productName: product.name,
     keyId: product.keyId,
+    keyValue: ownedProduct?.keyString || null,
     keyMasked: product.keyMasked,
     purchasedAt: product.activatedAt,
     expiresAt: product.expiresAt,
@@ -470,6 +473,7 @@ export async function listCustomerResetRequests(actor: TicketActor) {
   return snapshot.docs
     .map(toResetRequest)
     .filter((request) => request.customerDiscordId === actor.id)
+    .map(({ keyValue: _keyValue, ...request }) => request)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 

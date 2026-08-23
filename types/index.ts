@@ -302,10 +302,13 @@ export interface ResetRequest {
   customerId: string;
   customerDiscordId: string;
   customerName: string;
+  customerImage?: string | null;
   customerEmail?: string | null;
   productId: string;
   productName: string;
   keyId?: string | null;
+  /** المفتاح الكامل يعرض للإدارة فقط ويزال من استجابة العميل. */
+  keyValue?: string | null;
   keyMasked: string;
   purchasedAt?: string | null;
   expiresAt?: string | null;
