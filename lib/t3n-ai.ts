@@ -785,7 +785,7 @@ export async function listAiConversations(actor: TicketActor) {
   const conversationsSnapshot = await getDocs(collection(database(), AI_COLLECTION));
   return conversationsSnapshot.docs
     .map(toConversation)
-    .filter((conversation) => conversation.status !== 'CLOSED')
+    .filter((conversation) => conversation.status !== 'CLOSED' && (conversation.messageCount || 0) > 0)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
