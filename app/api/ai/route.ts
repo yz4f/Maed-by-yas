@@ -17,7 +17,7 @@ import {
   markCustomerSupportNotificationSeen,
   reopenAiConversation,
   recordAiCustomerPage,
-  closeAiConversation,
+  deleteAiConversation,
 } from '@/lib/t3n-ai';
 import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
@@ -186,7 +186,7 @@ export async function PATCH(request: NextRequest) {
     }
     if (body?.action === 'conversation_close') {
       const input = conversationCloseSchema.parse(body);
-      return NextResponse.json({ success: true, ...(await closeAiConversation(current, input.conversationId)) });
+      return NextResponse.json({ success: true, ...(await deleteAiConversation(current, input.conversationId)) });
     }
     const input = adminResetPatchSchema.parse(body);
     return NextResponse.json({ success: true, request: await processResetRequest(current, { requestId: input.requestId, action: input.decision, note: input.note }) });

@@ -65,7 +65,7 @@ const copy = {
     close: 'إنهاء المحادثة',
     closeConfirm: 'تأكيد الإنهاء',
     closeCancel: 'إلغاء',
-    closeSuccess: 'تم إنهاء المحادثة وحفظ سجلها.',
+    closeSuccess: 'تم حذف المحادثة نهائياً من قائمة الدعم.',
     quickReplies: ['مرحباً، اكتب تفاصيل المشكلة بوضوح وسأتابع معك هنا.', 'جرّب الخطوات الموجودة في الشرح ثم أرسل صورة واضحة للنتيجة.', 'تم استلام التفاصيل، يرجى الانتظار قليلاً وسيتم الرد عند توفر فريق الدعم.'],
     attachImage: 'إرفاق صورة',
     removeImage: 'إزالة الصورة',
@@ -101,7 +101,7 @@ const copy = {
     close: 'Close conversation',
     closeConfirm: 'Confirm close',
     closeCancel: 'Cancel',
-    closeSuccess: 'Conversation closed and its history was preserved.',
+    closeSuccess: 'Conversation deleted from the support list.',
     quickReplies: ['Hello. Describe the issue clearly and I will follow it up here.', 'Try the steps in the guide, then send a clear image of the result.', 'The details were received. Please wait and support will reply when available.'],
     attachImage: 'Attach image',
     removeImage: 'Remove image',
@@ -305,11 +305,14 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to close conversation.');
-      if (data.conversation) setSelected(data.conversation as Conversation);
-      if (Array.isArray(data.messages)) setMessages(data.messages as Message[]);
+      const deletedId = typeof data.deletedConversationId === 'string' ? data.deletedConversationId : selected.id;
+      threadCacheRef.current.delete(deletedId);
+      setConversations((current) => current.filter((conversation) => conversation.id !== deletedId));
+      setSelectedId((current) => current === deletedId ? null : current);
+      setSelected(null);
+      setMessages([]);
       setCloseConfirm(false);
       setAttachment(null);
-      void loadList();
       onNotify?.(t.closeSuccess, 'success');
     } catch (error) {
       onNotify?.(error instanceof Error ? error.message : 'Unable to close conversation.', 'error');
@@ -358,7 +361,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
         </div>
 
         <form onSubmit={sendReply} className={`shrink-0 border-t p-3 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`}>
-          {selected.status === 'HUMAN_ACTIVE' && <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">{t.quickReplies.map((reply) => <button key={reply} type="button" onClick={() => setDraft(reply)} disabled={working || preparingImage} className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[9px] font-bold transition active:scale-95 ${isDark ? 'border-violet-300/[.16] bg-violet-400/[.06] text-violet-100 hover:bg-violet-400/[.13]' : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'}`}>{reply}</button>)}</div>}
+          {selected.status === 'HUMAN_ACTIVE' && <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">{t.quickReplies.slice(0, 2).map((reply) => <button key={reply} type="button" onClick={() => setDraft(reply)} disabled={working || preparingImage} className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[9px] font-bold transition active:scale-95 ${isDark ? 'border-violet-300/[.16] bg-violet-400/[.06] text-violet-100 hover:bg-violet-400/[.13]' : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'}`}>{reply}</button>)}</div>}
           {attachment && <div className={`mb-2 flex items-center gap-2 rounded-xl border p-2 ${isDark ? 'border-violet-300/[.16] bg-violet-400/[.06]' : 'border-violet-100 bg-violet-50'}`}><img src={attachment.previewData || ''} alt={attachment.name} className="h-10 w-10 rounded-lg border border-white/10 object-cover" /><div className="min-w-0 flex-1"><p className={`truncate text-[10px] font-black ${isDark ? 'text-violet-100' : 'text-violet-800'}`}>{t.imageReady}</p><p className={`truncate text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{attachment.name}</p></div><button type="button" onClick={() => setAttachment(null)} disabled={working} className={`grid h-8 w-8 place-items-center rounded-lg ${isDark ? 'text-slate-400 hover:bg-rose-400/10 hover:text-rose-200' : 'text-slate-500 hover:bg-rose-50 hover:text-rose-600'}`} aria-label={t.removeImage}><Trash2 className="h-3.5 w-3.5" /></button></div>}
           <div className={`flex items-end gap-2 rounded-2xl border p-2 ${isDark ? 'border-white/[.1] bg-slate-950/45 focus-within:border-violet-300/35' : 'border-slate-200 bg-slate-50'}`}><label title={t.attachImage} className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition ${working || preparingImage || attachment || selected.status !== 'HUMAN_ACTIVE' ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${isDark ? 'border-white/[.1] text-violet-200 hover:bg-violet-400/[.12]' : 'border-slate-200 text-violet-700 hover:bg-violet-50'}`}><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={selectImage} disabled={working || preparingImage || Boolean(attachment) || selected.status !== 'HUMAN_ACTIVE'} /><ImagePlus className="h-4 w-4" /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} disabled={working || preparingImage || selected.status !== 'HUMAN_ACTIVE'} rows={1} maxLength={1800} placeholder={t.reply} className={`min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-xs outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><button type="submit" disabled={working || preparingImage || selected.status !== 'HUMAN_ACTIVE' || (draft.trim().length < 2 && !attachment)} className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500 text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-40" title={t.send}>{working || preparingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div>
         </form>

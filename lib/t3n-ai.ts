@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
@@ -785,6 +785,7 @@ export async function listAiConversations(actor: TicketActor) {
   const conversationsSnapshot = await getDocs(collection(database(), AI_COLLECTION));
   return conversationsSnapshot.docs
     .map(toConversation)
+    .filter((conversation) => conversation.status !== 'CLOSED')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
@@ -843,7 +844,7 @@ export async function sendStaffAiMessage(actor: TicketActor, input: { conversati
   return { conversation, message };
 }
 
-export async function closeAiConversation(actor: TicketActor, conversationId: string) {
+export async function deleteAiConversation(actor: TicketActor, conversationId: string) {
   if (!isStaff(actor)) throw new Error('هذه العملية مخصصة للإدارة.');
   const snapshot = await getDoc(doc(database(), AI_COLLECTION, conversationId));
   if (!snapshot.exists()) throw new Error('المحادثة غير موجودة.');
@@ -851,27 +852,11 @@ export async function closeAiConversation(actor: TicketActor, conversationId: st
   if (conversation.status === 'HUMAN_ACTIVE' && conversation.humanAgentId && conversation.humanAgentId !== actor.id) {
     throw new Error('لا يمكنك إنهاء متابعة موظف إداري آخر.');
   }
-  if (conversation.status === 'CLOSED') return getAiConversationForStaff(actor, conversationId);
-  const now = new Date();
-  const closedAt = now.toISOString();
-  const reopenAt = new Date(now.getTime() + CUSTOMER_REOPEN_DELAY_MS).toISOString();
-  await updateConversationStatus(conversationId, 'CLOSED', {
-    closedAt,
-    closedReason: 'MANUAL',
-    reopenAt,
-    idleCloseAt: null,
-    inactivityWarningAt: null,
-    humanAgentId: null,
-    humanAgentName: null,
-  });
-  await addConversationMessage(conversationId, {
-    conversationId,
-    role: 'system',
-    body: 'تم إنهاء هذه المحادثة من فريق الدعم. يمكنك فتح محادثة جديدة بعد ساعة عند الحاجة.',
-    visibleToCustomer: true,
-  });
-  await StoreDB.addLog('AI Conversation Closed By Staff', `تم إنهاء محادثة العميل ${conversation.customerName}`, actor.id, actor.name);
-  return getAiConversationForStaff(actor, conversationId);
+  const messagesSnapshot = await getDocs(collection(database(), AI_COLLECTION, conversationId, 'messages'));
+  await Promise.all(messagesSnapshot.docs.map((message) => deleteDoc(message.ref)));
+  await deleteDoc(doc(database(), AI_COLLECTION, conversationId));
+  await StoreDB.addLog('AI Conversation Deleted By Staff', `تم حذف محادثة العميل ${conversation.customerName} نهائياً`, actor.id, actor.name);
+  return { deletedConversationId: conversationId };
 }
 
 export async function processResetRequest(actor: TicketActor, input: { requestId: string; action: 'approve' | 'reject' | 'request_info' | 'complete'; note?: string }) {
