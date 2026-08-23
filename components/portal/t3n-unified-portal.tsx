@@ -2555,6 +2555,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                       {/* ── BODY ── */}
                       <div className="product-license-card__body">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black ${canUseProduct ? 'border-emerald-300/20 bg-emerald-400/[0.1] text-emerald-200' : 'border-rose-300/20 bg-rose-400/[0.1] text-rose-200'}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${canUseProduct ? 'bg-emerald-300 shadow-[0_0_9px_rgba(110,231,183,0.8)]' : 'bg-rose-300'}`} />
+                            {canUseProduct ? (lang === 'ar' ? 'ترخيص نشط' : 'Active license') : (lang === 'ar' ? 'ترخيص منتهٍ' : 'Expired license')}
+                          </span>
+                          <span className="rounded-lg border border-white/[0.08] bg-black/15 px-2 py-1 font-mono text-[10px] text-slate-300">{up.product?.version || 'LICENSE'}</span>
+                        </div>
 
                         {/* Product name + subtitle */}
                         <div className="product-license-card__heading">
@@ -2572,24 +2579,37 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           </div>
                         </div>
 
-                        {/* Key row */}
-                        <div className="product-key-row">
-                          <code className="product-key-row__value">
-                            {displayKey}
-                          </code>
-                          {up.keyString && (
-                            <button
-                              onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
-                              title={timing.isExpired ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired') : (lang === 'ar' ? 'نسخ المفتاح' : 'Copy key')}
-                              disabled={timing.isExpired}
-                              className={`product-key-row__icon ${copiedKeyId === up.id ? 'product-key-row__icon--copied' : ''}`}
-                            >
-                              {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
-                            </button>
-                          )}
+                        {/* License key: only provided by the authenticated owner's /api/user/products response. */}
+                        <div className="rounded-2xl border border-cyan-200/[0.12] bg-slate-950/45 p-3.5 shadow-inner shadow-black/20">
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={12} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</span>
+                            {up.keyString && <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'خاص بحسابك' : 'Private to your account'}</span>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-xl border border-white/[0.07] bg-black/30 px-3 py-2.5 text-[11px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
+                            {up.keyString && (
+                              <button
+                                onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
+                                title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}
+                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[11px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
+                              >
+                                {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
+                                <span className="hidden sm:inline">{copiedKeyId === up.id ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
-                        {/* License status is displayed in the banner; available actions stay intentionally simple. */}
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
+                            <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-slate-500"><Clock size={12} className="text-indigo-300" />{lang === 'ar' ? 'تاريخ التفعيل' : 'Activated'}</p>
+                            <p className="text-[11px] font-bold text-slate-200">{up.activatedAt ? new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(up.activatedAt)) : '—'}</p>
+                          </div>
+                          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
+                            <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-slate-500"><CheckCircle2 size={12} className={canUseProduct ? 'text-emerald-300' : 'text-rose-300'} />{lang === 'ar' ? 'ينتهي في' : 'Expires'}</p>
+                            <p className={`text-[11px] font-bold ${canUseProduct ? 'text-emerald-100' : 'text-rose-200'}`}>{up.expiresAt ? new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(up.expiresAt)) : (lang === 'ar' ? 'دائم' : 'Lifetime')}</p>
+                          </div>
+                        </div>
 
                         {/* Download Loader — white primary */}
                         <button
@@ -4176,8 +4196,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="space-y-3">
                         {selectedCustomerProducts.map((userProd) => {
                           const originalProd = products.find(p => p.id === userProd.productId);
+                          const activatedKey = allKeysList.find((key) => key.usedByUserId === selectedAdminCustomer.id && key.productId === userProd.productId);
+                          const expiresAt = userProd.expiresAt ? new Date(userProd.expiresAt) : null;
+                          const isActiveLicense = userProd.status === 'Active' && (!expiresAt || expiresAt.getTime() > Date.now());
                           return (
-                            <div key={userProd.id} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:border-white/10 transition-all">
+                            <div key={userProd.id} className="flex flex-col gap-3 rounded-2xl border border-white/[0.07] bg-gradient-to-br from-white/[0.04] to-transparent p-4 shadow-inner shadow-black/10 transition-all hover:border-cyan-200/[0.16]">
                               <div className="space-y-1">
                                 <div className="text-sm font-extrabold text-white flex items-center gap-2">
                                   <span>{originalProd?.name || userProd.productId}</span>
@@ -4186,17 +4209,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                 <div className="text-[11px] text-neutral-400 flex flex-wrap gap-x-3 font-medium">
                                   <span>{lang === 'ar' ? 'تاريخ التفعيل:' : 'Activated:'} {new Date(userProd.activatedAt).toLocaleDateString('ar-SA')}</span>
                                   <span className="text-neutral-600">|</span>
-                                  <span className="text-emerald-400 font-bold">
-                                    {lang === 'ar' ? 'نشط' : 'Active'}
+                                  <span className={isActiveLicense ? 'text-emerald-400 font-bold' : 'text-rose-300 font-bold'}>
+                                    {isActiveLicense ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
                                   </span>
                                 </div>
                               </div>
+                              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                                <div className="rounded-xl border border-cyan-200/[0.1] bg-black/25 px-3 py-2.5">
+                                  <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-bold text-slate-500"><span>{lang === 'ar' ? 'مفتاح الترخيص المفعّل' : 'Activated license key'}</span><span>{expiresAt ? (lang === 'ar' ? 'ينتهي:' : 'Expires:') : (lang === 'ar' ? 'دائم' : 'Lifetime')}</span></div>
+                                  <code className="block select-all overflow-x-auto whitespace-nowrap font-mono text-[11px] font-bold tracking-[0.04em] text-cyan-100">{activatedKey?.key || userProd.keyString || '—'}</code>
+                                </div>
+                                {(activatedKey?.key || userProd.keyString) && <button onClick={() => copyKeyToClipboard(activatedKey?.key || userProd.keyString!, `admin-${userProd.id}`)} className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-cyan-300/20 bg-cyan-300/[0.1] px-3 py-2.5 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-300/[0.18] active:scale-95"><Copy size={13} />{copiedKeyId === `admin-${userProd.id}` ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ المفتاح' : 'Copy key')}</button>}
+                              </div>
+                              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                <span className="text-[10px] text-slate-500">{lang === 'ar' ? 'آخر تاريخ:' : 'Expiry:'} <b className={isActiveLicense ? 'text-emerald-200' : 'text-rose-200'}>{expiresAt ? expiresAt.toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US') : (lang === 'ar' ? 'ترخيص دائم' : 'Lifetime license')}</b></span>
                               <button
                                 onClick={() => handleRevokeUserProduct(selectedAdminCustomer.id, userProd.productId)}
                                 className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-95"
                               >
                                 {lang === 'ar' ? 'سحب وتعطيل' : 'Revoke Product'}
                               </button>
+                              </div>
                             </div>
                           );
                         })}
@@ -4261,8 +4294,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                                 <span>{lang === 'ar' ? 'المدة:' : 'Duration:'} <span className="text-white font-bold">{keyObj.duration}</span></span>
                               </div>
                             </div>
-                            <div className="text-[10px] text-neutral-500 font-mono">
-                              {new Date(keyObj.usedAt || Date.now()).toLocaleDateString('ar-SA')}
+                                    <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-neutral-500 font-mono">{new Date(keyObj.usedAt || Date.now()).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
+                              <button onClick={() => copyKeyToClipboard(keyObj.key, `history-${keyObj.id}`)} className="rounded-lg border border-cyan-300/15 bg-cyan-300/[0.08] p-2 text-cyan-100 transition hover:bg-cyan-300/[0.16]" title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}>{copiedKeyId === `history-${keyObj.id}` ? <Check size={13} /> : <Copy size={13} />}</button>
                             </div>
                           </div>
                         ))}
@@ -4316,6 +4350,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <div className="flex justify-between items-center">
                       <span className="text-neutral-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-indigo-400" /> IP Address</span>
                       <span className="font-mono text-white font-bold">{selectedAdminCustomer.lastIp || '127.0.0.1'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-cyan-300" /> {lang === 'ar' ? 'آخر دخول' : 'Last sign-in'}</span>
+                      <span className="font-bold text-slate-200">{selectedAdminCustomer.lastLogin ? new Date(selectedAdminCustomer.lastLogin).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US') : '—'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-neutral-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> {lang === 'ar' ? 'التحذيرات النشطة' : 'Warnings'}</span>
