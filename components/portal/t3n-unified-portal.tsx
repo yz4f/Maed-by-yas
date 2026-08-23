@@ -2539,26 +2539,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       className={`product-license-card group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
-                      {/* ── BANNER IMAGE ── */}
-                      <div className="product-license-card__media">
-                        <img
-                          src={productImg}
-                          alt={up.product?.name || 'Product'}
-                          className="product-license-card__image"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        {/* The image remains clean; the two-day countdown is shown below the product title. */}
-                        <div className="product-license-card__media-overlay" />
-                      </div>
-
+                      {/* ── COMPACT PRODUCT HEADER ── */}
                       {/* ── BODY ── */}
                       <div className="product-license-card__body">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
-                            <div className="mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="product-license-card__icon shrink-0">
+                              <img src={productImg} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
+                              <div className="mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
+                            </div>
                           </div>
                           <span className={`mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[9px] font-black ${canUseProduct ? 'border-emerald-300/20 bg-emerald-400/[0.1] text-emerald-200' : 'border-rose-300/20 bg-rose-400/[0.1] text-rose-200'}`}>
                             <span className={`h-1.5 w-1.5 rounded-full ${canUseProduct ? 'bg-emerald-300' : 'bg-rose-300'}`} />
@@ -2571,11 +2563,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
 
                         {/* License key: only provided by the authenticated owner's /api/user/products response. */}
-                        <div className="rounded-xl border border-cyan-200/[0.12] bg-slate-950/45 p-2.5 shadow-inner shadow-black/20">
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={12} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</span>
-                            {up.keyString && <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'خاص بحسابك' : 'Private to your account'}</span>}
-                          </div>
+                        <div className="rounded-xl border border-cyan-200/[0.1] bg-slate-950/35 p-2 shadow-inner shadow-black/20">
+                          <div className="mb-1.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={11} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</div>
                           <div className="flex items-center gap-2">
                             <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-lg border border-white/[0.07] bg-black/30 px-3 py-2 text-[10px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
                             {up.keyString && (
