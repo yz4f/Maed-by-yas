@@ -2555,59 +2555,39 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                       {/* ── BODY ── */}
                       <div className="product-license-card__body">
-                        <div className="mb-4 flex items-center justify-between gap-3">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black ${canUseProduct ? 'border-emerald-300/20 bg-emerald-400/[0.1] text-emerald-200' : 'border-rose-300/20 bg-rose-400/[0.1] text-rose-200'}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${canUseProduct ? 'bg-emerald-300 shadow-[0_0_9px_rgba(110,231,183,0.8)]' : 'bg-rose-300'}`} />
-                            {canUseProduct ? (lang === 'ar' ? 'ترخيص نشط' : 'Active license') : (lang === 'ar' ? 'ترخيص منتهٍ' : 'Expired license')}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
+                            <div className="mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
+                          </div>
+                          <span className={`mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[9px] font-black ${canUseProduct ? 'border-emerald-300/20 bg-emerald-400/[0.1] text-emerald-200' : 'border-rose-300/20 bg-rose-400/[0.1] text-rose-200'}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${canUseProduct ? 'bg-emerald-300' : 'bg-rose-300'}`} />
+                            {canUseProduct ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
                           </span>
-                          <span className="rounded-lg border border-white/[0.08] bg-black/15 px-2 py-1 font-mono text-[10px] text-slate-300">{up.product?.version || 'LICENSE'}</span>
                         </div>
-
-                        {/* Product name + subtitle */}
-                        <div className="product-license-card__heading">
-                          <div className="product-license-card__title">
-                            {up.product?.name || 'Product'}
-                          </div>
-                          <div className="product-license-card__meta">
-                            {up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}
-                            {up.product?.version ? ` • ${lang === 'ar' ? 'الإصدار' : 'Version'} ${up.product.version}` : ''}
-                          </div>
-                          <div className="product-license-card__meta product-license-card__meta--secondary">
-                            {timing.isExpired
-                              ? (lang === 'ar' ? 'انتهت مدة الترخيص' : 'License expired')
-                              : (lang === 'ar' ? `المدة المتبقية: ${timing.countdown}` : `Time remaining: ${timing.countdown}`)}
-                          </div>
+                        <div className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[10px] ${canUseProduct ? 'border-emerald-300/[0.12] bg-emerald-300/[0.045] text-emerald-100' : 'border-rose-300/[0.12] bg-rose-300/[0.045] text-rose-100'}`}>
+                          <span className="inline-flex items-center gap-1.5 font-bold"><Clock size={12} />{lang === 'ar' ? 'الوقت المتبقي' : 'Time remaining'}</span>
+                          <span className="font-mono font-black">{timing.isExpired ? (lang === 'ar' ? 'منتهٍ' : 'Expired') : timing.countdown}</span>
                         </div>
 
                         {/* License key: only provided by the authenticated owner's /api/user/products response. */}
-                        <div className="rounded-2xl border border-cyan-200/[0.12] bg-slate-950/45 p-3.5 shadow-inner shadow-black/20">
+                        <div className="rounded-xl border border-cyan-200/[0.12] bg-slate-950/45 p-2.5 shadow-inner shadow-black/20">
                           <div className="mb-2 flex items-center justify-between gap-3">
                             <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={12} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</span>
                             {up.keyString && <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'خاص بحسابك' : 'Private to your account'}</span>}
                           </div>
                           <div className="flex items-center gap-2">
-                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-xl border border-white/[0.07] bg-black/30 px-3 py-2.5 text-[11px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
+                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-lg border border-white/[0.07] bg-black/30 px-3 py-2 text-[10px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
                             {up.keyString && (
                               <button
                                 onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
                                 title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}
-                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[11px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
+                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[10px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
                               >
                                 {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
                                 <span className="hidden sm:inline">{copiedKeyId === up.id ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}</span>
                               </button>
                             )}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
-                            <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-slate-500"><Clock size={12} className="text-indigo-300" />{lang === 'ar' ? 'تاريخ التفعيل' : 'Activated'}</p>
-                            <p className="text-[11px] font-bold text-slate-200">{up.activatedAt ? new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(up.activatedAt)) : '—'}</p>
-                          </div>
-                          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
-                            <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-slate-500"><CheckCircle2 size={12} className={canUseProduct ? 'text-emerald-300' : 'text-rose-300'} />{lang === 'ar' ? 'ينتهي في' : 'Expires'}</p>
-                            <p className={`text-[11px] font-bold ${canUseProduct ? 'text-emerald-100' : 'text-rose-200'}`}>{up.expiresAt ? new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(up.expiresAt)) : (lang === 'ar' ? 'دائم' : 'Lifetime')}</p>
                           </div>
                         </div>
 
