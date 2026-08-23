@@ -509,6 +509,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   useEffect(() => {
     if (activeTab === 'faqs' && activeProductCount === 0) setActiveTab('my-products');
   }, [activeTab, activeProductCount]);
+
+  useEffect(() => {
+    if (!resetRequestProduct) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmittingResetRequest) {
+        setResetRequestProduct(null);
+        setResetRequestReason('');
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [resetRequestProduct, isSubmittingResetRequest]);
   const sortedUserProducts = [...userProducts].sort((a, b) => {
     const aPriority = getLicenseTiming(a).isUsable ? 0 : 1;
     const bPriority = getLicenseTiming(b).isUsable ? 0 : 1;
