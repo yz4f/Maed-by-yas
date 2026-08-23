@@ -110,6 +110,8 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const displayedThreadIdRef = useRef<string | null>(null);
   const threadAbortRef = useRef<AbortController | null>(null);
   const threadRequestRef = useRef(0);
+  const inFlightThreadIdRef = useRef<string | null>(null);
+  const threadCacheRef = useRef(new Map<string, { conversation: Conversation; messages: Message[] }>());
 
   useEffect(() => { notifyRef.current = onNotify; }, [onNotify]);
   useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
@@ -142,58 +144,68 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     }
   }, [t.updated]);
 
+  const applyThread = useCallback((conversationId: string, conversation: Conversation, nextMessages: Message[]) => {
+    threadCacheRef.current.set(conversationId, { conversation, messages: nextMessages });
+    if (selectedIdRef.current !== conversationId) return;
+    displayedThreadIdRef.current = conversationId;
+    setSelected((current) => {
+      const unchanged = current?.id === conversation.id && current.updatedAt === conversation.updatedAt && current.status === conversation.status && current.messageCount === conversation.messageCount;
+      return unchanged ? current : conversation;
+    });
+    setMessages((current) => {
+      const currentSignature = current.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
+      const nextSignature = nextMessages.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
+      return currentSignature === nextSignature ? current : nextMessages;
+    });
+  }, []);
+
   const loadThread = useCallback(async (conversationId: string, options: { showSpinner?: boolean; notify?: boolean } = {}) => {
+    const cached = threadCacheRef.current.get(conversationId);
+    if (cached && selectedIdRef.current === conversationId) applyThread(conversationId, cached.conversation, cached.messages);
+    if (inFlightThreadIdRef.current === conversationId) return;
+
     const requestId = ++threadRequestRef.current;
-    threadAbortRef.current?.abort();
+    if (threadAbortRef.current && inFlightThreadIdRef.current !== conversationId) threadAbortRef.current.abort();
     const controller = new AbortController();
     threadAbortRef.current = controller;
-    if (options.showSpinner) setLoadingThread(true);
+    inFlightThreadIdRef.current = conversationId;
+    if (options.showSpinner && !cached) setLoadingThread(true);
     try {
       const response = await fetch(`/api/ai?view=admin_conversation&conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to load conversation.');
-      if (requestId !== threadRequestRef.current || selectedIdRef.current !== conversationId) return;
       const nextConversation = data.conversation as Conversation;
       const nextMessages = Array.isArray(data.messages) ? data.messages as Message[] : [];
-      setSelected((current) => {
-        const unchanged = current?.id === nextConversation.id && current.updatedAt === nextConversation.updatedAt && current.status === nextConversation.status && current.messageCount === nextConversation.messageCount;
-        return unchanged ? current : nextConversation;
-      });
-      displayedThreadIdRef.current = conversationId;
-      setMessages((current) => {
-        const currentSignature = current.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
-        const nextSignature = nextMessages.map((item) => `${item.id}:${item.body}:${item.createdAt}`).join('|');
-        return currentSignature === nextSignature ? current : nextMessages;
-      });
+      if (requestId === threadRequestRef.current) applyThread(conversationId, nextConversation, nextMessages);
     } catch (error) {
       if (options.notify && !(error instanceof DOMException && error.name === 'AbortError')) notifyRef.current?.(error instanceof Error ? error.message : 'Unable to load conversation.', 'error');
     } finally {
-      if (requestId === threadRequestRef.current) setLoadingThread(false);
+      if (requestId === threadRequestRef.current) {
+        inFlightThreadIdRef.current = null;
+        setLoadingThread(false);
+      }
     }
-  }, []);
+  }, [applyThread]);
 
   useEffect(() => { void loadList({ showSpinner: true }); }, [loadList]);
   useEffect(() => {
     if (selectedId) {
-      const isNewSelection = displayedThreadIdRef.current !== selectedId;
-      if (isNewSelection) {
-        setSelected(null);
-        setMessages([]);
-      }
-      void loadThread(selectedId, { showSpinner: isNewSelection });
+      const cached = threadCacheRef.current.get(selectedId);
+      if (cached) applyThread(selectedId, cached.conversation, cached.messages);
+      void loadThread(selectedId, { showSpinner: !cached });
     } else {
       displayedThreadIdRef.current = null;
       setSelected(null);
       setMessages([]);
     }
-  }, [selectedId, loadThread]);
+  }, [selectedId, applyThread, loadThread]);
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState === 'hidden') return;
       void loadList();
       if (selectedId) void loadThread(selectedId);
     };
-    const interval = window.setInterval(refresh, 15_000);
+    const interval = window.setInterval(refresh, 20_000);
     document.addEventListener('visibilitychange', refresh);
     return () => { window.clearInterval(interval); document.removeEventListener('visibilitychange', refresh); };
   }, [loadList, loadThread, selectedId]);
@@ -248,7 +260,14 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       <div className="max-h-[620px] overflow-y-auto p-2">
         {loadingList && conversations.length === 0 ? <div className="p-6 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-cyan-300" /></div> : conversations.length === 0 ? <p className={`p-5 text-center text-xs leading-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.empty}</p> : conversations.map((conversation) => {
           const status = activeStatus[conversation.status];
-          return <button key={conversation.id} onClick={() => setSelectedId(conversation.id)} className={`mb-1.5 w-full rounded-2xl border p-3 text-start transition ${selectedId === conversation.id ? (isDark ? 'border-cyan-300/25 bg-cyan-400/[.08]' : 'border-cyan-200 bg-cyan-50') : (isDark ? 'border-transparent hover:bg-white/[.04]' : 'border-transparent hover:bg-slate-50')}`}>
+          return <button key={conversation.id} onClick={() => {
+            if (selectedId === conversation.id) return;
+            const cached = threadCacheRef.current.get(conversation.id);
+            setSelected(cached?.conversation || conversation);
+            setMessages(cached?.messages || []);
+            setLoadingThread(!cached);
+            setSelectedId(conversation.id);
+          }} className={`mb-1.5 w-full rounded-2xl border p-3 text-start transition ${selectedId === conversation.id ? (isDark ? 'border-cyan-300/25 bg-cyan-400/[.08]' : 'border-cyan-200 bg-cyan-50') : (isDark ? 'border-transparent hover:bg-white/[.04]' : 'border-transparent hover:bg-slate-50')}`}>
             <div className="flex items-center gap-2.5"><img src={conversation.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-9 w-9 rounded-xl object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{conversation.customerName}</p><p className={`mt-0.5 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{formatDate(conversation.lastMessageAt, lang)}</p></div></div>
             <div className="mt-2 flex items-center justify-between gap-2"><span className={`rounded-full border px-2 py-1 text-[9px] font-black ${status.className}`}>{status.label}</span><span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{conversation.messageCount || 0}</span></div>
           </button>;
