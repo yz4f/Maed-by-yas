@@ -320,3 +320,31 @@ export interface ResetRequest {
   processedById?: string | null;
   processedByName?: string | null;
 }
+
+export type SiteUpdateStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'DISCORD_SENT' | 'DISCORD_FAILED';
+export type SiteUpdateKind = 'FEATURE' | 'IMPROVEMENT' | 'FIX' | 'RELEASE';
+
+export interface SiteUpdate {
+  id: string;
+  title: string;
+  summary: string;
+  highlights: string[];
+  imageUrl: string;
+  imageAlt: string;
+  kind: SiteUpdateKind;
+  status: SiteUpdateStatus;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+  approvedAt?: string | null;
+  approvedById?: string | null;
+  approvedByName?: string | null;
+  publishedAt?: string | null;
+  publishedById?: string | null;
+  publishedByName?: string | null;
+  discordMessageId?: string | null;
+  discordChannelId?: string | null;
+  discordSentAt?: string | null;
+  discordError?: string | null;
+  discordAttemptAt?: string | null;
+}

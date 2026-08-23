@@ -1,4 +1,5 @@
 import WebSocket, { RawData } from 'ws';
+import type { SiteUpdate } from '@/types';
 
 const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
 const websiteUrl = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/, '');
@@ -51,6 +52,52 @@ async function registerCommands(applicationId: string, token: string) {
   });
   if (!response.ok) throw new Error(`Discord commands HTTP ${response.status}: ${await response.text()}`);
   console.info(`[Discord Bot] Commands registered in guild ${guildId}.`);
+}
+
+export async function sendDiscordSiteUpdate(update: SiteUpdate, channelId: string): Promise<{ messageId: string }> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال التحديث.');
+  if (!channelId) throw new Error('قناة تحديثات Discord غير محددة.');
+
+  const highlights = update.highlights.map((item) => `• ${item}`).join('\n');
+  const isInlineImage = update.imageUrl.startsWith('data:image/');
+  const attachmentName = `site-update-${update.id}.png`;
+  const embed = {
+    color: 0x22d3ee,
+    author: { name: 'تحديثات منصة تعن' },
+    title: update.title,
+    description: update.summary,
+    fields: [
+      { name: 'أبرز ما تم إضافته', value: highlights, inline: false },
+      { name: 'الحالة', value: 'تم اعتماد التحديث ونشره بنجاح', inline: true },
+      { name: 'التاريخ', value: `<t:${Math.floor(new Date(update.publishedAt || Date.now()).getTime() / 1000)}:F>`, inline: true },
+    ],
+    image: { url: isInlineImage ? `attachment://${attachmentName}` : update.imageUrl },
+    footer: { text: 'تعن • تحديث رسمي معتمد' },
+  };
+  let response: Response;
+  if (isInlineImage) {
+    const [meta, base64] = update.imageUrl.split(',', 2);
+    const contentType = meta.match(/^data:(image\/(?:jpeg|png|webp));base64$/i)?.[1] || 'image/png';
+    const bytes = Buffer.from(base64 || '', 'base64');
+    const form = new FormData();
+    form.append('payload_json', JSON.stringify({ embeds: [embed] }));
+    form.append('files[0]', new Blob([bytes], { type: contentType }), attachmentName);
+    response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bot ${token}` },
+      body: form,
+    });
+  } else {
+    response = await discordApi(`/channels/${channelId}/messages`, token, {
+      method: 'POST',
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+  }
+  if (!response.ok) throw new Error(`تعذر إرسال تحديث Discord (HTTP ${response.status}).`);
+  const message = await response.json() as { id?: string };
+  if (!message.id) throw new Error('لم يعرض Discord معرف رسالة التحديث.');
+  return { messageId: message.id };
 }
 
 function assistantEmbed() {
