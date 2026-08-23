@@ -268,6 +268,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     supportPrimaryBefore: 'دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، ',
     supportPrimaryStrong: 'في حال كان الخطأ من طرفنا',
     supportSecondary: 'يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.',
+    preparationTitle: 'تجهيز إلزامي قبل البدء',
+    preparationDescription: 'يلزم تجهيز فلاش USB بنسخة Windows المناسبة قبل متابعة شرح المنتج. أكمل هذه الخطوة أولاً ثم تابع الفيديو الرئيسي.',
+    windows11Label: 'تجهيز فلاش Windows 11',
+    windows10Label: 'تجهيز فلاش Windows 10',
+    watchPreparation: 'مشاهدة شرح التجهيز',
+    motherboardTitle: 'تنبيه توافق اللوحة الأم',
+    motherboardDescription: 'إذا لم تكتمل العملية بعد اتباع الدليل وتجهيز Windows، فقد يرتبط ذلك بقيود توافق في اللوحة الأم. لا يمكن للدعم تجاوز هذه القيود أو ضمان إمكانية تغيير معلومات الجهاز.',
     waitingTitle: 'الخطوة الأخيرة قبل الفيديو',
     readyTitle: 'أصبح الشرح جاهزًا للمشاهدة',
     waitingMessage: (seconds: number) => `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${seconds} ${seconds === 1 ? 'ثانية' : 'ثوانٍ'}.`,
@@ -321,6 +328,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     supportPrimaryBefore: 'Our support team is dedicated only to product-related problems and errors, ',
     supportPrimaryStrong: 'when the issue is on our side',
     supportSecondary: 'Please make sure that you have followed all steps correctly and reviewed all store policies before contacting support.',
+    preparationTitle: 'Required preparation',
+    preparationDescription: 'Prepare a USB flash drive with the appropriate Windows version before continuing with the product guide. Complete this first, then continue to the main video.',
+    windows11Label: 'Prepare a Windows 11 USB',
+    windows10Label: 'Prepare a Windows 10 USB',
+    watchPreparation: 'Watch preparation guide',
+    motherboardTitle: 'Motherboard compatibility notice',
+    motherboardDescription: 'If the process does not complete after following the guide and preparing Windows, it may relate to motherboard compatibility restrictions. Support cannot bypass these restrictions or guarantee changes to device information.',
     waitingTitle: 'One final step before the video',
     readyTitle: 'The tutorial is ready to watch',
     waitingMessage: (seconds: number) => `Please read this notice. Continue will unlock in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
@@ -4140,6 +4154,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </section>
 
+                  <section className="overflow-hidden rounded-[22px] border border-sky-300/[0.18] bg-[linear-gradient(135deg,rgba(14,116,144,.14),rgba(15,23,42,.56))] p-5 shadow-[0_18px_42px_rgba(14,116,144,.09)]">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-sky-200/20 bg-sky-400/[.12] text-[11px] font-black text-sky-100">01</span><div><h5 className="text-sm font-black text-white">{guideText.preparationTitle}</h5><p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-300">{guideText.preparationDescription}</p></div></div>
+                      <span className="rounded-full border border-sky-200/15 bg-sky-400/[.08] px-2.5 py-1 text-[9px] font-black text-sky-100">{lang === 'ar' ? 'قبل فيديو المنتج' : 'Before the product video'}</span>
+                    </div>
+                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                      {[{ label: guideText.windows11Label, url: 'https://youtu.be/XZ-9RbqlA2k' }, { label: guideText.windows10Label, url: 'https://youtu.be/WaFxvUmsNWs' }].map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer" className="group flex items-center justify-between gap-3 rounded-xl border border-white/[.10] bg-slate-950/50 px-3.5 py-3 text-start transition hover:border-sky-300/35 hover:bg-sky-400/[.08]"><span className="flex min-w-0 items-center gap-2"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[.06] text-sky-200"><Play className="h-3.5 w-3.5" fill="currentColor" /></span><span className="truncate text-[11px] font-black text-slate-100">{item.label}</span></span><span className="shrink-0 text-[10px] font-black text-sky-200">{guideText.watchPreparation}</span></a>)}
+                    </div>
+                  </section>
+
                   <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-4">
                     <section className="group rounded-[20px] border border-white/[0.10] bg-white/[0.035] p-5 transition-colors hover:border-white/[0.16]">
                       <div className="flex items-start gap-3">
@@ -4162,6 +4186,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <div className="mt-4 border-t border-primary/[0.13] pt-3.5 text-[12px] leading-6 text-slate-400">{guideText.supportSecondary}</div>
                     </section>
                   </div>
+
+                  <section className="rounded-[20px] border border-amber-300/[0.16] bg-amber-300/[0.055] p-4 sm:px-5">
+                    <div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-amber-300/20 bg-amber-300/[.09] text-amber-200"><AlertCircle className="h-4 w-4" /></span><div><h5 className="text-xs font-black text-amber-100">{guideText.motherboardTitle}</h5><p className="mt-1.5 text-[11px] leading-5 text-amber-100/70">{guideText.motherboardDescription}</p></div></div>
+                  </section>
 
                   <section className="flex flex-col gap-4 rounded-[20px] border border-white/[0.10] bg-black/25 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-5">
                     <div className="flex min-w-0 items-center gap-3">
