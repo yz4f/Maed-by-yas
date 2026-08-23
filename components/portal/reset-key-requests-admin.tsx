@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, UserRound, XCircle } from 'lucide-react';
 import type { ResetRequest, ResetRequestStatus } from '@/types';
 
@@ -10,7 +10,7 @@ interface ResetKeyRequestsAdminProps {
   onNotify: (text: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const statusStyle: Record<ResetRequestStatus, string> = {
+const darkStatusStyle: Record<ResetRequestStatus, string> = {
   PENDING: 'border-amber-300/20 bg-amber-300/[0.09] text-amber-100',
   APPROVED: 'border-sky-300/20 bg-sky-300/[0.09] text-sky-100',
   REJECTED: 'border-rose-300/20 bg-rose-300/[0.09] text-rose-100',
@@ -19,13 +19,21 @@ const statusStyle: Record<ResetRequestStatus, string> = {
   CANCELLED: 'border-slate-300/20 bg-slate-300/[0.07] text-slate-200',
 };
 
+const lightStatusStyle: Record<ResetRequestStatus, string> = {
+  PENDING: 'border-amber-200 bg-amber-50 text-amber-800',
+  APPROVED: 'border-sky-200 bg-sky-50 text-sky-800',
+  REJECTED: 'border-rose-200 bg-rose-50 text-rose-800',
+  WAITING_FOR_CUSTOMER: 'border-violet-200 bg-violet-50 text-violet-800',
+  COMPLETED: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  CANCELLED: 'border-slate-200 bg-slate-50 text-slate-600',
+};
+
 function statusLabel(status: ResetRequestStatus, lang: 'ar' | 'en') {
   const ar: Record<ResetRequestStatus, string> = {
     PENDING: 'قيد المراجعة', APPROVED: 'تمت الموافقة', REJECTED: 'مرفوض',
     WAITING_FOR_CUSTOMER: 'بانتظار العميل', COMPLETED: 'تم التنفيذ', CANCELLED: 'ملغي',
   };
-  if (lang === 'ar') return ar[status];
-  return status.replaceAll('_', ' ');
+  return lang === 'ar' ? ar[status] : status.replaceAll('_', ' ');
 }
 
 export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyRequestsAdminProps) {
@@ -33,25 +41,40 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const [isLoading, setIsLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const mountedRef = useRef(false);
+  const inFlightRef = useRef(false);
+  const requestCacheRef = useRef<ResetRequest[]>([]);
+  const notifyRef = useRef(onNotify);
+
+  notifyRef.current = onNotify;
 
   const load = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setIsLoading(true);
+
     try {
-      const response = await fetch('/api/ai?view=admin_resets', { credentials: 'same-origin' });
+      const response = await fetch('/api/ai?view=admin_resets', { credentials: 'same-origin', cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحميل الطلبات.');
-      setRequests(Array.isArray(data.requests) ? data.requests : []);
+      const next = Array.isArray(data.requests) ? data.requests as ResetRequest[] : [];
+      requestCacheRef.current = next;
+      if (mountedRef.current) setRequests(next);
     } catch (error) {
-      onNotify(error instanceof Error ? error.message : 'تعذر تحميل الطلبات.', 'error');
+      if (mountedRef.current) notifyRef.current(error instanceof Error ? error.message : 'تعذر تحميل الطلبات.', 'error');
     } finally {
-      setIsLoading(false);
+      inFlightRef.current = false;
+      if (mountedRef.current) setIsLoading(false);
     }
-  }, [onNotify]);
+  }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    mountedRef.current = true;
+    void load();
+    return () => { mountedRef.current = false; };
+  }, [load]);
 
-  const copyKey = async (key: string | null | undefined, id: string) => {
-    if (!key) return;
+  const copyKey = async (key: string, id: string) => {
     try {
       await navigator.clipboard.writeText(key);
       setCopiedId(id);
@@ -72,7 +95,11 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحديث الطلب.');
-      setRequests((current) => current.map((request) => request.id === requestId ? data.request : request));
+      setRequests((current) => {
+        const next = current.map((request) => request.id === requestId ? data.request : request);
+        requestCacheRef.current = next;
+        return next;
+      });
       onNotify(lang === 'ar' ? 'تم تحديث حالة الطلب.' : 'Request status updated.', 'success');
     } catch (error) {
       onNotify(error instanceof Error ? error.message : 'تعذر تحديث الطلب.', 'error');
@@ -83,73 +110,64 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
 
   const pendingCount = requests.filter((request) => request.status === 'PENDING').length;
   const completedCount = requests.filter((request) => request.status === 'COMPLETED').length;
+  const cardClass = isDark ? 'border-white/[0.08] bg-[#0b111b]/90 shadow-[0_16px_40px_rgba(0,0,0,0.18)] hover:border-cyan-200/[0.16]' : 'border-slate-200 bg-white shadow-[0_14px_34px_rgba(33,82,118,0.08)] hover:border-sky-200';
+  const muted = isDark ? 'text-slate-400' : 'text-slate-500';
+  const keyPanel = isDark ? 'border-cyan-200/[0.1] bg-black/20' : 'border-sky-100 bg-sky-50/70';
+  const reasonPanel = isDark ? 'border-rose-300/[0.1] bg-rose-300/[0.035]' : 'border-rose-100 bg-rose-50/60';
+  const statusStyle = isDark ? darkStatusStyle : lightStatusStyle;
 
   return (
     <section className="space-y-5" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="flex flex-col gap-4 rounded-[24px] border border-cyan-200/[0.12] bg-gradient-to-l from-cyan-300/[0.07] to-transparent p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`flex flex-col gap-4 rounded-[24px] border p-5 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-cyan-200/[0.12] bg-gradient-to-l from-cyan-300/[0.07] to-transparent' : 'border-sky-100 bg-gradient-to-l from-sky-50 to-white shadow-[0_12px_30px_rgba(33,82,118,0.06)]'}`}>
         <div className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100"><KeyRound size={21} /></div>
+          <div className={`grid h-11 w-11 place-items-center rounded-2xl border ${isDark ? 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100' : 'border-sky-200 bg-sky-100 text-sky-700'}`}><KeyRound size={21} /></div>
           <div>
-            <h3 className="text-base font-black text-white">{lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key reset requests'}</h3>
-            <p className="mt-1 text-xs text-slate-400">{lang === 'ar' ? 'راجع السبب، انسخ المفتاح عند الحاجة، ثم اعتمد أو نفّذ الطلب.' : 'Review the reason, copy the key when needed, then approve or complete the request.'}</p>
+            <h3 className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key reset requests'}</h3>
+            <p className={`mt-1 text-xs ${muted}`}>{lang === 'ar' ? 'الطلبات مستقرة ولا تتغير إلا عند التحديث أو تنفيذ إجراء إداري.' : 'Requests remain stable and change only after refresh or an administrative action.'}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-xl border border-amber-300/15 bg-amber-300/[0.08] px-3 py-2 text-[11px] font-black text-amber-100">{pendingCount} {lang === 'ar' ? 'قيد المراجعة' : 'pending'}</span>
-          <span className="rounded-xl border border-emerald-300/15 bg-emerald-300/[0.08] px-3 py-2 text-[11px] font-black text-emerald-100">{completedCount} {lang === 'ar' ? 'مكتمل' : 'completed'}</span>
-          <button onClick={() => void load()} disabled={isLoading} className="grid h-9 w-9 place-items-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-slate-300 transition hover:bg-white/[0.09] disabled:opacity-50" title={lang === 'ar' ? 'تحديث' : 'Refresh'}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /></button>
+          <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-amber-300/15 bg-amber-300/[0.08] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>{pendingCount} {lang === 'ar' ? 'قيد المراجعة' : 'pending'}</span>
+          <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-emerald-300/15 bg-emerald-300/[0.08] text-emerald-100' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{completedCount} {lang === 'ar' ? 'مكتمل' : 'completed'}</span>
+          <button onClick={() => void load()} disabled={isLoading} className={`grid h-9 w-9 place-items-center rounded-xl border transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-white/[0.1] bg-white/[0.04] text-slate-300 hover:bg-white/[0.09]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`} title={lang === 'ar' ? 'تحديث' : 'Refresh'}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /></button>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2">{[0, 1].map((item) => <div key={item} className="h-56 animate-pulse rounded-[22px] border border-white/[0.06] bg-white/[0.025]" />)}</div>
+      {isLoading && requests.length === 0 ? (
+        <div className="grid gap-3 md:grid-cols-2">{[0, 1].map((item) => <div key={item} className={`h-56 animate-pulse rounded-[22px] border ${isDark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-slate-200 bg-slate-100'}`} />)}</div>
       ) : requests.length === 0 ? (
-        <div className="rounded-[22px] border border-dashed border-white/[0.12] bg-white/[0.02] px-6 py-14 text-center">
-          <UserRound className="mx-auto mb-3 text-slate-600" size={28} />
-          <p className="font-bold text-slate-300">{lang === 'ar' ? 'لا توجد طلبات رستات مفاتيح حالياً.' : 'No key reset requests yet.'}</p>
-          <p className="mt-1 text-xs text-slate-500">{lang === 'ar' ? 'ستظهر هنا الطلبات المرسلة من بطاقات المنتجات.' : 'Requests sent from product cards will appear here.'}</p>
+        <div className={`rounded-[22px] border border-dashed px-6 py-14 text-center ${isDark ? 'border-white/[0.12] bg-white/[0.02]' : 'border-slate-200 bg-white'}`}>
+          <UserRound className={`mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-slate-400'}`} size={28} />
+          <p className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{lang === 'ar' ? 'لا توجد طلبات رستات مفاتيح حالياً.' : 'No key reset requests yet.'}</p>
+          <p className={`mt-1 text-xs ${muted}`}>{lang === 'ar' ? 'ستظهر هنا الطلبات المرسلة من بطاقات المنتجات.' : 'Requests sent from product cards will appear here.'}</p>
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
-          {requests.map((request) => (
-            <article key={request.id} className="rounded-[22px] border border-white/[0.08] bg-[#0b111b]/90 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.18)] transition hover:border-cyan-200/[0.16]">
-              <div className="flex items-start justify-between gap-3 border-b border-white/[0.06] pb-3">
+          {requests.map((request) => {
+            const hasFullKey = Boolean(request.keyValue?.trim());
+            return <article key={request.id} className={`rounded-[22px] border p-4 transition ${cardClass}`}>
+              <div className={`flex items-start justify-between gap-3 border-b pb-3 ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
                 <div className="flex min-w-0 items-center gap-3">
-                  <img src={request.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-11 w-11 rounded-2xl border border-cyan-300/20 object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
-                  <div className="min-w-0">
-                    <h4 className="truncate text-sm font-black text-white">{request.customerName}</h4>
-                    <p className="mt-0.5 text-[11px] text-slate-400">{request.productName} · {request.reference}</p>
-                  </div>
+                  <img src={request.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className={`h-11 w-11 rounded-2xl border object-cover ${isDark ? 'border-cyan-300/20' : 'border-sky-200'}`} onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
+                  <div className="min-w-0"><h4 className={`truncate text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{request.customerName}</h4><p className={`mt-0.5 text-[11px] ${muted}`}>{request.productName} · {request.reference}</p></div>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black ${statusStyle[request.status]}`}>{statusLabel(request.status, lang)}</span>
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
-                <div className="rounded-2xl border border-cyan-200/[0.1] bg-black/20 p-3">
-                  <div className="mb-2 flex items-center gap-1.5 text-[10px] font-black text-cyan-100/70"><KeyRound size={12} />{lang === 'ar' ? 'المفتاح' : 'License key'}</div>
+                <div className={`rounded-2xl border p-3 ${keyPanel}`}>
+                  <div className={`mb-2 flex items-center gap-1.5 text-[10px] font-black ${isDark ? 'text-cyan-100/70' : 'text-sky-700'}`}><KeyRound size={12} />{lang === 'ar' ? 'المفتاح' : 'License key'}</div>
                   <div className="flex items-center gap-2">
-                    <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-xl border border-white/[0.07] bg-slate-950/60 px-2.5 py-2 text-[10px] font-bold tracking-[0.035em] text-cyan-100">{request.keyValue || request.keyMasked}</code>
-                    <button onClick={() => void copyKey(request.keyValue || request.keyMasked, request.id)} className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 transition hover:bg-cyan-300/[0.18]" title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}>{copiedId === request.id ? <Check size={14} /> : <Copy size={14} />}</button>
+                    <code className={`min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-xl border px-2.5 py-2 text-[10px] font-bold tracking-[0.035em] ${isDark ? 'border-white/[0.07] bg-slate-950/60 text-cyan-100' : 'border-sky-100 bg-white text-sky-900'}`}>{hasFullKey ? request.keyValue : request.keyMasked}</code>
+                    {hasFullKey ? <button onClick={() => void copyKey(request.keyValue!, request.id)} className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl border transition active:scale-95 ${isDark ? 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]' : 'border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200'}`} title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}>{copiedId === request.id ? <Check size={14} /> : <Copy size={14} />}</button> : <span className={`shrink-0 text-[9px] font-bold ${muted}`}>{lang === 'ar' ? 'قديم' : 'legacy'}</span>}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-rose-300/[0.1] bg-rose-300/[0.035] p-3">
-                  <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black text-rose-100/75"><MessageSquareText size={12} />{lang === 'ar' ? 'سبب الرستات' : 'Reset reason'}</div>
-                  <p className="line-clamp-3 text-[11px] leading-5 text-slate-200">{request.reason}</p>
-                </div>
+                <div className={`rounded-2xl border p-3 ${reasonPanel}`}><div className={`mb-1.5 flex items-center gap-1.5 text-[10px] font-black ${isDark ? 'text-rose-100/75' : 'text-rose-700'}`}><MessageSquareText size={12} />{lang === 'ar' ? 'سبب الرستات' : 'Reset reason'}</div><p className={`line-clamp-3 text-[11px] leading-5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{request.reason}</p></div>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-500"><Clock3 size={12} />{new Date(request.createdAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
-                <div className="flex items-center gap-2">
-                  {request.status === 'PENDING' && <>
-                    <button disabled={busyId === request.id} onClick={() => void process(request.id, 'approve')} className="inline-flex items-center gap-1.5 rounded-xl border border-sky-300/20 bg-sky-300/[0.1] px-3 py-2 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/[0.18] disabled:opacity-50"><CheckCircle2 size={13} />{lang === 'ar' ? 'اعتماد' : 'Approve'}</button>
-                    <button disabled={busyId === request.id} onClick={() => void process(request.id, 'reject')} className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300/20 bg-rose-300/[0.1] px-3 py-2 text-[10px] font-black text-rose-100 transition hover:bg-rose-300/[0.18] disabled:opacity-50"><XCircle size={13} />{lang === 'ar' ? 'رفض' : 'Reject'}</button>
-                  </>}
-                  {request.status === 'APPROVED' && <button disabled={busyId === request.id} onClick={() => void process(request.id, 'complete')} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300/20 bg-emerald-300/[0.1] px-3 py-2 text-[10px] font-black text-emerald-100 transition hover:bg-emerald-300/[0.18] disabled:opacity-50"><CheckCircle2 size={13} />{lang === 'ar' ? 'تنفيذ الرستات' : 'Complete reset'}</button>}
-                </div>
-              </div>
-            </article>
-          ))}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold ${muted}`}><Clock3 size={12} />{new Date(request.createdAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span><div className="flex items-center gap-2">{request.status === 'PENDING' && <><button disabled={busyId === request.id} onClick={() => void process(request.id, 'approve')} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-sky-300/20 bg-sky-300/[0.1] text-sky-100 hover:bg-sky-300/[0.18]' : 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100'}`}><CheckCircle2 size={13} />{lang === 'ar' ? 'اعتماد' : 'Approve'}</button><button disabled={busyId === request.id} onClick={() => void process(request.id, 'reject')} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-rose-300/20 bg-rose-300/[0.1] text-rose-100 hover:bg-rose-300/[0.18]' : 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100'}`}><XCircle size={13} />{lang === 'ar' ? 'رفض' : 'Reject'}</button></>}{request.status === 'APPROVED' && <button disabled={busyId === request.id} onClick={() => void process(request.id, 'complete')} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-emerald-300/20 bg-emerald-300/[0.1] text-emerald-100 hover:bg-emerald-300/[0.18]' : 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'}`}><CheckCircle2 size={13} />{lang === 'ar' ? 'تنفيذ الرستات' : 'Complete reset'}</button>}</div></div>
+            </article>;
+          })}
         </div>
       )}
     </section>

@@ -639,6 +639,7 @@ body {
   --sd-danger: #fb7185;
 }
 .portal-shell--dark {
+  --portal-icon-cutout: #071629;
   --sd-bg: #090f1b;
   --sd-surface: #111a2a;
   --sd-surface-raised: #162235;
@@ -647,6 +648,7 @@ body {
   --sd-muted: #94a3b8;
 }
 .portal-shell--light {
+  --portal-icon-cutout: #f8fbff;
   --sd-bg: #f5f8fc;
   --sd-surface: rgba(255, 255, 255, 0.9);
   --sd-surface-raised: #ffffff;
@@ -997,8 +999,8 @@ body {
 }
 .product-license-card__icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(103, 232, 249, 0.20);
@@ -1010,8 +1012,25 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(0.95) contrast(1.04);
+  filter: saturate(1.04) contrast(1.06) brightness(1.02);
 }
+.product-license-card__key { margin-top: 1px; }
+.portal-shell--light .product-license-card__key {
+  border-color: rgba(39, 101, 144, 0.17) !important;
+  background: linear-gradient(135deg, #f7fbfe, #edf5fa) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+.portal-shell--light .product-license-card__key code {
+  border-color: rgba(39, 101, 144, 0.14) !important;
+  background: #eaf3f9 !important;
+  color: #183f5d !important;
+}
+.portal-shell--light .product-license-card__key [class*="text-cyan"] { color: #2a6f96 !important; }
+.portal-shell--light .product-license-card__key button { border-color: rgba(25, 127, 178, 0.22) !important; background: rgba(14, 116, 144, 0.08) !important; color: #176a91 !important; }
+.portal-shell--light .portal-sidebar > div:last-child { border-top-color: rgba(39, 83, 119, 0.12) !important; }
+.portal-shell--light .portal-sidebar > div:last-child > div { background: rgba(245, 250, 254, 0.86) !important; border-color: rgba(39, 83, 119, 0.12) !important; }
+.portal-shell--light .portal-sidebar > div:last-child > div span:first-child { color: #18354d !important; }
+.portal-shell--light .portal-sidebar > div:last-child > button { border-color: rgba(39, 83, 119, 0.14) !important; color: #567084 !important; }
 .product-license-card__icon:has(img[style*="hidden"])::after {
   content: 'T3N';
   font: 800 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1039,7 +1058,7 @@ body {
 }
 @media (max-width: 520px) {
   .product-license-card__body { padding: 12px; gap: 7px; }
-  .product-license-card__icon { width: 38px; height: 38px; border-radius: 12px; }
+  .product-license-card__icon { width: 40px; height: 40px; border-radius: 12px; }
   .product-key-row__value { font-size: 10px; }
 }
 

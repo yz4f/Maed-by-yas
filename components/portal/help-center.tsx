@@ -20,14 +20,14 @@ const copy = {
     title: 'مساعد تعن',
     subtitle: 'للسؤال عن المنتجات، التفعيل، التحميل، الشروحات أو أي مشكلة ظاهرة لديك.',
     action: 'فتح المحادثة',
-    note: 'ستبقى رسائلك خاصة بحسابك داخل المنصة.',
+    note: 'اكتب موضوع المشكلة بوضوح وانتظر الرد. إذا كان فريق الدعم متاحاً فسيتم الرد داخل المحادثة.',
   },
   en: {
     label: 'HELP CENTER',
     title: 'Ta3n Assistant',
     subtitle: 'Ask about your products, activation, downloads, guides, or an issue you are seeing.',
     action: 'Open chat',
-    note: 'Your messages remain private to your account inside the platform.',
+    note: 'Describe the issue clearly and wait for a reply. The support team will respond in the chat when available.',
   },
 };
 

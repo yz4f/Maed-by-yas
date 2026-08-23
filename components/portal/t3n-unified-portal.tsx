@@ -69,8 +69,8 @@ function DiscordMark({ className = '' }: { className?: string }) {
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none">
       <path d="M7.05 6.34c1.28-.95 2.8-1.42 4.95-1.42s3.67.47 4.95 1.42c1.18 1.5 1.8 3.54 1.8 5.9 0 2.34-.62 4.34-1.8 5.82-1.2.9-2.8 1.45-4.95 1.45s-3.75-.55-4.95-1.45c-1.18-1.48-1.8-3.48-1.8-5.82 0-2.36.62-4.4 1.8-5.9Z" fill="currentColor" />
       <path d="M8.15 8.44c.55.2 1.04.47 1.47.8M15.85 8.44c-.55.2-1.04.47-1.47.8M8.9 15.3c1.78.86 4.42.86 6.2 0" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
-      <circle cx="9.6" cy="12.25" r="1.05" fill="#101113" />
-      <circle cx="14.4" cy="12.25" r="1.05" fill="#101113" />
+      <circle cx="9.6" cy="12.25" r="1.05" fill="var(--portal-icon-cutout, #0b1523)" />
+      <circle cx="14.4" cy="12.25" r="1.05" fill="var(--portal-icon-cutout, #0b1523)" />
     </svg>
   );
 }
@@ -2087,9 +2087,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'overview' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                border: activeTab === 'overview' ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
-                color: activeTab === 'overview' ? '#fff' : '#666',
+                background: activeTab === 'overview' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
+                border: activeTab === 'overview' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
+                color: activeTab === 'overview' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
               }}
             >
               <LayoutDashboard size={15} />
@@ -2107,9 +2107,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'my-products' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                border: activeTab === 'my-products' ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
-                color: activeTab === 'my-products' ? '#fff' : '#666',
+                background: activeTab === 'my-products' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
+                border: activeTab === 'my-products' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
+                color: activeTab === 'my-products' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
               }}
             >
               <Package size={15} />
@@ -2163,12 +2163,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                border: '1px solid transparent', color: '#666', textDecoration: 'none',
+                border: '1px solid transparent', color: isDark ? '#91aabd' : '#567084', textDecoration: 'none',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#aaa'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; e.currentTarget.style.background = 'transparent'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = isDark ? '#d8f2ff' : '#0f5f7a'; e.currentTarget.style.background = isDark ? 'rgba(94,201,255,0.06)' : 'rgba(14,116,144,0.06)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = isDark ? '#91aabd' : '#567084'; e.currentTarget.style.background = 'transparent'; }}
             >
-              <DiscordMark className="w-[17px] h-[17px]" />
+              <DiscordMark className="h-[16px] w-[16px] shrink-0" />
               <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{lang === 'ar' ? 'ديسكورد' : 'Discord'}</span>
             </a>
           </div>
@@ -2184,9 +2184,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                   padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                  background: activeTab === 'profile' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                  border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
-                  color: activeTab === 'profile' ? '#fff' : '#666',
+                background: activeTab === 'profile' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
+                border: activeTab === 'profile' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
+                color: activeTab === 'profile' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
                 }}
               >
                 <User size={15} />
@@ -2586,7 +2586,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       {/* ── BODY ── */}
                       <div className="product-license-card__body">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-2.5">
+                          <div className="flex min-w-0 items-center gap-3">
                             <div className="product-license-card__icon shrink-0">
                               <img src={productImg} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
                             </div>
@@ -2606,15 +2606,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
 
                         {/* License key: only provided by the authenticated owner's /api/user/products response. */}
-                        <div className="rounded-xl border border-cyan-200/[0.1] bg-slate-950/35 p-2 shadow-inner shadow-black/20">
-                          <div className="mb-1.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={11} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</div>
-                          <div className="flex items-center gap-2">
-                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-lg border border-white/[0.07] bg-black/30 px-3 py-2 text-[10px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
+                        <div className="product-license-card__key rounded-xl border border-cyan-200/[0.1] bg-slate-950/35 p-1.5 shadow-inner shadow-black/20">
+                          <div className="mb-1 flex items-center gap-1.5 px-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={10} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</div>
+                          <div className="flex items-center gap-1.5">
+                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-lg border border-white/[0.07] bg-black/30 px-2.5 py-1.5 text-[9px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
                             {up.keyString && (
                               <button
                                 onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
                                 title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}
-                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[10px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
+                                className={`inline-flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1.5 text-[9px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
                               >
                                 {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
                                 <span className="hidden sm:inline">{copiedKeyId === up.id ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}</span>

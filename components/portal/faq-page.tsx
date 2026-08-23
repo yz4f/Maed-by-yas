@@ -42,7 +42,7 @@ const faqGroups: Record<Language, FaqGroup[]> = {
       title: 'المساعدة والإدارة',
       icon: 'support',
       items: [
-        { question: 'كيف أتواصل مع فريق الإدارة؟', answer: 'افتح مساعد تعن واكتب تفاصيل المشكلة. عند الحاجة يستطيع فريق الإدارة الدخول إلى نفس المحادثة والرد مباشرةً، ثم تعود المتابعة تلقائياً إلى مساعد تعن عند الانتهاء.' },
+        { question: 'كيف أتواصل مع فريق الإدارة؟', answer: 'افتح مساعد تعن واكتب موضوع المشكلة وتفاصيلها بوضوح، ثم انتظر الرد. إذا كان فريق الدعم متاحاً فسيتم الرد عليك داخل المحادثة نفسها.' },
         { question: 'هل تظهر رتبة المنتج في ديسكورد بعد التفعيل؟', answer: 'عند تفعيل مفتاح منتج صالح من حسابك المرتبط بديسكورد، تُمنح رتبة Customer ورتبة المنتج المناسبة تلقائياً.' },
         { question: 'ماذا أكتب للحصول على مساعدة أسرع؟', answer: 'اذكر اسم المنتج، وصف الخطأ، والخطوات التي جرّبتها. أرفق لقطة شاشة عندما يكون ذلك ممكناً لتسهيل فهم الحالة.' },
       ],
@@ -74,7 +74,7 @@ const faqGroups: Record<Language, FaqGroup[]> = {
       title: 'Assistant & administration',
       icon: 'support',
       items: [
-        { question: 'How do I contact administration?', answer: 'Open Ta3n Assistant and describe the issue. When needed, administration can enter the same conversation and reply directly, then return it to the assistant after follow-up.' },
+        { question: 'How do I contact administration?', answer: 'Open Ta3n Assistant and clearly describe the issue, then wait for a reply. If the support team is available, it will reply in the same conversation.' },
         { question: 'Do Discord product roles appear after activation?', answer: 'When you activate a valid product key from a Discord-linked account, the Customer role and the relevant product role are granted automatically.' },
         { question: 'What should I write for faster help?', answer: 'Include the product name, what happened, and steps you already tried. Attach a clear screenshot whenever possible.' },
       ],
