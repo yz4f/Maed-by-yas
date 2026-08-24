@@ -239,8 +239,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     issuesLabel: 'مكتبة حلول المشاكل',
     issuesTitle: 'مكتبة الشروحات المرئية',
     issuesDescription: 'اختر الشرح المناسب من المكتبة. كل بطاقة تعرض صورة الخطأ ثم تفتح فيديو الحل المطابق لها داخل الموقع.',
-    libraryAvailable: '3 شروحات متاحة',
+    libraryAvailable: '4 حلول متاحة',
     videoGuide: 'شرح فيديو',
+    runtimeIssueTitle: 'خطأ تعريفات Visual C++ أو رسالة بيضاء',
+    runtimeIssueDescription: 'لرسائل VCRUNTIME140_1.dll أو MSVCP140.dll غير الموجودة عند تشغيل اللودر أو البرنامج.',
+    runtimeIssueAction: 'تحميل Visual C++ x64',
+    runtimeIssueHint: 'تنزيل رسمي من Microsoft ثم أعد تشغيل Windows قبل تجربة المنتج.',
     downloadWarpLabel: 'أداة اتصال اختيارية',
     downloadWarp: 'تحميل Cloudflare WARP لنظام Windows',
     downloadWarpAction: 'تنزيل الآن',
@@ -302,8 +306,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     issuesLabel: 'TROUBLESHOOTING LIBRARY',
     issuesTitle: 'Visual troubleshooting library',
     issuesDescription: 'Choose the relevant guide from the library. Each card shows the error screenshot and opens its dedicated solution video inside the site.',
-    libraryAvailable: '3 guides available',
+    libraryAvailable: '4 fixes available',
     videoGuide: 'Video guide',
+    runtimeIssueTitle: 'Visual C++ runtime or white error message',
+    runtimeIssueDescription: 'For missing VCRUNTIME140_1.dll or MSVCP140.dll messages when opening the loader or application.',
+    runtimeIssueAction: 'Download Visual C++ x64',
+    runtimeIssueHint: 'Official Microsoft download. Restart Windows before trying the product again.',
     downloadWarpLabel: 'OPTIONAL CONNECTION TOOL',
     downloadWarp: 'Download Cloudflare WARP for Windows',
     downloadWarpAction: 'Download now',
@@ -4157,6 +4165,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
                       </button>
                     ))}
+                    <a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="group relative flex h-full min-h-[250px] flex-col overflow-hidden rounded-[22px] border border-rose-300/[0.22] bg-[linear-gradient(135deg,rgba(136,19,55,.18),rgba(15,23,42,.88)_54%,rgba(8,47,73,.50))] p-4 text-start shadow-[0_16px_36px_rgba(0,0,0,.18)] transition-all duration-200 hover:-translate-y-1 hover:border-rose-300/45 hover:shadow-[0_20px_44px_rgba(136,19,55,.22)] sm:p-5">
+                      <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-rose-300/[.13] blur-3xl" />
+                      <div className="relative flex items-start justify-between gap-4"><span className="grid h-10 w-10 place-items-center rounded-xl border border-rose-200/30 bg-rose-400/[.15] text-[11px] font-black text-rose-100">04</span><span className="grid h-11 w-11 place-items-center rounded-xl border border-rose-200/[.26] bg-slate-950/30 text-rose-100 transition-transform duration-200 group-hover:scale-110"><AlertCircle className="h-5 w-5" /></span></div>
+                      <div className="relative mt-auto pt-8"><span className="inline-flex rounded-lg border border-rose-200/[.22] bg-rose-400/[.10] px-2 py-1 text-[9px] font-black tracking-[.12em] text-rose-100">MICROSOFT VISUAL C++</span><h5 className="mt-3 text-[15px] font-black text-white sm:text-base">{guideText.runtimeIssueTitle}</h5><p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-300 sm:text-[12px]">{guideText.runtimeIssueDescription}</p><p className="mt-3 border-t border-white/[.10] pt-3 text-[10px] leading-5 text-rose-100/80">{guideText.runtimeIssueHint}</p><span className="mt-4 inline-flex items-center gap-2 text-[11px] font-black text-rose-100"><Download className="h-3.5 w-3.5" />{guideText.runtimeIssueAction}</span></div>
+                    </a>
                   </div>
                 </div>
               )}
