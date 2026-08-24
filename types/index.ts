@@ -322,6 +322,29 @@ export interface SupportNotification {
   seenAt?: string | null;
 }
 
+export type VoiceSupportSessionStatus = 'PENDING_CONSENT' | 'WAITING_FOR_CUSTOMER' | 'ACTIVE' | 'STAFF_ASSISTANCE' | 'ENDED' | 'FAILED';
+
+export interface VoiceSupportSession {
+  id: string;
+  customerDiscordId: string;
+  customerName: string;
+  customerImage?: string | null;
+  createdById: string;
+  createdByName: string;
+  voiceChannelId?: string | null;
+  voiceChannelName?: string | null;
+  inviteUrl?: string | null;
+  status: VoiceSupportSessionStatus;
+  consentedAt?: string | null;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  screenShareRequested: boolean;
+  staffJoined: boolean;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ResetRequest {
   id: string;
   reference: string;

@@ -11,6 +11,7 @@ export const discordRoomChannels = {
   smartSupport: '1541504744344780920',
 } as const;
 const DISCORD_SUPPORT_COLLECTION = 'discordSupportSessions';
+const VOICE_SUPPORT_COLLECTION = 'voiceSupportSessions';
 const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
 
 type DiscordSupportSession = {
@@ -498,6 +499,78 @@ async function maintainDiscordSupportSessions(token: string) {
   }
 }
 
+async function openDiscordDm(recipientId: string, token: string) {
+  const response = await discordApi('/users/@me/channels', token, { method: 'POST', body: JSON.stringify({ recipient_id: recipientId }) });
+  if (!response.ok) throw new Error(`تعذر فتح رسالة خاصة للعميل (HTTP ${response.status}).`);
+  const channel = await response.json() as { id?: string };
+  if (!channel.id) throw new Error('لم يعرض Discord معرف الرسالة الخاصة.');
+  return channel.id;
+}
+
+export async function sendDiscordVoiceConsentRequest(session: { id: string; customerDiscordId: string; customerName: string; screenShareRequested: boolean }) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال طلب الموافقة.');
+  const dmId = await openDiscordDm(session.customerDiscordId, token);
+  await postDiscordMessage(dmId, token, {
+    embeds: [{
+      color: 0x22d3ee,
+      title: 'دعوة لجلسة دعم صوتية خاصة',
+      description: `مرحباً <@${session.customerDiscordId}>. طلب فريق الدعم فتح جلسة صوتية خاصة لمساعدتك. لن يبدأ أي صوت أو مشاركة شاشة إلا بعد موافقتك الصريحة.`,
+      fields: [
+        { name: 'مشاركة الشاشة', value: session.screenShareRequested ? 'اختيارية عند الحاجة لشرح المشكلة. يمكنك رفضها أو إيقافها في أي وقت.' : 'غير مطلوبة لهذه الجلسة.', inline: false },
+        { name: 'الخصوصية', value: 'لا ترسل مفاتيح المنتج أو كلمات المرور أو الرموز الحساسة داخل الجلسة.', inline: false },
+      ],
+      footer: { text: `تعن • جلسة ${session.id}` },
+    }],
+    components: [{ type: 1, components: [
+      { type: 2, style: 1, custom_id: `ta3n_voice_accept:${session.id}`, label: 'أوافق وأفتح الجلسة', emoji: { name: '✅' } },
+      { type: 2, style: 2, custom_id: `ta3n_voice_decline:${session.id}`, label: 'إلغاء', emoji: { name: '✖️' } },
+    ] }],
+  });
+}
+
+async function activateDiscordVoiceSession(sessionId: string, customerId: string, token: string) {
+  const sessionRef = doc(supportDatabase(), VOICE_SUPPORT_COLLECTION, sessionId);
+  const snapshot = await getDoc(sessionRef);
+  if (!snapshot.exists()) throw new Error('جلسة الدعم الصوتي غير موجودة.');
+  const session = snapshot.data() as any;
+  if (session.customerDiscordId !== customerId) throw new Error('هذه الجلسة مخصصة لحساب آخر.');
+  if (session.status !== 'PENDING_CONSENT') return session;
+
+  const selfResponse = await discordApi('/users/@me', token);
+  if (!selfResponse.ok) throw new Error(`تعذر تحديد حساب البوت الصوتي (HTTP ${selfResponse.status}).`);
+  const self = await selfResponse.json() as { id?: string };
+  if (!self.id) throw new Error('لم يعرض Discord معرف البوت.');
+  const VIEW_CHANNEL = 0x400;
+  const CONNECT = 0x100000;
+  const SPEAK = 0x200000;
+  const STREAM = 0x200;
+  const allowed = String(VIEW_CHANNEL | CONNECT | SPEAK | STREAM);
+  const channelResponse = await discordApi(`/guilds/${guildId}/channels`, token, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: `🎙️・support-${String(session.customerName || 'customer').replace(/[^\p{L}\p{N}-]+/gu, '-').slice(0, 38)}`,
+      type: 2,
+      user_limit: 3,
+      permission_overwrites: [
+        { id: guildId, type: 0, deny: String(VIEW_CHANNEL | CONNECT) },
+        { id: customerId, type: 1, allow: allowed },
+        { id: String(session.createdById), type: 1, allow: allowed },
+        { id: self.id, type: 1, allow: allowed },
+      ],
+    }),
+  });
+  if (!channelResponse.ok) throw new Error(`تعذر إنشاء الغرفة الصوتية الخاصة (HTTP ${channelResponse.status}).`);
+  const channel = await channelResponse.json() as { id?: string; name?: string };
+  if (!channel.id) throw new Error('لم يعرض Discord معرف الغرفة الصوتية.');
+  const inviteResponse = await discordApi(`/channels/${channel.id}/invites`, token, { method: 'POST', body: JSON.stringify({ max_age: 900, max_uses: 1, unique: true }) });
+  const invite = inviteResponse.ok ? await inviteResponse.json() as { code?: string } : null;
+  const inviteUrl = invite?.code ? `https://discord.gg/${invite.code}` : null;
+  const now = new Date().toISOString();
+  await updateDoc(sessionRef, { status: 'WAITING_FOR_CUSTOMER', consentedAt: now, voiceChannelId: channel.id, voiceChannelName: channel.name || 'جلسة دعم خاصة', inviteUrl, updatedAt: now });
+  return { ...session, status: 'WAITING_FOR_CUSTOMER', consentedAt: now, voiceChannelId: channel.id, voiceChannelName: channel.name || 'جلسة دعم خاصة', inviteUrl };
+}
+
 function assistantEmbed() {
   return {
     color: 0x22d3ee,
@@ -548,6 +621,29 @@ async function answerInteraction(interaction: any, token: string) {
     }
     const result = await createDiscordSupportThread(interaction, token);
     await respond({ content: result.existing ? `لديك جلسة دعم نشطة بالفعل: <#${result.threadId}>` : `تم إنشاء جلسة دعمك الخاصة: <#${result.threadId}>`, flags: 64 });
+    return;
+  }
+
+  if (customId.startsWith('ta3n_voice_accept:') || customId.startsWith('ta3n_voice_decline:')) {
+    const sessionId = customId.split(':', 2)[1];
+    const actorId = String(interaction.member?.user?.id || interaction.user?.id || '');
+    if (!sessionId || !actorId) {
+      await respond({ content: 'تعذر التحقق من جلسة الدعم الصوتي.', flags: 64 });
+      return;
+    }
+    if (customId.startsWith('ta3n_voice_decline:')) {
+      const voiceRef = doc(supportDatabase(), VOICE_SUPPORT_COLLECTION, sessionId);
+      const voiceSnapshot = await getDoc(voiceRef);
+      if (!voiceSnapshot.exists() || String((voiceSnapshot.data() as any).customerDiscordId) !== actorId) {
+        await respond({ content: 'هذه الدعوة غير مخصصة لحسابك.', flags: 64 });
+        return;
+      }
+      await updateDoc(voiceRef, { status: 'ENDED', endedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), notes: 'رفض العميل دعوة الجلسة.' });
+      await respond({ content: 'تم إلغاء دعوة الدعم الصوتي. لن يتم فتح أي غرفة أو مشاركة شاشة.', flags: 64 });
+      return;
+    }
+    const voiceSession = await activateDiscordVoiceSession(sessionId, actorId, token);
+    await respond({ content: voiceSession.inviteUrl ? `تم إنشاء غرفتك الخاصة. ادخل من هنا: ${voiceSession.inviteUrl}\nمشاركة الشاشة اختيارية ويمكنك إيقافها في أي وقت.` : 'تم إنشاء الغرفة الخاصة. افتح السيرفر ثم ادخل إلى الغرفة الصوتية الجديدة.', flags: 64 });
     return;
   }
 
