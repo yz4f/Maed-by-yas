@@ -270,6 +270,8 @@ export interface AiConversation {
   customerDiscordId: string;
   customerName: string;
   customerImage?: string | null;
+  /** معرف ظاهر ومستقل لرابط جلسة الدعم، ولا يكشف معرف Discord. */
+  supportSessionId?: string | null;
   status: AiConversationStatus;
   createdAt: string;
   updatedAt: string;

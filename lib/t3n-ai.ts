@@ -99,6 +99,11 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function makeSupportSessionId() {
+  const year = new Date().getUTCFullYear();
+  return `SUP-${year}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
 function isStaff(actor: TicketActor) {
   return STAFF_ROLES.has(actor.role);
 }
@@ -267,6 +272,11 @@ export async function getAiConversation(actor: TicketActor, options: { includeCu
   let conversation: AiConversation;
   if (snapshot.exists()) {
     conversation = toConversation(snapshot);
+    if (!conversation.supportSessionId) {
+      const supportSessionId = makeSupportSessionId();
+      await updateDoc(ref, { supportSessionId, updatedAt: now });
+      conversation = { ...conversation, supportSessionId, updatedAt: now };
+    }
   } else {
     conversation = {
       id: actor.id,
@@ -274,6 +284,7 @@ export async function getAiConversation(actor: TicketActor, options: { includeCu
       customerDiscordId: actor.id,
       customerName: customer.name,
       customerImage: customer.image || null,
+      supportSessionId: makeSupportSessionId(),
       status: 'AI_ACTIVE',
       createdAt: now,
       updatedAt: now,

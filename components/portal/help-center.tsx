@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowUpLeft, Bot, CheckCircle2, MessageCircle, ShieldCheck, Sparkles } from 'lucide-react';
-import { AiChatModal } from './ai-chat-modal';
 
 interface HelpCenterProps {
   lang: 'ar' | 'en';
@@ -46,7 +45,7 @@ const copy = {
 };
 
 export function HelpCenter({ lang, isDark, onNotify, onOpenGuide }: HelpCenterProps) {
-  const [showChat, setShowChat] = useState(false);
+  const router = useRouter();
   const t = copy[lang];
   const surface = isDark
     ? 'border-cyan-200/[.14] bg-[#071426] text-slate-100 shadow-[0_28px_84px_rgba(0,0,0,.28)]'
@@ -72,7 +71,7 @@ export function HelpCenter({ lang, isDark, onNotify, onOpenGuide }: HelpCenterPr
         </div>
 
         <div className="mt-9 flex flex-col items-stretch gap-4 sm:items-start">
-          <button onClick={() => setShowChat(true)} className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-l from-cyan-300 via-sky-400 to-sky-500 px-5 text-xs font-black text-slate-950 shadow-[0_14px_34px_rgba(34,211,238,.24)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-[.98] sm:min-w-[172px]">
+          <button onClick={() => router.push('/support')} className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-l from-cyan-300 via-sky-400 to-sky-500 px-5 text-xs font-black text-slate-950 shadow-[0_14px_34px_rgba(34,211,238,.24)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-[.98] sm:min-w-[172px]">
             <MessageCircle className="h-4 w-4" />{t.action}<ArrowUpLeft className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
           <p className={`flex max-w-xl items-start gap-2 text-[11px] leading-5 ${muted}`}><Bot className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-300" />{t.note}</p>
@@ -100,6 +99,5 @@ export function HelpCenter({ lang, isDark, onNotify, onOpenGuide }: HelpCenterPr
         <div className={`mt-8 flex items-center gap-2 rounded-2xl border px-3 py-2.5 ${isDark ? 'border-cyan-200/[.1] bg-cyan-300/[.045] text-cyan-100' : 'border-sky-100 bg-sky-50/75 text-sky-800'}`}><Sparkles className="h-3.5 w-3.5 shrink-0" /><p className="text-[10px] font-bold leading-5">{lang === 'ar' ? 'ابدأ بكتابة المشكلة كما تظهر لك للحصول على توجيه أدق.' : 'Start by describing the issue exactly as it appears for clearer guidance.'}</p></div>
       </motion.aside>
     </div>
-    <AiChatModal open={showChat} onClose={() => setShowChat(false)} lang={lang} isDark={isDark} onNotify={onNotify} onOpenGuide={(destination) => { setShowChat(false); onOpenGuide?.(destination); }} />
   </section>;
 }
