@@ -2741,10 +2741,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <button
                           onClick={() => { setResetRequestProduct(up); setResetRequestReason(''); }}
                           disabled={!canUseProduct}
-                          className="mt-1 inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-3 text-[10px] font-black text-amber-100 transition hover:bg-amber-300/[0.14] disabled:cursor-not-allowed disabled:opacity-45"
+                          className="product-reset-button"
                         >
-                          <RefreshCw size={12} />
-                          {lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}
+                          <span className="product-reset-button__icon"><RefreshCw size={15} /></span>
+                          <span className="min-w-0 text-start"><span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span><span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'أرسل السبب للإدارة من دون مشاركة المفتاح' : 'Send the reason to staff without sharing the key'}</span></span>
                         </button>
                       </div>
                     </article>
