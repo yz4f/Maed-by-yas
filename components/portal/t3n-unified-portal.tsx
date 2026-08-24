@@ -245,6 +245,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     runtimeIssueDescription: 'لرسائل VCRUNTIME140_1.dll أو MSVCP140.dll غير الموجودة عند تشغيل اللودر أو البرنامج.',
     runtimeIssueAction: 'تحميل Visual C++ x64',
     runtimeIssueHint: 'تنزيل رسمي من Microsoft ثم أعد تشغيل Windows قبل تجربة المنتج.',
+    commonErrorsTitle: 'حل سريع لرسائل التشغيل الشائعة',
+    commonErrorsDescription: 'إذا ظهرت شاشة تحميل بيضاء أو رسالة فقدان ملف DLL عند فتح اللودر، ابدأ بتحديث تعريفات Visual C++ الرسمية ثم أعد تشغيل Windows.',
+    commonErrorsAction: 'تحميل وتحديث Visual C++ x64',
+    commonErrorsNote: 'يشمل أخطاء VCRUNTIME140_1.dll وVCRUNTIME140.dll وMSVCP140.dll.',
     downloadWarpLabel: 'أداة اتصال اختيارية',
     downloadWarp: 'تحميل Cloudflare WARP لنظام Windows',
     downloadWarpAction: 'تنزيل الآن',
@@ -312,6 +316,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     runtimeIssueDescription: 'For missing VCRUNTIME140_1.dll or MSVCP140.dll messages when opening the loader or application.',
     runtimeIssueAction: 'Download Visual C++ x64',
     runtimeIssueHint: 'Official Microsoft download. Restart Windows before trying the product again.',
+    commonErrorsTitle: 'Quick fix for common launch errors',
+    commonErrorsDescription: 'If a white loading screen or a missing DLL message appears when opening the loader, update the official Visual C++ runtime and restart Windows.',
+    commonErrorsAction: 'Download & update Visual C++ x64',
+    commonErrorsNote: 'Covers VCRUNTIME140_1.dll, VCRUNTIME140.dll, and MSVCP140.dll errors.',
     downloadWarpLabel: 'OPTIONAL CONNECTION TOOL',
     downloadWarp: 'Download Cloudflare WARP for Windows',
     downloadWarpAction: 'Download now',
@@ -4145,6 +4153,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       {lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}
                     </button>
                   </div>
+                  <section className="relative overflow-hidden rounded-[22px] border border-rose-300/[.20] bg-[linear-gradient(135deg,rgba(136,19,55,.20),rgba(15,23,42,.92)_48%,rgba(8,47,73,.48))] p-4 shadow-[0_16px_40px_rgba(0,0,0,.16)] sm:p-5">
+                    <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-rose-300/[.14] blur-3xl" />
+                    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-rose-200/[.28] bg-rose-400/[.12] text-rose-100"><AlertCircle className="h-5 w-5" /></span><div className="min-w-0 text-start"><p className="text-[10px] font-black tracking-[.15em] text-rose-200/85">VISUAL C++ RUNTIME</p><h5 className="mt-1 text-sm font-black text-white sm:text-[15px]">{guideText.commonErrorsTitle}</h5><p className="mt-1 max-w-2xl text-[11px] leading-5 text-slate-300">{guideText.commonErrorsDescription}</p><p className="mt-2 text-[10px] font-bold text-rose-100/80">{guideText.commonErrorsNote}</p></div></div><a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200/[.44] bg-rose-300 px-4 py-2.5 text-[11px] font-black text-rose-950 shadow-[0_10px_24px_rgba(251,113,133,.22)] transition hover:-translate-y-0.5 hover:bg-rose-200 active:scale-[.98]"><Download className="h-4 w-4" />{guideText.commonErrorsAction}</a></div>
+                  </section>
                   <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
                     {[
                       { view: 'network' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png', title: guideText.networkIssueTitle, description: guideText.networkIssueDescription, accent: 'sky' },
