@@ -833,7 +833,7 @@ export async function listAiConversations(actor: TicketActor) {
   const conversationsSnapshot = await getDocs(collection(database(), AI_COLLECTION));
   return conversationsSnapshot.docs
     .map(toConversation)
-    .filter((conversation) => conversation.status !== 'CLOSED' && (conversation.messageCount || 0) > 0)
+    .filter((conversation) => (conversation.messageCount || 0) > 0)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
@@ -900,11 +900,24 @@ export async function deleteAiConversation(actor: TicketActor, conversationId: s
   if (conversation.status === 'HUMAN_ACTIVE' && conversation.humanAgentId && conversation.humanAgentId !== actor.id) {
     throw new Error('لا يمكنك إنهاء متابعة موظف إداري آخر.');
   }
-  const messagesSnapshot = await getDocs(collection(database(), AI_COLLECTION, conversationId, 'messages'));
-  await Promise.all(messagesSnapshot.docs.map((message) => deleteDoc(message.ref)));
-  await deleteDoc(doc(database(), AI_COLLECTION, conversationId));
-  await StoreDB.addLog('AI Conversation Deleted By Staff', `تم حذف محادثة العميل ${conversation.customerName} نهائياً`, actor.id, actor.name);
-  return { deletedConversationId: conversationId };
+  const closedAt = new Date().toISOString();
+  await updateConversationStatus(conversationId, 'CLOSED', {
+    closedAt,
+    closedReason: 'MANUAL',
+    reopenAt: null,
+    idleCloseAt: null,
+    inactivityWarningAt: null,
+    humanAgentId: null,
+    humanAgentName: null,
+  });
+  await addConversationMessage(conversationId, {
+    conversationId,
+    role: 'system',
+    body: 'تم إغلاق هذه الجلسة من فريق الدعم. تبقى الرسائل محفوظة للمراجعة، ويمكنك بدء جلسة جديدة عند الحاجة.',
+    visibleToCustomer: true,
+  });
+  await StoreDB.addLog('AI Conversation Closed By Staff', `تم إغلاق محادثة العميل ${conversation.customerName} مع حفظ السجل`, actor.id, actor.name);
+  return { closedConversationId: conversationId };
 }
 
 export async function processResetRequest(actor: TicketActor, input: { requestId: string; action: 'approve' | 'reject' | 'request_info' | 'complete'; note?: string }) {
