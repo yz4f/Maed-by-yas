@@ -19,8 +19,12 @@ export function SupportSessionPage({ sessionId }: { sessionId: string }) {
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || 'تعذر فتح جلسة الدعم.');
         const conversation = data.conversation as Conversation | undefined;
-        if (!conversation?.supportSessionId || conversation.supportSessionId !== sessionId) {
+        if (!conversation?.supportSessionId) {
           if (active) setState('not-found');
+          return;
+        }
+        if (conversation.supportSessionId !== sessionId) {
+          router.replace(`/support/session/${encodeURIComponent(conversation.supportSessionId)}`);
           return;
         }
         if (active) setState('ready');
@@ -31,7 +35,7 @@ export function SupportSessionPage({ sessionId }: { sessionId: string }) {
         setState('error');
       });
     return () => { active = false; };
-  }, [sessionId]);
+  }, [router, sessionId]);
 
   if (state === 'ready') {
     return <AiChatModal open standalone sessionId={sessionId} onClose={() => router.push('/support')} lang="ar" isDark onNotify={() => undefined} onOpenGuide={(destination) => router.push(destination === 'issues' ? '/?tab=my-products&guide=issues' : '/?tab=my-products&guide=product')} />;
