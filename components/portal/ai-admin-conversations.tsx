@@ -3,7 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createImageAttachment, type ChatAttachment } from './ai-chat-modal';
-import { Bot, CheckCircle2, Clock3, ImagePlus, Loader2, MessageCircle, RefreshCw, Send, Trash2, UserRound, UsersRound, XCircle } from 'lucide-react';
+import { Bot, CheckCircle2, Clock3, ImagePlus, Loader2, MessageCircle, RefreshCw, Search, Send, Trash2, UserRound, UsersRound, XCircle } from 'lucide-react';
 
 type Language = 'ar' | 'en';
 type ConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
@@ -19,6 +19,7 @@ type Conversation = {
   messageCount: number;
   humanAgentId?: string | null;
   humanAgentName?: string | null;
+  supportSessionId?: string | null;
 };
 
 type Message = {
@@ -71,7 +72,7 @@ const copy = {
     close: 'إنهاء المحادثة',
     closeConfirm: 'تأكيد الإنهاء',
     closeCancel: 'إلغاء',
-    closeSuccess: 'تم حذف المحادثة نهائياً من قائمة الدعم.',
+    closeSuccess: 'تم إغلاق المحادثة وحفظ سجلها ضمن جلسات الدعم.',
     quickReplies: ['مرحباً، اكتب تفاصيل المشكلة بوضوح وسأتابع معك هنا.', 'جرّب الخطوات الموجودة في الشرح ثم أرسل صورة واضحة للنتيجة.', 'تم استلام التفاصيل، يرجى الانتظار قليلاً وسيتم الرد عند توفر فريق الدعم.'],
     attachImage: 'إرفاق صورة',
     removeImage: 'إزالة الصورة',
@@ -113,7 +114,7 @@ const copy = {
     close: 'Close conversation',
     closeConfirm: 'Confirm close',
     closeCancel: 'Cancel',
-    closeSuccess: 'Conversation deleted from the support list.',
+    closeSuccess: 'Conversation closed and preserved in support history.',
     quickReplies: ['Hello. Describe the issue clearly and I will follow it up here.', 'Try the steps in the guide, then send a clear image of the result.', 'The details were received. Please wait and support will reply when available.'],
     attachImage: 'Attach image',
     removeImage: 'Remove image',
@@ -141,6 +142,8 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
   const [preparingImage, setPreparingImage] = useState(false);
   const [closeConfirm, setCloseConfirm] = useState(false);
+  const [queryText, setQueryText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | ConversationStatus>('ALL');
   const notifyRef = useRef(onNotify);
   const selectedIdRef = useRef<string | null>(null);
   const displayedThreadIdRef = useRef<string | null>(null);
@@ -151,6 +154,15 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
 
   useEffect(() => { notifyRef.current = onNotify; }, [onNotify]);
   useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
+  const filteredConversations = useMemo(() => {
+    const query = queryText.trim().toLocaleLowerCase();
+    return conversations.filter((conversation) => {
+      const statusMatches = statusFilter === 'ALL' || conversation.status === statusFilter;
+      const textMatches = !query || conversation.customerName.toLocaleLowerCase().includes(query) || (conversation.supportSessionId || '').toLocaleLowerCase().includes(query);
+      return statusMatches && textMatches;
+    });
+  }, [conversations, queryText, statusFilter]);
 
   const activeStatus = useMemo(() => ({
     AI_ACTIVE: { label: t.ai, className: isDark ? 'border-cyan-300/15 bg-cyan-400/[.08] text-cyan-100' : 'border-cyan-200 bg-cyan-50 text-cyan-700' },
@@ -317,14 +329,11 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Unable to close conversation.');
-      const deletedId = typeof data.deletedConversationId === 'string' ? data.deletedConversationId : selected.id;
-      threadCacheRef.current.delete(deletedId);
-      setConversations((current) => current.filter((conversation) => conversation.id !== deletedId));
-      setSelectedId((current) => current === deletedId ? null : current);
-      setSelected(null);
-      setMessages([]);
+      const closedId = typeof data.closedConversationId === 'string' ? data.closedConversationId : selected.id;
+      threadCacheRef.current.delete(closedId);
       setCloseConfirm(false);
       setAttachment(null);
+      await Promise.all([loadList(), loadThread(closedId)]);
       onNotify?.(t.closeSuccess, 'success');
     } catch (error) {
       onNotify?.(error instanceof Error ? error.message : 'Unable to close conversation.', 'error');
@@ -334,11 +343,12 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   return <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[340px_minmax(0,1fr)]">
     <aside className={`self-start overflow-hidden rounded-[26px] border shadow-[0_16px_42px_rgba(0,0,0,.12)] ${isDark ? 'border-white/[.08] bg-[#0c1422]' : 'border-slate-200 bg-white'}`}>
       <div className={`flex items-center justify-between gap-3 border-b px-4 py-4 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
-        <div className="flex min-w-0 items-center gap-2.5"><span className="grid h-10 w-10 place-items-center rounded-[14px] border border-cyan-300/[.14] bg-cyan-400/[.08] text-cyan-200"><UsersRound className="h-4.5 w-4.5" /></span><div className="min-w-0"><h3 className="truncate text-sm font-black">{t.title}</h3><p className={`mt-0.5 truncate text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.activeChats(conversations.length)}</p></div></div>
+        <div className="flex min-w-0 items-center gap-2.5"><span className="grid h-10 w-10 place-items-center rounded-[14px] border border-cyan-300/[.14] bg-cyan-400/[.08] text-cyan-200"><UsersRound className="h-4.5 w-4.5" /></span><div className="min-w-0"><h3 className="truncate text-sm font-black">{t.title}</h3><p className={`mt-0.5 truncate text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.activeChats(filteredConversations.length)}</p></div></div>
         <button onClick={() => void loadList({ showSpinner: true, notify: true })} disabled={loadingList} className={`grid h-9 w-9 place-items-center rounded-xl border transition ${isDark ? 'border-white/[.1] text-slate-300 hover:bg-white/[.06]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`} title={t.refresh}>{loadingList ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button>
       </div>
+      <div className={`border-b px-3 py-3 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}><div className={`flex items-center gap-2 rounded-xl border px-2.5 ${isDark ? 'border-white/[.09] bg-slate-950/35' : 'border-slate-200 bg-slate-50'}`}><Search className={`h-3.5 w-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} /><input value={queryText} onChange={(event) => setQueryText(event.target.value)} placeholder={lang === 'ar' ? 'بحث عميل أو Session ID' : 'Search customer or session'} className={`h-9 min-w-0 flex-1 bg-transparent text-[10px] font-bold outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} /></div><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'ALL' | ConversationStatus)} className={`mt-2 h-8 w-full rounded-lg border px-2 text-[10px] font-bold outline-none ${isDark ? 'border-white/[.09] bg-slate-950/35 text-slate-300' : 'border-slate-200 bg-white text-slate-700'}`}><option value="ALL">{lang === 'ar' ? 'كل الجلسات' : 'All sessions'}</option><option value="AI_ACTIVE">{t.ai}</option><option value="WAITING_FOR_SUPPORT">{t.waiting}</option><option value="WAITING_FOR_CUSTOMER">{t.waitingCustomer}</option><option value="HUMAN_ACTIVE">{t.human}</option><option value="CLOSED">{t.closed}</option></select></div>
       <div className="max-h-[620px] overflow-y-auto p-2.5">
-        {loadingList && conversations.length === 0 ? <div className={`m-1 grid min-h-52 place-items-center rounded-2xl border border-dashed text-center ${isDark ? 'border-cyan-300/[.14] bg-cyan-300/[.035] text-slate-400' : 'border-cyan-200 bg-cyan-50/50 text-slate-500'}`}><div><span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400/10 text-cyan-300"><Loader2 className="h-5 w-5 animate-spin" /></span><p className="text-[11px] font-black">{t.loading}</p><p className="mt-1 text-[10px] opacity-75">{lang === 'ar' ? 'يتم ترتيب المحادثات بأحدث رسالة.' : 'Ordering conversations by latest message.'}</p></div></div> : conversations.length === 0 ? <div className={`m-1 grid min-h-52 place-items-center rounded-2xl border border-dashed p-5 text-center ${isDark ? 'border-white/[.08] bg-white/[.025] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'}`}><div><span className={`mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl ${isDark ? 'bg-violet-400/[.09] text-violet-200' : 'bg-violet-50 text-violet-600'}`}><MessageCircle className="h-5 w-5" /></span><p className={`text-[11px] font-black ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{t.empty}</p><p className="mt-1 max-w-[190px] text-[10px] leading-5">{lang === 'ar' ? 'ستظهر المحادثات الجديدة هنا فور بدء العميل التحدث مع مساعد تعن.' : 'New chats appear here as soon as a customer starts talking with Ta3n Assistant.'}</p><button onClick={() => void loadList({ showSpinner: true, notify: true })} className={`mt-3 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black transition ${isDark ? 'border-white/[.1] text-slate-300 hover:bg-white/[.06]' : 'border-slate-200 text-slate-600 hover:bg-white'}`}><RefreshCw className="h-3 w-3" />{t.refresh}</button></div></div> : conversations.map((conversation) => {
+        {loadingList && conversations.length === 0 ? <div className={`m-1 grid min-h-52 place-items-center rounded-2xl border border-dashed text-center ${isDark ? 'border-cyan-300/[.14] bg-cyan-300/[.035] text-slate-400' : 'border-cyan-200 bg-cyan-50/50 text-slate-500'}`}><div><span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400/10 text-cyan-300"><Loader2 className="h-5 w-5 animate-spin" /></span><p className="text-[11px] font-black">{t.loading}</p><p className="mt-1 text-[10px] opacity-75">{lang === 'ar' ? 'يتم ترتيب المحادثات بأحدث رسالة.' : 'Ordering conversations by latest message.'}</p></div></div> : filteredConversations.length === 0 ? <div className={`m-1 grid min-h-52 place-items-center rounded-2xl border border-dashed p-5 text-center ${isDark ? 'border-white/[.08] bg-white/[.025] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'}`}><div><span className={`mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl ${isDark ? 'bg-violet-400/[.09] text-violet-200' : 'bg-violet-50 text-violet-600'}`}><MessageCircle className="h-5 w-5" /></span><p className={`text-[11px] font-black ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{t.empty}</p><p className="mt-1 max-w-[190px] text-[10px] leading-5">{lang === 'ar' ? 'ستظهر المحادثات الجديدة هنا فور بدء العميل التحدث مع مساعد تعن.' : 'New chats appear here as soon as a customer starts talking with Ta3n Assistant.'}</p><button onClick={() => void loadList({ showSpinner: true, notify: true })} className={`mt-3 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black transition ${isDark ? 'border-white/[.1] text-slate-300 hover:bg-white/[.06]' : 'border-slate-200 text-slate-600 hover:bg-white'}`}><RefreshCw className="h-3 w-3" />{t.refresh}</button></div></div> : filteredConversations.map((conversation) => {
           const status = activeStatus[conversation.status];
           return <button key={conversation.id} onClick={() => {
             if (selectedId === conversation.id) return;
@@ -348,7 +358,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
             setLoadingThread(!cached);
             setSelectedId(conversation.id);
           }} className={`mb-1.5 w-full rounded-2xl border p-3 text-start transition ${selectedId === conversation.id ? (isDark ? 'border-cyan-300/25 bg-cyan-400/[.08]' : 'border-cyan-200 bg-cyan-50') : (isDark ? 'border-transparent hover:bg-white/[.04]' : 'border-transparent hover:bg-slate-50')}`}>
-            <div className="flex items-center gap-2.5"><img src={conversation.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-9 w-9 rounded-xl object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{conversation.customerName}</p><p className={`mt-0.5 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{formatDate(conversation.lastMessageAt, lang)}</p></div></div>
+            <div className="flex items-center gap-2.5"><img src={conversation.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-9 w-9 rounded-xl object-cover" onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{conversation.customerName}</p><p className={`mt-0.5 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversation.supportSessionId || formatDate(conversation.lastMessageAt, lang)}</p></div></div>
             <div className="mt-2 flex items-center justify-between gap-2"><span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black ${status.className}`}>{conversation.status === 'WAITING_FOR_CUSTOMER' && <Clock3 className="h-3 w-3" />}{status.label}</span><span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{conversation.messageCount || 0}</span></div>
           </button>;
         })}
