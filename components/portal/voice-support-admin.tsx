@@ -23,6 +23,7 @@ function formatTime(value?: string | null) {
 export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }) {
   const [sessions, setSessions] = useState<VoiceSupportSession[]>([]);
   const [customerId, setCustomerId] = useState('');
+  const [customerQuery, setCustomerQuery] = useState('');
   const [screenShareRequested, setScreenShareRequested] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -30,6 +31,11 @@ export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }
 
   const activeCount = useMemo(() => sessions.filter((item) => ['PENDING_CONSENT', 'WAITING_FOR_CUSTOMER', 'ACTIVE', 'STAFF_ASSISTANCE'].includes(item.status)).length, [sessions]);
   const selectedCustomer = customers.find((customer) => customer.discordId === customerId);
+  const visibleCustomers = useMemo(() => {
+    const query = customerQuery.trim().toLowerCase();
+    if (!query) return customers;
+    return customers.filter((customer) => `${customer.name} ${customer.discordId} ${customer.email || ''}`.toLowerCase().includes(query));
+  }, [customerQuery, customers]);
 
   const loadSessions = async () => {
     setIsLoading(true);
@@ -105,7 +111,7 @@ export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }
 
     <section className="rounded-[24px] border border-white/[.08] bg-[#091321]/80 p-4 shadow-[0_16px_40px_rgba(0,0,0,.16)] sm:p-5">
       <div className="mb-4 flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl border border-cyan-200/[.16] bg-cyan-300/[.08] text-cyan-200"><Plus className="h-4 w-4" /></span><div><h4 className="text-sm font-black text-white">إنشاء جلسة خاصة</h4><p className="mt-0.5 text-[10px] text-slate-500">يرسل النظام طلب موافقة للعميل قبل فتح أي مسار صوت أو شاشة.</p></div></div>
-      <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto]"><select value={customerId} onChange={(event) => setCustomerId(event.target.value)} className="h-12 min-w-0 rounded-xl border border-white/[.09] bg-[#050b14] px-3 text-xs font-bold text-white outline-none transition focus:border-cyan-300/[.45]" aria-label="اختيار العميل"><option value="">اختر العميل لإنشاء جلسة الدعم</option>{customers.map((customer) => <option value={customer.discordId} key={customer.discordId}>{customer.name} — {customer.discordId}</option>)}</select><label className="flex h-12 items-center gap-2 rounded-xl border border-white/[.08] bg-white/[.035] px-3 text-[11px] font-bold text-slate-300"><input checked={screenShareRequested} onChange={(event) => setScreenShareRequested(event.target.checked)} type="checkbox" className="h-4 w-4 accent-cyan-300" /><MonitorUp className="h-4 w-4 text-cyan-200" />طلب مشاركة الشاشة</label><button disabled={!selectedCustomer || isCreating} onClick={() => void createSession()} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#67e8f9,#38bdf8)] px-5 text-xs font-black text-slate-950 shadow-[0_12px_28px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"><PhoneCall className="h-4 w-4" />{isCreating ? 'جارٍ إنشاء الجلسة...' : 'إنشاء وطلب موافقة'}</button></div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]"><div className="space-y-2"><input value={customerQuery} onChange={(event) => setCustomerQuery(event.target.value)} placeholder="ابحث باسم العميل أو Discord ID" className="h-10 w-full rounded-xl border border-white/[.08] bg-white/[.025] px-3 text-[11px] font-bold text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/[.35]" /><select value={customerId} onChange={(event) => setCustomerId(event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-white/[.09] bg-[#050b14] px-3 text-xs font-bold text-white outline-none transition focus:border-cyan-300/[.45]" aria-label="اختيار العميل"><option value="">اختر العميل لإنشاء جلسة الدعم</option>{visibleCustomers.map((customer) => <option value={customer.discordId} key={customer.discordId}>{customer.name} — {customer.discordId}</option>)}</select></div><label className="flex h-12 self-end items-center gap-2 rounded-xl border border-white/[.08] bg-white/[.035] px-3 text-[11px] font-bold text-slate-300"><input checked={screenShareRequested} onChange={(event) => setScreenShareRequested(event.target.checked)} type="checkbox" className="h-4 w-4 accent-cyan-300" /><MonitorUp className="h-4 w-4 text-cyan-200" />طلب مشاركة الشاشة</label><button disabled={!selectedCustomer || isCreating} onClick={() => void createSession()} className="inline-flex h-12 self-end items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#67e8f9,#38bdf8)] px-5 text-xs font-black text-slate-950 shadow-[0_12px_28px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"><PhoneCall className="h-4 w-4" />{isCreating ? 'جارٍ إنشاء الجلسة...' : 'إنشاء وطلب موافقة'}</button></div>
     </section>
 
     {error && <div className="flex items-center gap-2 rounded-2xl border border-rose-300/[.18] bg-rose-400/[.06] px-4 py-3 text-xs font-bold text-rose-100"><XCircle className="h-4 w-4 shrink-0" />{error}</div>}
