@@ -1251,3 +1251,27 @@ body {
     box-shadow: none;
   }
 }
+
+/* Mobile loading and scrolling: defer below-the-fold license card paint without layout jumps. */
+@media (max-width: 767px) {
+  .product-license-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 430px;
+  }
+
+  .products-experience {
+    scroll-margin-top: 5rem;
+  }
+
+  .portal-ambient::before,
+  .portal-ambient::after {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-ambient::before,
+  .portal-ambient::after {
+    animation: none !important;
+  }
+}

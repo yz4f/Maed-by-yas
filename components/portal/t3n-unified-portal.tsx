@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import {
   Shield,
@@ -51,11 +52,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
 import { DashboardLayout } from './DashboardLayout';
 import { HelpCenter } from './help-center';
-import { FaqPage } from './faq-page';
-import { AiAdminConversations } from './ai-admin-conversations';
-import { SiteUpdatesAdmin } from './site-updates-admin';
-import { ResetKeyRequestsAdmin } from './reset-key-requests-admin';
 import { SupportNotificationBanner } from './support-notification-banner';
+const FaqPage = dynamic(() => import('./faq-page').then((module) => module.FaqPage), { ssr: false });
+const AiAdminConversations = dynamic(() => import('./ai-admin-conversations').then((module) => module.AiAdminConversations), { ssr: false });
+const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
+const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -2665,7 +2666,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="product-license-card__icon shrink-0">
-                              <img src={productImg} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                              <img src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
                             </div>
                             <div className="min-w-0">
                               <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>

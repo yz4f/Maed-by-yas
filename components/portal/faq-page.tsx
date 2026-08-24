@@ -6,7 +6,7 @@ type Language = 'ar' | 'en';
 
 type FaqItem = { question: string; answer: string };
 
-type FaqGroup = { label: string; title: string; icon: 'product' | 'troubleshoot' | 'support'; items: FaqItem[] };
+type FaqGroup = { label: string; title: string; icon: 'product' | 'troubleshoot' | 'support' | 'license'; items: FaqItem[] };
 
 interface FaqPageProps {
   lang: Language;
@@ -35,6 +35,16 @@ const faqGroups: Record<Language, FaqGroup[]> = {
         { question: 'ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ آخر؟', answer: 'ادخل إلى «الشروحات والتعليمات» في المنتج ثم افتح «حلول المشاكل» واختر المشكلة المطابقة لما يظهر لديك. اتبع الخطوات كاملة وبالترتيب.' },
         { question: 'هل أستطيع إرسال صورة للمشكلة؟', answer: 'نعم. افتح مساعد تعن، ثم اختر صورة من جهازك أو الصق لقطة الشاشة مباشرة في خانة الكتابة. أرسل صورة واضحة للخطأ مع وصف قصير.' },
         { question: 'لماذا لا يتم تفعيل المفتاح؟', answer: 'تأكد من كتابة المفتاح كاملاً كما تم استلامه، وأنه لم يُستخدم سابقاً. إذا استمرت المشكلة، افتح مساعد تعن وأرسل تفاصيل الرسالة الظاهرة.' },
+      ],
+    },
+    {
+      label: 'التراخيص',
+      title: 'المفاتيح والرستات',
+      icon: 'license',
+      items: [
+        { question: 'أين أجد مفتاح المنتج الخاص بي؟', answer: 'افتح «منتجاتي» وستجد شريط المفتاح ضمن بطاقة الترخيص المفعّل. استخدم زر النسخ لنسخه بدقة.' },
+        { question: 'متى أطلب رستات للمفتاح؟', answer: 'استخدم «طلب رستات المفتاح» من بطاقة المنتج عند الحاجة، ثم اكتب سبباً واضحاً. ستظهر حالة الطلب داخل حسابك حتى تتم مراجعته.' },
+        { question: 'كيف أعرف أن الرستات اكتمل؟', answer: 'عند تنفيذ الرستات ستظهر لك رسالة واضحة في صفحة «منتجاتي» تؤكد أن المفتاح أصبح جاهزاً للتسجيل أو التشغيل من جديد.' },
       ],
     },
     {
@@ -70,6 +80,16 @@ const faqGroups: Record<Language, FaqGroup[]> = {
       ],
     },
     {
+      label: 'LICENSES',
+      title: 'Keys & resets',
+      icon: 'license',
+      items: [
+        { question: 'Where can I find my product key?', answer: 'Open “My Products” to find the key bar on your active license card. Use the copy button to copy it accurately.' },
+        { question: 'When should I request a key reset?', answer: 'Use “Request key reset” on the product card when needed, then write a clear reason. The request status remains visible in your account while it is reviewed.' },
+        { question: 'How do I know the reset is complete?', answer: 'When the reset is completed, a clear message appears on “My Products” confirming that your key is ready to register or start again.' },
+      ],
+    },
+    {
       label: 'FOLLOW-UP',
       title: 'Assistant & administration',
       icon: 'support',
@@ -82,7 +102,7 @@ const faqGroups: Record<Language, FaqGroup[]> = {
   ],
 };
 
-const iconFor = (icon: FaqGroup['icon']) => icon === 'product' ? PackageOpen : icon === 'troubleshoot' ? Wrench : MessageCircle;
+const iconFor = (icon: FaqGroup['icon']) => icon === 'product' ? PackageOpen : icon === 'troubleshoot' ? Wrench : icon === 'license' ? KeyRound : MessageCircle;
 
 export function FaqPage({ lang, isDark, onOpenProducts, onOpenAssistant }: FaqPageProps) {
   const groups = faqGroups[lang];
@@ -111,7 +131,7 @@ export function FaqPage({ lang, isDark, onOpenProducts, onOpenAssistant }: FaqPa
       </div>
     </section>
 
-    <div className="grid gap-5 lg:grid-cols-3">
+    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
       {groups.map((group) => {
         const Icon = iconFor(group.icon);
         return <section key={group.title} className={`rounded-[24px] border p-4 sm:p-5 ${isDark ? 'border-white/[.08] bg-[#0b1422]' : 'border-slate-200 bg-white shadow-[0_12px_28px_rgba(22,78,120,.05)]'}`}>
