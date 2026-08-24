@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
+import { sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
@@ -255,7 +255,7 @@ export async function getCustomerContext(actor: TicketActor) {
   return getCustomerContextForUser(await ensureCustomer(actor));
 }
 
-export async function getAiConversation(actor: TicketActor, options: { includeCustomerContext?: boolean } = {}) {
+export async function getAiConversation(actor: TicketActor, options: { includeCustomerContext?: boolean; suppressDiscordOpenLog?: boolean } = {}) {
   const customer = await ensureCustomer(actor);
   const ref = doc(database(), AI_COLLECTION, actor.id);
   const [snapshot, messagesSnapshot, customerContext] = await Promise.all([
@@ -291,12 +291,14 @@ export async function getAiConversation(actor: TicketActor, options: { includeCu
       humanAgentName: null,
     };
     await setDoc(ref, conversation);
-    void sendDiscordWebsiteLog({
-      type: 'conversationOpened',
-      customerId: actor.id,
-      customerName: customer.name || 'عميل',
-      customerImage: customer.image || null,
-    }).catch((error) => console.error('[Discord Log] Conversation opened event failed:', error));
+    if (!options.suppressDiscordOpenLog) {
+      void sendDiscordWebsiteLog({
+        type: 'conversationOpened',
+        customerId: actor.id,
+        customerName: customer.name || 'عميل',
+        customerImage: customer.image || null,
+      }).catch((error) => console.error('[Discord Log] Conversation opened event failed:', error));
+    }
   }
   return { conversation, messages: messagesSnapshot.docs.map(toMessage), customer: customerContext, customerProfile: customer };
 }
@@ -668,13 +670,13 @@ function fastSupportReply(message: string, language: 'ar' | 'en', intent = class
   return null;
 }
 
-export async function sendAiMessage(actor: TicketActor, input: { body: string; language: 'ar' | 'en'; attachments?: AiImageAttachment[] }) {
+export async function sendAiMessage(actor: TicketActor, input: { body: string; language: 'ar' | 'en'; attachments?: AiImageAttachment[]; source?: 'website' | 'discord' }) {
   const body = input.body.trim();
   const attachments = validateAiAttachments(input.attachments || []);
   if (body.length > MAX_CHAT_LENGTH) throw new Error(`يجب ألا تتجاوز الرسالة ${MAX_CHAT_LENGTH} حرفاً.`);
   if (body.length < 2 && attachments.length === 0) throw new Error('اكتب رسالتك أو أرفق صورة واحدة على الأقل.');
   const messageBody = body || (input.language === 'ar' ? 'صورة مرفقة لشرح المشكلة.' : 'An image is attached to explain the issue.');
-  const workspace = await getAiConversation(actor);
+  const workspace = await getAiConversation(actor, { suppressDiscordOpenLog: input.source === 'discord' });
   const { conversation } = workspace;
   const now = Date.now();
   if (conversation.status === 'CLOSED' && conversation.reopenAt && new Date(conversation.reopenAt).getTime() > now) {
@@ -787,8 +789,21 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
     processedAt: null,
     processedById: null,
     processedByName: null,
+    discordMessageId: null,
   };
-  await setDoc(doc(database(), RESET_COLLECTION, id), request);
+  const requestRef = doc(database(), RESET_COLLECTION, id);
+  await setDoc(requestRef, request);
+  void syncDiscordResetRequestLog({
+    reference: request.reference,
+    customerDiscordId: request.customerDiscordId,
+    customerName: request.customerName,
+    customerImage: request.customerImage,
+    productName: request.productName,
+    keyMasked: request.keyMasked,
+    reason: request.reason,
+    status: request.status,
+  }).then(({ messageId }) => updateDoc(requestRef, { discordMessageId: messageId }))
+    .catch((error) => console.error('[Discord Reset] Unable to create request card:', error));
   await StoreDB.addLog('Reset Request Created', `تم إنشاء طلب ${request.reference} لمنتج ${request.productName}`, context.user.id, context.user.name);
   return { request, duplicate: false };
 }
@@ -938,8 +953,23 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
       seenAt: null,
     } satisfies SupportNotification);
   }
+  const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null };
+  void syncDiscordResetRequestLog({
+    reference: updatedRequest.reference,
+    customerDiscordId: updatedRequest.customerDiscordId,
+    customerName: updatedRequest.customerName,
+    customerImage: updatedRequest.customerImage,
+    productName: updatedRequest.productName,
+    keyMasked: updatedRequest.keyMasked,
+    reason: updatedRequest.reason,
+    status: updatedRequest.status,
+    adminName: updatedRequest.processedByName,
+    adminNotes: updatedRequest.adminNotes,
+    discordMessageId: updatedRequest.discordMessageId,
+  }).then(({ messageId }) => updateDoc(requestRef, { discordMessageId: messageId }))
+    .catch((error) => console.error('[Discord Reset] Unable to update request card:', error));
   await StoreDB.addLog(`AI Reset ${status}`, `طلب ${request.reference} — ${request.productName}`, actor.id, actor.name);
-  return { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name };
+  return updatedRequest;
 }
 
 export async function getAiAdminWorkspace(actor: TicketActor) {

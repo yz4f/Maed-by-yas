@@ -348,6 +348,8 @@ export interface ResetRequest {
   processedAt?: string | null;
   processedById?: string | null;
   processedByName?: string | null;
+  /** معرف بطاقة Discord المرتبطة بالطلب، لتحديثها دون تكرار الرسائل. */
+  discordMessageId?: string | null;
 }
 
 export type SiteUpdateStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'DISCORD_SENT' | 'DISCORD_FAILED';
