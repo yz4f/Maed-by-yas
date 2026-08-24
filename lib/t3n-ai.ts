@@ -627,10 +627,10 @@ function classifySupportMessage(message: string): SupportIntent {
   const motherboardMentioned = hasAny(text, ['مذربورد', 'ماذربورد', 'ماذر بورد', 'motherboard', 'mainboard', 'asus', 'اسوس', 'msi', 'gigabyte', 'جيجابايت', 'asrock']);
   const banOrSpoofMentioned = hasAny(text, ['فك باند', 'فك الباند', 'مافك', 'ما انفك', 'الباند باقي', 'باند للحين', 'ban still', 'unban', 'spoof', 'سبوفر', 'سبوف']);
   const guideConfusion = hasAny(text, ['ما عرفت', 'ماعرفت', 'ما فهمت', 'مافهمت', 'ما قدرت', 'ماقدرت', 'كيف اسويه', 'كيف اشغله', 'الشرح صعب', 'طريقة التشغيل', 'ما اعرف الطريقة']);
-  const resetRequest = hasAny(text, ['طلب رستات', 'طلب ريست', 'رستات المفتاح', 'ريست المفتاح', 'reset key', 'request reset', 'reset request']);
+  const resetRequest = hasAny(text, ['طلب رستات', 'طلب ريست', 'رستات المفتاح', 'ريست المفتاح', 'ابي رستات', 'ابغى رستات', 'احتاج رستات', 'احتاج ريست', 'reset key', 'request reset', 'reset request']);
   const spooferListIssue = hasAny(text, ['قائمة سبوفر', 'قائمه سبوفر', 'spoofer list', 'list not showing', 'القائمة ما تظهر', 'القائمه ما تظهر']);
   const loaderIssue = hasAny(text, ['تحميل اللودر', 'تنزيل اللودر', 'اللودر ما يفتح', 'لودر ما يفتح', 'loader download', 'loader wont open', 'loader will not open']);
-  const activationIssue = hasAny(text, ['خطا تفعيل', 'خطأ تفعيل', 'مشكلة تفعيل', 'التفعيل ما يشتغل', 'activation error', 'activation failed', 'key activation']);
+  const activationIssue = hasAny(text, ['خطا تفعيل', 'خطأ تفعيل', 'مشكلة تفعيل', 'التفعيل ما يشتغل', 'مفتاح ما يشتغل', 'المفتاح ما يشتغل', 'مفتاح مايشتغل', 'key not working', 'activation error', 'activation failed', 'key activation']);
   const orderIssue = hasAny(text, ['الطلب ما وصل', 'الطلب ماوصل', 'ما استلمت', 'ماوصلني', 'لم يصل', 'طلبية', 'order not received', 'order missing', 'did not receive order']);
   const accountIssue = hasAny(text, ['ما اقدر ادخل', 'ما ادخل', 'تسجيل الدخول', 'حسابي', 'دخول الحساب', 'account login', 'cant log in', "can't log in", 'cannot log in']);
   const humanRequest = hasAny(text, ['التواصل مع الدعم', 'موظف', 'دعم بشري', 'human support', 'agent']);
@@ -668,6 +668,24 @@ function hasRecentAssistantGuidance(history: AiMessage[], markers: string[]) {
   return history.slice(-4).some((entry) => entry.role === 'assistant' && markers.some((marker) => entry.body.includes(marker)));
 }
 
+function contextualClarification(language: 'ar' | 'en', history: AiMessage[], currentMessage = '') {
+  const customerContext = normalizedSupportText([...history.filter((entry) => entry.role === 'customer').slice(-5).map((entry) => entry.body), currentMessage].join(' '));
+  const mentionsFortnite = hasAny(customerContext, ['فورت', 'fortnite', 'فورت نايت']);
+  const mentionsSpoofer = hasAny(customerContext, ['سبوفر', 'spoofer', 'قائمة']);
+  const mentionsKey = hasAny(customerContext, ['مفتاح', 'تفعيل', 'key', 'activation']);
+  const askedBefore = hasRecentAssistantGuidance(history, ['حتى أساعدك بدقة', 'To help accurately']);
+  if (language === 'ar') {
+    if (mentionsKey) return 'هل تظهر لك رسالة عند تفعيل المفتاح، أم أن المنتج يظهر مفعّلاً لكن لا يعمل؟ أرسل صورة الرسالة الظاهرة فقط، ولا ترسل المفتاح.';
+    if (mentionsSpoofer) return 'فهمت أن المشكلة مرتبطة بالـSpoofer. هل القائمة لا تظهر داخل الموقع أم يظهر خطأ بعد فتح اللودر؟ أرسل صورة للخطوة التي توقفت عندها.';
+    if (mentionsFortnite) return 'فهمت أن المشكلة مرتبطة بفورت نايت. هل ظهرت قبل تشغيل المنتج أم بعده؟ أرسل صورة رسالة الخطأ أو اكتب اسم المنتج المفعّل لأوجهك إلى القسم المناسب.';
+    return askedBefore ? 'اختر الأقرب لمشكلتك: تفعيل مفتاح، لودر، قائمة Spoofer، أو طلب رستات. وإذا ظهر خطأ أرسل صورته فقط.' : 'أكيد، اشرح لي باختصار ماذا ظهر لك أو أرسل صورة واضحة للخطأ؛ سأحدد لك الحل أو القسم المناسب.';
+  }
+  if (mentionsKey) return 'Do you see an activation error, or is the product active but not working? Send only a screenshot of the message and never the key.';
+  if (mentionsSpoofer) return 'I understand this is related to Spoofer. Is the list missing in the site, or does an error appear after opening the loader? Send a screenshot of the step where it stopped.';
+  if (mentionsFortnite) return 'I understand this is related to Fortnite. Did the issue appear before or after launching the product? Send the error screenshot or the active product name so I can direct you to the correct section.';
+  return askedBefore ? 'Choose the closest issue: key activation, loader, Spoofer list, or key reset. If an error appears, send its screenshot only.' : 'Describe what appeared briefly or send a clear error screenshot, and I will direct you to the correct section.';
+}
+
 function fastSupportReply(message: string, language: 'ar' | 'en', intent = classifySupportMessage(message), history: AiMessage[] = []) {
   const normalized = normalizedSupportText(message);
   const repeatedVisualCpp = hasRecentAssistantGuidance(history, ['Visual C++', 'VCRUNTIME140', 'MSVCP140']);
@@ -694,7 +712,7 @@ function fastSupportReply(message: string, language: 'ar' | 'en', intent = class
     if (normalized.includes('spoofer') || normalized.includes('سبوفر') || normalized.includes('قائمة')) return 'من بطاقة المنتج افتح «دليل المنتج» ثم «حلول المشاكل»، واختر مشكلة قائمة Spoofer. إذا استمرت المشكلة، أرسل صورة واضحة لما يظهر لديك في هذه المحادثة.';
     if (normalized.includes('reset') || normalized.includes('ريست') || normalized.includes('اعادة تعيين')) return 'من بطاقة المنتج اختر «طلب رستات المفتاح»، واكتب السبب بوضوح. سيظهر الطلب للإدارة للمراجعة.';
     if (normalized.includes('لودر') || normalized.includes('تحميل')) return 'افتح «منتجاتي» واضغط «تحميل اللودر» من بطاقة المنتج المفعّل. يظهر الزر للتراخيص النشطة وغير المنتهية فقط.';
-    if (intent === 'UNCLEAR') return 'حتى أساعدك بدقة، اكتب المشكلة باختصار كما تظهر لديك وحدد اسم المنتج أو أرفق صورة واضحة للخطأ.';
+    if (intent === 'UNCLEAR') return contextualClarification(language, history, message);
     return null;
   }
   if (intent === 'VISUAL_CPP_RUNTIME') return repeatedVisualCpp
@@ -717,7 +735,7 @@ function fastSupportReply(message: string, language: 'ar' | 'en', intent = class
   if (normalized.includes('spoofer') || normalized.includes('list')) return 'Open “Product guide” from your product card, then choose “Issue fixes” and select the Spoofer list issue. If it continues, send a clear screenshot in this chat.';
   if (normalized.includes('reset')) return 'Choose “Request key reset” from your product card and describe the reason clearly. The request will be visible to administration for review.';
   if (normalized.includes('loader') || normalized.includes('download')) return 'Open “My Products” and choose “Download Loader” from your active product card. This is available for active, non-expired licenses only.';
-  if (intent === 'UNCLEAR') return 'To help accurately, describe the issue exactly as it appears, include the product name, or attach a clear image of the error.';
+  if (intent === 'UNCLEAR') return contextualClarification(language, history, message);
   return null;
 }
 
