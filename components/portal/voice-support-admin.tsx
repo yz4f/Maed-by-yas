@@ -46,7 +46,11 @@ export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }
     }
   };
 
-  useEffect(() => { void loadSessions(); }, []);
+  useEffect(() => {
+    void loadSessions();
+    const refreshTimer = window.setInterval(() => void loadSessions(), 12_000);
+    return () => window.clearInterval(refreshTimer);
+  }, []);
 
   const createSession = async () => {
     if (!selectedCustomer) return;
