@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import DiscordProvider from 'next-auth/providers/discord';
 import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
+import { sendDiscordWebsiteLog } from './discord-bot';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -37,6 +38,13 @@ export const authOptions: NextAuthOptions = {
         } else {
           token.role = 'Customer';
         }
+
+        void sendDiscordWebsiteLog({
+          type: 'login',
+          customerId: profile.id,
+          customerName: profile.global_name || profile.username || 'عميل',
+          customerImage: token.image,
+        }).catch((error) => console.error('[Discord Log] Login event failed:', error));
       }
       return token;
     },

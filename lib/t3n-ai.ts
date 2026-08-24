@@ -1,6 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
+import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
@@ -278,6 +279,12 @@ export async function getAiConversation(actor: TicketActor, options: { includeCu
       humanAgentName: null,
     };
     await setDoc(ref, conversation);
+    void sendDiscordWebsiteLog({
+      type: 'conversationOpened',
+      customerId: actor.id,
+      customerName: customer.name || 'عميل',
+      customerImage: customer.image || null,
+    }).catch((error) => console.error('[Discord Log] Conversation opened event failed:', error));
   }
   return { conversation, messages: messagesSnapshot.docs.map(toMessage), customer: customerContext, customerProfile: customer };
 }
@@ -477,6 +484,12 @@ export async function reopenAiConversation(actor: TicketActor) {
     visibleToCustomer: true,
   });
   await StoreDB.addLog('AI Conversation Reopened', `تم فتح محادثة جديدة للعميل ${conversation.customerName}`, conversation.customerId, conversation.customerName);
+  void sendDiscordWebsiteLog({
+    type: 'conversationOpened',
+    customerId: actor.id,
+    customerName: conversation.customerName || 'عميل',
+    customerImage: conversation.customerImage || null,
+  }).catch((error) => console.error('[Discord Log] Conversation reopen event failed:', error));
   return { ...(await getAiConversation(actor)), openedAt };
 }
 

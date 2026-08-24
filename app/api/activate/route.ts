@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { DiscordBotService } from '@/lib/discord';
+import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
 
 export async function POST(req: Request) {
   try {
@@ -26,6 +27,16 @@ export async function POST(req: Request) {
     const discordRoleSync = res.success && res.product
       ? await DiscordBotService.syncRolesOnProductActivation(discordId, res.product.name)
       : null;
+
+    if (res.success && res.product) {
+      void sendDiscordWebsiteLog({
+        type: 'productActivated',
+        customerId: discordId,
+        customerName: typeof name === 'string' && name.trim() ? name.trim() : 'عميل',
+        customerImage: typeof image === 'string' ? image : null,
+        productName: res.product.name,
+      }).catch((error) => console.error('[Discord Log] Product activation event failed:', error));
+    }
 
     return NextResponse.json({ ...res, discordRoleSync }, { status: res.success ? 200 : 400 });
   } catch (err: any) {

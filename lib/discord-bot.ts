@@ -4,6 +4,16 @@ import type { SiteUpdate } from '@/types';
 const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
 const websiteUrl = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/, '');
 const productStatusChannelId = '1499633005008916551';
+const websiteLogChannels = {
+  conversationOpened: '1510001198353219744',
+  login: '1510454551952752691',
+  productActivated: '1514658718233530508',
+} as const;
+
+type WebsiteLogEvent =
+  | { type: 'conversationOpened'; customerId: string; customerName: string; customerImage?: string | null }
+  | { type: 'login'; customerId: string; customerName: string; customerImage?: string | null }
+  | { type: 'productActivated'; customerId: string; customerName: string; customerImage?: string | null; productName: string };
 
 type GatewayPacket = { op: number; d: any; s?: number | null; t?: string | null };
 
@@ -53,6 +63,41 @@ async function registerCommands(applicationId: string, token: string) {
   });
   if (!response.ok) throw new Error(`Discord commands HTTP ${response.status}: ${await response.text()}`);
   console.info(`[Discord Bot] Commands registered in guild ${guildId}.`);
+}
+
+export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ messageId: string }> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الموقع.');
+
+  const config = event.type === 'conversationOpened'
+    ? { channelId: websiteLogChannels.conversationOpened, color: 0x22d3ee, title: 'فتح محادثة جديدة', description: 'فتح العميل محادثة جديدة عبر مساعد تعن داخل الموقع.', label: 'الحالة', value: 'تم فتح المحادثة' }
+    : event.type === 'login'
+      ? { channelId: websiteLogChannels.login, color: 0x6366f1, title: 'تسجيل دخول للموقع', description: 'سجّل العميل دخوله إلى منصة تعن عبر حساب Discord المرتبط.', label: 'الحالة', value: 'تم تسجيل الدخول' }
+      : { channelId: websiteLogChannels.productActivated, color: 0x22c55e, title: 'تفعيل منتج جديد', description: 'تم تفعيل منتج جديد بنجاح من داخل منصة تعن.', label: 'المنتج', value: event.productName };
+
+  const embed = {
+    color: config.color,
+    author: { name: 'تعن • سجل الموقع', icon_url: `${websiteUrl}/logo.png` },
+    title: config.title,
+    description: config.description,
+    thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
+    fields: [
+      { name: 'الحساب', value: `**${event.customerName || 'عميل'}**\n<@${event.customerId}>`, inline: true },
+      { name: config.label, value: config.value, inline: true },
+      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+    ],
+    footer: { text: `تعن • ${event.customerId}` },
+    timestamp: new Date().toISOString(),
+  };
+
+  const response = await discordApi(`/channels/${config.channelId}/messages`, token, {
+    method: 'POST',
+    body: JSON.stringify({ embeds: [embed] }),
+  });
+  if (!response.ok) throw new Error(`تعذر إرسال سجل الموقع إلى Discord (HTTP ${response.status}).`);
+  const message = await response.json() as { id?: string };
+  if (!message.id) throw new Error('لم يعرض Discord معرف رسالة سجل الموقع.');
+  return { messageId: message.id };
 }
 
 export async function sendDiscordProductStatus(): Promise<{ messageId: string }> {
