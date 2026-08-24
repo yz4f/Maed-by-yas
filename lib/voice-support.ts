@@ -67,7 +67,8 @@ export async function createVoiceSupportSession(actor: TicketActor, input: {
 export async function updateVoiceSupportSession(actor: TicketActor, sessionId: string, status: VoiceSupportSessionStatus, patch: Partial<Pick<VoiceSupportSession, 'voiceChannelId' | 'voiceChannelName' | 'inviteUrl' | 'consentedAt' | 'startedAt' | 'endedAt' | 'staffJoined' | 'notes'>> = {}) {
   if (!isStaff(actor)) throw new Error('تحديث جلسة الدعم الصوتي مخصص للإدارة.');
   const now = new Date().toISOString();
-  await updateDoc(doc(database(), VOICE_SUPPORT_COLLECTION, sessionId), { status, ...patch, updatedAt: now });
+  const cleanPatch = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+  await updateDoc(doc(database(), VOICE_SUPPORT_COLLECTION, sessionId), { status, ...cleanPatch, updatedAt: now });
   await StoreDB.addLog(`Voice Support ${status}`, `تم تحديث جلسة الدعم الصوتي ${sessionId}`, actor.id, actor.name);
 }
 
