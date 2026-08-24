@@ -2726,7 +2726,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           className="product-guide-button"
                         >
                           <HelpCircle size={13} />
-                          {lang === 'ar' ? 'الشروحات والتعليمات' : 'Guide'}
+                          {lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
                         </button>
                         <button
                           onClick={() => { setResetRequestProduct(up); setResetRequestReason(''); }}
