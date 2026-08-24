@@ -32,6 +32,8 @@ interface AiChatModalProps {
   isDark: boolean;
   onNotify?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
   onOpenGuide?: (destination: 'guide' | 'issues') => void;
+  standalone?: boolean;
+  sessionId?: string | null;
 }
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
@@ -180,7 +182,7 @@ export function createImageAttachment(file: File): Promise<ChatAttachment> {
   });
 }
 
-export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide }: AiChatModalProps) {
+export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide, standalone = false, sessionId = null }: AiChatModalProps) {
   const t = copy[lang];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -192,6 +194,10 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide
   const [reopening, setReopening] = useState(false);
   const conversationStatus = conversation.status;
   const endRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const shouldFollowRef = useRef(true);
+  const previousMessageCountRef = useRef(0);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
   const notifyRef = useRef(onNotify);
   const refreshInFlightRef = useRef(false);
 
@@ -254,8 +260,29 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide
 
   useEffect(() => {
     if (!open) return;
+    const hasAddedMessage = messages.length > previousMessageCountRef.current;
+    if (shouldFollowRef.current) {
+      endRef.current?.scrollIntoView({ behavior: previousMessageCountRef.current ? 'smooth' : 'auto', block: 'end' });
+      setHasNewMessages(false);
+    } else if (hasAddedMessage) {
+      setHasNewMessages(true);
+    }
+    previousMessageCountRef.current = messages.length;
+  }, [open, messages]);
+
+  const handleMessagesScroll = () => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 88;
+    shouldFollowRef.current = atBottom;
+    if (atBottom) setHasNewMessages(false);
+  };
+
+  const jumpToLatest = () => {
+    shouldFollowRef.current = true;
+    setHasNewMessages(false);
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [open, messages, loading, attachment]);
+  };
 
   const selectImage = async (file?: File | null) => {
     if (!file || loading || preparingImage) return;
@@ -360,16 +387,16 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide
   };
   const attachmentUrl = attachment?.previewData || null;
 
-  return <AnimatePresence>{open && <motion.div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => !preparingImage && onClose()}>
-    <motion.section className={`flex h-[min(740px,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-[30px] border shadow-[0_30px_100px_rgba(0,0,0,.52)] ${isDark ? 'border-cyan-300/[.18] bg-[#0a1321] text-slate-100' : 'border-white bg-white text-slate-900'}`} initial={{ opacity: 0, scale: .97, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .97, y: 12 }} onMouseDown={(event) => event.stopPropagation()}>
+  return <AnimatePresence>{open && <motion.div dir={lang === 'ar' ? 'rtl' : 'ltr'} className={standalone ? 'min-h-[100dvh] bg-[#07111d]' : 'fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-5'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => !standalone && !preparingImage && onClose()}>
+    <motion.section className={`flex w-full flex-col overflow-hidden ${standalone ? 'h-[100dvh] max-w-none rounded-none border-0 shadow-none' : 'h-[min(740px,90vh)] max-w-3xl rounded-[30px] border shadow-[0_30px_100px_rgba(0,0,0,.52)]'} ${isDark ? 'border-cyan-300/[.18] bg-[#0a1321] text-slate-100' : 'border-white bg-white text-slate-900'}`} initial={{ opacity: 0, scale: standalone ? 1 : .97, y: standalone ? 0 : 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: standalone ? 1 : .97, y: standalone ? 0 : 12 }} onMouseDown={(event) => event.stopPropagation()}>
       <header className={`relative overflow-hidden border-b px-5 py-4 sm:px-6 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(34,211,238,.16),transparent_36%),radial-gradient(circle_at_95%_95%,rgba(139,92,246,.13),transparent_38%)]" />
-        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'HUMAN_ACTIVE' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-violet-300/20 bg-violet-400/[.1] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700'}`}>{t.humanLabel}</span>}{conversationStatus === 'WAITING_FOR_CUSTOMER' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-amber-300/20 bg-amber-400/[.1] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{t.waitingCustomerLabel}</span>}{conversationStatus === 'CLOSED' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-rose-300/20 bg-rose-400/[.1] text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>{t.closedLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversationStatus === 'HUMAN_ACTIVE' ? t.humanActive : t.subtitle}</p></div></div><button onClick={onClose} disabled={preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
+        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'HUMAN_ACTIVE' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-violet-300/20 bg-violet-400/[.1] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700'}`}>{t.humanLabel}</span>}{conversationStatus === 'WAITING_FOR_CUSTOMER' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-amber-300/20 bg-amber-400/[.1] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{t.waitingCustomerLabel}</span>}{conversationStatus === 'CLOSED' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-rose-300/20 bg-rose-400/[.1] text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>{t.closedLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversationStatus === 'HUMAN_ACTIVE' ? t.humanActive : t.subtitle}</p>{sessionId && <p className={`mt-1 font-mono text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sessionId}</p>}</div></div><button onClick={onClose} disabled={preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
       </header>
 
       {conversationStatus === 'WAITING_FOR_CUSTOMER' && idleRemainingMs > 0 && <div className={`mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-[10px] sm:mx-6 ${isDark ? 'border-amber-300/[.18] bg-amber-400/[.08] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900'}`}><div className="flex min-w-0 flex-1 items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /><span className="leading-5">{t.inactivityWarning}</span></div><div className="flex shrink-0 items-center gap-2"><span className="font-mono text-xs font-black"><Clock3 className="mb-0.5 me-1 inline h-3.5 w-3.5" />{formatRemaining(idleRemainingMs)}</span><button type="button" onClick={() => document.querySelector<HTMLTextAreaElement>('[data-ai-chat-input]')?.focus()} className={`rounded-lg border px-2 py-1 text-[9px] font-black transition active:scale-95 ${isDark ? 'border-amber-200/20 bg-amber-300/[.08] hover:bg-amber-300/[.14]' : 'border-amber-200 bg-white hover:bg-amber-100'}`}>{t.continueChat}</button></div></div>}
 
-      <div className={`flex-1 overflow-y-auto px-4 py-5 sm:px-6 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`} onDragOver={(event) => event.preventDefault()} onDrop={onDrop}>
+      <div ref={scrollRef} onScroll={handleMessagesScroll} className={`flex-1 overflow-y-auto px-4 py-5 sm:px-6 ${isDark ? 'bg-[linear-gradient(180deg,rgba(8,17,30,.56),rgba(3,8,16,.22))]' : 'bg-slate-50/60'}`} onDragOver={(event) => event.preventDefault()} onDrop={onDrop}>
         <div className="space-y-3.5">
           {messages.length === 0 && <div className={`mx-auto max-w-md rounded-2xl border p-4 text-center ${isDark ? 'border-cyan-300/[.13] bg-cyan-400/[.045]' : 'border-sky-100 bg-white'}`}><Bot className="mx-auto h-5 w-5 text-cyan-300" /><p className={`mt-2 text-xs leading-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{t.start}</p><div className="mt-3 flex flex-wrap justify-center gap-2">{t.quick.map((quick) => <button key={quick} onClick={() => void submit(quick)} className={`rounded-xl border px-2.5 py-1.5 text-[10px] font-bold transition ${isDark ? 'border-white/[.1] bg-white/[.035] text-cyan-100 hover:bg-cyan-400/[.12]' : 'border-slate-200 bg-slate-50 text-sky-700 hover:bg-sky-50'}`}>{quick}</button>)}</div></div>}
           {messages.map((message) => {
@@ -381,6 +408,8 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide
           <div ref={endRef} />
         </div>
       </div>
+
+      {hasNewMessages && <button type="button" onClick={jumpToLatest} className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 rounded-full border border-cyan-200/[.18] bg-slate-950/90 px-3 py-2 text-[10px] font-black text-cyan-100 shadow-[0_10px_28px_rgba(0,0,0,.28)] backdrop-blur transition hover:bg-slate-900">↓ رسائل جديدة</button>}
 
       {conversationStatus !== 'CLOSED' ? <form className={`border-t p-3 sm:p-4 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`} onSubmit={(event) => { event.preventDefault(); void submit(); }}>{attachment && <div className={`mb-2 flex items-center gap-2 rounded-2xl border p-2 ${isDark ? 'border-cyan-300/[.16] bg-cyan-400/[.06]' : 'border-sky-100 bg-sky-50'}`}><div className="h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-slate-950"><img src={attachmentUrl || ''} alt={attachment.name} className="h-full w-full object-cover" /></div><div className="min-w-0 flex-1"><p className={`truncate text-[11px] font-bold ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.imageReady}</p><p className={`truncate text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{attachment.name}</p></div><button type="button" onClick={() => setAttachment(null)} disabled={loading} aria-label={t.removeImage} className={`grid h-9 w-9 place-items-center rounded-xl border transition ${isDark ? 'border-white/[.1] text-slate-400 hover:bg-rose-400/10 hover:text-rose-300' : 'border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600'}`}><Trash2 className="h-4 w-4" /></button></div>}<div className={`flex items-end gap-2 rounded-2xl border p-2 ${isDark ? 'border-white/[.1] bg-slate-950/45 focus-within:border-cyan-300/35' : 'border-slate-200 bg-slate-50 focus-within:border-sky-300'}`}><label aria-label={t.attach} title={t.attach} className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition ${loading || preparingImage || attachment ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${isDark ? 'border-white/[.1] text-cyan-200 hover:bg-cyan-400/[.12]' : 'border-slate-200 text-sky-700 hover:bg-sky-50'}`}><input onChange={onFileChange} type="file" accept="image/png,image/jpeg,image/webp" disabled={loading || preparingImage || Boolean(attachment)} className="sr-only" />{preparingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}</label><textarea data-ai-chat-input value={input} onChange={(event) => setInput(event.target.value)} onPaste={onPaste} rows={1} maxLength={1800} disabled={loading || preparingImage} placeholder={t.placeholder} className={`min-h-10 flex-1 resize-none bg-transparent px-1 py-2 text-xs outline-none placeholder:text-slate-500 ${isDark ? 'text-slate-100' : 'text-slate-800'}`} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submit(); } }} /><button type="submit" disabled={loading || preparingImage || (input.trim().length < 2 && !attachment)} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40" aria-label={t.send}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div><div className={`mt-2 flex items-center justify-between gap-2 px-1 text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><span className="inline-flex items-center gap-1"><ImagePlus className="h-3 w-3" />{t.imageHint}</span><span className="inline-flex items-center gap-1"><ShieldCheck className="h-3 w-3" />{t.protected}</span></div></form> : <section className={`border-t px-4 py-5 text-center sm:px-6 ${isDark ? 'border-white/[.08] bg-[#0a1321]' : 'border-slate-100 bg-white'}`}><div className={`mx-auto max-w-md rounded-2xl border p-4 ${isDark ? 'border-rose-300/[.16] bg-rose-400/[.07] text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-900'}`}><AlertTriangle className="mx-auto h-5 w-5" /><p className="mt-2 text-xs font-black">{t.closedMessage}</p>{reopenRemainingMs > 0 ? <p className={`mt-2 text-[11px] ${isDark ? 'text-rose-100/80' : 'text-rose-800'}`}>{t.reopenMessage} <span className="font-mono font-black">{formatRemaining(reopenRemainingMs)}</span></p> : <button type="button" onClick={() => void reopenConversation()} disabled={reopening} className={`mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-[11px] font-black transition active:scale-95 disabled:opacity-55 ${isDark ? 'bg-rose-200 text-rose-950 hover:bg-white' : 'bg-rose-600 text-white hover:bg-rose-700'}`}>{reopening && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{t.openNew}</button>}</div></section>}
     </motion.section>
