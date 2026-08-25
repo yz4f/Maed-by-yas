@@ -2,6 +2,7 @@ import WebSocket, { RawData } from 'ws';
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb } from '@/lib/store-db';
 import type { SiteUpdate } from '@/types';
+import { DISCORD_ROLES } from '@/lib/roles';
 
 const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
 const websiteUrl = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/, '');
@@ -340,6 +341,19 @@ function resetStatusPresentation(status: DiscordResetRequestLog['status']) {
   return values[status];
 }
 
+function resetRequestAdminComponents(event: DiscordResetRequestLog) {
+  if (event.status === 'PENDING') {
+    return [{ type: 1, components: [
+      { type: 2, style: 1, custom_id: `ta3n_reset_approve:${event.reference}`, label: 'قبول الطلب', emoji: { name: '✅' } },
+      { type: 2, style: 4, custom_id: `ta3n_reset_reject:${event.reference}`, label: 'رفض الطلب', emoji: { name: '✖️' } },
+      { type: 2, style: 2, custom_id: `ta3n_reset_info:${event.reference}`, label: 'معلومات العميل', emoji: { name: 'ℹ️' } },
+    ] }];
+  }
+  return [{ type: 1, components: [
+    { type: 2, style: 2, custom_id: 'ta3n_reset_closed', label: resetStatusPresentation(event.status).label, disabled: true },
+  ] }];
+}
+
 export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog): Promise<{ messageId: string }> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الريست.');
@@ -371,7 +385,7 @@ export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog):
     method: event.discordMessageId ? 'PATCH' : 'POST',
     body: JSON.stringify({
       embeds: [embed],
-      components: [{ type: 1, components: [{ type: 2, style: 5, label: 'فتح لوحة الإدارة', url: websiteUrl }] }],
+      components: resetRequestAdminComponents(event),
     }),
   });
   if (!response.ok) throw new Error(`تعذر مزامنة بطاقة الريست مع Discord (HTTP ${response.status}).`);
@@ -498,16 +512,15 @@ function supportPanelComponents() {
 
 function resetPanelEmbed() {
   return {
-    color: 0xfbbf24,
-    author: { name: 'تعن • رستات المفاتيح', icon_url: `${websiteUrl}/logo.png` },
-    title: 'طلب رستات المفتاح',
-    description: 'اضغط الزر أدناه لفتح نموذج خاص وآمن لطلب إعادة ضبط مفتاح منتجك. لا تكتب المفتاح داخل الروم العام.',
+    color: 0x5865f2,
+    author: { name: 'Ta3n • Key Reset Center', icon_url: `${websiteUrl}/logo.png` },
+    title: '🔄 طلب ريستات',
+    description: 'اضغط الزر لفتح نموذج سريع وخاص. يكفي أن تكتب سبب الطلب؛ سيتم التحقق من حساب Discord والمنتج المفعّل تلقائياً من الموقع.',
     fields: [
-      { name: 'الخطوة 1', value: 'اكتب مفتاح المنتج داخل النموذج الخاص فقط.', inline: true },
-      { name: 'الخطوة 2', value: 'اكتب سبب طلب الريست بشكل مختصر وواضح.', inline: true },
-      { name: 'الخصوصية', value: 'لن يظهر المفتاح كاملاً في الروم أو بطاقة الإدارة؛ يستخدم للتحقق من المنتج المرتبط بحسابك فقط.', inline: false },
+      { name: 'كيف يعمل؟', value: '1. اضغط الزر\n2. اكتب السبب\n3. يراجع فريق الإدارة الطلب', inline: true },
+      { name: 'الخصوصية', value: 'لا تكتب المفتاح هنا. تتم المطابقة داخل النظام، ولا يظهر المفتاح كاملاً في Discord.', inline: true },
     ],
-    footer: { text: 'تعن • طلب واحد نشط لكل منتج' },
+    footer: { text: 'Ta3n • طلب واحد نشط لكل منتج مفعّل' },
     timestamp: new Date().toISOString(),
   };
 }
@@ -519,7 +532,7 @@ function resetPanelComponents() {
       type: 2,
       style: 1,
       custom_id: 'ta3n_reset_start',
-      label: 'طلب رستات المفتاح',
+      label: 'طلب ريستات',
       emoji: { name: '🔄' },
     }],
   }];
@@ -774,6 +787,19 @@ async function activateDiscordVoiceSession(sessionId: string, customerId: string
   return { ...session, status: 'WAITING_FOR_CUSTOMER', consentedAt: now, voiceChannelId: channel.id, voiceChannelName: channel.name || 'جلسة دعم خاصة', inviteUrl };
 }
 
+function isDiscordResetAdministrator(interaction: any) {
+  const actorId = String(interaction.member?.user?.id || interaction.user?.id || '');
+  const roleIds = Array.isArray(interaction.member?.roles) ? interaction.member.roles.map(String) : [];
+  const permissions = BigInt(String(interaction.member?.permissions || '0'));
+  return actorId === '1315014140804206636' || roleIds.includes(DISCORD_ROLES.BOSS) || roleIds.includes(DISCORD_ROLES.CO_BOSS) || (permissions & 0x8n) === 0x8n;
+}
+
+async function findDiscordResetRequest(reference: string): Promise<{ id: string } & Record<string, unknown>> {
+  const snapshot = await getDocs(query(collection(supportDatabase(), 'resetRequests'), where('reference', '==', reference)));
+  if (snapshot.empty) throw new Error('لم يعد طلب الريست موجوداً أو تم إغلاقه.');
+  return { id: snapshot.docs[0].id, ...(snapshot.docs[0].data() as Record<string, unknown>) } as { id: string } & Record<string, unknown>;
+}
+
 function assistantEmbed() {
   return {
     color: 0x22d3ee,
@@ -825,20 +851,34 @@ async function answerInteraction(interaction: any, token: string) {
 
   if (interaction.type === 5) {
     const customId = String(interaction.data?.custom_id || '');
-    if (customId !== 'ta3n_reset_submit') return;
+    if (customId !== 'ta3n_reset_submit' && !customId.startsWith('ta3n_reset_reject_submit:')) return;
     const actorId = String(interaction.member?.user?.id || interaction.user?.id || '');
     const actorUser = interaction.member?.user || interaction.user || {};
     const values = Object.fromEntries((interaction.data?.components || []).flatMap((row: any) => row.components || []).map((field: any) => [String(field.custom_id || ''), String(field.value || '')]));
     try {
+      if (customId.startsWith('ta3n_reset_reject_submit:')) {
+        if (!isDiscordResetAdministrator(interaction)) throw new Error('هذا الإجراء مخصص للإدارة فقط.');
+        const reference = customId.split(':', 2)[1];
+        const request = await findDiscordResetRequest(reference);
+        const { processResetRequest } = await import('@/lib/t3n-ai');
+        await processResetRequest({ id: actorId, name: String(actorUser.global_name || actorUser.username || 'Administrator'), image: null, role: 'Admin' }, {
+          requestId: request.id,
+          action: 'reject',
+          note: String(values.reject_reason || ''),
+        });
+        await respond({ content: `تم رفض الطلب \`${reference}\` وتحديث البطاقة مع سبب الرفض.`, flags: 64 });
+        return;
+      }
+
       const avatarHash = String(actorUser.avatar || '');
       const image = actorId && avatarHash ? `https://cdn.discordapp.com/avatars/${actorId}/${avatarHash}.png` : null;
       const { createResetRequest } = await import('@/lib/t3n-ai');
+      if (!actorId) throw new Error('تعذر التحقق من حساب Discord. أعد المحاولة بعد لحظات.');
       const result = await createResetRequest({ id: actorId, name: String(actorUser.global_name || actorUser.username || 'عميل'), image, role: 'Customer' }, {
-        licenseKey: String(values.license_key || ''),
         reason: String(values.reset_reason || ''),
         language: 'ar',
       });
-      await respond({ content: result.duplicate ? `لديك طلب رستات نشط بالفعل: \`${result.request.reference}\`، وستصلك أي تحديثات هنا وفي الموقع.` : `تم إرسال طلبك بنجاح برقم \`${result.request.reference}\`. لا يظهر المفتاح في الروم العام أو بطاقة المتابعة.`, flags: 64 });
+      await respond({ content: result.duplicate ? `لديك طلب رستات نشط بالفعل: \`${result.request.reference}\`، وستصلك أي تحديثات هنا وفي الموقع.` : `تم إرسال طلبك بنجاح برقم \`${result.request.reference}\`. تم التحقق من المنتج المرتبط بحسابك تلقائياً، ولا يظهر المفتاح كاملاً في Discord.`, flags: 64 });
     } catch (error) {
       await respond({ content: error instanceof Error ? error.message : 'تعذر إرسال طلب الريست. حاول مرة أخرى أو افتحه من بطاقة المنتج داخل الموقع.', flags: 64 });
     }
@@ -847,6 +887,59 @@ async function answerInteraction(interaction: any, token: string) {
 
   if (interaction.type !== 3) return;
   const customId = String(interaction.data?.custom_id || '');
+  if (customId.startsWith('ta3n_reset_approve:') || customId.startsWith('ta3n_reset_reject:') || customId.startsWith('ta3n_reset_info:')) {
+    if (String(interaction.channel_id) !== discordRoomChannels.keyResetRequests) {
+      await respond({ content: 'استخدم أزرار إدارة الريست من روم رستات المفاتيح المحدد فقط.', flags: 64 });
+      return;
+    }
+    if (!isDiscordResetAdministrator(interaction)) {
+      await respond({ content: 'هذه الأزرار مخصصة للإدارة فقط.', flags: 64 });
+      return;
+    }
+    const reference = customId.split(':', 2)[1];
+    try {
+      const request = await findDiscordResetRequest(reference);
+      if (customId.startsWith('ta3n_reset_approve:')) {
+        const actorUser = interaction.member?.user || interaction.user || {};
+        const { processResetRequest } = await import('@/lib/t3n-ai');
+        await processResetRequest({ id: String(actorUser.id || ''), name: String(actorUser.global_name || actorUser.username || 'Administrator'), image: null, role: 'Admin' }, { requestId: request.id, action: 'approve' });
+        await respond({ content: `تم قبول الطلب \`${reference}\` وتحديث بطاقته باسم الإدارة المنفذة.`, flags: 64 });
+        return;
+      }
+      if (customId.startsWith('ta3n_reset_reject:')) {
+        await respondModal({
+          custom_id: `ta3n_reset_reject_submit:${reference}`,
+          title: 'رفض طلب ريستات',
+          components: [{ type: 1, components: [{ type: 4, custom_id: 'reject_reason', label: 'سبب الرفض', style: 2, min_length: 3, max_length: 500, required: true, placeholder: 'اكتب سبباً واضحاً للعميل' }] }],
+        });
+        return;
+      }
+      await respond({
+        embeds: [{
+          color: 0x5865f2,
+          title: `معلومات الطلب ${reference}`,
+          thumbnail: request.customerImage ? { url: String(request.customerImage) } : undefined,
+          fields: [
+            { name: 'العميل', value: `**${String(request.customerName || 'عميل')}**\n<@${String(request.customerDiscordId || '')}>`, inline: true },
+            { name: 'Discord ID', value: `\`${String(request.customerDiscordId || '')}\``, inline: true },
+            { name: 'المنتج', value: String(request.productName || 'غير محدد'), inline: true },
+            { name: 'المفتاح', value: String(request.keyMasked || '••••••'), inline: true },
+            { name: 'سبب الطلب', value: String(request.reason || 'لم يضف العميل سبباً').slice(0, 500), inline: false },
+          ],
+          footer: { text: 'المفتاح الكامل لا يظهر في Discord' },
+        }],
+        flags: 64,
+      });
+      return;
+    } catch (error) {
+      await respond({ content: error instanceof Error ? error.message : 'تعذر معالجة طلب الريست الآن.', flags: 64 });
+      return;
+    }
+  }
+  if (customId === 'ta3n_reset_closed') {
+    await respond({ content: 'هذا الطلب منتهٍ أو تم التعامل معه بالفعل.', flags: 64 });
+    return;
+  }
   if (customId === 'ta3n_support_start') {
     if (String(interaction.channel_id) !== discordRoomChannels.smartSupport) {
       await respond({ content: 'استخدم زر بدء المساعدة من روم الدعم الذكي المحدد.', flags: 64 });
@@ -864,10 +957,9 @@ async function answerInteraction(interaction: any, token: string) {
     }
     await respondModal({
       custom_id: 'ta3n_reset_submit',
-      title: 'طلب رستات المفتاح',
+      title: 'طلب ريستات',
       components: [
-        { type: 1, components: [{ type: 4, custom_id: 'license_key', label: 'مفتاح المنتج', style: 1, min_length: 8, max_length: 160, required: true, placeholder: 'اكتب المفتاح هنا فقط' }] },
-        { type: 1, components: [{ type: 4, custom_id: 'reset_reason', label: 'سبب طلب الريست', style: 2, min_length: 3, max_length: 500, required: true, placeholder: 'مثال: غيّرت الجهاز أو ظهرت مشكلة في التشغيل' }] },
+        { type: 1, components: [{ type: 4, custom_id: 'reset_reason', label: 'سبب طلب الريستات', style: 2, min_length: 3, max_length: 500, required: true, placeholder: 'مثال: غيّرت الجهاز أو ظهرت مشكلة في التشغيل' }] },
       ],
     });
     return;
@@ -998,10 +1090,8 @@ export async function startDiscordBot() {
   started = true;
   try {
     await ensurePrivateAuditChannels(token);
-    const removedCount = await purgeTerminalResetRequestsOnStartup(token);
-    if (removedCount) console.info(`[Discord Audit] Cleared ${removedCount} terminal reset requests on startup.`);
   } catch (error) {
-    console.error('[Discord Audit] Private audit setup or terminal reset cleanup failed:', error);
+    console.error('[Discord Audit] Private audit setup failed:', error);
   }
   supportMaintenanceTimer = setInterval(() => {
     if (supportMaintenanceRunning) return;

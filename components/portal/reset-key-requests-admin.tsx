@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, Send, Trash2, UserRound, XCircle } from 'lucide-react';
+import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, Send, UserRound, XCircle } from 'lucide-react';
 import type { ResetRequest, ResetRequestStatus } from '@/types';
 
 interface ResetKeyRequestsAdminProps {
@@ -42,7 +42,6 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isPurging, setIsPurging] = useState(false);
   const mountedRef = useRef(false);
   const inFlightRef = useRef(false);
   const requestCacheRef = useRef<ResetRequest[]>([]);
@@ -101,27 +100,6 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
     }
   };
 
-  const purgeTerminalRequests = async () => {
-    if (isPurging) return;
-    setIsPurging(true);
-    try {
-      const response = await fetch('/api/ai', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ action: 'purge_terminal_resets' }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.error || 'تعذر إزالة الطلبات المنتهية.');
-      setRequests((current) => current.filter((request) => !['REJECTED', 'COMPLETED', 'CANCELLED'].includes(request.status)));
-      onNotify(lang === 'ar' ? `تمت إزالة ${data.removedCount || 0} طلبات منتهية.` : `${data.removedCount || 0} terminal requests were removed.`, 'success');
-    } catch (error) {
-      onNotify(error instanceof Error ? error.message : 'تعذر إزالة الطلبات المنتهية.', 'error');
-    } finally {
-      setIsPurging(false);
-    }
-  };
-
   const process = async (requestId: string, decision: 'approve' | 'reject' | 'complete') => {
     setBusyId(requestId);
     try {
@@ -171,7 +149,6 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-amber-300/15 bg-amber-300/[0.08] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>{pendingCount} {lang === 'ar' ? 'قيد المراجعة' : 'pending'}</span>
           <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-emerald-300/15 bg-emerald-300/[0.08] text-emerald-100' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{completedCount} {lang === 'ar' ? 'مكتمل' : 'completed'}</span>
-          <button onClick={() => void purgeTerminalRequests()} disabled={isPurging} className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[10px] font-black transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-rose-300/20 bg-rose-300/[0.08] text-rose-100 hover:bg-rose-300/[0.15]' : 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100'}`} title={lang === 'ar' ? 'إزالة المرفوضة والمنفذة والملغاة' : 'Remove rejected, completed, and cancelled requests'}><Trash2 size={13} />{isPurging ? (lang === 'ar' ? 'جارٍ التنظيف…' : 'Cleaning…') : (lang === 'ar' ? 'إزالة المنتهية' : 'Clear terminal')}</button>
           <button onClick={() => void publishPanel()} disabled={isPublishing} className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[10px] font-black transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-amber-300/20 bg-amber-300/[0.1] text-amber-100 hover:bg-amber-300/[0.17]' : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'}`} title={lang === 'ar' ? 'نشر لوحة طلب الريست في Discord' : 'Publish reset request panel in Discord'}><Send size={13} />{isPublishing ? (lang === 'ar' ? 'جارٍ النشر…' : 'Publishing…') : (lang === 'ar' ? 'نشر اللوحة' : 'Publish panel')}</button>
           <button onClick={() => void load()} disabled={isLoading} className={`grid h-9 w-9 place-items-center rounded-xl border transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-white/[0.1] bg-white/[0.04] text-slate-300 hover:bg-white/[0.09]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`} title={lang === 'ar' ? 'تحديث' : 'Refresh'}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /></button>
         </div>

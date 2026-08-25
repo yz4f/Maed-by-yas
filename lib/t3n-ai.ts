@@ -1178,9 +1178,8 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     } satisfies SupportNotification);
   }
   const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null };
-  const terminal = ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(status);
   void sendDiscordResetAuditLog({
-    action: terminal ? 'REMOVED' : 'UPDATED',
+    action: 'UPDATED',
     reference: updatedRequest.reference,
     customerDiscordId: updatedRequest.customerDiscordId,
     customerName: updatedRequest.customerName,
@@ -1189,13 +1188,6 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     status: resetStatusLabel(status),
     adminName: actor.name,
   }).catch((error) => console.error('[Discord Audit] Unable to log reset status:', error));
-
-  if (terminal) {
-    void deleteDiscordResetRequestCard(updatedRequest.discordMessageId).catch((error) => console.error('[Discord Reset] Unable to remove terminal request card:', error));
-    await deleteDoc(requestRef);
-    await StoreDB.addLog(`AI Reset ${status}`, `تمت إزالة طلب ${request.reference} المنتهي من لوحة المتابعة`, actor.id, actor.name);
-    return { ...updatedRequest, removed: true };
-  }
 
   void syncDiscordResetRequestLog({
     reference: updatedRequest.reference,
