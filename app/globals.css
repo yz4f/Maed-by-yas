@@ -1328,3 +1328,23 @@ body {
   .guide-experience-modal { max-height: 94vh !important; border-radius: 22px !important; }
   .guide-experience-modal .guide-experience-body { padding: 14px !important; }
 }
+
+/* Contrast fixes for guide cards affected by global color utilities. */
+.portal-shell--dark .guide-experience-modal .guide-menu-card { color: #f8fbff !important; }
+.portal-shell--dark .guide-experience-modal .guide-menu-card p { color: #c3d2e2 !important; }
+.portal-shell--dark .guide-experience-modal .guide-prep-card {
+  background: linear-gradient(145deg, #08243a 0%, #0b1b31 54%, #06101e 100%) !important;
+  border-color: rgba(125, 211, 252, 0.34) !important;
+}
+.portal-shell--dark .guide-experience-modal .guide-prep-card .bg-sky-400\/\[\.12\] { background-color: rgba(14, 165, 233, 0.18) !important; }
+.portal-shell--dark .guide-experience-modal .guide-prep-card .text-sky-200 { color: #d9f5ff !important; }
+.guide-runtime-download,
+.portal-shell--dark .guide-experience-modal .guide-runtime-download {
+  color: #4a0712 !important;
+  background: #fecdd3 !important;
+  border-color: #fecdd3 !important;
+  text-shadow: none !important;
+}
+.guide-runtime-download:hover,
+.portal-shell--dark .guide-experience-modal .guide-runtime-download:hover { color: #3b0610 !important; background: #ffe4e6 !important; border-color: #ffe4e6 !important; }
+.guide-runtime-download svg { color: currentColor !important; }
