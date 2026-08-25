@@ -1308,3 +1308,23 @@ body {
 .product-reset-button__icon { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(253, 230, 138, 0.18); border-radius: 9px; background: rgba(251, 191, 36, 0.10); color: #fde68a; }
 .portal-shell--light .product-reset-button { border-color: rgba(180, 83, 9, 0.22); color: #92400e; background: linear-gradient(135deg, #fffbeb, #fff7ed); }
 .portal-shell--light .product-reset-button__icon { border-color: rgba(180, 83, 9, 0.15); background: #fef3c7; color: #b45309; }
+
+/* Shared product-guide surface: keep all product guides dark, readable, and media-safe. */
+.guide-experience-modal {
+  background: linear-gradient(145deg, #081423 0%, #060e1a 52%, #040a13 100%) !important;
+  border-color: rgba(197, 230, 255, 0.16) !important;
+}
+.guide-experience-modal .guide-experience-body { background: linear-gradient(180deg, rgba(7, 20, 35, 0.96), rgba(3, 10, 19, 0.98)) !important; }
+.guide-experience-modal .text-slate-400 { color: #b9c9da !important; }
+.guide-experience-modal .text-slate-300 { color: #d9e6f1 !important; }
+.guide-experience-modal .bg-white\/\[\.025\],
+.guide-experience-modal .bg-white\/\[\.035\],
+.guide-experience-modal .bg-white\/\[\.04\] { background-color: rgba(15, 32, 51, 0.82) !important; }
+.guide-experience-modal video,
+.guide-experience-modal iframe { background: #02060c; }
+.guide-experience-modal button:focus-visible,
+.guide-experience-modal a:focus-visible { outline: 2px solid rgba(125, 211, 252, 0.95); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .guide-experience-modal { max-height: 94vh !important; border-radius: 22px !important; }
+  .guide-experience-modal .guide-experience-body { padding: 14px !important; }
+}

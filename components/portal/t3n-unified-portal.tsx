@@ -4072,7 +4072,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
-          <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
+          <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="guide-experience-modal relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className={`min-h-[112px] px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-center justify-center ${lang === 'ar' ? 'bg-gradient-to-l' : 'bg-gradient-to-r'} from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden`}>
               <div className="absolute -top-16 -left-10 w-56 h-56 bg-primary/20 rounded-full blur-[70px]" />
@@ -4085,20 +4085,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </button>
               <div className="z-10 flex items-center gap-3 text-center">
                 <span className="grid h-10 w-10 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
-                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideView === 'format' ? guideText.formatSectionTitle : guideText.modalTitle}</h3>
+                <h3 className="text-center text-xl font-black tracking-tight text-white sm:text-2xl">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideView === 'format' ? guideText.formatSectionTitle : `${guideModalProduct.product?.name || guideText.modalTitle} · ${guideText.modalTitle}`}</h3>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 sm:p-6 lg:p-7 overflow-y-auto scrollbar-thin bg-gradient-to-b from-slate-950/15 to-slate-950/55">
+            <div className="guide-experience-body p-4 sm:p-6 lg:p-7 overflow-y-auto scrollbar-thin bg-gradient-to-b from-slate-950/15 to-slate-950/55">
               {guideView === 'menu' && (
-                <div className="grid grid-cols-1 gap-4 rounded-[28px] border border-white/[.06] bg-[#060c17]/55 p-3 sm:grid-cols-2 sm:gap-5 sm:p-4 lg:grid-cols-3 animate-slide-up">
+                <div className="grid auto-rows-fr grid-cols-1 gap-4 rounded-[28px] border border-white/[.10] bg-[#06101d]/92 p-3 sm:grid-cols-2 sm:gap-5 sm:p-4 lg:grid-cols-3 animate-slide-up">
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
                       setGuideView('notice');
                     }}
-                    className="relative min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-indigo-950/80 via-slate-900 to-[#070b14] border border-indigo-300/[.20] hover:border-indigo-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(37,99,235,.18)] hover:-translate-y-1"
+                    className="relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-indigo-950/80 via-slate-900 to-[#070b14] border border-indigo-300/[.20] hover:border-indigo-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(37,99,235,.18)] hover:-translate-y-1"
                   >
                     <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(59,130,246,0.2)]">
                       <Play className="w-7 h-7" fill="currentColor" />
@@ -4111,7 +4111,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                   <button
                     onClick={() => setGuideView('format')}
-                    className="relative min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-sky-950/85 via-[#0b1f31] to-[#070d18] border border-sky-300/[.22] hover:border-sky-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(14,116,144,.18)] hover:-translate-y-1"
+                    className="relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-sky-950/85 via-[#0b1f31] to-[#070d18] border border-sky-300/[.22] hover:border-sky-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(14,116,144,.18)] hover:-translate-y-1"
                   >
                     <div className="w-16 h-16 rounded-2xl bg-sky-400/[.12] border border-sky-300/[.25] flex items-center justify-center text-sky-200 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(56,189,248,.15)]">
                       <Play className="w-7 h-7" fill="currentColor" />
@@ -4126,7 +4126,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {/* Visual issue-fix center */}
                   <button
                     onClick={() => setGuideView('issues')}
-                    className="relative min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-emerald-950/[.44] via-slate-900 to-[#070b14] border border-emerald-300/[.16] hover:border-emerald-300/45 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(16,185,129,.14)] hover:-translate-y-1"
+                    className="relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-emerald-950/[.44] via-slate-900 to-[#070b14] border border-emerald-300/[.16] hover:border-emerald-300/45 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(16,185,129,.14)] hover:-translate-y-1"
                   >
                     <div className="w-16 h-16 rounded-2xl bg-emerald-400/10 border border-emerald-400/25 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(16,185,129,0.13)]">
                       <HelpCircle className="w-7 h-7" />
@@ -4157,7 +4157,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <div className="text-start">
                       <div className="flex flex-wrap items-center gap-2"><p className="text-[10px] font-black tracking-[0.18em] text-emerald-300/80">{guideText.issuesLabel}</p><span className="rounded-md border border-emerald-300/20 bg-emerald-400/[0.08] px-2 py-1 text-[9px] font-black text-emerald-100">{guideText.libraryAvailable}</span></div>
                       <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">{guideText.issuesTitle}</h4>
-                      <p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-400 sm:text-[13px]">{guideText.issuesDescription}</p>
+                      <p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-300 sm:text-[13px]">{guideText.issuesDescription}</p>
                     </div>
                     <button onClick={() => setGuideView('menu')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 text-[11px] font-black text-slate-300 transition-all hover:border-primary/35 hover:bg-primary/10 hover:text-white sm:self-auto">
                       {lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}
@@ -4182,7 +4182,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
                         <div className="flex flex-1 flex-col p-4 sm:p-5">
                           <h5 className="text-[15px] font-black text-white sm:text-base">{issue.title}</h5>
-                          <p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-400 sm:text-[12px]">{issue.description}</p>
+                          <p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-300 sm:text-[12px]">{issue.description}</p>
                           <div className={`mt-auto pt-4 inline-flex items-center gap-2 text-[11px] font-black ${issue.accent === 'sky' ? 'text-sky-200' : issue.accent === 'emerald' ? 'text-emerald-200' : 'text-violet-200'}`}><Play className="h-3.5 w-3.5" fill="currentColor" />{guideText.watchSolution}</div>
                         </div>
                       </button>
