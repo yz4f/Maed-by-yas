@@ -3,6 +3,7 @@ import DiscordProvider from 'next-auth/providers/discord';
 import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 import { sendDiscordWebsiteLog } from './discord-bot';
+import { recordSiteLogin } from './site-presence';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -39,12 +40,11 @@ export const authOptions: NextAuthOptions = {
           token.role = 'Customer';
         }
 
-        void sendDiscordWebsiteLog({
-          type: 'login',
-          customerId: profile.id,
-          customerName: profile.global_name || profile.username || 'عميل',
-          customerImage: token.image,
-        }).catch((error) => console.error('[Discord Log] Login event failed:', error));
+        const customerName = profile.global_name || profile.username || 'Customer';
+        void Promise.all([
+          recordSiteLogin({ discordId: profile.id, name: customerName, image: token.image, role: token.role || 'Customer' }),
+          sendDiscordWebsiteLog({ type: 'login', customerId: profile.id, customerName, customerImage: token.image }),
+        ]).catch((error) => console.error('[Website Presence] Login event failed:', error));
       }
       return token;
     },

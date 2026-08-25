@@ -93,6 +93,18 @@ export interface DownloadLog {
   downloadedAt: string;
 }
 
+export interface SitePresence {
+  userId: string;
+  discordId: string;
+  name: string;
+  image?: string | null;
+  role: RoleType;
+  loginAt: string;
+  lastSeenAt: string;
+  logoutAt?: string | null;
+  active: boolean;
+}
+
 export interface SystemLog {
   id: string;
   action: string;

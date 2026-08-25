@@ -15,14 +15,20 @@ const VOICE_SUPPORT_COLLECTION = 'voiceSupportSessions';
 const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
 const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
 const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
-const DISCORD_AUDIT_CATEGORY_NAME = '🔐・سجلات خاصة';
-const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・سجل-رستات';
-const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・سجل-اغلاق-الدعم';
+const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
+const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-log';
+const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・support-closures';
+const DISCORD_LOGIN_AUDIT_CHANNEL_NAME = '🔐・login-log';
+const DISCORD_LOGOUT_AUDIT_CHANNEL_NAME = '🚪・logout-log';
+const DISCORD_WEBSITE_EVENTS_CHANNEL_NAME = '🖥️・website-events';
 
 type DiscordPrivateAuditChannels = {
   categoryId?: string | null;
   resetAuditChannelId: string;
   conversationClosedAuditChannelId: string;
+  loginAuditChannelId: string;
+  logoutAuditChannelId: string;
+  websiteEventsChannelId: string;
 };
 let privateAuditChannelCache: DiscordPrivateAuditChannels | null = null;
 
@@ -62,15 +68,10 @@ function splitDiscordMessage(value: string) {
   chunks.push(remaining);
   return chunks;
 }
-const websiteLogChannels = {
-  conversationOpened: '1510001198353219744',
-  login: '1510454551952752691',
-  productActivated: '1514658718233530508',
-} as const;
-
 type WebsiteLogEvent =
   | { type: 'conversationOpened'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'login'; customerId: string; customerName: string; customerImage?: string | null }
+  | { type: 'logout'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'productActivated'; customerId: string; customerName: string; customerImage?: string | null; productName: string };
 
 type GatewayPacket = { op: number; d: any; s?: number | null; t?: string | null };
@@ -117,21 +118,21 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
   const configRef = doc(database, DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_AUDIT_CONFIG_ID);
   const stored = await getDoc(configRef);
   const storedChannels = stored.exists() ? stored.data() as Partial<DiscordPrivateAuditChannels> : null;
-  if (storedChannels?.resetAuditChannelId && storedChannels.conversationClosedAuditChannelId) {
-    privateAuditChannelCache = {
-      categoryId: storedChannels.categoryId || null,
-      resetAuditChannelId: storedChannels.resetAuditChannelId,
-      conversationClosedAuditChannelId: storedChannels.conversationClosedAuditChannelId,
-    };
-    return privateAuditChannelCache;
-  }
 
   const guildChannelsResponse = await discordApi(`/guilds/${guildId}/channels`, token);
   if (!guildChannelsResponse.ok) throw new Error(`تعذر قراءة رومات Discord الخاصة بالسجل (HTTP ${guildChannelsResponse.status}).`);
   const guildChannels = await guildChannelsResponse.json() as Array<{ id: string; name: string; type: number; parent_id?: string | null }>;
   const findChannel = (name: string, type: number) => guildChannels.find((channel) => channel.name === name && channel.type === type);
-  let category = findChannel(DISCORD_AUDIT_CATEGORY_NAME, 4);
-  if (!category) {
+  const renameChannel = async (channelId: string, name: string) => {
+    const response = await discordApi(`/channels/${channelId}`, token, { method: 'PATCH', body: JSON.stringify({ name }) });
+    if (!response.ok) throw new Error(`تعذر تنسيق اسم روم سجل Discord (HTTP ${response.status}).`);
+    return response.json() as Promise<{ id: string; name: string; type: number }>;
+  };
+
+  let category = storedChannels?.categoryId ? guildChannels.find((channel) => channel.id === storedChannels.categoryId) : findChannel(DISCORD_AUDIT_CATEGORY_NAME, 4);
+  if (category) {
+    if (category.name !== DISCORD_AUDIT_CATEGORY_NAME) category = await renameChannel(category.id, DISCORD_AUDIT_CATEGORY_NAME);
+  } else {
     const response = await discordApi(`/guilds/${guildId}/channels`, token, {
       method: 'POST',
       body: JSON.stringify({ name: DISCORD_AUDIT_CATEGORY_NAME, type: 4, permission_overwrites: [{ id: guildId, type: 0, deny: '1024' }] }),
@@ -140,12 +141,17 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
     category = await response.json() as { id: string; name: string; type: number };
   }
 
-  const createLogChannel = async (name: string) => {
+  const createOrRenameLogChannel = async (storedId: string | null | undefined, name: string) => {
+    const storedChannel = storedId ? guildChannels.find((channel) => channel.id === storedId) : null;
+    if (storedChannel) {
+      if (storedChannel.name !== name) await renameChannel(storedChannel.id, name);
+      return storedChannel.id;
+    }
     const existing = findChannel(name, 0);
     if (existing) return existing.id;
     const response = await discordApi(`/guilds/${guildId}/channels`, token, {
       method: 'POST',
-      body: JSON.stringify({ name, type: 0, parent_id: category!.id, topic: 'سجل إداري خاص — لا يحتوي مفاتيح كاملة أو محتوى محادثات العملاء.' }),
+      body: JSON.stringify({ name, type: 0, parent_id: category!.id, topic: 'Private administrative audit log. No full license keys, chat content, email, or IP addresses.' }),
     });
     if (!response.ok) throw new Error(`تعذر إنشاء روم سجل Discord الخاص (HTTP ${response.status}).`);
     return String((await response.json() as { id: string }).id);
@@ -153,8 +159,11 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
 
   privateAuditChannelCache = {
     categoryId: category.id,
-    resetAuditChannelId: await createLogChannel(DISCORD_RESET_AUDIT_CHANNEL_NAME),
-    conversationClosedAuditChannelId: await createLogChannel(DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME),
+    resetAuditChannelId: await createOrRenameLogChannel(storedChannels?.resetAuditChannelId, DISCORD_RESET_AUDIT_CHANNEL_NAME),
+    conversationClosedAuditChannelId: await createOrRenameLogChannel(storedChannels?.conversationClosedAuditChannelId, DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME),
+    loginAuditChannelId: await createOrRenameLogChannel(storedChannels?.loginAuditChannelId, DISCORD_LOGIN_AUDIT_CHANNEL_NAME),
+    logoutAuditChannelId: await createOrRenameLogChannel(storedChannels?.logoutAuditChannelId, DISCORD_LOGOUT_AUDIT_CHANNEL_NAME),
+    websiteEventsChannelId: await createOrRenameLogChannel(storedChannels?.websiteEventsChannelId, DISCORD_WEBSITE_EVENTS_CHANNEL_NAME),
   };
   await setDoc(configRef, { ...privateAuditChannelCache, updatedAt: new Date().toISOString() }, { merge: true });
   return privateAuditChannelCache;
@@ -179,36 +188,35 @@ async function registerCommands(applicationId: string, token: string) {
 
 export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ messageId: string }> {
   const token = process.env.DISCORD_BOT_TOKEN;
-  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الموقع.');
-
-  const config = event.type === 'conversationOpened'
-    ? { channelId: websiteLogChannels.conversationOpened, color: 0x22d3ee, title: 'فتح محادثة جديدة', description: 'فتح العميل محادثة جديدة عبر مساعد تعن داخل الموقع.', label: 'الحالة', value: 'تم فتح المحادثة' }
-    : event.type === 'login'
-      ? { channelId: websiteLogChannels.login, color: 0x6366f1, title: 'تسجيل دخول للموقع', description: 'سجّل العميل دخوله إلى منصة تعن عبر حساب Discord المرتبط.', label: 'الحالة', value: 'تم تسجيل الدخول' }
-      : { channelId: websiteLogChannels.productActivated, color: 0x22c55e, title: 'تفعيل منتج جديد', description: 'تم تفعيل منتج جديد بنجاح من داخل منصة تعن.', label: 'المنتج', value: event.productName };
+  if (!token) throw new Error('Discord bot is not connected, so the website log was not sent.');
+  const channels = await ensurePrivateAuditChannels(token);
+  const config = event.type === 'login'
+    ? { channelId: channels.loginAuditChannelId, color: 0x6366f1, title: 'Website Sign-in', description: 'A customer signed in to the Ta3n platform using their linked Discord account.', label: 'Status', value: 'Signed in' }
+    : event.type === 'logout'
+      ? { channelId: channels.logoutAuditChannelId, color: 0x64748b, title: 'Website Sign-out', description: 'A customer signed out of the Ta3n platform.', label: 'Status', value: 'Signed out' }
+      : event.type === 'conversationOpened'
+        ? { channelId: channels.websiteEventsChannelId, color: 0x22d3ee, title: 'Support Conversation Opened', description: 'A customer opened a new Ta3n Assistant conversation from the website.', label: 'Event', value: 'Conversation opened' }
+        : { channelId: channels.websiteEventsChannelId, color: 0x22c55e, title: 'Product Activated', description: 'A product was activated successfully from the Ta3n platform.', label: 'Product', value: event.productName };
 
   const embed = {
     color: config.color,
-    author: { name: 'تعن • سجل الموقع', icon_url: `${websiteUrl}/logo.png` },
+    author: { name: 'Ta3n • Website Audit', icon_url: `${websiteUrl}/logo.png` },
     title: config.title,
     description: config.description,
     thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
     fields: [
-      { name: 'الحساب', value: `**${event.customerName || 'عميل'}**\n<@${event.customerId}>`, inline: true },
+      { name: 'Account', value: `**${event.customerName || 'Customer'}**\n<@${event.customerId}>`, inline: true },
       { name: config.label, value: config.value, inline: true },
-      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+      { name: 'Time', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
     ],
-    footer: { text: `تعن • ${event.customerId}` },
+    footer: { text: `Ta3n • ${event.customerId}` },
     timestamp: new Date().toISOString(),
   };
 
-  const response = await discordApi(`/channels/${config.channelId}/messages`, token, {
-    method: 'POST',
-    body: JSON.stringify({ embeds: [embed] }),
-  });
-  if (!response.ok) throw new Error(`تعذر إرسال سجل الموقع إلى Discord (HTTP ${response.status}).`);
+  const response = await discordApi(`/channels/${config.channelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
+  if (!response.ok) throw new Error(`Unable to send website audit log to Discord (HTTP ${response.status}).`);
   const message = await response.json() as { id?: string };
-  if (!message.id) throw new Error('لم يعرض Discord معرف رسالة سجل الموقع.');
+  if (!message.id) throw new Error('Discord did not return a website audit log message ID.');
   return { messageId: message.id };
 }
 
@@ -226,26 +234,26 @@ export async function sendDiscordResetAuditLog(event: {
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الريست.');
   const channels = await ensurePrivateAuditChannels(token);
   const labels = {
-    CREATED: { title: 'تسجيل طلب رستات جديد', description: 'تم إنشاء طلب رستات جديد عبر الموقع أو نموذج Discord.', color: 0x38bdf8 },
-    UPDATED: { title: 'تحديث حالة طلب رستات', description: 'تم تحديث حالة طلب رستات بواسطة الإدارة.', color: 0xfbbf24 },
-    REMOVED: { title: 'إزالة طلب رستات منتهي', description: 'تمت إزالة طلب رستات نهائي من لوحة المتابعة بعد اكتماله أو رفضه أو إلغائه.', color: 0x64748b },
+    CREATED: { title: 'Key Reset Request Created', description: 'A new key reset request was created through the website or Discord form.', color: 0x38bdf8 },
+    UPDATED: { title: 'Key Reset Request Updated', description: 'A key reset request was updated by an administrator.', color: 0xfbbf24 },
+    REMOVED: { title: 'Terminal Key Reset Removed', description: 'A completed, rejected, or cancelled key reset request was removed from the active queue.', color: 0x64748b },
   } as const;
   const presentation = labels[event.action];
   const embed = {
     color: presentation.color,
-    author: { name: 'تعن • سجل رستات خاص', icon_url: `${websiteUrl}/logo.png` },
+    author: { name: 'Ta3n • Key Reset Audit', icon_url: `${websiteUrl}/logo.png` },
     title: presentation.title,
     description: presentation.description,
     thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
     fields: [
-      { name: 'رقم الطلب', value: `\`${event.reference}\``, inline: true },
-      { name: 'الحالة', value: event.status, inline: true },
-      { name: 'العميل', value: `**${event.customerName || 'عميل'}**\n<@${event.customerDiscordId}>`, inline: true },
-      { name: 'المنتج', value: event.productName || 'غير محدد', inline: true },
-      ...(event.adminName ? [{ name: 'الإدارة', value: event.adminName, inline: true }] : []),
-      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+      { name: 'Request', value: `\`${event.reference}\``, inline: true },
+      { name: 'Status', value: event.status, inline: true },
+      { name: 'Customer', value: `**${event.customerName || 'Customer'}**\n<@${event.customerDiscordId}>`, inline: true },
+      { name: 'Product', value: event.productName || 'Not specified', inline: true },
+      ...(event.adminName ? [{ name: 'Administrator', value: event.adminName, inline: true }] : []),
+      { name: 'Time', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
     ],
-    footer: { text: `تعن • ${event.customerDiscordId} • لا يظهر المفتاح` },
+    footer: { text: `Ta3n • ${event.customerDiscordId} • Full key hidden` },
     timestamp: new Date().toISOString(),
   };
   const response = await discordApi(`/channels/${channels.resetAuditChannelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
@@ -265,17 +273,17 @@ export async function sendDiscordConversationClosedAuditLog(event: {
   const manual = event.reason === 'MANUAL';
   const embed = {
     color: manual ? 0x64748b : 0xf59e0b,
-    author: { name: 'تعن • سجل إغلاق الدعم', icon_url: `${websiteUrl}/logo.png` },
-    title: manual ? 'تم إغلاق محادثة من الإدارة' : 'تم إغلاق محادثة للخمول',
-    description: manual ? 'أغلق فريق الإدارة جلسة الدعم مع حفظ سجل المحادثة.' : 'أُغلقت جلسة الدعم تلقائياً بعد خمس دقائق من عدم رد العميل.',
+    author: { name: 'Ta3n • Support Closure Audit', icon_url: `${websiteUrl}/logo.png` },
+    title: manual ? 'Support Conversation Closed by Staff' : 'Support Conversation Closed for Inactivity',
+    description: manual ? 'An administrator closed the support session while preserving its internal record.' : 'The support session closed automatically after five minutes without a customer reply.',
     thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
     fields: [
-      { name: 'العميل', value: `**${event.customerName || 'عميل'}**\n<@${event.customerDiscordId}>`, inline: true },
-      { name: 'السبب', value: manual ? 'إغلاق إداري' : 'خمول لمدة 5 دقائق', inline: true },
-      ...(event.closedByName ? [{ name: 'بواسطة', value: event.closedByName, inline: true }] : []),
-      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+      { name: 'Customer', value: `**${event.customerName || 'Customer'}**\n<@${event.customerDiscordId}>`, inline: true },
+      { name: 'Reason', value: manual ? 'Closed by staff' : 'Five-minute inactivity', inline: true },
+      ...(event.closedByName ? [{ name: 'Closed by', value: event.closedByName, inline: true }] : []),
+      { name: 'Time', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
     ],
-    footer: { text: `تعن • ${event.customerDiscordId} • محتوى الرسائل غير معروض` },
+    footer: { text: `Ta3n • ${event.customerDiscordId} • Chat content hidden` },
     timestamp: new Date().toISOString(),
   };
   const response = await discordApi(`/channels/${channels.conversationClosedAuditChannelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });

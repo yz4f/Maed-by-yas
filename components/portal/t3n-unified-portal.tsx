@@ -59,6 +59,7 @@ const AiAdminConversations = dynamic(() => import('./ai-admin-conversations').th
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const VoiceSupportAdmin = dynamic(() => import('./voice-support-admin').then((module) => module.VoiceSupportAdmin), { ssr: false });
+const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
@@ -81,6 +82,17 @@ function DiscordMark({ className = '' }: { className?: string }) {
 
 export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const { data: session, status } = useSession();
+  const sessionUserId = (session?.user as any)?.discordId as string | undefined;
+
+  useEffect(() => {
+    if (!sessionUserId) return;
+    const heartbeat = () => {
+      void fetch('/api/presence', { method: 'POST', credentials: 'same-origin' }).catch(() => undefined);
+    };
+    heartbeat();
+    const interval = window.setInterval(heartbeat, 45_000);
+    return () => window.clearInterval(interval);
+  }, [sessionUserId]);
 
   // Helper to split brand names to prevent browser translation tools from altering them to EON
   const renderBrandText = (text: string) => {
@@ -504,7 +516,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('products');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('products');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -1501,10 +1513,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setDemoUser(null);
     if (session) {
-      signOut();
+      try {
+        await fetch('/api/presence', { method: 'PATCH', credentials: 'same-origin' });
+      } catch {
+        // Do not block the customer from leaving if audit delivery is temporarily unavailable.
+      }
+      await signOut();
     }
   };
 
@@ -2992,6 +3009,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
+                { id: 'sitePresence', label: lang === 'ar' ? 'نشاط الموقع' : 'Site Presence', icon: UserCheck },
                 { id: 'voiceSessions', label: lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Sessions', icon: Mic2 },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },
@@ -3229,6 +3247,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             )}
 
+
+            {adminSectionTab === 'sitePresence' && (
+              <SitePresenceAdmin lang={lang} isDark={isDark} />
+            )}
 
             {adminSectionTab === 'voiceSessions' && (
               <VoiceSupportAdmin customers={allCustomersList.map((customer: any) => ({ discordId: customer.discordId || customer.id, name: customer.name || 'عميل', image: customer.image || null, email: customer.email || null })).filter((customer: any) => Boolean(customer.discordId))} />
