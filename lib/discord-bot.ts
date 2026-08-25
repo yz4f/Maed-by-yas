@@ -16,6 +16,7 @@ const VOICE_SUPPORT_COLLECTION = 'voiceSupportSessions';
 const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
 const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
 const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
+const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
 const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
 const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-log';
 const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・support-closures';
@@ -546,7 +547,21 @@ export async function publishDiscordResetPanel(): Promise<{ messageId: string }>
     components: resetPanelComponents(),
   });
   if (!message.id) throw new Error('لم يعرض Discord معرف رسالة لوحة الريست.');
+  await setDoc(doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_RESET_PANEL_CONFIG_ID), {
+    messageId: message.id,
+    channelId: discordRoomChannels.keyResetRequests,
+    publishedAt: new Date().toISOString(),
+  }, { merge: true });
   return { messageId: message.id };
+}
+
+async function ensureDiscordResetPanelPublished() {
+  const panelRef = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_RESET_PANEL_CONFIG_ID);
+  const panel = await getDoc(panelRef);
+  const messageId = panel.exists() ? String(panel.data()?.messageId || '') : '';
+  if (messageId) return { messageId, published: false };
+  const result = await publishDiscordResetPanel();
+  return { ...result, published: true };
 }
 
 async function postDiscordMessage(channelId: string, token: string, data: Record<string, unknown>) {
@@ -1090,8 +1105,10 @@ export async function startDiscordBot() {
   started = true;
   try {
     await ensurePrivateAuditChannels(token);
+    const panel = await ensureDiscordResetPanelPublished();
+    if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
   } catch (error) {
-    console.error('[Discord Audit] Private audit setup failed:', error);
+    console.error('[Discord Audit] Private audit setup or reset panel publish failed:', error);
   }
   supportMaintenanceTimer = setInterval(() => {
     if (supportMaintenanceRunning) return;
