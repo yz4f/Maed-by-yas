@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import { sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
+import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordResetAuditLog, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
@@ -422,6 +422,12 @@ export async function processDueAiConversationClosures(nowMs = Date.now()) {
     if (closed) {
       closedCount += 1;
       await StoreDB.addLog('AI Conversation Auto Closed', `تم إغلاق محادثة العميل ${conversation.customerName} لعدم الرد خلال 5 دقائق`, conversation.customerId, conversation.customerName);
+      void sendDiscordConversationClosedAuditLog({
+        customerDiscordId: conversation.customerDiscordId,
+        customerName: conversation.customerName,
+        customerImage: conversation.customerImage || null,
+        reason: 'INACTIVITY',
+      }).catch((error) => console.error('[Discord Audit] Unable to log inactive conversation closure:', error));
     }
   }
 
@@ -990,6 +996,15 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
   }).then(({ messageId }) => updateDoc(requestRef, { discordMessageId: messageId }))
     .catch((error) => console.error('[Discord Reset] Unable to create request card:', error));
   await StoreDB.addLog('Reset Request Created', `تم إنشاء طلب ${request.reference} لمنتج ${request.productName}`, context.user.id, context.user.name);
+  void sendDiscordResetAuditLog({
+    action: 'CREATED',
+    reference: request.reference,
+    customerDiscordId: request.customerDiscordId,
+    customerName: request.customerName,
+    customerImage: request.customerImage,
+    productName: request.productName,
+    status: 'قيد الانتظار',
+  }).catch((error) => console.error('[Discord Audit] Unable to log reset creation:', error));
   return { request, duplicate: false };
 }
 
@@ -1106,6 +1121,13 @@ export async function deleteAiConversation(actor: TicketActor, conversationId: s
     visibleToCustomer: true,
   });
   await StoreDB.addLog('AI Conversation Closed By Staff', `تم إغلاق محادثة العميل ${conversation.customerName} مع حفظ السجل`, actor.id, actor.name);
+  void sendDiscordConversationClosedAuditLog({
+    customerDiscordId: conversation.customerDiscordId,
+    customerName: conversation.customerName,
+    customerImage: conversation.customerImage || null,
+    reason: 'MANUAL',
+    closedByName: actor.name,
+  }).catch((error) => console.error('[Discord Audit] Unable to log manual conversation closure:', error));
   return { closedConversationId: conversationId };
 }
 
@@ -1156,6 +1178,25 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     } satisfies SupportNotification);
   }
   const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null };
+  const terminal = ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(status);
+  void sendDiscordResetAuditLog({
+    action: terminal ? 'REMOVED' : 'UPDATED',
+    reference: updatedRequest.reference,
+    customerDiscordId: updatedRequest.customerDiscordId,
+    customerName: updatedRequest.customerName,
+    customerImage: updatedRequest.customerImage,
+    productName: updatedRequest.productName,
+    status: resetStatusLabel(status),
+    adminName: actor.name,
+  }).catch((error) => console.error('[Discord Audit] Unable to log reset status:', error));
+
+  if (terminal) {
+    void deleteDiscordResetRequestCard(updatedRequest.discordMessageId).catch((error) => console.error('[Discord Reset] Unable to remove terminal request card:', error));
+    await deleteDoc(requestRef);
+    await StoreDB.addLog(`AI Reset ${status}`, `تمت إزالة طلب ${request.reference} المنتهي من لوحة المتابعة`, actor.id, actor.name);
+    return { ...updatedRequest, removed: true };
+  }
+
   void syncDiscordResetRequestLog({
     reference: updatedRequest.reference,
     customerDiscordId: updatedRequest.customerDiscordId,
@@ -1172,6 +1213,29 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     .catch((error) => console.error('[Discord Reset] Unable to update request card:', error));
   await StoreDB.addLog(`AI Reset ${status}`, `طلب ${request.reference} — ${request.productName}`, actor.id, actor.name);
   return updatedRequest;
+}
+
+function resetStatusLabel(status: ResetRequestStatus) {
+  return ({
+    PENDING: 'قيد الانتظار',
+    APPROVED: 'تمت الموافقة',
+    REJECTED: 'مرفوض',
+    WAITING_FOR_CUSTOMER: 'بانتظار معلومات العميل',
+    COMPLETED: 'تم التنفيذ',
+    CANCELLED: 'ملغي',
+  } as const)[status];
+}
+
+export async function purgeTerminalResetRequests(actor: TicketActor) {
+  if (!isStaff(actor)) throw new Error('هذه العملية مخصصة للإدارة.');
+  const snapshot = await getDocs(collection(database(), RESET_COLLECTION));
+  const terminalRequests = snapshot.docs.map(toResetRequest).filter((request) => ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(request.status));
+  for (const request of terminalRequests) {
+    void deleteDiscordResetRequestCard(request.discordMessageId).catch((error) => console.error('[Discord Reset] Unable to remove old request card:', error));
+    await deleteDoc(doc(database(), RESET_COLLECTION, request.id));
+  }
+  if (terminalRequests.length) await StoreDB.addLog('AI Reset Requests Purged', `تمت إزالة ${terminalRequests.length} طلبات رستات منتهية من لوحة المتابعة`, actor.id, actor.name);
+  return { removedCount: terminalRequests.length };
 }
 
 export async function getAiAdminWorkspace(actor: TicketActor) {

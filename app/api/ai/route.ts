@@ -13,6 +13,7 @@ import {
   listCustomerResetRequests,
   listResetRequests,
   processResetRequest,
+  purgeTerminalResetRequests,
   listCustomerSupportNotifications,
   markCustomerSupportNotificationSeen,
   reopenAiConversation,
@@ -79,6 +80,7 @@ const conversationCloseSchema = z.object({
   action: z.literal('conversation_close'),
   conversationId: z.string().trim().min(1).max(180),
 });
+const purgeTerminalResetsSchema = z.object({ action: z.literal('purge_terminal_resets') });
 
 function enforceRateLimit(actorId: string, action: string, limit: number, windowMs: number) {
   const key = `${actorId}:${action}`;
@@ -187,6 +189,10 @@ export async function PATCH(request: NextRequest) {
     if (body?.action === 'conversation_close') {
       const input = conversationCloseSchema.parse(body);
       return NextResponse.json({ success: true, ...(await deleteAiConversation(current, input.conversationId)) });
+    }
+    if (body?.action === 'purge_terminal_resets') {
+      purgeTerminalResetsSchema.parse(body);
+      return NextResponse.json({ success: true, ...(await purgeTerminalResetRequests(current)) });
     }
     const input = adminResetPatchSchema.parse(body);
     return NextResponse.json({ success: true, request: await processResetRequest(current, { requestId: input.requestId, action: input.decision, note: input.note }) });

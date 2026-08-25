@@ -1,5 +1,5 @@
 import WebSocket, { RawData } from 'ws';
-import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb } from '@/lib/store-db';
 import type { SiteUpdate } from '@/types';
 
@@ -13,6 +13,18 @@ export const discordRoomChannels = {
 const DISCORD_SUPPORT_COLLECTION = 'discordSupportSessions';
 const VOICE_SUPPORT_COLLECTION = 'voiceSupportSessions';
 const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
+const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
+const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
+const DISCORD_AUDIT_CATEGORY_NAME = '🔐・سجلات خاصة';
+const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・سجل-رستات';
+const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・سجل-اغلاق-الدعم';
+
+type DiscordPrivateAuditChannels = {
+  categoryId?: string | null;
+  resetAuditChannelId: string;
+  conversationClosedAuditChannelId: string;
+};
+let privateAuditChannelCache: DiscordPrivateAuditChannels | null = null;
 
 type DiscordSupportSession = {
   id: string;
@@ -99,6 +111,55 @@ async function discordApi(path: string, token: string, init: RequestInit = {}) {
   });
 }
 
+async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivateAuditChannels> {
+  if (privateAuditChannelCache) return privateAuditChannelCache;
+  const database = supportDatabase();
+  const configRef = doc(database, DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_AUDIT_CONFIG_ID);
+  const stored = await getDoc(configRef);
+  const storedChannels = stored.exists() ? stored.data() as Partial<DiscordPrivateAuditChannels> : null;
+  if (storedChannels?.resetAuditChannelId && storedChannels.conversationClosedAuditChannelId) {
+    privateAuditChannelCache = {
+      categoryId: storedChannels.categoryId || null,
+      resetAuditChannelId: storedChannels.resetAuditChannelId,
+      conversationClosedAuditChannelId: storedChannels.conversationClosedAuditChannelId,
+    };
+    return privateAuditChannelCache;
+  }
+
+  const guildChannelsResponse = await discordApi(`/guilds/${guildId}/channels`, token);
+  if (!guildChannelsResponse.ok) throw new Error(`تعذر قراءة رومات Discord الخاصة بالسجل (HTTP ${guildChannelsResponse.status}).`);
+  const guildChannels = await guildChannelsResponse.json() as Array<{ id: string; name: string; type: number; parent_id?: string | null }>;
+  const findChannel = (name: string, type: number) => guildChannels.find((channel) => channel.name === name && channel.type === type);
+  let category = findChannel(DISCORD_AUDIT_CATEGORY_NAME, 4);
+  if (!category) {
+    const response = await discordApi(`/guilds/${guildId}/channels`, token, {
+      method: 'POST',
+      body: JSON.stringify({ name: DISCORD_AUDIT_CATEGORY_NAME, type: 4, permission_overwrites: [{ id: guildId, type: 0, deny: '1024' }] }),
+    });
+    if (!response.ok) throw new Error(`تعذر إنشاء فئة سجلات Discord الخاصة (HTTP ${response.status}).`);
+    category = await response.json() as { id: string; name: string; type: number };
+  }
+
+  const createLogChannel = async (name: string) => {
+    const existing = findChannel(name, 0);
+    if (existing) return existing.id;
+    const response = await discordApi(`/guilds/${guildId}/channels`, token, {
+      method: 'POST',
+      body: JSON.stringify({ name, type: 0, parent_id: category!.id, topic: 'سجل إداري خاص — لا يحتوي مفاتيح كاملة أو محتوى محادثات العملاء.' }),
+    });
+    if (!response.ok) throw new Error(`تعذر إنشاء روم سجل Discord الخاص (HTTP ${response.status}).`);
+    return String((await response.json() as { id: string }).id);
+  };
+
+  privateAuditChannelCache = {
+    categoryId: category.id,
+    resetAuditChannelId: await createLogChannel(DISCORD_RESET_AUDIT_CHANNEL_NAME),
+    conversationClosedAuditChannelId: await createLogChannel(DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME),
+  };
+  await setDoc(configRef, { ...privateAuditChannelCache, updatedAt: new Date().toISOString() }, { merge: true });
+  return privateAuditChannelCache;
+}
+
 function commands() {
   return [
     { name: 'مساعد', description: 'فتح مساعد تعن للحلول السريعة', type: 1 },
@@ -149,6 +210,100 @@ export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ m
   const message = await response.json() as { id?: string };
   if (!message.id) throw new Error('لم يعرض Discord معرف رسالة سجل الموقع.');
   return { messageId: message.id };
+}
+
+export async function sendDiscordResetAuditLog(event: {
+  action: 'CREATED' | 'UPDATED' | 'REMOVED';
+  reference: string;
+  customerDiscordId: string;
+  customerName: string;
+  customerImage?: string | null;
+  productName: string;
+  status: string;
+  adminName?: string | null;
+}) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الريست.');
+  const channels = await ensurePrivateAuditChannels(token);
+  const labels = {
+    CREATED: { title: 'تسجيل طلب رستات جديد', description: 'تم إنشاء طلب رستات جديد عبر الموقع أو نموذج Discord.', color: 0x38bdf8 },
+    UPDATED: { title: 'تحديث حالة طلب رستات', description: 'تم تحديث حالة طلب رستات بواسطة الإدارة.', color: 0xfbbf24 },
+    REMOVED: { title: 'إزالة طلب رستات منتهي', description: 'تمت إزالة طلب رستات نهائي من لوحة المتابعة بعد اكتماله أو رفضه أو إلغائه.', color: 0x64748b },
+  } as const;
+  const presentation = labels[event.action];
+  const embed = {
+    color: presentation.color,
+    author: { name: 'تعن • سجل رستات خاص', icon_url: `${websiteUrl}/logo.png` },
+    title: presentation.title,
+    description: presentation.description,
+    thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
+    fields: [
+      { name: 'رقم الطلب', value: `\`${event.reference}\``, inline: true },
+      { name: 'الحالة', value: event.status, inline: true },
+      { name: 'العميل', value: `**${event.customerName || 'عميل'}**\n<@${event.customerDiscordId}>`, inline: true },
+      { name: 'المنتج', value: event.productName || 'غير محدد', inline: true },
+      ...(event.adminName ? [{ name: 'الإدارة', value: event.adminName, inline: true }] : []),
+      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+    ],
+    footer: { text: `تعن • ${event.customerDiscordId} • لا يظهر المفتاح` },
+    timestamp: new Date().toISOString(),
+  };
+  const response = await discordApi(`/channels/${channels.resetAuditChannelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
+  if (!response.ok) throw new Error(`تعذر إرسال سجل الريست الخاص (HTTP ${response.status}).`);
+}
+
+export async function sendDiscordConversationClosedAuditLog(event: {
+  customerDiscordId: string;
+  customerName: string;
+  customerImage?: string | null;
+  reason: 'INACTIVITY' | 'MANUAL';
+  closedByName?: string | null;
+}) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل إغلاق المحادثة.');
+  const channels = await ensurePrivateAuditChannels(token);
+  const manual = event.reason === 'MANUAL';
+  const embed = {
+    color: manual ? 0x64748b : 0xf59e0b,
+    author: { name: 'تعن • سجل إغلاق الدعم', icon_url: `${websiteUrl}/logo.png` },
+    title: manual ? 'تم إغلاق محادثة من الإدارة' : 'تم إغلاق محادثة للخمول',
+    description: manual ? 'أغلق فريق الإدارة جلسة الدعم مع حفظ سجل المحادثة.' : 'أُغلقت جلسة الدعم تلقائياً بعد خمس دقائق من عدم رد العميل.',
+    thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
+    fields: [
+      { name: 'العميل', value: `**${event.customerName || 'عميل'}**\n<@${event.customerDiscordId}>`, inline: true },
+      { name: 'السبب', value: manual ? 'إغلاق إداري' : 'خمول لمدة 5 دقائق', inline: true },
+      ...(event.closedByName ? [{ name: 'بواسطة', value: event.closedByName, inline: true }] : []),
+      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+    ],
+    footer: { text: `تعن • ${event.customerDiscordId} • محتوى الرسائل غير معروض` },
+    timestamp: new Date().toISOString(),
+  };
+  const response = await discordApi(`/channels/${channels.conversationClosedAuditChannelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
+  if (!response.ok) throw new Error(`تعذر إرسال سجل إغلاق المحادثة الخاص (HTTP ${response.status}).`);
+}
+
+export async function deleteDiscordResetRequestCard(messageId?: string | null) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token || !messageId) return;
+  const response = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/messages/${messageId}`, token, { method: 'DELETE' });
+  if (!response.ok && response.status !== 404) throw new Error(`تعذر إزالة بطاقة طلب الريست القديمة (HTTP ${response.status}).`);
+}
+
+async function purgeTerminalResetRequestsOnStartup(token: string) {
+  const database = supportDatabase();
+  const snapshot = await getDocs(collection(database, 'resetRequests'));
+  const terminalRequests = snapshot.docs
+    .map((item) => ({ id: item.id, data: item.data() as Record<string, unknown> }))
+    .filter(({ data }) => ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(String(data.status)));
+  for (const request of terminalRequests) {
+    const messageId = typeof request.data.discordMessageId === 'string' ? request.data.discordMessageId : null;
+    if (messageId) {
+      const response = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/messages/${messageId}`, token, { method: 'DELETE' });
+      if (!response.ok && response.status !== 404) throw new Error(`تعذر إزالة بطاقة طلب الريست القديمة (HTTP ${response.status}).`);
+    }
+    await deleteDoc(doc(database, 'resetRequests', request.id));
+  }
+  return terminalRequests.length;
 }
 
 type DiscordResetRequestLog = {
@@ -833,6 +988,13 @@ export async function startDiscordBot() {
     return;
   }
   started = true;
+  try {
+    await ensurePrivateAuditChannels(token);
+    const removedCount = await purgeTerminalResetRequestsOnStartup(token);
+    if (removedCount) console.info(`[Discord Audit] Cleared ${removedCount} terminal reset requests on startup.`);
+  } catch (error) {
+    console.error('[Discord Audit] Private audit setup or terminal reset cleanup failed:', error);
+  }
   supportMaintenanceTimer = setInterval(() => {
     if (supportMaintenanceRunning) return;
     supportMaintenanceRunning = true;
