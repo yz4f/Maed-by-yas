@@ -284,6 +284,9 @@ export interface AiConversation {
   /** يضبط عند انتظار رد العميل ويستمر بعد إعادة تحميل الصفحة أو فتح الحساب من جهاز آخر. */
   idleCloseAt?: string | null;
   inactivityWarningAt?: string | null;
+  /** مهلة قصيرة تمنح الإدارة فرصة للرد قبل عودة المساعد إلى متابعة الحالة تلقائياً. */
+  supportWaitUntil?: string | null;
+  supportWaitLanguage?: 'ar' | 'en' | null;
   closedAt?: string | null;
   closedReason?: AiConversationCloseReason;
   reopenAt?: string | null;

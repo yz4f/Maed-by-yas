@@ -8,8 +8,9 @@ const AI_COLLECTION = 'aiConversations';
 const KNOWLEDGE_COLLECTION = 'aiKnowledge';
 const RESET_COLLECTION = 'resetRequests';
 const SUPPORT_NOTIFICATIONS_COLLECTION = 'supportNotifications';
-const CUSTOMER_IDLE_CLOSE_MS = 3 * 60 * 1000;
-const CUSTOMER_IDLE_WARNING_MS = 2 * 60 * 1000;
+const CUSTOMER_IDLE_CLOSE_MS = 5 * 60 * 1000;
+const CUSTOMER_IDLE_WARNING_MS = 1 * 60 * 1000;
+const SUPPORT_HUMAN_REPLY_GRACE_MS = 60 * 1000;
 const CUSTOMER_REOPEN_DELAY_MS = 60 * 60 * 1000;
 const AI_CONVERSATION_MAINTENANCE_INTERVAL_MS = 15 * 1000;
 let aiConversationMaintenanceTimer: ReturnType<typeof setInterval> | null = null;
@@ -164,13 +165,13 @@ function idleCloseCopy(language: 'ar' | 'en') {
       warningTitle: 'تنبيه: المحادثة بانتظار ردك',
       warningMessage: 'لم نتلقَّ رداً جديداً منك. أرسل أي رسالة خلال دقيقة واحدة لمتابعة المحادثة.',
       closeTitle: 'تم إغلاق محادثة الدعم',
-      closeMessage: 'تم إغلاق المحادثة تلقائياً لعدم وجود رد جديد منك خلال 3 دقائق. يمكنك فتح محادثة جديدة بعد ساعة من الآن.',
+      closeMessage: 'تم إغلاق المحادثة تلقائياً لعدم وجود رد جديد منك خلال 5 دقائق. يمكنك فتح محادثة جديدة بعد ساعة من الآن.',
     }
     : {
       warningTitle: 'Action needed: chat is waiting for your reply',
       warningMessage: 'We have not received a new reply. Send any message within one minute to keep this conversation open.',
       closeTitle: 'Support chat closed',
-      closeMessage: 'This conversation was closed automatically because no new reply was received for 3 minutes. You can open a new conversation in one hour.',
+      closeMessage: 'This conversation was closed automatically because no new reply was received for 5 minutes. You can open a new conversation in one hour.',
     };
 }
 
@@ -180,11 +181,37 @@ async function armCustomerIdleTimer(conversationId: string, customerMessageAt: s
     lastCustomerMessageAt: customerMessageAt,
     idleCloseAt: closeAt,
     inactivityWarningAt: null,
+    supportWaitUntil: null,
     closedAt: null,
     closedReason: null,
     reopenAt: null,
   });
   return closeAt;
+}
+
+function supportWaitCopy(language: 'ar' | 'en') {
+  return language === 'ar'
+    ? {
+      requested: 'تم استلام طلب الدعم. سيتم التحقق الآن من توفر الإدارة؛ إذا كان أحد أعضاء الإدارة متاحاً فسيرد عليك هنا. سيتوقف مساعد تعن لمدة دقيقة كاملة، ثم سيتابع مساعدتك إذا لم يصل رد بشري.',
+      elapsed: 'لم يصل رد من الإدارة خلال الدقيقة المحددة، لذلك عاد مساعد تعن لمتابعة حالتك. أرسل صورة واضحة للخطأ أو اكتب ما ظهر لك في الخطوة الحالية وسأوجهك للحل المناسب.',
+    }
+    : {
+      requested: 'Your support request was received. We will check whether an administrator is available to reply here. The assistant will pause for one full minute, then continue helping if no human reply arrives.',
+      elapsed: 'No administrator reply arrived within the one-minute window. Ta3n Assistant is now continuing your case; send a clear error screenshot or describe what appears at your current step.',
+    };
+}
+
+async function armSupportHumanReplyGrace(conversationId: string, language: 'ar' | 'en') {
+  const waitUntil = new Date(Date.now() + SUPPORT_HUMAN_REPLY_GRACE_MS).toISOString();
+  await updateConversationStatus(conversationId, 'WAITING_FOR_SUPPORT', {
+    idleCloseAt: null,
+    inactivityWarningAt: null,
+    supportWaitUntil: waitUntil,
+    supportWaitLanguage: language,
+    humanAgentId: null,
+    humanAgentName: null,
+  });
+  return { waitUntil, copy: supportWaitCopy(language) };
 }
 
 export async function listKnowledge(): Promise<AiKnowledgeEntry[]> {
@@ -294,6 +321,8 @@ export async function getAiConversation(actor: TicketActor, options: { includeCu
       lastClientPageAt: null,
       idleCloseAt: null,
       inactivityWarningAt: null,
+      supportWaitUntil: null,
+      supportWaitLanguage: null,
       closedAt: null,
       closedReason: null,
       reopenAt: null,
@@ -363,6 +392,8 @@ export async function processDueAiConversationClosures(nowMs = Date.now()) {
         reopenAt,
         idleCloseAt: null,
         inactivityWarningAt: latest.inactivityWarningAt || null,
+        supportWaitUntil: null,
+        supportWaitLanguage: null,
         humanAgentId: null,
         humanAgentName: null,
       });
@@ -390,7 +421,7 @@ export async function processDueAiConversationClosures(nowMs = Date.now()) {
 
     if (closed) {
       closedCount += 1;
-      await StoreDB.addLog('AI Conversation Auto Closed', `تم إغلاق محادثة العميل ${conversation.customerName} لعدم الرد خلال 3 دقائق`, conversation.customerId, conversation.customerName);
+      await StoreDB.addLog('AI Conversation Auto Closed', `تم إغلاق محادثة العميل ${conversation.customerName} لعدم الرد خلال 5 دقائق`, conversation.customerId, conversation.customerName);
     }
   }
 
@@ -436,10 +467,63 @@ export async function processAiConversationInactivityWarnings(nowMs = Date.now()
   return { warningCount };
 }
 
+export async function processExpiredSupportWaits(nowMs = Date.now()) {
+  const snapshot = await getDocs(collection(database(), AI_COLLECTION));
+  const due = snapshot.docs.map(toConversation).filter((conversation) => conversation.status === 'WAITING_FOR_SUPPORT' && conversation.supportWaitUntil && new Date(conversation.supportWaitUntil).getTime() <= nowMs);
+  let resumedCount = 0;
+
+  for (const conversation of due) {
+    const waitUntil = conversation.supportWaitUntil!;
+    const resumedAt = new Date(nowMs).toISOString();
+    const conversationRef = doc(database(), AI_COLLECTION, conversation.id);
+    const resumedMessageRef = messageRef(conversation.id, `assistant-resumed-${new Date(waitUntil).getTime()}`);
+    let resumed = false;
+
+    await runTransaction(database(), async (transaction) => {
+      const latestSnapshot = await transaction.get(conversationRef);
+      if (!latestSnapshot.exists()) return;
+      const latest = toConversation(latestSnapshot);
+      if (latest.status !== 'WAITING_FOR_SUPPORT' || latest.supportWaitUntil !== waitUntil || new Date(waitUntil).getTime() > nowMs) return;
+      const customerMessageAt = latest.lastCustomerMessageAt || resumedAt;
+      transaction.update(conversationRef, {
+        status: 'WAITING_FOR_CUSTOMER',
+        updatedAt: resumedAt,
+        lastMessageAt: resumedAt,
+        messageCount: increment(1),
+        idleCloseAt: new Date(new Date(customerMessageAt).getTime() + CUSTOMER_IDLE_CLOSE_MS).toISOString(),
+        inactivityWarningAt: null,
+        supportWaitUntil: null,
+        supportWaitLanguage: null,
+        humanAgentId: null,
+        humanAgentName: null,
+      });
+      transaction.set(resumedMessageRef, {
+        id: resumedMessageRef.id,
+        conversationId: conversation.id,
+        role: 'system',
+        body: supportWaitCopy(latest.supportWaitLanguage || 'ar').elapsed,
+        visibleToCustomer: true,
+        createdAt: resumedAt,
+      } satisfies AiMessage);
+      resumed = true;
+    });
+
+    if (resumed) {
+      resumedCount += 1;
+      await StoreDB.addLog('AI Conversation Support Wait Elapsed', `عاد مساعد تعن لمتابعة محادثة العميل ${conversation.customerName} بعد دقيقة دون رد إداري`, conversation.customerId, conversation.customerName);
+    }
+  }
+
+  return { resumedCount };
+}
+
 export async function runAiConversationMaintenance(nowMs = Date.now()) {
-  const warnings = await processAiConversationInactivityWarnings(nowMs);
-  const closures = await processDueAiConversationClosures(nowMs);
-  return { ...warnings, ...closures };
+  const [warnings, closures, supportWaits] = await Promise.all([
+    processAiConversationInactivityWarnings(nowMs),
+    processDueAiConversationClosures(nowMs),
+    processExpiredSupportWaits(nowMs),
+  ]);
+  return { ...warnings, ...closures, ...supportWaits };
 }
 
 export function startAiConversationMaintenance() {
@@ -449,7 +533,7 @@ export function startAiConversationMaintenance() {
     aiConversationMaintenanceRunning = true;
     try {
       const result = await runAiConversationMaintenance();
-      if (result.warningCount || result.closedCount) console.info('[AI Conversations] Maintenance completed', result);
+      if (result.warningCount || result.closedCount || result.resumedCount) console.info('[AI Conversations] Maintenance completed', result);
     } catch (error) {
       console.error('[AI Conversations] Maintenance failed:', error);
     } finally {
@@ -499,6 +583,7 @@ export async function reopenAiConversation(actor: TicketActor) {
     reopenAt: null,
     idleCloseAt: null,
     inactivityWarningAt: null,
+    supportWaitUntil: null,
     humanAgentId: null,
     humanAgentName: null,
   });
@@ -603,7 +688,7 @@ async function callGemini(input: { message: string; attachments: AiImageAttachme
   return text.slice(0, 1100);
 }
 
-type SupportIntent = 'VISUAL_CPP_RUNTIME' | 'MOTHERBOARD_LIMITATION' | 'SPOOFER_LIST' | 'LOADER_ACCESS' | 'ACTIVATION_ISSUE' | 'RESET_REQUEST' | 'GUIDE_DIRECTION' | 'ORDER_DELIVERY' | 'ACCOUNT_ACCESS' | 'HUMAN_SUPPORT' | 'PRODUCT_HELP' | 'UNCLEAR';
+type SupportIntent = 'GREETING' | 'VISUAL_CPP_RUNTIME' | 'MOTHERBOARD_LIMITATION' | 'SPOOFER_LIST' | 'LOADER_ACCESS' | 'ACTIVATION_ISSUE' | 'RESET_REQUEST' | 'GUIDE_DIRECTION' | 'ORDER_DELIVERY' | 'ACCOUNT_ACCESS' | 'HUMAN_SUPPORT' | 'PRODUCT_HELP' | 'UNCLEAR';
 
 function normalizedSupportText(message: string) {
   return message.toLowerCase()
@@ -633,9 +718,11 @@ function classifySupportMessage(message: string): SupportIntent {
   const activationIssue = hasAny(text, ['خطا تفعيل', 'خطأ تفعيل', 'مشكلة تفعيل', 'التفعيل ما يشتغل', 'مفتاح ما يشتغل', 'المفتاح ما يشتغل', 'مفتاح مايشتغل', 'key not working', 'activation error', 'activation failed', 'key activation']);
   const orderIssue = hasAny(text, ['الطلب ما وصل', 'الطلب ماوصل', 'ما استلمت', 'ماوصلني', 'لم يصل', 'طلبية', 'order not received', 'order missing', 'did not receive order']);
   const accountIssue = hasAny(text, ['ما اقدر ادخل', 'ما ادخل', 'تسجيل الدخول', 'حسابي', 'دخول الحساب', 'account login', 'cant log in', "can't log in", 'cannot log in']);
-  const humanRequest = hasAny(text, ['التواصل مع الدعم', 'موظف', 'دعم بشري', 'human support', 'agent']);
+  const humanRequest = hasAny(text, ['التواصل مع الدعم', 'ابغى دعم', 'ابي دعم', 'احتاج دعم', 'دعم ادارة', 'دعم بشري', 'موظف', 'human support', 'agent']);
+  const greetingOnly = /^(السلام عليكم|سلام عليكم|السلام|هلا|هلا والله|اهلا|اهلاً|مرحبا|hi|hello|hey)[!،,.\s]*$/.test(text);
   const productHelp = hasAny(text, ['شرح', 'الشروحات', 'دليل', 'guide', 'spoofer', 'سبوفر', 'قائمة', 'reset', 'ريست', 'اعادة تعيين', 'لودر', 'تحميل', 'download', 'loader']);
 
+  if (greetingOnly) return 'GREETING';
   if (visualCppRuntime) return 'VISUAL_CPP_RUNTIME';
   if (motherboardMentioned && banOrSpoofMentioned) return 'MOTHERBOARD_LIMITATION';
   if (resetRequest) return 'RESET_REQUEST';
@@ -686,12 +773,26 @@ function contextualClarification(language: 'ar' | 'en', history: AiMessage[], cu
   return askedBefore ? 'Choose the closest issue: key activation, loader, Spoofer list, or key reset. If an error appears, send its screenshot only.' : 'Describe what appeared briefly or send a clear error screenshot, and I will direct you to the correct section.';
 }
 
+function deduplicateAssistantReply(reply: string, language: 'ar' | 'en', history: AiMessage[]) {
+  const lastAssistantReply = [...history].reverse().find((entry) => entry.role === 'assistant' || entry.role === 'system');
+  if (!lastAssistantReply) return reply;
+  const current = normalizedSupportText(reply);
+  const previous = normalizedSupportText(lastAssistantReply.body);
+  if (current === previous || (current.length > 90 && previous.length > 90 && (current.includes(previous) || previous.includes(current)))) {
+    return language === 'ar'
+      ? 'أرسلت لك التوجيه نفسه بالفعل حتى لا أكرر الكلام. أرسل الآن صورة واضحة للخطأ أو اكتب نتيجة آخر خطوة وصلت إليها، وسأحدد لك الخطوة التالية فقط.'
+      : 'I already sent the same direction, so I will not repeat it. Send a clear error screenshot or the result of your last step and I will give you only the next action.';
+  }
+  return reply;
+}
+
 function fastSupportReply(message: string, language: 'ar' | 'en', intent = classifySupportMessage(message), history: AiMessage[] = []) {
   const normalized = normalizedSupportText(message);
   const repeatedVisualCpp = hasRecentAssistantGuidance(history, ['Visual C++', 'VCRUNTIME140', 'MSVCP140']);
   const repeatedIssuesRoute = hasRecentAssistantGuidance(history, ['حلول المشاكل', 'Issue fixes']);
   const repeatedResetRoute = hasRecentAssistantGuidance(history, ['طلب رستات المفتاح', 'Request key reset']);
   if (language === 'ar') {
+    if (intent === 'GREETING') return 'حياك الله. اشرح مشكلتك باختصار أو أرسل صورة واضحة للخطأ، وسأوجهك إلى مسار واحد مناسب داخل الموقع.';
     if (intent === 'VISUAL_CPP_RUNTIME') return repeatedVisualCpp
       ? 'بما أن مسار تعريفات Visual C++ ظهر لك سابقاً، أخبرني فقط: هل ثبّت النسخة الرسمية وأعدت تشغيل Windows؟ إذا استمر الخطأ بعد ذلك أرسل صورة واضحة للرسالة الحالية.'
       : 'المشكلة الظاهرة مرتبطة بتعريفات Visual C++ مثل VCRUNTIME140_1.dll أو MSVCP140.dll. التوجه الآن: افتح «منتجاتي ← دليل المنتج ← حلول المشاكل»، ثم حمّل النسخة الرسمية x64 من Microsoft فقط: https://aka.ms/vc14/vc_redist.x64.exe وأعد تشغيل Windows قبل فتح اللودر. لا تحمّل ملفات DLL منفردة.';
@@ -715,6 +816,7 @@ function fastSupportReply(message: string, language: 'ar' | 'en', intent = class
     if (intent === 'UNCLEAR') return contextualClarification(language, history, message);
     return null;
   }
+  if (intent === 'GREETING') return 'Welcome. Briefly describe the issue or send a clear screenshot of the error, and I will direct you to one suitable path in the site.';
   if (intent === 'VISUAL_CPP_RUNTIME') return repeatedVisualCpp
     ? 'You already received the Visual C++ path. Confirm whether you installed the official package and restarted Windows; if the error remains, send a clear current screenshot.'
     : 'The issue indicates a missing Visual C++ runtime. Go to “My Products → Product guide → Issue fixes”, then use the official Microsoft x64 installer only: https://aka.ms/vc14/vc_redist.x64.exe and restart Windows.';
@@ -752,28 +854,35 @@ export async function sendAiMessage(actor: TicketActor, input: { body: string; l
     throw new Error('تم إغلاق هذه المحادثة تلقائياً. يمكنك فتح محادثة جديدة بعد انتهاء مهلة ساعة واحدة.');
   }
   if (conversation.status === 'CLOSED') {
-    await updateConversationStatus(conversation.id, 'AI_ACTIVE', { closedAt: null, closedReason: null, reopenAt: null, idleCloseAt: null, inactivityWarningAt: null });
+    await updateConversationStatus(conversation.id, 'AI_ACTIVE', { closedAt: null, closedReason: null, reopenAt: null, idleCloseAt: null, inactivityWarningAt: null, supportWaitUntil: null, supportWaitLanguage: null });
   }
 
   const customerMessage = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'customer', body: messageBody, attachments, visibleToCustomer: true });
 
   if (conversation.status === 'HUMAN_ACTIVE' || conversation.status === 'WAITING_FOR_SUPPORT') {
-    return { customerMessage, message: null, handoff: false, humanActive: conversation.status === 'HUMAN_ACTIVE' };
+    await updateDoc(doc(database(), AI_COLLECTION, conversation.id), { lastCustomerMessageAt: customerMessage.createdAt, updatedAt: customerMessage.createdAt });
+    return { customerMessage, message: null, handoff: false, humanActive: conversation.status === 'HUMAN_ACTIVE', supportWait: conversation.status === 'WAITING_FOR_SUPPORT' };
   }
 
   await armCustomerIdleTimer(conversation.id, customerMessage.createdAt);
 
   const supportIntent = classifySupportMessage(messageBody);
+  if (supportIntent === 'HUMAN_SUPPORT') {
+    const { copy } = await armSupportHumanReplyGrace(conversation.id, input.language);
+    const message = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: copy.requested, visibleToCustomer: true });
+    return { customerMessage, message, handoff: true, supportWait: true };
+  }
   if (shouldHandoff(supportIntent)) {
-    await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT', { idleCloseAt: null, inactivityWarningAt: null });
-    const reply = handoffReply(supportIntent, input.language);
-    return { customerMessage, message: await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: reply, visibleToCustomer: true }), handoff: true };
+    const { copy } = await armSupportHumanReplyGrace(conversation.id, input.language);
+    const message = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: `${handoffReply(supportIntent, input.language)}\n\n${copy.requested}`, visibleToCustomer: true });
+    return { customerMessage, message, handoff: true, supportWait: true };
   }
 
   const instantReply = fastSupportReply(messageBody, input.language, supportIntent, workspace.messages);
   const mustUsePolicyReply = supportIntent === 'MOTHERBOARD_LIMITATION' || supportIntent === 'GUIDE_DIRECTION' || attachments.length === 0;
   if (instantReply && mustUsePolicyReply) {
-    const message = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'assistant', body: instantReply, visibleToCustomer: true });
+    const body = deduplicateAssistantReply(instantReply, input.language, workspace.messages);
+    const message = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'assistant', body, visibleToCustomer: true });
     return { customerMessage, message, handoff: false, instant: true };
   }
 
@@ -785,22 +894,23 @@ export async function sendAiMessage(actor: TicketActor, input: { body: string; l
     const response = await callGemini({ message: messageBody, attachments, language: input.language, customerContext, knowledge, history: workspace.messages });
     const handoff = response.includes('[HANDOFF]');
     const cleanReply = response.replace(/\[HANDOFF\]/g, '').trim();
-    if (handoff) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT', { idleCloseAt: null, inactivityWarningAt: null });
-    const reply = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'assistant', body: cleanReply || (input.language === 'ar' ? 'تم تحويل طلبك إلى الدعم المختص.' : 'Your request has been passed to support.'), visibleToCustomer: true });
-    return { customerMessage, message: reply, handoff };
+    const supportWait = handoff ? await armSupportHumanReplyGrace(conversation.id, input.language) : null;
+    const answer = cleanReply || (input.language === 'ar' ? 'تم استلام رسالتك وسأساعدك بالمسار المناسب.' : 'Your message was received and I will guide you through the relevant path.');
+    const reply = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'assistant', body: deduplicateAssistantReply(supportWait ? `${answer}\n\n${supportWait.copy.requested}` : answer, input.language, workspace.messages), visibleToCustomer: true });
+    return { customerMessage, message: reply, handoff, supportWait: Boolean(supportWait) };
   } catch (error) {
     console.error('Ta3n Assistant response fallback:', error);
     const needsHumanReview = attachments.length > 0;
-    if (needsHumanReview) await updateConversationStatus(conversation.id, 'WAITING_FOR_SUPPORT', { idleCloseAt: null, inactivityWarningAt: null });
+    const supportWait = needsHumanReview ? await armSupportHumanReplyGrace(conversation.id, input.language) : null;
     const fallback = input.language === 'ar'
       ? (needsHumanReview
-        ? 'تم استلام الصورة في سجلك، لكن لم يكتمل تحليلها الآلي الآن. حوّلت الحالة إلى فريق الإدارة لمراجعة الصورة ومتابعة المشكلة.'
-        : 'تم استلام رسالتك، لكن تعذر إكمال الرد الآلي الآن. حوّلت الحالة إلى فريق الإدارة لمتابعتها.')
+        ? `تم استلام الصورة في سجلك، لكن لم يكتمل تحليلها الآلي الآن. ${supportWait?.copy.requested || ''}`
+        : 'تم استلام رسالتك، لكن تعذر إكمال الرد الآلي الآن. أرسل صورة واضحة للخطأ أو أعد المحاولة بعد لحظات.')
       : (needsHumanReview
-        ? 'Your image has been saved in this conversation, but automated analysis did not finish. The case has been routed to administration to review the image and continue support.'
-        : 'Your message was received, but the automated response could not finish. The case has been routed to administration for follow-up.');
+        ? `Your image has been saved in this conversation, but automated analysis did not finish. ${supportWait?.copy.requested || ''}`
+        : 'Your message was received, but the automated response could not finish. Send a clear error screenshot or try again shortly.');
     const reply = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'system', body: fallback, visibleToCustomer: true });
-    return { customerMessage, message: reply, handoff: needsHumanReview, fallback: true };
+    return { customerMessage, message: reply, handoff: needsHumanReview, supportWait: Boolean(supportWait), fallback: true };
   }
 }
 
@@ -936,6 +1046,8 @@ export async function setConversationHumanMode(actor: TicketActor, conversationI
     humanAgentName: status === 'HUMAN_ACTIVE' ? actor.name : null,
     idleCloseAt: null,
     inactivityWarningAt: null,
+    supportWaitUntil: null,
+    supportWaitLanguage: null,
   });
   const notice = status === 'HUMAN_ACTIVE'
     ? 'انضم فريق الإدارة إلى المحادثة. يمكنك متابعة إرسال التفاصيل هنا.'
@@ -982,6 +1094,8 @@ export async function deleteAiConversation(actor: TicketActor, conversationId: s
     reopenAt: null,
     idleCloseAt: null,
     inactivityWarningAt: null,
+    supportWaitUntil: null,
+    supportWaitLanguage: null,
     humanAgentId: null,
     humanAgentName: null,
   });
