@@ -333,6 +333,46 @@ function supportPanelComponents() {
   }];
 }
 
+function resetPanelEmbed() {
+  return {
+    color: 0xfbbf24,
+    author: { name: 'تعن • رستات المفاتيح', icon_url: `${websiteUrl}/logo.png` },
+    title: 'طلب رستات المفتاح',
+    description: 'اضغط الزر أدناه لفتح نموذج خاص وآمن لطلب إعادة ضبط مفتاح منتجك. لا تكتب المفتاح داخل الروم العام.',
+    fields: [
+      { name: 'الخطوة 1', value: 'اكتب مفتاح المنتج داخل النموذج الخاص فقط.', inline: true },
+      { name: 'الخطوة 2', value: 'اكتب سبب طلب الريست بشكل مختصر وواضح.', inline: true },
+      { name: 'الخصوصية', value: 'لن يظهر المفتاح كاملاً في الروم أو بطاقة الإدارة؛ يستخدم للتحقق من المنتج المرتبط بحسابك فقط.', inline: false },
+    ],
+    footer: { text: 'تعن • طلب واحد نشط لكل منتج' },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function resetPanelComponents() {
+  return [{
+    type: 1,
+    components: [{
+      type: 2,
+      style: 1,
+      custom_id: 'ta3n_reset_start',
+      label: 'طلب رستات المفتاح',
+      emoji: { name: '🔄' },
+    }],
+  }];
+}
+
+export async function publishDiscordResetPanel(): Promise<{ messageId: string }> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم نشر لوحة الريست.');
+  const message = await postDiscordMessage(discordRoomChannels.keyResetRequests, token, {
+    embeds: [resetPanelEmbed()],
+    components: resetPanelComponents(),
+  });
+  if (!message.id) throw new Error('لم يعرض Discord معرف رسالة لوحة الريست.');
+  return { messageId: message.id };
+}
+
 async function postDiscordMessage(channelId: string, token: string, data: Record<string, unknown>) {
   const response = await discordApi(`/channels/${channelId}/messages`, token, { method: 'POST', body: JSON.stringify(data) });
   if (!response.ok) throw new Error(`تعذر إرسال رسالة دعم Discord (HTTP ${response.status}).`);
@@ -595,6 +635,14 @@ async function answerInteraction(interaction: any, token: string) {
     });
     if (!response.ok) console.error(`[Discord Bot] Unable to answer interaction: ${response.status} ${await response.text()}`);
   };
+  const respondModal = async (data: Record<string, unknown>) => {
+    const response = await fetch(`https://discord.com/api/v10/interactions/${interaction.id}/${interaction.token}/callback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 9, data }),
+    });
+    if (!response.ok) console.error(`[Discord Bot] Unable to open reset modal: ${response.status} ${await response.text()}`);
+  };
 
   if (interaction.type === 2) {
     const commandName = interaction.data?.name;
@@ -612,6 +660,28 @@ async function answerInteraction(interaction: any, token: string) {
     return;
   }
 
+  if (interaction.type === 5) {
+    const customId = String(interaction.data?.custom_id || '');
+    if (customId !== 'ta3n_reset_submit') return;
+    const actorId = String(interaction.member?.user?.id || interaction.user?.id || '');
+    const actorUser = interaction.member?.user || interaction.user || {};
+    const values = Object.fromEntries((interaction.data?.components || []).flatMap((row: any) => row.components || []).map((field: any) => [String(field.custom_id || ''), String(field.value || '')]));
+    try {
+      const avatarHash = String(actorUser.avatar || '');
+      const image = actorId && avatarHash ? `https://cdn.discordapp.com/avatars/${actorId}/${avatarHash}.png` : null;
+      const { createResetRequest } = await import('@/lib/t3n-ai');
+      const result = await createResetRequest({ id: actorId, name: String(actorUser.global_name || actorUser.username || 'عميل'), image, role: 'Customer' }, {
+        licenseKey: String(values.license_key || ''),
+        reason: String(values.reset_reason || ''),
+        language: 'ar',
+      });
+      await respond({ content: result.duplicate ? `لديك طلب رستات نشط بالفعل: \`${result.request.reference}\`، وستصلك أي تحديثات هنا وفي الموقع.` : `تم إرسال طلبك بنجاح برقم \`${result.request.reference}\`. لا يظهر المفتاح في الروم العام أو بطاقة المتابعة.`, flags: 64 });
+    } catch (error) {
+      await respond({ content: error instanceof Error ? error.message : 'تعذر إرسال طلب الريست. حاول مرة أخرى أو افتحه من بطاقة المنتج داخل الموقع.', flags: 64 });
+    }
+    return;
+  }
+
   if (interaction.type !== 3) return;
   const customId = String(interaction.data?.custom_id || '');
   if (customId === 'ta3n_support_start') {
@@ -621,6 +691,22 @@ async function answerInteraction(interaction: any, token: string) {
     }
     const result = await createDiscordSupportThread(interaction, token);
     await respond({ content: result.existing ? `لديك جلسة دعم نشطة بالفعل: <#${result.threadId}>` : `تم إنشاء جلسة دعمك الخاصة: <#${result.threadId}>`, flags: 64 });
+    return;
+  }
+
+  if (customId === 'ta3n_reset_start') {
+    if (String(interaction.channel_id) !== discordRoomChannels.keyResetRequests) {
+      await respond({ content: 'استخدم زر طلب الريست من روم رستات المفاتيح المحدد.', flags: 64 });
+      return;
+    }
+    await respondModal({
+      custom_id: 'ta3n_reset_submit',
+      title: 'طلب رستات المفتاح',
+      components: [
+        { type: 1, components: [{ type: 4, custom_id: 'license_key', label: 'مفتاح المنتج', style: 1, min_length: 8, max_length: 160, required: true, placeholder: 'اكتب المفتاح هنا فقط' }] },
+        { type: 1, components: [{ type: 4, custom_id: 'reset_reason', label: 'سبب طلب الريست', style: 2, min_length: 3, max_length: 500, required: true, placeholder: 'مثال: غيّرت الجهاز أو ظهرت مشكلة في التشغيل' }] },
+      ],
+    });
     return;
   }
 

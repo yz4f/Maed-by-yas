@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, UserRound, XCircle } from 'lucide-react';
+import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, Send, UserRound, XCircle } from 'lucide-react';
 import type { ResetRequest, ResetRequestStatus } from '@/types';
 
 interface ResetKeyRequestsAdminProps {
@@ -41,6 +41,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const [isLoading, setIsLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
   const mountedRef = useRef(false);
   const inFlightRef = useRef(false);
   const requestCacheRef = useRef<ResetRequest[]>([]);
@@ -81,6 +82,21 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
       window.setTimeout(() => setCopiedId((current) => current === id ? null : current), 1800);
     } catch {
       onNotify(lang === 'ar' ? 'تعذر نسخ المفتاح.' : 'Could not copy the key.', 'error');
+    }
+  };
+
+  const publishPanel = async () => {
+    if (isPublishing) return;
+    setIsPublishing(true);
+    try {
+      const response = await fetch('/api/admin/reset-panel', { method: 'POST', credentials: 'same-origin' });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'تعذر نشر لوحة طلب الريست.');
+      onNotify(lang === 'ar' ? 'تم نشر لوحة طلب الريست في Discord.' : 'The reset request panel was published in Discord.', 'success');
+    } catch (error) {
+      onNotify(error instanceof Error ? error.message : 'تعذر نشر لوحة طلب الريست.', 'error');
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -126,9 +142,10 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
             <p className={`mt-1 text-xs ${muted}`}>{lang === 'ar' ? 'الطلبات مستقرة ولا تتغير إلا عند التحديث أو تنفيذ إجراء إداري.' : 'Requests remain stable and change only after refresh or an administrative action.'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-amber-300/15 bg-amber-300/[0.08] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>{pendingCount} {lang === 'ar' ? 'قيد المراجعة' : 'pending'}</span>
           <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-emerald-300/15 bg-emerald-300/[0.08] text-emerald-100' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{completedCount} {lang === 'ar' ? 'مكتمل' : 'completed'}</span>
+          <button onClick={() => void publishPanel()} disabled={isPublishing} className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[10px] font-black transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-amber-300/20 bg-amber-300/[0.1] text-amber-100 hover:bg-amber-300/[0.17]' : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'}`} title={lang === 'ar' ? 'نشر لوحة طلب الريست في Discord' : 'Publish reset request panel in Discord'}><Send size={13} />{isPublishing ? (lang === 'ar' ? 'جارٍ النشر…' : 'Publishing…') : (lang === 'ar' ? 'نشر اللوحة' : 'Publish panel')}</button>
           <button onClick={() => void load()} disabled={isLoading} className={`grid h-9 w-9 place-items-center rounded-xl border transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-white/[0.1] bg-white/[0.04] text-slate-300 hover:bg-white/[0.09]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`} title={lang === 'ar' ? 'تحديث' : 'Refresh'}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /></button>
         </div>
       </div>

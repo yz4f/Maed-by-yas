@@ -251,6 +251,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     commonErrorsDescription: 'إذا ظهرت شاشة تحميل بيضاء أو رسالة فقدان ملف DLL عند فتح اللودر، ابدأ بتحديث تعريفات Visual C++ الرسمية ثم أعد تشغيل Windows.',
     commonErrorsAction: 'تحميل وتحديث Visual C++ x64',
     commonErrorsNote: 'يشمل أخطاء VCRUNTIME140_1.dll وVCRUNTIME140.dll وMSVCP140.dll.',
+    runtimePreviewLabel: 'مثال رسالة الخطأ',
+    runtimePreviewDescription: 'إذا ظهرت نافذة مشابهة، ثبّت تعريفات Visual C++ من الزر أعلاه ثم أعد تشغيل Windows.',
+    runtimePreviewStepOne: 'نزّل التعريف الرسمي.',
+    runtimePreviewStepTwo: 'ثبّته ثم أعد التشغيل.',
+    runtimePreviewStepThree: 'شغّل اللودر من جديد.',
     downloadWarpLabel: 'أداة اتصال اختيارية',
     downloadWarp: 'تحميل Cloudflare WARP لنظام Windows',
     downloadWarpAction: 'تنزيل الآن',
@@ -322,6 +327,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     commonErrorsDescription: 'If a white loading screen or a missing DLL message appears when opening the loader, update the official Visual C++ runtime and restart Windows.',
     commonErrorsAction: 'Download & update Visual C++ x64',
     commonErrorsNote: 'Covers VCRUNTIME140_1.dll, VCRUNTIME140.dll, and MSVCP140.dll errors.',
+    runtimePreviewLabel: 'Example error message',
+    runtimePreviewDescription: 'If you see a similar window, install the Visual C++ runtime from the button above, then restart Windows.',
+    runtimePreviewStepOne: 'Download the official runtime.',
+    runtimePreviewStepTwo: 'Install it, then restart.',
+    runtimePreviewStepThree: 'Start the loader again.',
     downloadWarpLabel: 'OPTIONAL CONNECTION TOOL',
     downloadWarp: 'Download Cloudflare WARP for Windows',
     downloadWarpAction: 'Download now',
@@ -4165,7 +4175,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
                   <section className="relative overflow-hidden rounded-[22px] border border-rose-300/[.20] bg-[linear-gradient(135deg,rgba(136,19,55,.20),rgba(15,23,42,.92)_48%,rgba(8,47,73,.48))] p-4 shadow-[0_16px_40px_rgba(0,0,0,.16)] sm:p-5">
                     <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-rose-300/[.14] blur-3xl" />
-                    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-rose-200/[.28] bg-rose-400/[.12] text-rose-100"><AlertCircle className="h-5 w-5" /></span><div className="min-w-0 text-start"><p className="text-[10px] font-black tracking-[.15em] text-rose-200/85">VISUAL C++ RUNTIME</p><h5 className="mt-1 text-sm font-black text-white sm:text-[15px]">{guideText.commonErrorsTitle}</h5><p className="mt-1 max-w-2xl text-[11px] leading-5 text-slate-300">{guideText.commonErrorsDescription}</p><p className="mt-2 text-[10px] font-bold text-rose-100/80">{guideText.commonErrorsNote}</p></div></div><a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="guide-runtime-download inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200/[.44] bg-rose-300 px-4 py-2.5 text-[11px] font-black text-rose-950 shadow-[0_10px_24px_rgba(251,113,133,.22)] transition hover:-translate-y-0.5 hover:bg-rose-200 active:scale-[.98]"><Download className="h-4 w-4" />{guideText.commonErrorsAction}</a></div>
+                    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-rose-200/[.28] bg-rose-400/[.12] text-rose-100"><AlertCircle className="h-5 w-5" /></span>
+                        <div className="min-w-0 text-start"><p className="text-[10px] font-black tracking-[.15em] text-rose-200/85">VISUAL C++ RUNTIME</p><h5 className="mt-1 text-sm font-black text-white sm:text-[15px]">{guideText.commonErrorsTitle}</h5><p className="mt-1 max-w-2xl text-[11px] leading-5 text-slate-300">{guideText.commonErrorsDescription}</p><p className="mt-2 text-[10px] font-bold text-rose-100/80">{guideText.commonErrorsNote}</p></div>
+                      </div>
+                      <a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="guide-runtime-download inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200/[.44] bg-rose-300 px-4 py-2.5 text-[11px] font-black text-rose-950 shadow-[0_10px_24px_rgba(251,113,133,.22)] transition hover:-translate-y-0.5 hover:bg-rose-200 active:scale-[.98]"><Download className="h-4 w-4" />{guideText.commonErrorsAction}</a>
+                    </div>
+                    <figure className="guide-runtime-preview relative mt-4 overflow-hidden rounded-2xl border border-rose-200/[.18] bg-slate-950/75 p-3 sm:p-4">
+                      <div className="mb-3 flex flex-col gap-1 text-start sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-black tracking-[.14em] text-rose-200">{guideText.runtimePreviewLabel}</p><p className="mt-1 text-[11px] leading-5 text-slate-300">{guideText.runtimePreviewDescription}</p></div><span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-200/[.18] bg-rose-400/[.10] px-2.5 py-1 text-[9px] font-black text-rose-100"><AlertCircle className="h-3.5 w-3.5" />MSVCP140.dll</span></div>
+                      <img src="/assets/guides/visual-cpp-runtime-error.png" alt={lang === 'ar' ? 'مثال لرسالة خطأ MSVCP140.dll وVisual C++ Runtime' : 'Example MSVCP140.dll and Visual C++ Runtime error message'} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[.12] bg-black object-contain shadow-[0_12px_26px_rgba(0,0,0,.28)] sm:max-h-[460px]" />
+                      <figcaption className="mt-3 grid gap-2 text-[10px] leading-5 text-slate-300 sm:grid-cols-3"><span><b className="text-rose-100">01.</b> {guideText.runtimePreviewStepOne}</span><span><b className="text-rose-100">02.</b> {guideText.runtimePreviewStepTwo}</span><span><b className="text-rose-100">03.</b> {guideText.runtimePreviewStepThree}</span></figcaption>
+                    </figure>
                   </section>
                   <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
                     {[

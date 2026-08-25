@@ -818,19 +818,25 @@ export async function getHelpOverview(actor: TicketActor) {
   };
 }
 
-export async function createResetRequest(actor: TicketActor, input: { productId?: string; reason: string; language: 'ar' | 'en' }) {
+export async function createResetRequest(actor: TicketActor, input: { productId?: string; licenseKey?: string; reason: string; language: 'ar' | 'en' }) {
   const reason = input.reason.trim();
   if (reason.length < 3 || reason.length > 500) throw new Error('يرجى توضيح سبب طلب Reset في 3 إلى 500 حرف.');
   const context = await getCustomerContext(actor);
   const products = context.products.filter((product) => product.status === 'Active' && (!product.expiresAt || new Date(product.expiresAt).getTime() > Date.now()));
-  const product = (input.productId ? products.find((item) => item.productId === input.productId) : undefined) || products[0];
+  const allOwnedProducts = await StoreDB.getUserProducts(context.user.id);
+  const requestedKey = input.licenseKey?.trim();
+  const ownedProductForKey = requestedKey ? allOwnedProducts.find((item) => item.keyString?.trim() === requestedKey) : null;
+  if (requestedKey && !ownedProductForKey) throw new Error('المفتاح لا يطابق منتجاً مفعلاً في حسابك. راجع المفتاح أو افتح الطلب من بطاقة المنتج.');
+  const product = requestedKey
+    ? products.find((item) => item.productId === ownedProductForKey?.productId && item.keyId === ownedProductForKey?.keyId)
+    : (input.productId ? products.find((item) => item.productId === input.productId) : undefined) || products[0];
   if (!product) throw new Error('لا يوجد ترخيص نشط يمكن رفع طلب Reset له.');
 
   const existing = await getDocs(collection(database(), RESET_COLLECTION));
   const duplicate = existing.docs.map(toResetRequest).find((item) => item.customerDiscordId === actor.id && item.productId === product.productId && ['PENDING', 'APPROVED', 'WAITING_FOR_CUSTOMER'].includes(item.status));
   if (duplicate) return { request: duplicate, duplicate: true };
 
-  const ownedProduct = (await StoreDB.getUserProducts(context.user.id)).find((item) => item.productId === product.productId && item.keyId === product.keyId);
+  const ownedProduct = ownedProductForKey || allOwnedProducts.find((item) => item.productId === product.productId && item.keyId === product.keyId);
   const now = new Date().toISOString();
   const id = makeId('rst');
   const request: ResetRequest = {
