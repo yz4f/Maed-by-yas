@@ -17,6 +17,8 @@ const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
 const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
 const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
 const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
+const DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID = 'resetFeatureAnnouncement';
+const DISCORD_UPDATES_CHANNEL_ID = '1540878976166400060';
 const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
 const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-log';
 const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・support-closures';
@@ -511,17 +513,21 @@ function supportPanelComponents() {
   }];
 }
 
+function resetPanelImageUrl() {
+  return `${websiteUrl}/assets/discord/reset-panel.webp`;
+}
+
 function resetPanelEmbed() {
   return {
     color: 0x5865f2,
-    author: { name: 'Ta3n • Key Reset Center', icon_url: `${websiteUrl}/logo.png` },
+    author: { name: 'Ta3n • Key Reset', icon_url: `${websiteUrl}/logo.png` },
     title: '🔄 طلب ريستات',
-    description: 'اضغط الزر لفتح نموذج سريع وخاص. يكفي أن تكتب سبب الطلب؛ سيتم التحقق من حساب Discord والمنتج المفعّل تلقائياً من الموقع.',
+    description: 'اضغط الزر، اكتب سبب طلب الريستات، ثم أرسل الطلب.\nسيتم التحقق من بيانات حسابك والمنتج المفعّل تلقائاً، ثم تتم مراجعة الطلب من الإدارة.',
+    image: { url: resetPanelImageUrl() },
     fields: [
-      { name: 'كيف يعمل؟', value: '1. اضغط الزر\n2. اكتب السبب\n3. يراجع فريق الإدارة الطلب', inline: true },
-      { name: 'الخصوصية', value: 'لا تكتب المفتاح هنا. تتم المطابقة داخل النظام، ولا يظهر المفتاح كاملاً في Discord.', inline: true },
+      { name: 'طلب سريع وآمن', value: 'لا تكتب المفتاح. تتم مطابقة حساب Discord والمنتج المفعّل داخل النظام فقط.', inline: false },
     ],
-    footer: { text: 'Ta3n • طلب واحد نشط لكل منتج مفعّل' },
+    footer: { text: 'Ta3n • One active request per product' },
     timestamp: new Date().toISOString(),
   };
 }
@@ -533,7 +539,7 @@ function resetPanelComponents() {
       type: 2,
       style: 1,
       custom_id: 'ta3n_reset_start',
-      label: 'طلب ريستات',
+      label: 'ابدأ طلب الريستات',
       emoji: { name: '🔄' },
     }],
   }];
@@ -556,12 +562,51 @@ export async function publishDiscordResetPanel(): Promise<{ messageId: string }>
 }
 
 async function ensureDiscordResetPanelPublished() {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم تحديث لوحة الريست.');
   const panelRef = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_RESET_PANEL_CONFIG_ID);
   const panel = await getDoc(panelRef);
   const messageId = panel.exists() ? String(panel.data()?.messageId || '') : '';
-  if (messageId) return { messageId, published: false };
+  if (messageId) {
+    const response = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/messages/${messageId}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify({ embeds: [resetPanelEmbed()], components: resetPanelComponents() }),
+    });
+    if (response.ok) {
+      await setDoc(panelRef, { refreshedAt: new Date().toISOString() }, { merge: true });
+      return { messageId, published: false, refreshed: true };
+    }
+  }
   const result = await publishDiscordResetPanel();
-  return { ...result, published: true };
+  return { ...result, published: true, refreshed: false };
+}
+
+async function ensureDiscordResetFeatureAnnouncementPublished() {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال إعلان التحديث.');
+  const announcementRef = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID);
+  const saved = await getDoc(announcementRef);
+  const messageId = saved.exists() ? String(saved.data()?.messageId || '') : '';
+  if (messageId) return { messageId, published: false };
+  const message = await postDiscordMessage(DISCORD_UPDATES_CHANNEL_ID, token, {
+    content: '@everyone',
+    allowed_mentions: { parse: ['everyone'] },
+    embeds: [{
+      color: 0x5865f2,
+      author: { name: 'Ta3n • New Feature', icon_url: `${websiteUrl}/logo.png` },
+      title: '🔄 ميزة جديدة: طلب ريستات',
+      description: 'أصبح بإمكانك الآن تقديم طلب ريستات بشكل أسرع وأكثر أماناً من الروم المخصص.',
+      image: { url: resetPanelImageUrl() },
+      fields: [
+        { name: 'كيف تستخدمها؟', value: 'اضغط زر **ابدأ طلب الريستات** • اكتب سبب الطلب • أرسل النموذج', inline: false },
+        { name: 'مهم', value: 'لا تحتاج إلى كتابة مفتاحك. يتم التحقق من حسابك والمنتج المفعّل تلقائياً داخل النظام.', inline: false },
+      ],
+      footer: { text: 'Ta3n • Key Reset Center is now live' },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+  await setDoc(announcementRef, { messageId: message.id, channelId: DISCORD_UPDATES_CHANNEL_ID, publishedAt: new Date().toISOString() }, { merge: true });
+  return { messageId: message.id, published: true };
 }
 
 async function postDiscordMessage(channelId: string, token: string, data: Record<string, unknown>) {
@@ -1107,6 +1152,8 @@ export async function startDiscordBot() {
     await ensurePrivateAuditChannels(token);
     const panel = await ensureDiscordResetPanelPublished();
     if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
+    const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
+    if (announcement.published) console.info(`[Discord Updates] Published reset feature announcement ${announcement.messageId}.`);
   } catch (error) {
     console.error('[Discord Audit] Private audit setup or reset panel publish failed:', error);
   }
