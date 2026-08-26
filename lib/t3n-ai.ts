@@ -1090,6 +1090,21 @@ export async function sendStaffAiMessage(actor: TicketActor, input: { conversati
     visibleToCustomer: true,
   });
   await StoreDB.addLog('AI Staff Reply', `رد على محادثة العميل ${conversation.customerName}${attachments.length ? ' مع صورة' : ''}`, actor.id, actor.name);
+  void (async () => {
+    try {
+      const { isSiteUserActive } = await import('@/lib/site-presence');
+      if (await isSiteUserActive(conversation.customerDiscordId)) return;
+      const { sendDiscordCustomerReplyReminder } = await import('@/lib/discord-bot');
+      await sendDiscordCustomerReplyReminder({
+        conversationId: conversation.id,
+        supportSessionId: conversation.supportSessionId || null,
+        customerDiscordId: conversation.customerDiscordId,
+        customerName: conversation.customerName,
+      });
+    } catch (error) {
+      console.warn('[Discord Support] Unable to send customer reply reminder:', error);
+    }
+  })();
   return { conversation, message };
 }
 

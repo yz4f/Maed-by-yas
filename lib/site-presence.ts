@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { db as getDb } from '@/lib/store-db';
 import type { SitePresence } from '@/types';
 
@@ -72,6 +72,13 @@ export async function recordSiteLogout(actor: PresenceActor) {
     active: false,
   }, { merge: true });
   return { logoutAt: now };
+}
+
+export async function isSiteUserActive(discordId: string) {
+  const snapshot = await getDoc(doc(database(), PRESENCE_COLLECTION, discordId));
+  if (!snapshot.exists()) return false;
+  const presence = toPresence(snapshot.id, snapshot.data() as Record<string, unknown>);
+  return presence.active && Date.now() - new Date(presence.lastSeenAt).getTime() <= ACTIVE_WINDOW_MS;
 }
 
 export async function listActiveSitePresence() {

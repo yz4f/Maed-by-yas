@@ -12,6 +12,7 @@ export const discordRoomChannels = {
   smartSupport: '1541504744344780920',
 } as const;
 const DISCORD_SUPPORT_COLLECTION = 'discordSupportSessions';
+const DISCORD_REPLY_REMINDER_COLLECTION = 'discordReplyReminders';
 const VOICE_SUPPORT_COLLECTION = 'voiceSupportSessions';
 const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
 const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
@@ -813,6 +814,39 @@ async function maintainDiscordSupportSessions(token: string) {
       }
     }
   }
+}
+
+export async function sendDiscordCustomerReplyReminder(event: {
+  conversationId: string;
+  supportSessionId?: string | null;
+  customerDiscordId: string;
+  customerName: string;
+}) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال تنبيه الرد.');
+  const reminderRef = doc(supportDatabase(), DISCORD_REPLY_REMINDER_COLLECTION, event.conversationId);
+  const existing = await getDoc(reminderRef);
+  const previousAt = existing.exists() ? new Date(String(existing.data()?.sentAt || 0)).getTime() : 0;
+  if (previousAt && Date.now() - previousAt < 10 * 60 * 1000) return { sent: false, reason: 'cooldown' as const };
+
+  const dmId = await openDiscordDm(event.customerDiscordId, token);
+  const sessionUrl = event.supportSessionId ? `${websiteUrl}/support/session/${encodeURIComponent(event.supportSessionId)}` : `${websiteUrl}/support`;
+  await postDiscordMessage(dmId, token, {
+    embeds: [{
+      color: 0x5865f2,
+      author: { name: 'Ta3n Support', icon_url: `${websiteUrl}/logo.png` },
+      title: 'لديك رد جديد من دعم تعن',
+      description: 'نحتاج إلى ردك لمتابعة مساعدتك. افتح جلسة الدعم وأرسل التفاصيل أو الصورة المطلوبة عندما تكون جاهزاً.',
+      fields: [
+        { name: 'مهم', value: 'لا ترسل المفتاح أو كلمة المرور في رسالة Discord الخاصة.', inline: false },
+      ],
+      footer: { text: 'Ta3n Support • تنبيه متابعة واحد كل 10 دقائق' },
+      timestamp: new Date().toISOString(),
+    }],
+    components: [{ type: 1, components: [{ type: 2, style: 5, label: 'فتح جلسة الدعم', url: sessionUrl, emoji: { name: '💬' } }] }],
+  });
+  await setDoc(reminderRef, { customerDiscordId: event.customerDiscordId, sentAt: new Date().toISOString(), supportSessionId: event.supportSessionId || null }, { merge: true });
+  return { sent: true, reason: 'sent' as const };
 }
 
 async function openDiscordDm(recipientId: string, token: string) {
