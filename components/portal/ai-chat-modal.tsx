@@ -52,8 +52,8 @@ const copy = {
     quick: ['أين أجد شرح منتجي؟', 'قائمة Spoofer لا تظهر', 'كيف أرفع طلب Reset؟'],
     close: 'إغلاق المحادثة',
     handoff: 'تم إرسال موضوعك للمراجعة. اكتب التفاصيل بوضوح وانتظر الرد عند توفر فريق الدعم.',
-    humanActive: 'فريق الدعم متاح الآن، ويمكنه الرد عليك داخل هذه المحادثة.',
-    humanLabel: 'فريق الدعم متاح',
+    humanActive: 'يمكنك متابعة إرسال تفاصيل المشكلة هنا.',
+    humanLabel: 'جلسة نشطة',
     waitingCustomerLabel: 'بانتظار ردك',
     closedLabel: 'مغلقة تلقائياً',
     inactivityWarning: 'لم نتلقَّ رداً جديداً منك. أرسل أي رسالة خلال الوقت المتبقي لتستمر المحادثة.',
@@ -61,7 +61,7 @@ const copy = {
     reopenMessage: 'يمكنك فتح محادثة جديدة بعد',
     openNew: 'فتح محادثة جديدة',
     continueChat: 'متابعة المحادثة',
-    staffLabel: 'فريق الإدارة',
+    staffLabel: 'دعم تعن',
     attach: 'إرفاق صورة',
     removeImage: 'إزالة الصورة',
     imageReady: 'الصورة جاهزة للإرسال',
@@ -86,8 +86,8 @@ const copy = {
     quick: ['Where is my product guide?', 'The Spoofer list is not showing', 'How do I request a reset?'],
     close: 'Close chat',
     handoff: 'Your topic has been sent for review. Describe it clearly and wait for a reply when support is available.',
-    humanActive: 'The support team is currently available and can reply in this conversation.',
-    humanLabel: 'Support available',
+    humanActive: 'You can continue sharing the details of the issue here.',
+    humanLabel: 'Active session',
     waitingCustomerLabel: 'Waiting for your reply',
     closedLabel: 'Closed automatically',
     inactivityWarning: 'We have not received a new reply. Send any message before the countdown ends to keep this conversation open.',
@@ -95,7 +95,7 @@ const copy = {
     reopenMessage: 'You can open a new conversation in',
     openNew: 'Open new conversation',
     continueChat: 'Continue conversation',
-    staffLabel: 'Administration',
+    staffLabel: 'Ta3n Support',
     attach: 'Attach image',
     removeImage: 'Remove image',
     imageReady: 'Image ready to send',
@@ -391,7 +391,7 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide
     <motion.section className={`flex w-full flex-col overflow-hidden ${standalone ? 'h-[100dvh] max-w-none rounded-none border-0 shadow-none' : 'h-[min(740px,90vh)] max-w-3xl rounded-[30px] border shadow-[0_30px_100px_rgba(0,0,0,.52)]'} ${isDark ? 'border-cyan-300/[.18] bg-[#0a1321] text-slate-100' : 'border-white bg-white text-slate-900'}`} initial={{ opacity: 0, scale: standalone ? 1 : .97, y: standalone ? 0 : 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: standalone ? 1 : .97, y: standalone ? 0 : 12 }} onMouseDown={(event) => event.stopPropagation()}>
       <header className={`relative overflow-hidden border-b px-5 py-4 sm:px-6 ${isDark ? 'border-white/[.08]' : 'border-slate-100'}`}>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(34,211,238,.16),transparent_36%),radial-gradient(circle_at_95%_95%,rgba(139,92,246,.13),transparent_38%)]" />
-        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'HUMAN_ACTIVE' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-violet-300/20 bg-violet-400/[.1] text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-700'}`}>{t.humanLabel}</span>}{conversationStatus === 'WAITING_FOR_CUSTOMER' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-amber-300/20 bg-amber-400/[.1] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{t.waitingCustomerLabel}</span>}{conversationStatus === 'CLOSED' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-rose-300/20 bg-rose-400/[.1] text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>{t.closedLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{conversationStatus === 'HUMAN_ACTIVE' ? t.humanActive : t.subtitle}</p>{sessionId && <p className={`mt-1 font-mono text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sessionId}</p>}</div></div><button onClick={onClose} disabled={preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
+        <div className="relative flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/20 bg-slate-950 shadow-[0_0_28px_rgba(34,211,238,.1)]"><img src="/t3nn-ai.png" alt={t.title} className="h-full w-full object-cover" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-black tracking-tight sm:text-lg">{t.title}</h2>{conversationStatus === 'WAITING_FOR_CUSTOMER' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-amber-300/20 bg-amber-400/[.1] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{t.waitingCustomerLabel}</span>}{conversationStatus === 'CLOSED' && <span className={`rounded-full border px-2 py-1 text-[8px] font-black tracking-wide ${isDark ? 'border-rose-300/20 bg-rose-400/[.1] text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>{t.closedLabel}</span>}</div><p className={`mt-1 max-w-[30rem] text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.subtitle}</p>{sessionId && <p className={`mt-1 font-mono text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sessionId}</p>}</div></div><button onClick={onClose} disabled={preparingImage} aria-label={t.close} className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-slate-400 transition hover:text-white disabled:opacity-50 ${isDark ? 'border-white/[.1] hover:bg-white/[.06]' : 'border-slate-200 hover:bg-slate-50 hover:text-slate-700'}`}><X className="h-4 w-4" /></button></div>
       </header>
 
       {conversationStatus === 'WAITING_FOR_CUSTOMER' && idleRemainingMs > 0 && <div className={`mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-[10px] sm:mx-6 ${isDark ? 'border-amber-300/[.18] bg-amber-400/[.08] text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900'}`}><div className="flex min-w-0 flex-1 items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /><span className="leading-5">{t.inactivityWarning}</span></div><div className="flex shrink-0 items-center gap-2"><span className="font-mono text-xs font-black"><Clock3 className="mb-0.5 me-1 inline h-3.5 w-3.5" />{formatRemaining(idleRemainingMs)}</span><button type="button" onClick={() => document.querySelector<HTMLTextAreaElement>('[data-ai-chat-input]')?.focus()} className={`rounded-lg border px-2 py-1 text-[9px] font-black transition active:scale-95 ${isDark ? 'border-amber-200/20 bg-amber-300/[.08] hover:bg-amber-300/[.14]' : 'border-amber-200 bg-white hover:bg-amber-100'}`}>{t.continueChat}</button></div></div>}

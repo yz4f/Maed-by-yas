@@ -1064,10 +1064,9 @@ export async function setConversationHumanMode(actor: TicketActor, conversationI
     supportWaitUntil: null,
     supportWaitLanguage: null,
   });
-  const notice = status === 'HUMAN_ACTIVE'
-    ? 'انضم فريق الإدارة إلى المحادثة. يمكنك متابعة إرسال التفاصيل هنا.'
-    : 'تم تحويل الرد على مساعد ذكاء تعن. يمكنك متابعة المحادثة وسيتابع المساعد الرد.';
-  await addConversationMessage(conversationId, { conversationId, role: 'system', body: notice, visibleToCustomer: true });
+  if (status === 'AI_ACTIVE') {
+    await addConversationMessage(conversationId, { conversationId, role: 'system', body: 'تم تحويل الرد على مساعد ذكاء تعن. يمكنك متابعة المحادثة وسيتابع المساعد الرد.', visibleToCustomer: true });
+  }
   await StoreDB.addLog(status === 'HUMAN_ACTIVE' ? 'AI Conversation Claimed' : 'AI Conversation Returned', `محادثة العميل ${conversation.customerName}`, actor.id, actor.name);
   return getAiConversationForStaff(actor, conversationId);
 }

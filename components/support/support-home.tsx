@@ -15,7 +15,7 @@ const statusCopy: Record<string, string> = {
   AI_ACTIVE: 'المساعدة الذكية متاحة',
   WAITING_FOR_SUPPORT: 'بانتظار المراجعة',
   WAITING_FOR_CUSTOMER: 'بانتظار ردك',
-  HUMAN_ACTIVE: 'فريق الدعم يتابع',
+  HUMAN_ACTIVE: 'جلسة دعم نشطة',
   CLOSED: 'جلسة مغلقة ومحفوظة',
 };
 
