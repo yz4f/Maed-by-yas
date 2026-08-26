@@ -844,8 +844,7 @@ export async function sendDiscordAdminDirectMessage(event: {
       title: 'رسالة من دعم تعن',
       description: body,
       fields: [
-        { name: 'إرسال من', value: event.staffName || 'دعم تعن', inline: true },
-        { name: 'الخصوصية', value: 'لا ترسل مفاتيح المنتج أو كلمات المرور في Discord.', inline: true },
+        { name: 'الخصوصية', value: 'لا ترسل مفاتيح المنتج أو كلمات المرور في Discord.', inline: false },
       ],
       footer: { text: 'Ta3n Support • رسالة دعم خاصة' },
       timestamp: new Date().toISOString(),
