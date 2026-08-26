@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { DiscordBotService } from '@/lib/discord';
+import { sendDiscordAdminDirectMessage } from '@/lib/discord-bot';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
@@ -17,8 +18,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, userId, productId, status, warningMessage, banReason, banType, banExpiresAt } = body;
-    const allowedActions = new Set(['remove_product', 'add_product', 'update_status', 'warn_user', 'ban_user', 'unban_user']);
+    const { action, userId, productId, status, warningMessage, banReason, banType, banExpiresAt, directMessage } = body;
+    const allowedActions = new Set(['remove_product', 'add_product', 'update_status', 'warn_user', 'ban_user', 'unban_user', 'send_discord_message']);
     if (!allowedActions.has(action) || typeof userId !== 'string' || !userId.trim()) {
       return NextResponse.json({ success: false, message: 'بيانات العملية غير صالحة.' }, { status: 400 });
     }
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
     }
     if (action === 'ban_user' && banType === 'temporary' && (!banExpiresAt || Number.isNaN(new Date(banExpiresAt).getTime()) || new Date(banExpiresAt) <= new Date())) {
       return NextResponse.json({ success: false, message: 'تاريخ انتهاء الحظر المؤقت غير صالح.' }, { status: 400 });
+    }
+    if (action === 'send_discord_message' && (typeof directMessage !== 'string' || directMessage.trim().length < 2 || directMessage.trim().length > 1200)) {
+      return NextResponse.json({ success: false, message: 'اكتب رسالة بين حرفين و1200 حرف قبل الإرسال.' }, { status: 400 });
     }
 
     const adminName = admin.name;
@@ -38,7 +42,37 @@ export async function POST(req: Request) {
     }
     const userObj = userDetails.user;
 
-    // 1. REMOVE PRODUCT
+    // 1. SEND A SINGLE DISCORD DIRECT MESSAGE
+    if (action === 'send_discord_message') {
+      const discordId = String(userObj?.discordId || '').trim();
+      if (!/^\d{16,22}$/.test(discordId)) {
+        return NextResponse.json({ success: false, message: 'لا يوجد حساب Discord مرتبط وصالح لهذا العميل.' }, { status: 400 });
+      }
+      const result = await sendDiscordAdminDirectMessage({
+        customerDiscordId: discordId,
+        customerName: String(userObj?.name || 'عميل'),
+        body: directMessage.trim(),
+        staffName: adminName || 'دعم تعن',
+      });
+      if (!result.sent) {
+        return NextResponse.json({ success: false, message: 'تم منع إرسال رسالة مكررة خلال ثوانٍ قليلة.' }, { status: 429 });
+      }
+      await StoreDB.addLog(
+        'Discord Direct Message Sent',
+        `أرسل ${adminName || 'دعم تعن'} رسالة Discord خاصة إلى العميل ${userObj.name}.`,
+        adminId || 'admin-system',
+        adminName || 'دعم تعن',
+        ip,
+        {
+          eventType: 'discord_direct_message_sent', actorDiscordId: admin.discordId, actorName: adminName,
+          targetUserId: userId, targetDiscordId: discordId,
+          metadata: { action, messageLength: directMessage.trim().length },
+        }
+      );
+      return NextResponse.json({ success: true, message: 'تم إرسال الرسالة الخاصة إلى Discord العميل.' });
+    }
+
+    // 2. REMOVE PRODUCT
     if (action === 'remove_product') {
       await StoreDB.removeProductFromUser(userId, productId);
       const prod = await StoreDB.getProductById(productId);

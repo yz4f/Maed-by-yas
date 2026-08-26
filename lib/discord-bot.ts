@@ -816,6 +816,45 @@ async function maintainDiscordSupportSessions(token: string) {
   }
 }
 
+export async function sendDiscordAdminDirectMessage(event: {
+  customerDiscordId: string;
+  customerName: string;
+  body: string;
+  staffName: string;
+}) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال الرسالة الخاصة.');
+  const customerDiscordId = String(event.customerDiscordId || '').trim();
+  const body = String(event.body || '').trim();
+  if (!/^\d{16,22}$/.test(customerDiscordId)) throw new Error('لا يوجد Discord ID صالح لهذا العميل.');
+  if (body.length < 2 || body.length > 1200) throw new Error('يجب أن تكون الرسالة بين حرفين و1200 حرف.');
+
+  const cooldownRef = doc(supportDatabase(), 'discordAdminDirectMessageCooldowns', customerDiscordId);
+  const previous = await getDoc(cooldownRef);
+  const previousAt = previous.exists() ? new Date(String(previous.data()?.sentAt || 0)).getTime() : 0;
+  if (previousAt && Date.now() - previousAt < 15_000 && previous.data()?.body === body) {
+    return { sent: false, reason: 'duplicate' as const };
+  }
+
+  const dmId = await openDiscordDm(customerDiscordId, token);
+  await postDiscordMessage(dmId, token, {
+    embeds: [{
+      color: 0x38bdf8,
+      author: { name: 'Ta3n Support', icon_url: `${websiteUrl}/logo.png` },
+      title: 'رسالة من دعم تعن',
+      description: body,
+      fields: [
+        { name: 'إرسال من', value: event.staffName || 'دعم تعن', inline: true },
+        { name: 'الخصوصية', value: 'لا ترسل مفاتيح المنتج أو كلمات المرور في Discord.', inline: true },
+      ],
+      footer: { text: 'Ta3n Support • رسالة دعم خاصة' },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+  await setDoc(cooldownRef, { customerDiscordId, customerName: event.customerName, body, sentAt: new Date().toISOString(), staffName: event.staffName }, { merge: true });
+  return { sent: true, reason: 'sent' as const };
+}
+
 export async function sendDiscordCustomerReplyReminder(event: {
   conversationId: string;
   supportSessionId?: string | null;

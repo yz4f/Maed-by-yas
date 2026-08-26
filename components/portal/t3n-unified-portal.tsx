@@ -47,7 +47,8 @@ import {
   Unlock,
   Hash,
   Megaphone,
-  Mic2
+  Mic2,
+  Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
@@ -526,6 +527,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [banTypeInput, setBanTypeInput] = useState<'temporary' | 'permanent'>('permanent');
   const [banExpiresAtInput, setBanExpiresAtInput] = useState('');
   const [warningMessageInput, setWarningMessageInput] = useState('');
+  const [discordDirectMessageInput, setDiscordDirectMessageInput] = useState('');
   const [isProcessingAdminAction, setIsProcessingAdminAction] = useState(false);
   const [allKeysList, setAllKeysList] = useState<KeyType[]>([]);
   const [searchKeysQuery, setSearchKeysQuery] = useState('');
@@ -755,6 +757,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const openCustomerModal = async (customer: any) => {
     setSelectedAdminCustomer(customer);
     setSelectedCustomerProducts([]);
+    setDiscordDirectMessageInput('');
     try {
       const res = await fetch(`/api/admin/customers/${customer.id}`);
       if (res.ok) {
@@ -921,6 +924,39 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     } finally {
       setIsProcessingAdminAction(false);
     }
+  };
+
+  const handleSendCustomerDiscordMessage = async (userId: string) => {
+    const message = discordDirectMessageInput.trim();
+    if (message.length < 2) {
+      showToast(lang === 'ar' ? 'اكتب رسالة للعميل أولاً.' : 'Write a message for the customer first.', 'warning');
+      return;
+    }
+    const customerName = selectedAdminCustomer?.name || (lang === 'ar' ? 'هذا العميل' : 'this customer');
+    askConfirm(
+      lang === 'ar' ? 'تأكيد رسالة Discord الخاصة' : 'Confirm Discord Direct Message',
+      lang === 'ar' ? `سيتم إرسال رسالة واحدة من دعم تعن إلى ${customerName} في الخاص. لا يمكن التراجع عن الإرسال.` : `One private Ta3n Support message will be sent to ${customerName}. This cannot be undone.`,
+      async () => {
+        setIsProcessingAdminAction(true);
+        try {
+          const res = await fetch('/api/admin/customers/manage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'send_discord_message', userId, directMessage: message }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data?.success) throw new Error(data?.message || (lang === 'ar' ? 'تعذر إرسال الرسالة الخاصة.' : 'Could not send the private message.'));
+          setDiscordDirectMessageInput('');
+          showToast(data.message || (lang === 'ar' ? 'تم إرسال الرسالة إلى Discord العميل.' : 'Message sent to the customer on Discord.'), 'success');
+          void loadAdminStats();
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر إرسال الرسالة الخاصة.' : 'Could not send the private message.'), 'error');
+        } finally {
+          setIsProcessingAdminAction(false);
+        }
+      }
+    );
   };
 
   const handleBanUser = async (userId: string) => {
@@ -4602,6 +4638,45 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <span className="text-neutral-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> {lang === 'ar' ? 'التحذيرات النشطة' : 'Warnings'}</span>
                       <span className="text-amber-500 font-extrabold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{selectedAdminCustomer.warningCount || 0}</span>
                     </div>
+                  </div>
+                </div>
+
+                {/* PRIVATE DISCORD MESSAGE */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                    <MessageSquare className="w-4.5 h-4.5 text-cyan-300" />
+                    <span>{lang === 'ar' ? 'رسالة Discord خاصة' : 'Private Discord Message'}</span>
+                  </h4>
+                  <div className="rounded-2xl border border-cyan-300/[0.14] bg-[linear-gradient(145deg,rgba(34,211,238,.09),rgba(14,23,38,.84)_55%)] p-5 shadow-inner shadow-black/20 space-y-3">
+                    {selectedAdminCustomer.discordId ? (
+                      <>
+                        <div className="flex items-start gap-2 rounded-xl border border-cyan-200/[0.12] bg-cyan-200/[0.05] px-3 py-2.5 text-[10px] leading-relaxed text-cyan-50/80">
+                          <DiscordMark className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />
+                          <span>{lang === 'ar' ? 'تصل الرسالة لهذا العميل فقط من بوت دعم تعن في الخاص. لا تُرسل أي رسالة حتى تضغط زر التأكيد.' : 'The message is sent only to this customer by the Ta3n Support bot. Nothing is sent until you confirm.'}</span>
+                        </div>
+                        <textarea
+                          value={discordDirectMessageInput}
+                          onChange={(event) => setDiscordDirectMessageInput(event.target.value.slice(0, 1200))}
+                          rows={4}
+                          maxLength={1200}
+                          placeholder={lang === 'ar' ? 'اكتب رسالتك للعميل بوضوح…' : 'Write a clear message for the customer…'}
+                          className="w-full resize-y rounded-xl border border-white/[0.09] bg-black/35 px-3.5 py-3 text-xs font-medium leading-relaxed text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/[0.38]"
+                        />
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-bold text-slate-500">{discordDirectMessageInput.length}/1200</span>
+                          <button
+                            onClick={() => void handleSendCustomerDiscordMessage(selectedAdminCustomer.id)}
+                            disabled={isProcessingAdminAction || discordDirectMessageInput.trim().length < 2}
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-cyan-100/70 bg-[linear-gradient(135deg,#d9f8ff,#7dd3fc)] px-4 text-[11px] font-black text-slate-950 shadow-[0_10px_22px_rgba(34,211,238,.13)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 active:scale-95"
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                            <span>{isProcessingAdminAction ? (lang === 'ar' ? 'جارٍ الإرسال…' : 'Sending…') : (lang === 'ar' ? 'إرسال في الخاص' : 'Send private message')}</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="rounded-xl border border-amber-300/[0.16] bg-amber-300/[0.06] px-3 py-3 text-xs font-bold leading-relaxed text-amber-100">{lang === 'ar' ? 'لا يوجد Discord ID مرتبط بهذا الحساب، لذلك لا يمكن إرسال رسالة خاصة له.' : 'This account has no linked Discord ID, so a private message cannot be sent.'}</div>
+                    )}
                   </div>
                 </div>
 
