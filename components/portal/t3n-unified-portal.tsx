@@ -2758,12 +2758,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       </div>
                       <div className="product-license-card__body">
                         <div className="product-license-card__heading">
-                          <div className="product-license-card__icon shrink-0">
-                            <img src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
-                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
-                            <div className="mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
+                            <div className="product-license-card__category mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
                           </div>
                         </div>
 

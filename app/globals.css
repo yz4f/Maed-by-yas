@@ -1844,3 +1844,31 @@ body {
   .portal-sidebar button:hover { transform: translateX(-1px); }
   [dir='ltr'] .portal-sidebar button:hover { transform: translateX(1px); }
 }
+
+/* Product card hierarchy fix: text first, key second, actions last. */
+.product-license-card--premium .product-license-card__body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch;
+}
+.product-license-card--premium .product-license-card__heading {
+  order: 1 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 1px 1px 0;
+}
+.product-license-card--premium .product-license-card__category {
+  color: rgba(190, 216, 234, 0.64) !important;
+}
+.product-license-card--premium .product-license-card__key {
+  order: 2 !important;
+}
+.product-license-card--premium .product-license-card__actions {
+  order: 3 !important;
+}
+.product-license-card--premium .product-reset-button {
+  order: 4 !important;
+}
+.portal-shell--light .product-license-card--premium .product-license-card__category {
+  color: #607a8d !important;
+}
