@@ -517,6 +517,10 @@ function resetPanelImageUrl() {
   return `${websiteUrl}/assets/discord/reset-panel.webp`;
 }
 
+function resetPanelPreviewImageUrl() {
+  return `${websiteUrl}/assets/discord/reset-panel-preview.png`;
+}
+
 function resetPanelEmbed() {
   return {
     color: 0x5865f2,
@@ -581,32 +585,46 @@ async function ensureDiscordResetPanelPublished() {
   return { ...result, published: true, refreshed: false };
 }
 
+function resetFeatureAnnouncementEmbed() {
+  return {
+    color: 0x5865f2,
+    author: { name: 'Ta3n • New Feature', icon_url: `${websiteUrl}/logo.png` },
+    title: '🔄 ميزة جديدة: طلب ريستات',
+    description: 'أصبح بإمكانك الآن تقديم طلب ريستات بشكل أسرع وأكثر أماناً من الروم المخصص.',
+    image: { url: resetPanelPreviewImageUrl() },
+    fields: [
+      { name: 'معاينة اللوحة', value: 'الصورة أعلاه توضح شكل لوحة طلب الريست الجديدة داخل Discord.', inline: false },
+      { name: 'كيف تستخدمها؟', value: 'اضغط زر **ابدأ طلب الريستات** • اكتب سبب الطلب • أرسل النموذج', inline: false },
+      { name: 'مهم', value: 'لا تحتاج إلى كتابة مفتاحك. يتم التحقق من حسابك والمنتج المفعّل تلقائياً داخل النظام.', inline: false },
+    ],
+    footer: { text: 'Ta3n • Key Reset Center is now live' },
+    timestamp: new Date().toISOString(),
+  };
+}
+
 async function ensureDiscordResetFeatureAnnouncementPublished() {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال إعلان التحديث.');
   const announcementRef = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID);
   const saved = await getDoc(announcementRef);
   const messageId = saved.exists() ? String(saved.data()?.messageId || '') : '';
-  if (messageId) return { messageId, published: false };
+  if (messageId) {
+    const response = await discordApi(`/channels/${DISCORD_UPDATES_CHANNEL_ID}/messages/${messageId}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify({ embeds: [resetFeatureAnnouncementEmbed()] }),
+    });
+    if (response.ok) {
+      await setDoc(announcementRef, { refreshedAt: new Date().toISOString() }, { merge: true });
+      return { messageId, published: false, refreshed: true };
+    }
+  }
   const message = await postDiscordMessage(DISCORD_UPDATES_CHANNEL_ID, token, {
     content: '@everyone',
     allowed_mentions: { parse: ['everyone'] },
-    embeds: [{
-      color: 0x5865f2,
-      author: { name: 'Ta3n • New Feature', icon_url: `${websiteUrl}/logo.png` },
-      title: '🔄 ميزة جديدة: طلب ريستات',
-      description: 'أصبح بإمكانك الآن تقديم طلب ريستات بشكل أسرع وأكثر أماناً من الروم المخصص.',
-      image: { url: resetPanelImageUrl() },
-      fields: [
-        { name: 'كيف تستخدمها؟', value: 'اضغط زر **ابدأ طلب الريستات** • اكتب سبب الطلب • أرسل النموذج', inline: false },
-        { name: 'مهم', value: 'لا تحتاج إلى كتابة مفتاحك. يتم التحقق من حسابك والمنتج المفعّل تلقائياً داخل النظام.', inline: false },
-      ],
-      footer: { text: 'Ta3n • Key Reset Center is now live' },
-      timestamp: new Date().toISOString(),
-    }],
+    embeds: [resetFeatureAnnouncementEmbed()],
   });
   await setDoc(announcementRef, { messageId: message.id, channelId: DISCORD_UPDATES_CHANNEL_ID, publishedAt: new Date().toISOString() }, { merge: true });
-  return { messageId: message.id, published: true };
+  return { messageId: message.id, published: true, refreshed: false };
 }
 
 async function postDiscordMessage(channelId: string, token: string, data: Record<string, unknown>) {
