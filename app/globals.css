@@ -1937,3 +1937,251 @@ body {
   .product-license-card--premium .product-reset-button { min-height: 48px !important; }
   .product-license-card--premium .product-reset-button__icon { width: 29px !important; height: 29px !important; }
 }
+
+/* Unified Dark Premium system: strict alignment, shared grid, and restrained surfaces. */
+.portal-shell {
+  --ui-bg: #07111d;
+  --ui-surface: #0b1929;
+  --ui-surface-strong: #0d2033;
+  --ui-line: rgba(180, 217, 239, 0.14);
+  --ui-line-strong: rgba(180, 225, 247, 0.22);
+  --ui-text: #f1f7fb;
+  --ui-muted: #91a8bb;
+  --ui-accent: #6bd3f2;
+  --ui-radius-sm: 12px;
+  --ui-radius: 18px;
+  --ui-radius-lg: 22px;
+  --ui-shadow: 0 18px 44px rgba(0, 7, 18, 0.25);
+}
+
+/* Remove decorative tilts; the canvas stays deliberately straight and quiet. */
+.portal-shell::before,
+.portal-shell::after {
+  display: none !important;
+}
+.portal-shell--dark {
+  background:
+    radial-gradient(ellipse 62% 42% at 50% -12%, rgba(56, 171, 217, 0.12), transparent 68%),
+    linear-gradient(180deg, #07111d 0%, #07131f 54%, #06101b 100%) !important;
+}
+.portal-grid {
+  opacity: .30 !important;
+  background-size: 56px 56px !important;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,.76), transparent 86%) !important;
+}
+.portal-ambient::before,
+.portal-ambient::after {
+  opacity: .22 !important;
+  filter: blur(18px) !important;
+}
+
+.portal-sidebar {
+  background: linear-gradient(180deg, rgba(8, 23, 39, .96), rgba(6, 17, 30, .94)) !important;
+  box-shadow: -1px 0 0 rgba(190,226,245,.08), 0 18px 42px rgba(0,8,20,.18) !important;
+}
+.portal-sidebar > div:nth-child(2) {
+  gap: 16px !important;
+  padding: 18px 14px !important;
+}
+.portal-sidebar > div:nth-child(2) > div {
+  display: grid;
+  gap: 4px;
+}
+.portal-sidebar > div:nth-child(2) > div > div:first-child {
+  margin: 0 7px 7px !important;
+  color: rgba(178, 210, 230, .52) !important;
+  font-size: 9px !important;
+  letter-spacing: .13em !important;
+}
+.portal-sidebar button,
+.portal-sidebar a {
+  min-height: 38px;
+  border-radius: var(--ui-radius-sm) !important;
+}
+.portal-sidebar > div:last-child {
+  padding: 14px !important;
+  border-top-color: rgba(180,217,239,.11) !important;
+}
+
+.portal-main-content {
+  background: transparent !important;
+}
+.portal-content-frame {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+.portal-page-header {
+  min-height: 76px;
+  margin-bottom: 20px !important;
+  padding: 0 0 18px !important;
+  border-bottom-color: var(--ui-line) !important;
+}
+.portal-page-header__eyebrow {
+  color: var(--ui-accent) !important;
+  opacity: .78;
+}
+.portal-page-header__title {
+  color: var(--ui-text) !important;
+  font-size: clamp(21px, 2vw, 27px) !important;
+  line-height: 1.25;
+}
+
+/* Shared structured surfaces instead of unrelated gradients and radii. */
+.overview-welcome-card,
+.overview-stat-card,
+.overview-quick-actions,
+.products-page-hero,
+.product-license-card--premium,
+.guide-experience-modal,
+.guide-menu-card,
+.guide-runtime-preview {
+  border-color: var(--ui-line) !important;
+  box-shadow: var(--ui-shadow) !important;
+}
+.overview-welcome-card,
+.overview-stat-card,
+.overview-quick-actions,
+.products-page-hero,
+.product-license-card--premium {
+  border-radius: var(--ui-radius) !important;
+}
+.overview-welcome-card,
+.overview-stat-card,
+.overview-quick-actions {
+  background-color: rgba(10, 24, 39, .88) !important;
+}
+.overview-dashboard {
+  gap: 20px !important;
+}
+.overview-dashboard > div,
+.overview-dashboard > section { min-width: 0; }
+
+.products-experience { gap: 20px !important; }
+.products-page-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center !important;
+  gap: 18px !important;
+  min-height: 106px;
+  padding: 20px 22px !important;
+  background: linear-gradient(130deg, rgba(13, 34, 53, .92), rgba(8, 24, 39, .88)) !important;
+}
+.product-library {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+}
+.product-library > * { min-width: 0; }
+.product-license-card--premium {
+  overflow: hidden !important;
+  background: linear-gradient(180deg, rgba(12, 29, 46, .96), rgba(7, 17, 28, .98)) !important;
+  box-shadow: 0 15px 36px rgba(0, 7, 18, .24), inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+.product-license-card--premium::before { opacity: .24 !important; }
+.product-license-card--premium:hover {
+  transform: translateY(-2px) !important;
+  border-color: var(--ui-line-strong) !important;
+  box-shadow: 0 20px 44px rgba(0,7,18,.32), inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+.product-license-card--premium .product-license-card__media {
+  height: 166px !important;
+  border-bottom-color: var(--ui-line) !important;
+}
+.product-license-card--premium .product-license-card__body {
+  padding: 16px !important;
+  gap: 12px !important;
+}
+.product-license-card--premium .product-license-card__heading {
+  padding: 2px 2px 1px !important;
+}
+.product-license-card--premium .product-license-card__title {
+  font-size: 17px !important;
+  font-weight: 850 !important;
+}
+.product-license-card--premium .product-license-card__key {
+  border-color: rgba(185,218,238,.13) !important;
+  background: rgba(3, 12, 22, .68) !important;
+}
+.product-license-card--premium .product-license-card__actions {
+  gap: 10px !important;
+}
+.product-license-card--premium .product-download-button,
+.product-license-card--premium .product-guide-button,
+.product-license-card--premium .product-reset-button {
+  min-height: 44px !important;
+  border-radius: var(--ui-radius-sm) !important;
+}
+
+/* Guide modal: a single aligned reading column with consistent media surfaces. */
+.guide-experience-modal {
+  width: min(calc(100vw - 32px), 980px) !important;
+  max-height: min(88vh, 920px) !important;
+  border-radius: var(--ui-radius-lg) !important;
+  background: #081725 !important;
+  box-shadow: 0 30px 90px rgba(0,0,0,.54) !important;
+}
+.guide-experience-modal > div:first-child {
+  min-height: 74px;
+  padding-inline: 24px !important;
+  border-bottom-color: var(--ui-line) !important;
+  background: linear-gradient(105deg, rgba(18, 49, 81, .74), rgba(8, 24, 39, .96)) !important;
+}
+.guide-experience-body {
+  padding: 22px !important;
+  background: #081725 !important;
+}
+.guide-experience-body > * {
+  width: min(100%, 860px);
+  margin-inline: auto;
+}
+.guide-menu-card {
+  min-height: 228px !important;
+  border-radius: var(--ui-radius) !important;
+  box-shadow: 0 12px 28px rgba(0,7,18,.22) !important;
+}
+.guide-menu-card:hover { transform: translateY(-2px) !important; }
+.guide-runtime-preview {
+  border-radius: var(--ui-radius) !important;
+  padding: 14px !important;
+  border-color: rgba(236, 174, 190, .18) !important;
+}
+.guide-runtime-preview img,
+.guide-experience-body figure img,
+.guide-experience-body video,
+.guide-experience-body iframe {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+  max-height: min(54vh, 460px);
+  margin-inline: auto;
+  border-radius: var(--ui-radius-sm) !important;
+  object-fit: contain !important;
+  background: #030a12;
+}
+.guide-experience-body [class*="grid"] > img,
+.guide-experience-body [class*="grid"] > figure { min-width: 0; }
+
+/* Alerts communicate clearly without breaking the palette. */
+[role="alert"],
+.support-notification-banner {
+  border-radius: var(--ui-radius) !important;
+}
+.portal-shell [class*="bg-amber"] {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+@media (max-width: 1023px) {
+  .product-library { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .guide-experience-modal { width: min(calc(100vw - 24px), 900px) !important; }
+}
+@media (max-width: 720px) {
+  .portal-grid { background-size: 42px 42px !important; }
+  .products-page-hero { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .products-page-hero > button { width: 100%; }
+  .product-library { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .product-license-card--premium .product-license-card__media { height: 150px !important; }
+  .guide-experience-modal { width: calc(100vw - 16px) !important; max-height: 92vh !important; border-radius: 18px !important; }
+  .guide-experience-modal > div:first-child { min-height: 64px; padding-inline: 16px !important; }
+  .guide-experience-body { padding: 14px !important; }
+  .guide-menu-card { min-height: 196px !important; padding: 20px !important; }
+  .guide-runtime-preview { padding: 10px !important; }
+}

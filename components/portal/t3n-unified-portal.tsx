@@ -2458,7 +2458,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className={`portal-page-header__brand hidden lg:flex ${isDark ? 'border-white/[0.10] bg-white/[0.035]' : 'border-slate-200 bg-white/75'}`}><img src="/logo.png" alt="تعن" /><span className="notranslate" translate="no">{renderBrandText('تعن')}</span></div>
             <button
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
               title={lang === 'ar' ? 'English' : 'العربية'}
