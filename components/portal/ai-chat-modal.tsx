@@ -236,11 +236,21 @@ export function AiChatModal({ open, onClose, lang, isDark, onNotify, onOpenGuide
         refreshInFlightRef.current = false;
       }
     };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void loadConversation();
+    };
     void loadConversation(true);
-    const interval = window.setInterval(() => { void loadConversation(); }, 12_000);
-    const onFocus = () => { void loadConversation(); };
-    window.addEventListener('focus', onFocus);
-    return () => { active = false; controller?.abort(); window.clearInterval(interval); window.removeEventListener('focus', onFocus); refreshInFlightRef.current = false; };
+    const interval = window.setInterval(refreshWhenVisible, 15_000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      active = false;
+      controller?.abort();
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      refreshInFlightRef.current = false;
+    };
   }, [open, t.error]);
 
   useEffect(() => {

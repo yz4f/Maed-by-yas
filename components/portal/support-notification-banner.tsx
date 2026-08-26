@@ -38,9 +38,19 @@ export function SupportNotificationBanner({ lang, isDark }: SupportNotificationB
         inFlightRef.current = false;
       }
     };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void load();
+    };
     void load();
-    const timer = window.setInterval(() => { void load(); }, 12_000);
-    return () => { active = false; window.clearInterval(timer); };
+    const timer = window.setInterval(refreshWhenVisible, 45_000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, []);
 
   const markSeen = async () => {

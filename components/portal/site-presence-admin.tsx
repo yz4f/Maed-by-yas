@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CircleDot, Clock3, RefreshCw, ShieldCheck, Users } from 'lucide-react';
 import type { SitePresence } from '@/types';
 
@@ -13,8 +13,11 @@ export function SitePresenceAdmin({ lang, isDark }: SitePresenceAdminProps) {
   const [active, setActive] = useState<SitePresence[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const requestInFlightRef = useRef(false);
 
   const load = useCallback(async (silent = false) => {
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     if (!silent) setIsLoading(true);
     try {
       const response = await fetch('/api/presence', { credentials: 'same-origin', cache: 'no-store' });
@@ -25,14 +28,24 @@ export function SitePresenceAdmin({ lang, isDark }: SitePresenceAdminProps) {
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load active users.');
     } finally {
+      requestInFlightRef.current = false;
       if (!silent) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void load(true);
+    };
     void load();
-    const interval = window.setInterval(() => void load(true), 30_000);
-    return () => window.clearInterval(interval);
+    const interval = window.setInterval(refreshWhenVisible, 30_000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, [load]);
 
   const timeFormatter = new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, CheckCircle2, Clock3, Headphones, Mic2, MonitorUp, PhoneCall, Plus, RefreshCw, ShieldCheck, Users, Video, XCircle } from 'lucide-react';
 import type { VoiceSupportSession, VoiceSupportSessionStatus } from '@/types';
 
@@ -28,6 +28,7 @@ export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestInFlightRef = useRef(false);
 
   const activeCount = useMemo(() => sessions.filter((item) => ['PENDING_CONSENT', 'WAITING_FOR_CUSTOMER', 'ACTIVE', 'STAFF_ASSISTANCE'].includes(item.status)).length, [sessions]);
   const selectedCustomer = customers.find((customer) => customer.discordId === customerId);
@@ -37,8 +38,10 @@ export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }
     return customers.filter((customer) => `${customer.name} ${customer.discordId} ${customer.email || ''}`.toLowerCase().includes(query));
   }, [customerQuery, customers]);
 
-  const loadSessions = async () => {
-    setIsLoading(true);
+  const loadSessions = async (silent = false) => {
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
+    if (!silent) setIsLoading(true);
     try {
       const response = await fetch('/api/admin/voice-sessions', { cache: 'no-store' });
       const payload = await response.json();
@@ -48,14 +51,24 @@ export function VoiceSupportAdmin({ customers }: { customers: CustomerOption[] }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'تعذر تحميل الجلسات.');
     } finally {
-      setIsLoading(false);
+      requestInFlightRef.current = false;
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void loadSessions(true);
+    };
     void loadSessions();
-    const refreshTimer = window.setInterval(() => void loadSessions(), 12_000);
-    return () => window.clearInterval(refreshTimer);
+    const refreshTimer = window.setInterval(refreshWhenVisible, 30_000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, []);
 
   const createSession = async () => {

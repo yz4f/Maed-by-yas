@@ -149,6 +149,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   const displayedThreadIdRef = useRef<string | null>(null);
   const threadAbortRef = useRef<AbortController | null>(null);
   const threadRequestRef = useRef(0);
+  const listInFlightRef = useRef(false);
   const inFlightThreadIdRef = useRef<string | null>(null);
   const threadCacheRef = useRef(new Map<string, { conversation: Conversation; messages: Message[] }>());
 
@@ -173,6 +174,8 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
   }), [isDark, t]);
 
   const loadList = useCallback(async (options: { showSpinner?: boolean; notify?: boolean } = {}) => {
+    if (listInFlightRef.current) return;
+    listInFlightRef.current = true;
     if (options.showSpinner) setLoadingList(true);
     try {
       const response = await fetch('/api/ai?view=admin_conversations', { credentials: 'same-origin', cache: 'no-store' });
@@ -189,6 +192,7 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
     } catch (error) {
       if (options.notify) notifyRef.current?.(error instanceof Error ? error.message : 'Unable to load conversations.', 'error');
     } finally {
+      listInFlightRef.current = false;
       if (options.showSpinner) setLoadingList(false);
     }
   }, [t.updated]);
@@ -257,9 +261,14 @@ export function AiAdminConversations({ lang, isDark, onNotify }: AiAdminConversa
       void loadList();
       if (selectedId) void loadThread(selectedId);
     };
-    const interval = window.setInterval(refresh, 20_000);
+    const interval = window.setInterval(refresh, 25_000);
+    window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
-    return () => { window.clearInterval(interval); document.removeEventListener('visibilitychange', refresh); };
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [loadList, loadThread, selectedId]);
   useEffect(() => () => threadAbortRef.current?.abort(), []);
 

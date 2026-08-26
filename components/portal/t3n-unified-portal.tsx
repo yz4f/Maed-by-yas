@@ -622,28 +622,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'short', year: 'numeric' }).format(joined);
   }, [currentUser?.createdAt, lang]);
 
-  // Load User Products when user logs in
+  // Keep the portal responsive: load customer data once, then fetch each heavy admin section only when opened.
   useEffect(() => {
-    if (currentUser) {
-      loadUserProducts();
-      loadDbProducts();
-      if (isAdmin) {
-        loadAdminStats();
-        loadAdminCustomersList();
-        loadAllKeysList();
-      }
-    }
-  }, [currentUser]);
+    if (!currentUser?.id) return;
+    void loadUserProducts();
+  }, [currentUser?.id]);
 
   useEffect(() => {
-    if (activeTab === 'admin' && isAdmin) {
-      loadDbProducts();
-      if (adminSectionTab === 'overview') loadAdminStats();
-      if (adminSectionTab === 'customers') loadAdminCustomersList();
-      if (adminSectionTab === 'keys') loadAllKeysList();
-      if (adminSectionTab === 'logs') loadAdminStats();
+    if (activeTab !== 'admin' || !isAdmin) return;
+    if (adminSectionTab === 'overview' || adminSectionTab === 'logs') void loadAdminStats();
+    if (adminSectionTab === 'products') {
+      void loadDbProducts();
+      void loadAdminStats();
     }
-  }, [activeTab, adminSectionTab]);
+    if (adminSectionTab === 'customers') void loadAdminCustomersList();
+    if (adminSectionTab === 'keys') void loadAllKeysList();
+  }, [activeTab, adminSectionTab, isAdmin]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -792,10 +786,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     setIsAdminRefreshing(true);
     setAdminLoadError(null);
     try {
-      const requests: Promise<boolean>[] = [loadDbProducts()];
-      if (adminSectionTab === 'overview' || adminSectionTab === 'logs' || adminSectionTab === 'products') requests.push(loadAdminStats());
+      const requests: Promise<boolean>[] = [];
+      if (adminSectionTab === 'overview' || adminSectionTab === 'logs') requests.push(loadAdminStats());
+      if (adminSectionTab === 'products') {
+        requests.push(loadDbProducts());
+        requests.push(loadAdminStats());
+      }
       if (adminSectionTab === 'customers') requests.push(loadAdminCustomersList());
       if (adminSectionTab === 'keys') requests.push(loadAllKeysList());
+      if (requests.length === 0) return;
       const results = await Promise.all(requests);
       if (results.some((result) => !result)) throw new Error('refresh-failed');
     } catch (error) {
@@ -2965,7 +2964,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
-          <div className="admin-workspace space-y-5 w-full max-w-[1320px] mx-auto">
+          <div className="admin-workspace space-y-5 w-full max-w-[1440px] mx-auto">
             {/* Top Admin Header */}
             <div className={`admin-hero ${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
               <div className="min-w-0">
