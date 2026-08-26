@@ -523,13 +523,51 @@ export async function processExpiredSupportWaits(nowMs = Date.now()) {
   return { resumedCount };
 }
 
+export async function processDueCustomerReplyReminders(nowMs = Date.now()) {
+  const snapshot = await getDocs(collection(database(), AI_COLLECTION));
+  const due = snapshot.docs.map(toConversation).filter((conversation) => conversation.status === 'HUMAN_ACTIVE' && conversation.customerReplyReminderDueAt && !conversation.customerReplyReminderSentAt && new Date(conversation.customerReplyReminderDueAt).getTime() <= nowMs);
+  let reminderCount = 0;
+
+  for (const conversation of due) {
+    const dueAt = conversation.customerReplyReminderDueAt!;
+    const conversationRef = doc(database(), AI_COLLECTION, conversation.id);
+    let shouldNotify = false;
+    await runTransaction(database(), async (transaction) => {
+      const latestSnapshot = await transaction.get(conversationRef);
+      if (!latestSnapshot.exists()) return;
+      const latest = toConversation(latestSnapshot);
+      if (latest.status !== 'HUMAN_ACTIVE' || latest.customerReplyReminderDueAt !== dueAt || latest.customerReplyReminderSentAt) return;
+      transaction.update(conversationRef, { customerReplyReminderDueAt: null, customerReplyReminderSentAt: new Date(nowMs).toISOString() });
+      shouldNotify = true;
+    });
+    if (!shouldNotify) continue;
+
+    try {
+      const { isSiteUserActive } = await import('@/lib/site-presence');
+      if (await isSiteUserActive(conversation.customerDiscordId)) continue;
+      const { sendDiscordCustomerReplyReminder } = await import('@/lib/discord-bot');
+      const result = await sendDiscordCustomerReplyReminder({
+        conversationId: conversation.id,
+        supportSessionId: conversation.supportSessionId || null,
+        customerDiscordId: conversation.customerDiscordId,
+        customerName: conversation.customerName,
+      });
+      if (result.sent) reminderCount += 1;
+    } catch (error) {
+      console.warn('[Discord Support] Unable to send delayed customer reply reminder:', error);
+    }
+  }
+  return { reminderCount };
+}
+
 export async function runAiConversationMaintenance(nowMs = Date.now()) {
-  const [warnings, closures, supportWaits] = await Promise.all([
+  const [warnings, closures, supportWaits, reminders] = await Promise.all([
     processAiConversationInactivityWarnings(nowMs),
     processDueAiConversationClosures(nowMs),
     processExpiredSupportWaits(nowMs),
+    processDueCustomerReplyReminders(nowMs),
   ]);
-  return { ...warnings, ...closures, ...supportWaits };
+  return { ...warnings, ...closures, ...supportWaits, ...reminders };
 }
 
 export function startAiConversationMaintenance() {
@@ -539,7 +577,7 @@ export function startAiConversationMaintenance() {
     aiConversationMaintenanceRunning = true;
     try {
       const result = await runAiConversationMaintenance();
-      if (result.warningCount || result.closedCount || result.resumedCount) console.info('[AI Conversations] Maintenance completed', result);
+      if (result.warningCount || result.closedCount || result.resumedCount || result.reminderCount) console.info('[AI Conversations] Maintenance completed', result);
     } catch (error) {
       console.error('[AI Conversations] Maintenance failed:', error);
     } finally {
@@ -866,7 +904,7 @@ export async function sendAiMessage(actor: TicketActor, input: { body: string; l
   const customerMessage = await addConversationMessage(conversation.id, { conversationId: conversation.id, role: 'customer', body: messageBody, attachments, visibleToCustomer: true });
 
   if (conversation.status === 'HUMAN_ACTIVE' || conversation.status === 'WAITING_FOR_SUPPORT') {
-    await updateDoc(doc(database(), AI_COLLECTION, conversation.id), { lastCustomerMessageAt: customerMessage.createdAt, updatedAt: customerMessage.createdAt });
+    await updateDoc(doc(database(), AI_COLLECTION, conversation.id), { lastCustomerMessageAt: customerMessage.createdAt, updatedAt: customerMessage.createdAt, customerReplyReminderDueAt: null, customerReplyReminderSentAt: null });
     return { customerMessage, message: null, handoff: false, humanActive: conversation.status === 'HUMAN_ACTIVE', supportWait: conversation.status === 'WAITING_FOR_SUPPORT' };
   }
 
@@ -1089,22 +1127,11 @@ export async function sendStaffAiMessage(actor: TicketActor, input: { conversati
     attachments,
     visibleToCustomer: true,
   });
+  await updateDoc(doc(database(), AI_COLLECTION, conversation.id), {
+    customerReplyReminderDueAt: new Date(Date.now() + 60_000).toISOString(),
+    customerReplyReminderSentAt: null,
+  });
   await StoreDB.addLog('AI Staff Reply', `رد على محادثة العميل ${conversation.customerName}${attachments.length ? ' مع صورة' : ''}`, actor.id, actor.name);
-  void (async () => {
-    try {
-      const { isSiteUserActive } = await import('@/lib/site-presence');
-      if (await isSiteUserActive(conversation.customerDiscordId)) return;
-      const { sendDiscordCustomerReplyReminder } = await import('@/lib/discord-bot');
-      await sendDiscordCustomerReplyReminder({
-        conversationId: conversation.id,
-        supportSessionId: conversation.supportSessionId || null,
-        customerDiscordId: conversation.customerDiscordId,
-        customerName: conversation.customerName,
-      });
-    } catch (error) {
-      console.warn('[Discord Support] Unable to send customer reply reminder:', error);
-    }
-  })();
   return { conversation, message };
 }
 

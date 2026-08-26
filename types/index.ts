@@ -299,6 +299,9 @@ export interface AiConversation {
   /** مهلة قصيرة تمنح الإدارة فرصة للرد قبل عودة المساعد إلى متابعة الحالة تلقائياً. */
   supportWaitUntil?: string | null;
   supportWaitLanguage?: 'ar' | 'en' | null;
+  /** موعد تنبيه Discord الخاص بعد رد دعم تعن إذا لم يصل رد من العميل. */
+  customerReplyReminderDueAt?: string | null;
+  customerReplyReminderSentAt?: string | null;
   closedAt?: string | null;
   closedReason?: AiConversationCloseReason;
   reopenAt?: string | null;
