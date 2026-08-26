@@ -1555,3 +1555,292 @@ body {
   .product-license-card--premium .product-guide-button,
   .product-license-card--premium .product-reset-button { transition: none; }
 }
+
+/* 2026 Unified Portal refinement: one consistent premium system across desktop and mobile. */
+:root {
+  --ta3n-radius-sm: 12px;
+  --ta3n-radius: 18px;
+  --ta3n-radius-lg: 24px;
+  --ta3n-line-dark: rgba(173, 215, 243, 0.14);
+  --ta3n-surface-dark: rgba(8, 18, 32, 0.84);
+  --ta3n-accent: #8de9ff;
+  --ta3n-accent-strong: #36c6ee;
+}
+
+.portal-shell {
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+.portal-sidebar {
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 1px rgba(191, 228, 250, 0.03), 16px 0 48px rgba(0, 8, 20, 0.26) !important;
+}
+
+.portal-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 92px;
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(185, 224, 247, 0.12);
+  background: linear-gradient(138deg, rgba(102, 204, 239, 0.11), rgba(8, 21, 38, 0.015) 58%);
+}
+
+.portal-sidebar-brand__mark,
+.portal-mobile-brand__mark {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 1px solid rgba(174, 229, 250, 0.28);
+  background: linear-gradient(145deg, rgba(145, 226, 250, 0.18), rgba(10, 29, 50, 0.72));
+  box-shadow: 0 10px 26px rgba(3, 14, 28, 0.34), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.portal-sidebar-brand__mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 17px;
+}
+
+.portal-sidebar-brand__mark img,
+.portal-mobile-brand__mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portal-sidebar-brand__eyebrow,
+.portal-sidebar-brand__caption {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-sidebar-brand__eyebrow {
+  color: #8bdff6;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.portal-sidebar-brand__name {
+  display: block;
+  margin-top: 3px;
+  color: #f6fcff;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+
+.portal-sidebar-brand__caption {
+  margin-top: 6px;
+  color: rgba(208, 229, 243, 0.58);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.portal-shell--light .portal-sidebar-brand {
+  border-bottom-color: rgba(41, 103, 142, 0.13);
+  background: linear-gradient(138deg, rgba(101, 207, 244, 0.15), rgba(255, 255, 255, 0.20) 58%);
+}
+.portal-shell--light .portal-sidebar-brand__name { color: #102d49; }
+.portal-shell--light .portal-sidebar-brand__eyebrow { color: #157696; }
+.portal-shell--light .portal-sidebar-brand__caption { color: #5b758b; }
+
+.portal-sidebar button:focus-visible,
+.portal-page-header button:focus-visible,
+.product-license-card button:focus-visible {
+  outline: 2px solid var(--ta3n-accent);
+  outline-offset: 3px;
+}
+
+.portal-main-content {
+  background: linear-gradient(110deg, rgba(5, 16, 29, 0.22), transparent 42%);
+}
+
+.portal-content-frame {
+  padding-bottom: 32px;
+}
+
+.portal-page-header {
+  min-height: 74px;
+  margin-bottom: 24px;
+  padding: 8px 0 17px;
+  border-bottom-width: 1px;
+}
+
+.portal-page-header__eyebrow {
+  margin-bottom: 5px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .17em;
+}
+
+.portal-page-header__title {
+  text-wrap: balance;
+}
+
+.portal-page-header__brand {
+  align-items: center;
+  gap: 9px;
+  height: 40px;
+  padding: 5px 11px 5px 6px;
+  border: 1px solid;
+  border-radius: 14px;
+  color: #ecfaff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.portal-page-header__brand img {
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.portal-shell--light .portal-page-header__brand { color: #173950; }
+
+.portal-mobile-bar {
+  box-shadow: 0 8px 28px rgba(0, 9, 22, 0.24);
+}
+.portal-mobile-brand__mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+}
+
+.products-experience { max-width: 1320px; margin-inline: auto; }
+.products-page-hero {
+  min-height: 96px;
+  border-radius: var(--ta3n-radius) !important;
+  box-shadow: 0 16px 42px rgba(0, 9, 22, 0.17);
+}
+
+.product-library {
+  gap: 22px !important;
+  align-items: stretch !important;
+}
+
+.product-license-card--premium {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  border-radius: var(--ta3n-radius) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(66, 210, 244, 0.11), transparent 36%),
+    linear-gradient(160deg, #102238 0%, #091522 56%, #07101a 100%) !important;
+  box-shadow: 0 16px 38px rgba(1, 10, 22, 0.30), inset 0 1px 0 rgba(255,255,255,0.055) !important;
+}
+
+.product-license-card--premium .product-license-card__media {
+  height: clamp(142px, 14vw, 176px) !important;
+  border-bottom: 1px solid rgba(182, 226, 247, 0.10);
+}
+
+.product-license-card--premium .product-license-card__media-overlay {
+  background: linear-gradient(180deg, rgba(3, 11, 20, 0.06), rgba(4, 13, 24, 0.20) 48%, #0a1624 100%) !important;
+}
+
+.product-license-card--premium .product-license-card__body {
+  flex: 1;
+  gap: 13px !important;
+  padding: 15px !important;
+}
+
+.product-license-card--premium .product-license-card__heading {
+  min-height: 52px;
+  margin-top: 0 !important;
+  align-items: center !important;
+}
+
+.product-license-card--premium .product-license-card__icon {
+  overflow: hidden;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+}
+
+.product-license-card--premium .product-license-card__icon img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.product-license-card--premium .product-license-card__title {
+  overflow: hidden;
+  color: #f6fbff !important;
+  font-size: 16px !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-license-card--premium .product-license-card__key {
+  margin-top: 0 !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+
+.product-license-card--premium .product-license-card__key code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px !important;
+}
+
+.product-license-card__actions {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;
+  gap: 9px !important;
+}
+
+.product-license-card--premium .product-download-button,
+.product-license-card--premium .product-guide-button,
+.product-license-card--premium .product-reset-button {
+  min-height: 44px !important;
+  border-radius: 13px !important;
+}
+
+.product-license-card--premium .product-download-button { box-shadow: 0 10px 22px rgba(41, 204, 238, 0.17) !important; }
+.product-license-card--premium .product-reset-button { margin-top: 1px !important; }
+
+.portal-shell--light .product-license-card--premium {
+  background: linear-gradient(160deg, #ffffff 0%, #eff7fb 58%, #e5f0f7 100%) !important;
+}
+
+@media (max-width: 1023px) {
+  .portal-main-content { padding-inline: 20px !important; }
+  .portal-page-header { margin-bottom: 20px; }
+  .portal-page-header__brand { display: none; }
+}
+
+@media (max-width: 640px) {
+  .portal-main-content { padding: 18px 14px 28px !important; padding-top: 84px !important; }
+  .portal-content-frame { padding-bottom: 18px; }
+  .portal-page-header { min-height: 58px; margin-bottom: 17px; padding-bottom: 13px; }
+  .portal-page-header__eyebrow { font-size: 8px; }
+  .products-experience { gap: 16px !important; }
+  .products-page-hero { min-height: 0; padding: 17px !important; }
+  .product-library { gap: 15px !important; }
+  .product-license-card--premium { border-radius: 17px !important; }
+  .product-license-card--premium .product-license-card__media { height: 142px !important; }
+  .product-license-card--premium .product-license-card__body { gap: 11px !important; padding: 12px !important; }
+  .product-license-card--premium .product-license-card__heading { min-height: 46px; }
+  .product-license-card--premium .product-license-card__icon { width: 44px !important; height: 44px !important; border-radius: 13px !important; }
+  .product-license-card--premium .product-license-card__title { font-size: 14px !important; }
+  .product-license-card__actions { grid-template-columns: 1fr !important; }
+  .product-license-card--premium .product-download-button,
+  .product-license-card--premium .product-guide-button { min-height: 42px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-shell *, .portal-shell *::before, .portal-shell *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-sidebar button:hover { transform: translateX(-1px); }
+  [dir='ltr'] .portal-sidebar button:hover { transform: translateX(1px); }
+}

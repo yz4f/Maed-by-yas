@@ -2178,13 +2178,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <SupportNotificationBanner lang={lang} isDark={isDark} />
 
       {/* Compact mobile top bar and navigation drawer */}
-      <div className={`fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
+      <div className={`portal-mobile-bar fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
         <button onClick={() => setMobileMenuOpen(true)} aria-label={lang === 'ar' ? 'فتح القائمة' : 'Open navigation'} className={`sd-icon-button inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}><Menu className="h-4 w-4" /></button>
-        <div className="flex min-w-0 items-center gap-2"><img src="/logo.png" alt="تسليم ذاتي" className="h-7 w-7 rounded-lg object-cover" /><span className="truncate text-sm font-black">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</span></div>
+        <div className="portal-mobile-brand flex min-w-0 items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span className="min-w-0"><strong className="notranslate block truncate text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.18em] opacity-60">TA3N PORTAL</small></span></div>
         <div className="flex items-center gap-1.5"><button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className={`h-8 min-w-8 rounded-lg border px-1.5 text-[9px] font-black ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{lang === 'ar' ? 'EN' : 'AR'}</button><button onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={lang === 'ar' ? 'تبديل المظهر' : 'Toggle theme'} className={`sd-icon-button !h-8 !w-8 inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}</button></div>
       </div>
       <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
-        <div className="mb-4 flex items-center justify-between px-1"><div className="flex items-center gap-2"><img src="/logo.png" alt="تسليم ذاتي" className="h-8 w-8 rounded-lg object-cover" /><span className="text-sm font-black">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
+        <div className="mb-5 flex items-center justify-between px-1"><div className="portal-mobile-brand flex items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span><strong className="notranslate block text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.17em] opacity-60">TA3N PORTAL</small></span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
         <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
         <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
       </motion.aside></>}</AnimatePresence>
@@ -2193,20 +2193,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <aside
         className="portal-sidebar hidden md:flex flex-col shrink-0 h-full relative z-20 transition-colors duration-500"
         style={{
-          width: '238px',
+          width: '272px',
           background: isDark ? 'linear-gradient(180deg, rgba(7, 21, 42, 0.92), rgba(4, 12, 26, 0.86))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(234, 245, 253, 0.74))',
           borderRight: lang === 'ar' ? 'none' : `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}`,
           borderLeft: lang === 'ar' ? `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}` : 'none',
         }}
       >
         {/* BRAND */}
-        <div style={{ padding: '22px 20px 18px', borderBottom: `1px solid ${isDark ? 'rgba(209, 235, 255, 0.1)' : 'rgba(47, 110, 162, 0.12)'}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-            <img src="/logo.png" alt="تعن" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div className="portal-sidebar-brand">
+          <div className="portal-sidebar-brand__mark"><img src="/logo.png" alt="تعن" /></div>
+          <div className="min-w-0">
+            <span className="portal-sidebar-brand__eyebrow">TA3N DIGITAL</span>
+            <strong className="portal-sidebar-brand__name notranslate" translate="no">{renderBrandText('تعن')}</strong>
+            <span className="portal-sidebar-brand__caption">{lang === 'ar' ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</span>
           </div>
-          <span className="notranslate" translate="no" style={{ fontSize: '17px', fontWeight: 800, color: isDark ? '#f1f8ff' : '#102845', letterSpacing: '-0.3px' }}>
-            {renderBrandText('تعن')}
-          </span>
         </div>
 
         {/* NAV */}
@@ -2411,8 +2411,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
 
       {/* Main Content Area */}
-      <main className="flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-20 scrollbar-none relative z-10">
-        <div className="max-w-[1440px] mx-auto space-y-6">
+      <main className="portal-main-content flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 scrollbar-none relative z-10">
+        <div className="portal-content-frame max-w-[1520px] mx-auto space-y-6">
 
         {currentUser?.warningMessage && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -2442,9 +2442,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         )}
 
         {/* Structured portal header */}
-        <header className={`flex items-center justify-between pb-6 mb-5 border-b animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
-          <div>
-            <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
+        <header className={`portal-page-header flex items-center justify-between gap-4 animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
+          <div className="min-w-0">
+            <p className={`portal-page-header__eyebrow ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>TA3N · DIGITAL PORTAL</p>
+            <h1 className={`portal-page-header__title text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
               {activeTab === 'faqs' && (lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions')}
@@ -2457,6 +2458,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <div className={`portal-page-header__brand hidden lg:flex ${isDark ? 'border-white/[0.10] bg-white/[0.035]' : 'border-slate-200 bg-white/75'}`}><img src="/logo.png" alt="تعن" /><span className="notranslate" translate="no">{renderBrandText('تعن')}</span></div>
             <button
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
               title={lang === 'ar' ? 'English' : 'العربية'}
