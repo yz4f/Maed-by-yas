@@ -116,6 +116,23 @@ async function discordApi(path: string, token: string, init: RequestInit = {}) {
   });
 }
 
+async function ensureResetRequestsChannelAccessible(token: string) {
+  const VIEW_CHANNEL = 0x400n;
+  const SEND_MESSAGES = 0x800n;
+  const READ_MESSAGE_HISTORY = 0x10000n;
+  const USE_APPLICATION_COMMANDS = 0x80000000n;
+  const response = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/permissions/${guildId}`, token, {
+    method: 'PUT',
+    body: JSON.stringify({
+      id: guildId,
+      type: 0,
+      allow: String(VIEW_CHANNEL | READ_MESSAGE_HISTORY | USE_APPLICATION_COMMANDS),
+      deny: String(SEND_MESSAGES),
+    }),
+  });
+  if (!response.ok) throw new Error(`تعذر ضبط صلاحيات روم طلب الريست للأعضاء (HTTP ${response.status}).`);
+}
+
 async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivateAuditChannels> {
   if (privateAuditChannelCache) return privateAuditChannelCache;
   const database = supportDatabase();
@@ -1167,13 +1184,14 @@ export async function startDiscordBot() {
   }
   started = true;
   try {
+    await ensureResetRequestsChannelAccessible(token);
     await ensurePrivateAuditChannels(token);
     const panel = await ensureDiscordResetPanelPublished();
     if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
     const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
     if (announcement.published) console.info(`[Discord Updates] Published reset feature announcement ${announcement.messageId}.`);
   } catch (error) {
-    console.error('[Discord Audit] Private audit setup or reset panel publish failed:', error);
+    console.error('[Discord Audit] Reset channel permissions, private audit setup, or reset panel publish failed:', error);
   }
   supportMaintenanceTimer = setInterval(() => {
     if (supportMaintenanceRunning) return;
