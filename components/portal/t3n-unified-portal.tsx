@@ -2180,11 +2180,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* Compact mobile top bar and navigation drawer */}
       <div className={`portal-mobile-bar fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
         <button onClick={() => setMobileMenuOpen(true)} aria-label={lang === 'ar' ? 'فتح القائمة' : 'Open navigation'} className={`sd-icon-button inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}><Menu className="h-4 w-4" /></button>
-        <div className="portal-mobile-brand flex min-w-0 items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span className="min-w-0"><strong className="notranslate block truncate text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.18em] opacity-60">TA3N PORTAL</small></span></div>
+        <div className="portal-mobile-brand flex min-w-0 items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span className="min-w-0"><strong className="notranslate block truncate text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div>
         <div className="flex items-center gap-1.5"><button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className={`h-8 min-w-8 rounded-lg border px-1.5 text-[9px] font-black ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{lang === 'ar' ? 'EN' : 'AR'}</button><button onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={lang === 'ar' ? 'تبديل المظهر' : 'Toggle theme'} className={`sd-icon-button !h-8 !w-8 inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}</button></div>
       </div>
       <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
-        <div className="mb-5 flex items-center justify-between px-1"><div className="portal-mobile-brand flex items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span><strong className="notranslate block text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.17em] opacity-60">TA3N PORTAL</small></span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
+        <div className="mb-5 flex items-center justify-between px-1"><div className="portal-mobile-brand flex items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span><strong className="notranslate block text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
         <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
         <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
       </motion.aside></>}</AnimatePresence>
@@ -2203,7 +2203,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         <div className="portal-sidebar-brand">
           <div className="portal-sidebar-brand__mark"><img src="/logo.png" alt="تعن" /></div>
           <div className="min-w-0">
-            <span className="portal-sidebar-brand__eyebrow">TA3N DIGITAL</span>
+            <span className="portal-sidebar-brand__eyebrow">{lang === 'ar' ? 'تعن الرقمية' : 'TA3N DIGITAL'}</span>
             <strong className="portal-sidebar-brand__name notranslate" translate="no">{renderBrandText('تعن')}</strong>
             <span className="portal-sidebar-brand__caption">{lang === 'ar' ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</span>
           </div>
@@ -2386,7 +2386,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {currentUser.name}
               </span>
               <span style={{ fontSize: '10px', color: '#555', fontWeight: 500 }}>
-                {currentUser.role === 'Boss' || currentUser.role === 'Co-Boss' || currentUser.role === 'Admin' ? 'Owner' : 'Discord'}
+                {currentUser.role === 'Boss' || currentUser.role === 'Co-Boss' || currentUser.role === 'Admin' ? (lang === 'ar' ? 'المالك' : 'Owner') : 'Discord'}
               </span>
             </div>
           </div>
@@ -2444,7 +2444,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* Structured portal header */}
         <header className={`portal-page-header flex items-center justify-between gap-4 animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
           <div className="min-w-0">
-            <p className={`portal-page-header__eyebrow ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>TA3N · DIGITAL PORTAL</p>
+            <p className={`portal-page-header__eyebrow ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'بوابة تعن الرقمية' : 'TA3N · DIGITAL PORTAL'}</p>
             <h1 className={`portal-page-header__title text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
               {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
               {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
@@ -2753,12 +2753,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <span className="product-license-card__status-dot" />
                           {canUseProduct ? (lang === 'ar' ? 'مفعّل' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
                         </span>
-                        <div className="product-license-card__media-brand">TA3N · DIGITAL LICENSE</div>
+                        <div className="product-license-card__media-brand">{lang === 'ar' ? 'تعن · ترخيص رقمي' : 'TA3N · DIGITAL LICENSE'}</div>
                       </div>
                       <div className="product-license-card__body">
                         <div className="product-license-card__heading">
                           <div className="min-w-0 flex-1">
-                            <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
+                            <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || (lang === 'ar' ? 'المنتج' : 'Product')}</div>
                             <div className="product-license-card__category mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
                           </div>
                         </div>
@@ -2783,7 +2783,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                         <div className="product-license-card__actions">
                           <button
-                            onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
+                            onClick={() => handleDownload(up.productId, up.product?.name || (lang === 'ar' ? 'المنتج' : 'Product'))}
                             disabled={!canUseProduct}
                             className="product-download-button"
                           >
@@ -2965,10 +2965,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
-          <div className="space-y-6 max-w-6xl mx-auto">
+          <div className="admin-workspace space-y-5 w-full max-w-[1320px] mx-auto">
             {/* Top Admin Header */}
-            <div className={`${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
-              <div>
+            <div className={`admin-hero ${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
+              <div className="min-w-0">
+                <p className={`admin-hero__eyebrow ${styles.textMuted}`}>{lang === 'ar' ? 'إدارة المنصة' : 'PLATFORM MANAGEMENT'}</p>
                 <h1 className={`text-2xl font-extrabold ${styles.textTitle} tracking-wide flex items-center gap-3`}>
                   <div className={`p-2 bg-black/5 dark:bg-white/5 rounded-xl border ${styles.borderSubtle}`}>
                     {adminSectionTab === 'overview' && <Activity className="w-6 h-6 text-sky-500 dark:text-sky-400" />}
@@ -3006,7 +3007,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs">
+              <div className="admin-hero__actions flex flex-wrap items-center gap-3 text-xs">
                 <button
                   onClick={refreshAdminPanel}
                   disabled={isAdminRefreshing}
@@ -3038,7 +3039,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
 
             {/* Admin Sub-Tabs Navigation */}
-            <div className={`flex flex-wrap items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-fit`}>
+            <div className={`admin-navigation grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-full`}>
               {[
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
@@ -3056,7 +3057,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <button
                     key={tab.id}
                     onClick={() => setAdminSectionTab(tab.id as any)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`admin-navigation__item flex min-w-0 items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       isActive 
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/15' 
                         : `${styles.textMuted} hover:${styles.textTitle} hover:bg-black/5 dark:hover:bg-white/5`
@@ -3071,7 +3072,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {/* ==================== SUB-TAB 1: PRODUCTS & INVENTORY ==================== */}
             {adminSectionTab === 'products' && (
-              <div className="space-y-4">
+              <div className="admin-section space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <h3 className={`text-lg font-bold ${styles.textTitle} flex items-center gap-2`}>
@@ -3113,11 +3114,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
+                  <div className="admin-product-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-slide-up">
                     {products.map((product) => (
                       <div
                         key={product.id}
-                        className="glass-card rounded-[24px] overflow-hidden hover:border-indigo-500/40 dark:hover:border-primary/40 transition-all duration-300 flex flex-col group"
+                        className="admin-product-card glass-card rounded-[24px] overflow-hidden hover:border-indigo-500/40 dark:hover:border-primary/40 transition-all duration-300 flex flex-col group"
                       >
                         {/* Top Image Banner - Full Width */}
                         <div className={`relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
@@ -3945,7 +3946,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
                         
                         <div className="flex justify-between items-center pr-2">
-                          <span className="text-xs text-indigo-500 dark:text-primary font-bold tracking-widest uppercase">Batch Keys</span>
+                          <span className="text-xs text-indigo-500 dark:text-primary font-bold tracking-widest uppercase">{lang === 'ar' ? 'مفاتيح الدفعة' : 'Batch Keys'}</span>
                           {bulkKeysText.trim() && (
                             <span className="text-xs font-bold bg-indigo-500/20 text-indigo-500 dark:text-primary px-3 py-1 rounded-lg">
                               {bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0).length} مفاتيح
@@ -4121,7 +4122,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <div className={`relative flex items-start justify-between gap-4 border-b border-white/[.07] px-5 py-5 sm:px-6 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
               <div className="flex min-w-0 items-center gap-3.5">
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-amber-200/[.22] bg-[linear-gradient(145deg,rgba(251,191,36,.20),rgba(245,158,11,.06))] text-amber-100 shadow-[0_10px_26px_rgba(245,158,11,.12)]"><RefreshCw size={21} /></div>
-                <div className="min-w-0"><div className="flex items-center gap-2"><h3 className="text-[15px] font-black tracking-tight text-white">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</h3><span className="rounded-full border border-amber-200/[.16] bg-amber-300/[.08] px-2 py-0.5 text-[8px] font-black tracking-[.08em] text-amber-100">RESET</span></div><p className="mt-1 text-[11px] leading-5 text-slate-400">{lang === 'ar' ? 'اكتب سبباً واضحاً ليتمكن الفريق من مراجعة الطلب.' : 'Describe the reason clearly so the team can review it.'}</p></div>
+                <div className="min-w-0"><div className="flex items-center gap-2"><h3 className="text-[15px] font-black tracking-tight text-white">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</h3><span className="rounded-full border border-amber-200/[.16] bg-amber-300/[.08] px-2 py-0.5 text-[8px] font-black tracking-[.08em] text-amber-100">{lang === 'ar' ? 'إعادة ضبط' : 'RESET'}</span></div><p className="mt-1 text-[11px] leading-5 text-slate-400">{lang === 'ar' ? 'اكتب سبباً واضحاً ليتمكن الفريق من مراجعة الطلب.' : 'Describe the reason clearly so the team can review it.'}</p></div>
               </div>
               <button onClick={() => { if (!isSubmittingResetRequest) { setResetRequestProduct(null); setResetRequestReason(''); } }} disabled={isSubmittingResetRequest} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/[.09] bg-white/[.04] text-slate-400 transition hover:border-white/[.16] hover:bg-white/[.08] hover:text-white disabled:opacity-45"><X size={16} /></button>
             </div>
@@ -4831,7 +4832,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
               <div>
                 <p className={`text-[10px] font-black tracking-[0.14em] ${isDark ? 'text-sky-200/75' : 'text-sky-700/75'}`}>{lang === 'ar' ? 'تفعيل الترخيص' : 'LICENSE ACTIVATION'}</p>
-                <h3 className="mt-0.5 text-base font-black">Redeem Key</h3>
+                <h3 className="mt-0.5 text-base font-black">{lang === 'ar' ? 'استرداد مفتاح' : 'Redeem Key'}</h3>
               </div>
             </div>
             <form onSubmit={handleRedeemKey} className="space-y-3">
