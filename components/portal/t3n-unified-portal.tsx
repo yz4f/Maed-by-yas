@@ -2702,42 +2702,43 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
                       )}
                     <article
-                      className={`product-license-card group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
+                      className={`product-license-card product-license-card--premium group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
-                      {/* ── COMPACT PRODUCT HEADER ── */}
-                      {/* ── BODY ── */}
-                      <div className="product-license-card__body">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="product-license-card__icon shrink-0">
-                              <img src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
-                              <div className="mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
-                            </div>
-                          </div>
-                          <span className={`mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[9px] font-black ${canUseProduct ? 'border-emerald-300/20 bg-emerald-400/[0.1] text-emerald-200' : 'border-rose-300/20 bg-rose-400/[0.1] text-rose-200'}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${canUseProduct ? 'bg-emerald-300' : 'bg-rose-300'}`} />
-                            {canUseProduct ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
-                          </span>
+                      <div className="product-license-card__media" aria-hidden="true">
+                        <img className="product-license-card__image" src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                        <div className="product-license-card__media-overlay" />
+                        <div className={`product-license-card__expiry ${timing.isExpired ? 'product-license-card__expiry--expired' : ''}`}>
+                          <Clock size={12} />
+                          <span>{timing.isExpired ? (lang === 'ar' ? 'انتهت صلاحية الترخيص' : 'License expired') : `${lang === 'ar' ? 'متبقي' : 'Remaining'} · ${timing.countdown}`}</span>
                         </div>
-                        <div className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[10px] ${canUseProduct ? 'border-emerald-300/[0.12] bg-emerald-300/[0.045] text-emerald-100' : 'border-rose-300/[0.12] bg-rose-300/[0.045] text-rose-100'}`}>
-                          <span className="inline-flex items-center gap-1.5 font-bold"><Clock size={12} />{lang === 'ar' ? 'الوقت المتبقي' : 'Time remaining'}</span>
-                          <span className="font-mono font-black">{timing.isExpired ? (lang === 'ar' ? 'منتهٍ' : 'Expired') : timing.countdown}</span>
+                        <span className={`product-license-card__status ${canUseProduct ? 'product-license-card__status--active' : ''}`}>
+                          <span className="product-license-card__status-dot" />
+                          {canUseProduct ? (lang === 'ar' ? 'مفعّل' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
+                        </span>
+                        <div className="product-license-card__media-brand">TA3N · DIGITAL LICENSE</div>
+                      </div>
+                      <div className="product-license-card__body">
+                        <div className="product-license-card__heading">
+                          <div className="product-license-card__icon shrink-0">
+                            <img src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || 'Product'}</div>
+                            <div className="mt-1 text-[10px] font-semibold text-slate-500">{up.product?.category || (lang === 'ar' ? 'ترخيص رقمي' : 'Digital license')}</div>
+                          </div>
                         </div>
 
                         {/* License key: only provided by the authenticated owner's /api/user/products response. */}
-                        <div className="product-license-card__key rounded-xl border border-cyan-200/[0.1] bg-slate-950/35 p-1.5 shadow-inner shadow-black/20">
-                          <div className="mb-1 flex items-center gap-1.5 px-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><Key size={10} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</div>
+                        <div className="product-license-card__key">
+                          <div className="mb-1.5 flex items-center justify-between gap-2 px-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-100/65"><span className="inline-flex items-center gap-1.5"><Key size={10} />{lang === 'ar' ? 'مفتاح الترخيص' : 'License key'}</span><span>{lang === 'ar' ? 'خاص بحسابك' : 'Account license'}</span></div>
                           <div className="flex items-center gap-1.5">
-                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-lg border border-white/[0.07] bg-black/30 px-2.5 py-1.5 text-[9px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
+                            <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap rounded-lg border border-white/[0.07] bg-black/30 px-2.5 py-2 text-[9px] font-bold tracking-[0.045em] text-cyan-100 scrollbar-none">{displayKey}</code>
                             {up.keyString && (
                               <button
                                 onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
                                 title={lang === 'ar' ? 'نسخ المفتاح' : 'Copy key'}
-                                className={`inline-flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1.5 text-[9px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
+                                className={`inline-flex shrink-0 items-center gap-1 rounded-lg border px-2.5 py-2 text-[9px] font-black transition-all active:scale-95 ${copiedKeyId === up.id ? 'border-emerald-300/25 bg-emerald-400/[0.15] text-emerald-100' : 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100 hover:bg-cyan-300/[0.18]'}`}
                               >
                                 {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
                                 <span className="hidden sm:inline">{copiedKeyId === up.id ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}</span>
@@ -2746,32 +2747,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           </div>
                         </div>
 
-                        {/* Download Loader — white primary */}
-                        <button
-                          onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
-                          disabled={!canUseProduct}
-                          className="product-download-button"
-                        >
-                          <Download size={14} />
-                          {lang === 'ar' ? 'تحميل اللودر' : 'Download Loader'}
-                        </button>
-
-                        {/* Guide — dark outline */}
-                        <button
-                          onClick={() => { setGuideModalProduct(up); setGuideView('menu'); }}
-                          disabled={!canUseProduct}
-                          className="product-guide-button"
-                        >
-                          <HelpCircle size={13} />
-                          {lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
-                        </button>
+                        <div className="product-license-card__actions">
+                          <button
+                            onClick={() => handleDownload(up.productId, up.product?.name || 'Product')}
+                            disabled={!canUseProduct}
+                            className="product-download-button"
+                          >
+                            <Download size={14} />
+                            {lang === 'ar' ? 'تحميل اللودر' : 'Download Loader'}
+                          </button>
+                          <button
+                            onClick={() => { setGuideModalProduct(up); setGuideView('menu'); }}
+                            disabled={!canUseProduct}
+                            className="product-guide-button"
+                          >
+                            <HelpCircle size={13} />
+                            {lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
+                          </button>
+                        </div>
                         <button
                           onClick={() => { setResetRequestProduct(up); setResetRequestReason(''); }}
                           disabled={!canUseProduct}
                           className="product-reset-button"
                         >
                           <span className="product-reset-button__icon"><RefreshCw size={15} /></span>
-                          <span className="min-w-0 text-start"><span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span><span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'أرسل السبب للإدارة من دون مشاركة المفتاح' : 'Send the reason to staff without sharing the key'}</span></span>
+                          <span className="min-w-0 text-start"><span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span><span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'أرسل السبب لفريق دعم تعن دون مشاركة المفتاح' : 'Send the reason to Ta3n Support without sharing the key'}</span></span>
                         </button>
                       </div>
                     </article>

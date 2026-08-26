@@ -1348,3 +1348,210 @@ body {
 .guide-runtime-download:hover,
 .portal-shell--dark .guide-experience-modal .guide-runtime-download:hover { color: #3b0610 !important; background: #ffe4e6 !important; border-color: #ffe4e6 !important; }
 .guide-runtime-download svg { color: currentColor !important; }
+
+/* My Products — original premium license cards. Structure-inspired only; no reference artwork or copy is reused. */
+.product-library {
+  align-items: start;
+}
+.product-license-card--premium {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid rgba(139, 180, 218, 0.16);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.10), transparent 30%),
+    linear-gradient(155deg, #14253a 0%, #0a1421 52%, #08101a 100%);
+  box-shadow: 0 18px 42px rgba(2, 10, 22, 0.28), inset 0 1px 0 rgba(255,255,255,0.045);
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), border-color 180ms ease, box-shadow 180ms ease;
+}
+.product-license-card--premium::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: '';
+  opacity: 0.38;
+  background-image: linear-gradient(rgba(148, 201, 236, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 201, 236, 0.045) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
+  pointer-events: none;
+}
+.product-license-card--premium:hover {
+  transform: translateY(-3px);
+  border-color: rgba(103, 232, 249, 0.34);
+  box-shadow: 0 24px 56px rgba(2, 12, 26, 0.40), 0 0 0 1px rgba(103, 232, 249, 0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.product-license-card--premium .product-license-card__media {
+  position: relative;
+  height: 168px;
+  overflow: hidden;
+  background: #07101b;
+}
+.product-license-card--premium .product-license-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.92) contrast(1.08) brightness(0.78);
+  transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), filter 300ms ease;
+}
+.product-license-card--premium:hover .product-license-card__image {
+  transform: scale(1.045);
+  filter: saturate(1) contrast(1.06) brightness(0.85);
+}
+.product-license-card--premium .product-license-card__media-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(3, 11, 20, 0.10) 0%, rgba(3, 11, 20, 0.12) 35%, #0a1421 100%);
+}
+.product-license-card--premium .product-license-card__expiry,
+.product-license-card--premium .product-license-card__status {
+  position: absolute;
+  top: 12px;
+  z-index: 2;
+  max-width: calc(100% - 24px);
+  border-radius: 10px;
+  font-size: 9px;
+  letter-spacing: 0.01em;
+}
+.product-license-card--premium .product-license-card__expiry {
+  inset-inline-start: 12px;
+  border-color: rgba(110, 231, 183, 0.36);
+  background: rgba(5, 37, 32, 0.84);
+  color: #d1fae5;
+}
+.product-license-card--premium .product-license-card__status {
+  inset-inline-end: 12px;
+  border-color: rgba(191, 219, 254, 0.22);
+  background: rgba(7, 20, 34, 0.78);
+  color: #dbeafe;
+}
+.product-license-card--premium .product-license-card__media-brand {
+  position: absolute;
+  inset-inline-end: 14px;
+  bottom: 12px;
+  z-index: 2;
+  color: rgba(226, 248, 255, 0.78);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-shadow: 0 2px 9px rgba(0, 0, 0, 0.5);
+}
+.product-license-card--premium .product-license-card__body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 11px;
+  padding: 0 15px 15px;
+}
+.product-license-card--premium .product-license-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  margin-top: -22px;
+}
+.product-license-card--premium .product-license-card__icon {
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(190, 231, 255, 0.20);
+  border-radius: 15px;
+  background: linear-gradient(145deg, #1d3349, #0b1725);
+  box-shadow: 0 10px 24px rgba(1, 9, 18, 0.34), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.product-license-card--premium .product-license-card__icon img {
+  object-fit: cover;
+}
+.product-license-card--premium .product-license-card__title {
+  color: #f5fbff;
+  font-weight: 900;
+  letter-spacing: -0.018em;
+}
+.product-license-card--premium .product-license-card__key {
+  margin-top: 2px;
+  padding: 9px;
+  border: 1px solid rgba(147, 197, 253, 0.14);
+  border-radius: 13px;
+  background: rgba(2, 10, 19, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+}
+.product-license-card--premium .product-license-card__key code {
+  min-height: 34px;
+  background: rgba(1, 7, 14, 0.58);
+}
+.product-license-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+  gap: 8px;
+}
+.product-license-card--premium .product-download-button,
+.product-license-card--premium .product-guide-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 900;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.product-license-card--premium .product-download-button {
+  border: 1px solid rgba(215, 250, 255, 0.84);
+  background: linear-gradient(135deg, #d9f8ff, #8edff4);
+  color: #082033;
+  box-shadow: 0 9px 18px rgba(34, 211, 238, 0.12);
+}
+.product-license-card--premium .product-download-button:hover:not(:disabled) {
+  background: #edfcff;
+  box-shadow: 0 11px 22px rgba(34, 211, 238, 0.18);
+}
+.product-license-card--premium .product-guide-button {
+  border: 1px solid rgba(148, 190, 222, 0.18);
+  background: rgba(255,255,255,0.035);
+  color: #d7e8f4;
+}
+.product-license-card--premium .product-guide-button:hover:not(:disabled) {
+  border-color: rgba(125, 211, 252, 0.36);
+  background: rgba(125, 211, 252, 0.10);
+  color: #effbff;
+}
+.product-license-card--premium .product-download-button:active:not(:disabled),
+.product-license-card--premium .product-guide-button:active:not(:disabled),
+.product-license-card--premium .product-reset-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.product-license-card--premium .product-reset-button {
+  min-height: 45px;
+  margin: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(120, 53, 15, 0.10));
+}
+.product-license-card--premium[data-active='false'] .product-license-card__media-brand { color: rgba(254, 205, 211, 0.72); }
+.portal-shell--light .product-license-card--premium {
+  border-color: rgba(40, 91, 126, 0.18);
+  background: linear-gradient(155deg, #fbfdff, #edf5f9 58%, #e7f0f6);
+  box-shadow: 0 16px 34px rgba(39, 83, 119, 0.10), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.portal-shell--light .product-license-card--premium .product-license-card__media-overlay { background: linear-gradient(180deg, rgba(7, 28, 45, 0.05), rgba(234, 244, 250, 0.18) 46%, #edf5f9 100%); }
+.portal-shell--light .product-license-card--premium .product-license-card__title { color: #12324a; }
+.portal-shell--light .product-license-card--premium .product-license-card__key { border-color: rgba(41, 105, 146, 0.16); background: rgba(255,255,255,0.72); }
+.portal-shell--light .product-license-card--premium .product-guide-button { border-color: rgba(40, 99, 137, 0.20); background: rgba(255,255,255,0.72); color: #24526f; }
+@media (max-width: 520px) {
+  .product-license-card--premium { border-radius: 19px; }
+  .product-license-card--premium .product-license-card__media { height: 154px; }
+  .product-license-card--premium .product-license-card__body { gap: 9px; padding: 0 12px 12px; }
+  .product-license-card--premium .product-license-card__heading { margin-top: -19px; }
+  .product-license-card--premium .product-license-card__icon { width: 46px; height: 46px; border-radius: 13px; }
+  .product-license-card--premium .product-license-card__expiry { inset-inline-start: 10px; top: 10px; }
+  .product-license-card--premium .product-license-card__status { inset-inline-end: 10px; top: 10px; }
+  .product-license-card--premium .product-license-card__media-brand { bottom: 10px; inset-inline-end: 11px; font-size: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-license-card--premium,
+  .product-license-card--premium .product-license-card__image,
+  .product-license-card--premium .product-download-button,
+  .product-license-card--premium .product-guide-button,
+  .product-license-card--premium .product-reset-button { transition: none; }
+}
