@@ -87,12 +87,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   useEffect(() => {
     if (!sessionUserId) return;
+    let requestInFlight = false;
     const heartbeat = () => {
-      void fetch('/api/presence', { method: 'POST', credentials: 'same-origin' }).catch(() => undefined);
+      if (document.visibilityState !== 'visible' || requestInFlight) return;
+      requestInFlight = true;
+      void fetch('/api/presence', { method: 'POST', credentials: 'same-origin' })
+        .catch(() => undefined)
+        .finally(() => { requestInFlight = false; });
     };
     heartbeat();
-    const interval = window.setInterval(heartbeat, 45_000);
-    return () => window.clearInterval(interval);
+    const interval = window.setInterval(heartbeat, 60_000);
+    window.addEventListener('focus', heartbeat);
+    document.addEventListener('visibilitychange', heartbeat);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', heartbeat);
+      document.removeEventListener('visibilitychange', heartbeat);
+    };
   }, [sessionUserId]);
 
   // Helper to split brand names to prevent browser translation tools from altering them to EON
@@ -181,21 +192,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Dynamic Products State (Firestore-synced)
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const dbProductsRequestInFlightRef = useRef(false);
 
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
 
   const loadDbProducts = async (): Promise<boolean> => {
+    if (dbProductsRequestInFlightRef.current) return true;
+    dbProductsRequestInFlightRef.current = true;
     try {
       const res = await fetch('/api/admin/products');
       const data = await res.json();
       if (!res.ok || !data.success || !data.products) return false;
-      setProducts(data.products);
+      const nextProducts = data.products as Product[];
+      setProducts((current) => JSON.stringify(current) === JSON.stringify(nextProducts) ? current : nextProducts);
       return true;
     } catch (error) {
       console.error('Failed to load db products:', error);
       return false;
+    } finally {
+      dbProductsRequestInFlightRef.current = false;
     }
   };
 
@@ -203,12 +220,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const userProductsRequestInFlightRef = useRef(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
   useEffect(() => {
-    const timer = window.setInterval(() => setLicenseClock(Date.now()), 1000);
+    if (activeTab !== 'my-products') return;
+    const refreshLicenseClock = () => setLicenseClock(Date.now());
+    refreshLicenseClock();
+    const timer = window.setInterval(refreshLicenseClock, 30_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [activeTab]);
 
 
   // Key Redemption State
@@ -400,6 +421,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
+  const adminStatsRequestInFlightRef = useRef(false);
+  const adminCustomersRequestInFlightRef = useRef(false);
+  const adminKeysRequestInFlightRef = useRef(false);
   const [isAdminRefreshing, setIsAdminRefreshing] = useState(false);
   const [adminLoadError, setAdminLoadError] = useState<string | null>(null);
   const [bulkProductId, setBulkProductId] = useState<string>(initialProducts[0]?.id || '');
@@ -582,10 +606,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     const days = Math.floor(totalSeconds / 86_400);
     const hours = Math.floor((totalSeconds % 86_400) / 3_600);
     const minutes = Math.floor((totalSeconds % 3_600) / 60);
-    const seconds = totalSeconds % 60;
     const countdown = lang === 'ar'
-      ? `${days}ي ${hours}س ${minutes}د ${seconds}ث`
-      : `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      ? `${days}ي ${hours}س ${minutes}د`
+      : `${days}d ${hours}h ${minutes}m`;
     return { expiresAtMs, remainingMs, isExpired, isUsable, countdown };
   };
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
@@ -650,18 +673,22 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }, [activeTab, currentUser?.id]);
 
   const loadUserProducts = async (): Promise<void> => {
-    if (!currentUser) return;
+    if (!currentUser || userProductsRequestInFlightRef.current) return;
+    userProductsRequestInFlightRef.current = true;
     setIsLoadingProducts(true);
     try {
       const res = await fetch('/api/user/products', { credentials: 'same-origin' });
       if (res.ok) {
         const data = await res.json();
-        setUserProducts(data.products || []);
-        setUserActivity(data.activity || []);
+        const nextProducts = Array.isArray(data.products) ? data.products as UserProduct[] : [];
+        const nextActivity = Array.isArray(data.activity) ? data.activity as AuditEvent[] : [];
+        setUserProducts((current) => JSON.stringify(current) === JSON.stringify(nextProducts) ? current : nextProducts);
+        setUserActivity((current) => JSON.stringify(current) === JSON.stringify(nextActivity) ? current : nextActivity);
       }
     } catch (e) {
       console.error('Failed to load user products:', e);
     } finally {
+      userProductsRequestInFlightRef.current = false;
       setIsLoadingProducts(false);
     }
   };
@@ -714,37 +741,41 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   const loadAdminStats = async (): Promise<boolean> => {
+    if (adminStatsRequestInFlightRef.current) return true;
+    adminStatsRequestInFlightRef.current = true;
     try {
       const res = await fetch('/api/admin/stats');
       const data = await res.json();
       if (!res.ok) return false;
-      if (data.success && data.stats) {
-        setAdminStats(data.stats);
-        setAdminLogs(data.stats.recentLogs || []);
-        return true;
-      }
-      if (data.stats || data.recentLogs) {
-        setAdminStats(data.stats || data);
-        setAdminLogs(data.stats?.recentLogs || data.recentLogs || []);
-        return true;
-      }
-      return false;
+      const nextStats = data.success && data.stats ? data.stats : (data.stats || data.recentLogs ? data.stats || data : null);
+      const nextLogs = data.success && data.stats ? data.stats.recentLogs || [] : data.stats?.recentLogs || data.recentLogs || [];
+      if (!nextStats) return false;
+      setAdminStats((current: any) => JSON.stringify(current) === JSON.stringify(nextStats) ? current : nextStats);
+      setAdminLogs((current) => JSON.stringify(current) === JSON.stringify(nextLogs) ? current : nextLogs);
+      return true;
     } catch (error) {
       console.error('Failed to load admin stats:', error);
       return false;
+    } finally {
+      adminStatsRequestInFlightRef.current = false;
     }
   };
 
   const loadAdminCustomersList = async (): Promise<boolean> => {
+    if (adminCustomersRequestInFlightRef.current) return true;
+    adminCustomersRequestInFlightRef.current = true;
     try {
       const res = await fetch('/api/admin/customers');
       const data = await res.json();
       if (!res.ok || !data.success && !Array.isArray(data.users)) return false;
-      setAllCustomersList(data.users || []);
+      const nextCustomers = Array.isArray(data.users) ? data.users : [];
+      setAllCustomersList((current) => JSON.stringify(current) === JSON.stringify(nextCustomers) ? current : nextCustomers);
       return true;
     } catch (error) {
       console.error('Failed to load customers:', error);
       return false;
+    } finally {
+      adminCustomersRequestInFlightRef.current = false;
     }
   };
 
@@ -769,15 +800,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   const loadAllKeysList = async (): Promise<boolean> => {
+    if (adminKeysRequestInFlightRef.current) return true;
+    adminKeysRequestInFlightRef.current = true;
     try {
       const res = await fetch('/api/keys');
       const data = await res.json();
       if (!res.ok || !data.success) return false;
-      setAllKeysList(data.keys || []);
+      const nextKeys = Array.isArray(data.keys) ? data.keys as KeyType[] : [];
+      setAllKeysList((current) => JSON.stringify(current) === JSON.stringify(nextKeys) ? current : nextKeys);
       return true;
     } catch (error) {
       console.error('Failed to load keys:', error);
       return false;
+    } finally {
+      adminKeysRequestInFlightRef.current = false;
     }
   };
 
