@@ -375,6 +375,8 @@ export interface ResetRequest {
   customerEmail?: string | null;
   productId: string;
   productName: string;
+  /** صورة المنتج المعروضة في سجل الإدارة الخاص فقط. */
+  productImage?: string | null;
   keyId?: string | null;
   /** المفتاح الكامل يعرض للإدارة فقط ويزال من استجابة العميل. */
   keyValue?: string | null;
@@ -393,6 +395,8 @@ export interface ResetRequest {
   processedByName?: string | null;
   /** معرف بطاقة Discord المرتبطة بالطلب، لتحديثها دون تكرار الرسائل. */
   discordMessageId?: string | null;
+  /** قناة سجل الإدارة الخاصة التي تحتوي بطاقة الطلب؛ لا تستخدم قناة العملاء. */
+  discordLogChannelId?: string | null;
 }
 
 export type SiteUpdateStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'DISCORD_SENT' | 'DISCORD_FAILED';

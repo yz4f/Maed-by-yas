@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordResetAuditLog, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
+import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
@@ -271,6 +271,7 @@ async function getCustomerContextForUser(user: User) {
     id: item.id,
     productId: item.productId,
     name: item.product?.name || 'منتج غير معروف',
+    image: item.product?.image || null,
     status: item.status,
     activatedAt: item.activatedAt || null,
     expiresAt: item.expiresAt || null,
@@ -1003,6 +1004,7 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
     customerEmail: context.user.email || null,
     productId: product.productId,
     productName: product.name,
+    productImage: product.image || null,
     keyId: product.keyId,
     keyValue: ownedProduct?.keyString || null,
     keyMasked: product.keyMasked,
@@ -1019,6 +1021,7 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
     processedById: null,
     processedByName: null,
     discordMessageId: null,
+    discordLogChannelId: null,
   };
   const requestRef = doc(database(), RESET_COLLECTION, id);
   await setDoc(requestRef, request);
@@ -1028,21 +1031,13 @@ export async function createResetRequest(actor: TicketActor, input: { productId?
     customerName: request.customerName,
     customerImage: request.customerImage,
     productName: request.productName,
+    productImage: request.productImage || null,
     keyMasked: request.keyMasked,
     reason: request.reason,
     status: request.status,
-  }).then(({ messageId }) => updateDoc(requestRef, { discordMessageId: messageId }))
+  }).then(({ messageId, channelId }) => updateDoc(requestRef, { discordMessageId: messageId, discordLogChannelId: channelId }))
     .catch((error) => console.error('[Discord Reset] Unable to create request card:', error));
   await StoreDB.addLog('Reset Request Created', `تم إنشاء طلب ${request.reference} لمنتج ${request.productName}`, context.user.id, context.user.name);
-  void sendDiscordResetAuditLog({
-    action: 'CREATED',
-    reference: request.reference,
-    customerDiscordId: request.customerDiscordId,
-    customerName: request.customerName,
-    customerImage: request.customerImage,
-    productName: request.productName,
-    status: 'قيد الانتظار',
-  }).catch((error) => console.error('[Discord Audit] Unable to log reset creation:', error));
   return { request, duplicate: false };
 }
 
@@ -1219,16 +1214,6 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     } satisfies SupportNotification);
   }
   const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null };
-  void sendDiscordResetAuditLog({
-    action: 'UPDATED',
-    reference: updatedRequest.reference,
-    customerDiscordId: updatedRequest.customerDiscordId,
-    customerName: updatedRequest.customerName,
-    customerImage: updatedRequest.customerImage,
-    productName: updatedRequest.productName,
-    status: resetStatusLabel(status),
-    adminName: actor.name,
-  }).catch((error) => console.error('[Discord Audit] Unable to log reset status:', error));
 
   void syncDiscordResetRequestLog({
     reference: updatedRequest.reference,
@@ -1236,13 +1221,15 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     customerName: updatedRequest.customerName,
     customerImage: updatedRequest.customerImage,
     productName: updatedRequest.productName,
+    productImage: updatedRequest.productImage || null,
     keyMasked: updatedRequest.keyMasked,
     reason: updatedRequest.reason,
     status: updatedRequest.status,
     adminName: updatedRequest.processedByName,
     adminNotes: updatedRequest.adminNotes,
     discordMessageId: updatedRequest.discordMessageId,
-  }).then(({ messageId }) => updateDoc(requestRef, { discordMessageId: messageId }))
+    discordLogChannelId: updatedRequest.discordLogChannelId,
+  }).then(({ messageId, channelId }) => updateDoc(requestRef, { discordMessageId: messageId, discordLogChannelId: channelId }))
     .catch((error) => console.error('[Discord Reset] Unable to update request card:', error));
   await StoreDB.addLog(`AI Reset ${status}`, `طلب ${request.reference} — ${request.productName}`, actor.id, actor.name);
   return updatedRequest;

@@ -21,7 +21,8 @@ const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
 const DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID = 'resetFeatureAnnouncement';
 const DISCORD_UPDATES_CHANNEL_ID = '1540878976166400060';
 const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
-const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-log';
+const DISCORD_RESET_AUDIT_CATEGORY_NAME = '🔐・reset-logs';
+const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-requests-log';
 const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・support-closures';
 const DISCORD_LOGIN_AUDIT_CHANNEL_NAME = '🔐・login-log';
 const DISCORD_LOGOUT_AUDIT_CHANNEL_NAME = '🚪・logout-log';
@@ -29,6 +30,7 @@ const DISCORD_WEBSITE_EVENTS_CHANNEL_NAME = '🖥️・website-events';
 
 type DiscordPrivateAuditChannels = {
   categoryId?: string | null;
+  resetCategoryId?: string | null;
   resetAuditChannelId: string;
   conversationClosedAuditChannelId: string;
   loginAuditChannelId: string;
@@ -117,17 +119,17 @@ async function discordApi(path: string, token: string, init: RequestInit = {}) {
   });
 }
 
-async function ensureResetRequestsChannelPrivate(token: string) {
+async function ensureResetRequestsChannelForCustomers(token: string) {
   const VIEW_CHANNEL = 0x400n;
   const SEND_MESSAGES = 0x800n;
   const READ_MESSAGE_HISTORY = 0x10000n;
   const USE_APPLICATION_COMMANDS = 0x80000000n;
-  const deniedForEveryone = VIEW_CHANNEL | SEND_MESSAGES | READ_MESSAGE_HISTORY | USE_APPLICATION_COMMANDS;
-  const hiddenResponse = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/permissions/${guildId}`, token, {
+  const customerAllow = VIEW_CHANNEL | READ_MESSAGE_HISTORY | USE_APPLICATION_COMMANDS;
+  const customerResponse = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/permissions/${guildId}`, token, {
     method: 'PUT',
-    body: JSON.stringify({ id: guildId, type: 0, allow: '0', deny: String(deniedForEveryone) }),
+    body: JSON.stringify({ id: guildId, type: 0, allow: String(customerAllow), deny: String(SEND_MESSAGES) }),
   });
-  if (!hiddenResponse.ok) throw new Error(`تعذر إخفاء روم طلب الريست عن العملاء (HTTP ${hiddenResponse.status}).`);
+  if (!customerResponse.ok) throw new Error(`تعذر تجهيز روم طلب الريست للعملاء (HTTP ${customerResponse.status}).`);
 
   const staffAllow = VIEW_CHANNEL | SEND_MESSAGES | READ_MESSAGE_HISTORY | USE_APPLICATION_COMMANDS;
   for (const roleId of [DISCORD_ROLES.BOSS, DISCORD_ROLES.CO_BOSS]) {
@@ -156,29 +158,51 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
     return response.json() as Promise<{ id: string; name: string; type: number }>;
   };
 
-  let category = storedChannels?.categoryId ? guildChannels.find((channel) => channel.id === storedChannels.categoryId) : findChannel(DISCORD_AUDIT_CATEGORY_NAME, 4);
-  if (category) {
-    if (category.name !== DISCORD_AUDIT_CATEGORY_NAME) category = await renameChannel(category.id, DISCORD_AUDIT_CATEGORY_NAME);
-  } else {
+  const ensurePrivateCategory = async (storedId: string | null | undefined, name: string) => {
+    let category = storedId ? guildChannels.find((channel) => channel.id === storedId) : findChannel(name, 4);
+    if (category) {
+      if (category.name !== name) category = await renameChannel(category.id, name);
+      return category;
+    }
     const response = await discordApi(`/guilds/${guildId}/channels`, token, {
       method: 'POST',
-      body: JSON.stringify({ name: DISCORD_AUDIT_CATEGORY_NAME, type: 4, permission_overwrites: [{ id: guildId, type: 0, deny: '1024' }] }),
+      body: JSON.stringify({ name, type: 4, permission_overwrites: [{ id: guildId, type: 0, deny: '1024' }] }),
     });
     if (!response.ok) throw new Error(`تعذر إنشاء فئة سجلات Discord الخاصة (HTTP ${response.status}).`);
-    category = await response.json() as { id: string; name: string; type: number };
-  }
+    return await response.json() as { id: string; name: string; type: number };
+  };
 
-  const createOrRenameLogChannel = async (storedId: string | null | undefined, name: string) => {
-    const storedChannel = storedId ? guildChannels.find((channel) => channel.id === storedId) : null;
-    if (storedChannel) {
-      if (storedChannel.name !== name) await renameChannel(storedChannel.id, name);
-      return storedChannel.id;
+  const category = await ensurePrivateCategory(storedChannels?.categoryId, DISCORD_AUDIT_CATEGORY_NAME);
+  const resetCategory = await ensurePrivateCategory(storedChannels?.resetCategoryId, DISCORD_RESET_AUDIT_CATEGORY_NAME);
+  const grantStaffPrivateLogAccess = async (categoryId: string) => {
+    const VIEW_CHANNEL = 0x400n;
+    const SEND_MESSAGES = 0x800n;
+    const READ_MESSAGE_HISTORY = 0x10000n;
+    const USE_APPLICATION_COMMANDS = 0x80000000n;
+    const staffAllow = VIEW_CHANNEL | SEND_MESSAGES | READ_MESSAGE_HISTORY | USE_APPLICATION_COMMANDS;
+    for (const roleId of [DISCORD_ROLES.BOSS, DISCORD_ROLES.CO_BOSS]) {
+      const response = await discordApi(`/channels/${categoryId}/permissions/${roleId}`, token, {
+        method: 'PUT',
+        body: JSON.stringify({ id: roleId, type: 0, allow: String(staffAllow), deny: '0' }),
+      });
+      if (!response.ok) throw new Error(`تعذر منح الإدارة وصول سجل الريستات الخاص (HTTP ${response.status}).`);
     }
+  };
+  await Promise.all([grantStaffPrivateLogAccess(category.id), grantStaffPrivateLogAccess(resetCategory.id)]);
+  const createOrRenameLogChannel = async (storedId: string | null | undefined, name: string, parentId: string) => {
+    const ensureChannelParent = async (channel: { id: string; name: string; parent_id?: string | null }) => {
+      if (channel.name === name && channel.parent_id === parentId) return channel.id;
+      const response = await discordApi(`/channels/${channel.id}`, token, { method: 'PATCH', body: JSON.stringify({ name, parent_id: parentId }) });
+      if (!response.ok) throw new Error(`تعذر ترتيب روم سجل Discord الخاص (HTTP ${response.status}).`);
+      return channel.id;
+    };
+    const storedChannel = storedId ? guildChannels.find((channel) => channel.id === storedId) : null;
+    if (storedChannel) return ensureChannelParent(storedChannel);
     const existing = findChannel(name, 0);
-    if (existing) return existing.id;
+    if (existing) return ensureChannelParent(existing);
     const response = await discordApi(`/guilds/${guildId}/channels`, token, {
       method: 'POST',
-      body: JSON.stringify({ name, type: 0, parent_id: category!.id, topic: 'Private administrative audit log. No full license keys, chat content, email, or IP addresses.' }),
+      body: JSON.stringify({ name, type: 0, parent_id: parentId, topic: 'Private administrative audit log. No full license keys, chat content, email, or IP addresses.' }),
     });
     if (!response.ok) throw new Error(`تعذر إنشاء روم سجل Discord الخاص (HTTP ${response.status}).`);
     return String((await response.json() as { id: string }).id);
@@ -186,11 +210,12 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
 
   privateAuditChannelCache = {
     categoryId: category.id,
-    resetAuditChannelId: await createOrRenameLogChannel(storedChannels?.resetAuditChannelId, DISCORD_RESET_AUDIT_CHANNEL_NAME),
-    conversationClosedAuditChannelId: await createOrRenameLogChannel(storedChannels?.conversationClosedAuditChannelId, DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME),
-    loginAuditChannelId: await createOrRenameLogChannel(storedChannels?.loginAuditChannelId, DISCORD_LOGIN_AUDIT_CHANNEL_NAME),
-    logoutAuditChannelId: await createOrRenameLogChannel(storedChannels?.logoutAuditChannelId, DISCORD_LOGOUT_AUDIT_CHANNEL_NAME),
-    websiteEventsChannelId: await createOrRenameLogChannel(storedChannels?.websiteEventsChannelId, DISCORD_WEBSITE_EVENTS_CHANNEL_NAME),
+    resetCategoryId: resetCategory.id,
+    resetAuditChannelId: await createOrRenameLogChannel(storedChannels?.resetAuditChannelId, DISCORD_RESET_AUDIT_CHANNEL_NAME, resetCategory.id),
+    conversationClosedAuditChannelId: await createOrRenameLogChannel(storedChannels?.conversationClosedAuditChannelId, DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME, category.id),
+    loginAuditChannelId: await createOrRenameLogChannel(storedChannels?.loginAuditChannelId, DISCORD_LOGIN_AUDIT_CHANNEL_NAME, category.id),
+    logoutAuditChannelId: await createOrRenameLogChannel(storedChannels?.logoutAuditChannelId, DISCORD_LOGOUT_AUDIT_CHANNEL_NAME, category.id),
+    websiteEventsChannelId: await createOrRenameLogChannel(storedChannels?.websiteEventsChannelId, DISCORD_WEBSITE_EVENTS_CHANNEL_NAME, category.id),
   };
   await setDoc(configRef, { ...privateAuditChannelCache, updatedAt: new Date().toISOString() }, { merge: true });
   return privateAuditChannelCache;
@@ -317,11 +342,47 @@ export async function sendDiscordConversationClosedAuditLog(event: {
   if (!response.ok) throw new Error(`تعذر إرسال سجل إغلاق المحادثة الخاص (HTTP ${response.status}).`);
 }
 
-export async function deleteDiscordResetRequestCard(messageId?: string | null) {
+export async function deleteDiscordResetRequestCard(messageId?: string | null, channelId?: string | null) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token || !messageId) return;
-  const response = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/messages/${messageId}`, token, { method: 'DELETE' });
+  const targetChannelId = channelId || discordRoomChannels.keyResetRequests;
+  const response = await discordApi(`/channels/${targetChannelId}/messages/${messageId}`, token, { method: 'DELETE' });
   if (!response.ok && response.status !== 404) throw new Error(`تعذر إزالة بطاقة طلب الريست القديمة (HTTP ${response.status}).`);
+}
+
+async function migrateLegacyResetRequestLogs(token: string) {
+  const database = supportDatabase();
+  const snapshot = await getDocs(collection(database, 'resetRequests'));
+  let migrated = 0;
+  for (const item of snapshot.docs) {
+    const data = item.data() as Record<string, unknown>;
+    const legacyMessageId = typeof data.discordMessageId === 'string' ? data.discordMessageId : null;
+    const logChannelId = typeof data.discordLogChannelId === 'string' ? data.discordLogChannelId : null;
+    if (!legacyMessageId || logChannelId) continue;
+    const status = String(data.status || 'PENDING') as DiscordResetRequestLog['status'];
+    if (!['PENDING', 'APPROVED', 'WAITING_FOR_CUSTOMER'].includes(status)) continue;
+    try {
+      const result = await syncDiscordResetRequestLog({
+        reference: String(data.reference || item.id),
+        customerDiscordId: String(data.customerDiscordId || ''),
+        customerName: String(data.customerName || 'عميل'),
+        customerImage: typeof data.customerImage === 'string' ? data.customerImage : null,
+        productName: String(data.productName || 'منتج غير محدد'),
+        productImage: typeof data.productImage === 'string' ? data.productImage : `${websiteUrl}/logo.png`,
+        keyMasked: String(data.keyMasked || '••••••'),
+        reason: String(data.reason || 'لم يضف العميل سبباً'),
+        status,
+        adminName: typeof data.processedByName === 'string' ? data.processedByName : null,
+        adminNotes: typeof data.adminNotes === 'string' ? data.adminNotes : null,
+      });
+      await updateDoc(doc(database, 'resetRequests', item.id), { discordMessageId: result.messageId, discordLogChannelId: result.channelId });
+      await deleteDiscordResetRequestCard(legacyMessageId, discordRoomChannels.keyResetRequests);
+      migrated += 1;
+    } catch (error) {
+      console.error('[Discord Reset] Unable to migrate legacy request card:', error);
+    }
+  }
+  return migrated;
 }
 
 async function purgeTerminalResetRequestsOnStartup(token: string) {
@@ -333,7 +394,8 @@ async function purgeTerminalResetRequestsOnStartup(token: string) {
   for (const request of terminalRequests) {
     const messageId = typeof request.data.discordMessageId === 'string' ? request.data.discordMessageId : null;
     if (messageId) {
-      const response = await discordApi(`/channels/${discordRoomChannels.keyResetRequests}/messages/${messageId}`, token, { method: 'DELETE' });
+      const auditChannelId = typeof request.data.discordLogChannelId === 'string' ? request.data.discordLogChannelId : discordRoomChannels.keyResetRequests;
+      const response = await discordApi(`/channels/${auditChannelId}/messages/${messageId}`, token, { method: 'DELETE' });
       if (!response.ok && response.status !== 404) throw new Error(`تعذر إزالة بطاقة طلب الريست القديمة (HTTP ${response.status}).`);
     }
     await deleteDoc(doc(database, 'resetRequests', request.id));
@@ -347,12 +409,14 @@ type DiscordResetRequestLog = {
   customerName: string;
   customerImage?: string | null;
   productName: string;
+  productImage?: string | null;
   keyMasked: string;
   reason: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITING_FOR_CUSTOMER' | 'COMPLETED' | 'CANCELLED';
   adminName?: string | null;
   adminNotes?: string | null;
   discordMessageId?: string | null;
+  discordLogChannelId?: string | null;
 };
 
 function resetStatusPresentation(status: DiscordResetRequestLog['status']) {
@@ -380,35 +444,42 @@ function resetRequestAdminComponents(event: DiscordResetRequestLog) {
   ] }];
 }
 
-export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog): Promise<{ messageId: string }> {
+export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog): Promise<{ messageId: string; channelId: string }> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الريست.');
+  const channels = await ensurePrivateAuditChannels(token);
+  const logChannelId = channels.resetAuditChannelId;
   const status = resetStatusPresentation(event.status);
   const embed = {
     color: status.color,
     author: { name: 'تعن • طلبات رستات المفاتيح', icon_url: `${websiteUrl}/logo.png` },
     title: event.status === 'PENDING' ? 'طلب رستات مفتاح جديد' : `تحديث طلب رستات ${event.reference}`,
-    description: event.status === 'COMPLETED' ? 'تم تنفيذ إعادة ضبط الترخيص بنجاح. لا يظهر المفتاح كاملاً في Discord.' : 'بطاقة متابعة منظمة لطلب إعادة ضبط الترخيص داخل منصة تعن.',
+    description: event.status === 'COMPLETED' ? 'تم تنفيذ إعادة ضبط الترخيص بنجاح. هذه البطاقة محفوظة داخل سجل الإدارة الخاص.' : 'سجل متابعة منظم لطلب إعادة ضبط الترخيص. لا يظهر المفتاح الكامل إلا في لوحة الإدارة بالموقع.',
     thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
+    image: event.productImage ? { url: event.productImage } : undefined,
     fields: [
       { name: 'رقم الطلب', value: `\`${event.reference}\``, inline: true },
       { name: 'الحالة', value: status.label, inline: true },
       { name: 'العميل', value: `**${event.customerName || 'عميل'}**\n<@${event.customerDiscordId}>`, inline: true },
       { name: 'المنتج', value: event.productName || 'غير محدد', inline: true },
-      { name: 'المفتاح', value: event.keyMasked || '••••••', inline: true },
+      { name: 'المفتاح', value: event.keyMasked ? `\`${event.keyMasked}\`\nانسخ الكامل من لوحة الإدارة` : 'غير متوفر', inline: true },
       { name: 'السبب', value: (event.reason || 'لم يضف العميل سبباً').slice(0, 500), inline: false },
       ...(event.adminName ? [{ name: 'الإدارة', value: event.adminName, inline: true }] : []),
       ...(event.adminNotes ? [{ name: 'ملاحظة الإدارة', value: event.adminNotes.slice(0, 500), inline: false }] : []),
       { name: 'آخر تحديث', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
     ],
-    footer: { text: `تعن • ${event.customerDiscordId}` },
+    footer: { text: `تعن • سجل رستات خاص • ${event.customerDiscordId}` },
     timestamp: new Date().toISOString(),
   };
-  const path = event.discordMessageId
-    ? `/channels/${discordRoomChannels.keyResetRequests}/messages/${event.discordMessageId}`
-    : `/channels/${discordRoomChannels.keyResetRequests}/messages`;
+  const canUpdateExistingLog = Boolean(event.discordMessageId && event.discordLogChannelId === logChannelId);
+  if (event.discordMessageId && !canUpdateExistingLog) {
+    void deleteDiscordResetRequestCard(event.discordMessageId, event.discordLogChannelId || discordRoomChannels.keyResetRequests).catch(() => undefined);
+  }
+  const path = canUpdateExistingLog
+    ? `/channels/${logChannelId}/messages/${event.discordMessageId}`
+    : `/channels/${logChannelId}/messages`;
   const response = await discordApi(path, token, {
-    method: event.discordMessageId ? 'PATCH' : 'POST',
+    method: canUpdateExistingLog ? 'PATCH' : 'POST',
     body: JSON.stringify({
       embeds: [embed],
       components: resetRequestAdminComponents(event),
@@ -417,7 +488,7 @@ export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog):
   if (!response.ok) throw new Error(`تعذر مزامنة بطاقة الريست مع Discord (HTTP ${response.status}).`);
   const message = await response.json() as { id?: string };
   if (!message.id) throw new Error('لم يعرض Discord معرف بطاقة الريست.');
-  return { messageId: message.id };
+  return { messageId: message.id, channelId: logChannelId };
 }
 
 export async function sendDiscordProductStatus(): Promise<{ messageId: string }> {
@@ -1060,8 +1131,9 @@ async function answerInteraction(interaction: any, token: string) {
   if (interaction.type !== 3) return;
   const customId = String(interaction.data?.custom_id || '');
   if (customId.startsWith('ta3n_reset_approve:') || customId.startsWith('ta3n_reset_reject:') || customId.startsWith('ta3n_reset_info:')) {
-    if (String(interaction.channel_id) !== discordRoomChannels.keyResetRequests) {
-      await respond({ content: 'استخدم أزرار إدارة الريست من روم رستات المفاتيح المحدد فقط.', flags: 64 });
+    const resetAuditChannels = await ensurePrivateAuditChannels(token);
+    if (String(interaction.channel_id) !== resetAuditChannels.resetAuditChannelId) {
+      await respond({ content: 'أزرار إدارة الريست متاحة داخل سجل الريستات الخاص بالإدارة فقط.', flags: 64 });
       return;
     }
     if (!isDiscordResetAdministrator(interaction)) {
@@ -1261,8 +1333,10 @@ export async function startDiscordBot() {
   }
   started = true;
   try {
-    await ensureResetRequestsChannelPrivate(token);
+    await ensureResetRequestsChannelForCustomers(token);
     await ensurePrivateAuditChannels(token);
+    const migratedResetLogs = await migrateLegacyResetRequestLogs(token);
+    if (migratedResetLogs) console.info(`[Discord Reset] Moved ${migratedResetLogs} active request logs to the private audit channel.`);
     const panel = await ensureDiscordResetPanelPublished();
     if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
     const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
