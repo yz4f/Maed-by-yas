@@ -21,6 +21,8 @@ const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
 const DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID = 'resetFeatureAnnouncement';
 const DISCORD_SUPPORT_LINK_CONFIG_ID = 'supportLinkAnnouncement';
 const DISCORD_SUPPORT_LINK_URL = 'https://t3nn.wtf/support';
+const DISCORD_SUPPORT_LINK_IMAGE_URL = `${websiteUrl}/assets/discord/support-center.png`;
+const DISCORD_SUPPORT_LINK_PAYLOAD_VERSION = 'support-link-image-v1';
 const DISCORD_UPDATES_CHANNEL_ID = '1540878976166400060';
 const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
 const DISCORD_RESET_AUDIT_CATEGORY_NAME = '🔐・reset-logs';
@@ -728,17 +730,29 @@ async function ensureDiscordSupportLinkSent() {
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال رابط الدعم.');
   const reference = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_SUPPORT_LINK_CONFIG_ID);
   const saved = await getDoc(reference);
-  if (saved.exists() && String(saved.data()?.url || '') === DISCORD_SUPPORT_LINK_URL && saved.data()?.messageId) {
-    return { sent: false, messageId: String(saved.data().messageId) };
+  const payload = {
+    content: `@everyone\n${DISCORD_SUPPORT_LINK_URL}`,
+    allowed_mentions: { parse: ['everyone'] },
+    embeds: [{
+      color: 0x2563eb,
+      image: { url: DISCORD_SUPPORT_LINK_IMAGE_URL },
+    }],
+  };
+  const existingMessageId = saved.exists() && String(saved.data()?.url || '') === DISCORD_SUPPORT_LINK_URL ? String(saved.data()?.messageId || '') : '';
+  if (existingMessageId && saved.data()?.payloadVersion === DISCORD_SUPPORT_LINK_PAYLOAD_VERSION) {
+    return { sent: false, messageId: existingMessageId };
   }
-  const message = await postDiscordMessage(discordRoomChannels.smartSupport, token, {
-    content: DISCORD_SUPPORT_LINK_URL,
-    allowed_mentions: { parse: [] },
-  });
+  if (existingMessageId) {
+    const response = await discordApi(`/channels/${discordRoomChannels.smartSupport}/messages/${existingMessageId}`, token, { method: 'DELETE' });
+    if (!response.ok && response.status !== 404) throw new Error(`تعذر استبدال رسالة رابط الدعم السابقة (HTTP ${response.status}).`);
+  }
+  const message = await postDiscordMessage(discordRoomChannels.smartSupport, token, payload);
   await setDoc(reference, {
     messageId: message.id,
     channelId: discordRoomChannels.smartSupport,
     url: DISCORD_SUPPORT_LINK_URL,
+    imageUrl: DISCORD_SUPPORT_LINK_IMAGE_URL,
+    payloadVersion: DISCORD_SUPPORT_LINK_PAYLOAD_VERSION,
     sentAt: new Date().toISOString(),
   }, { merge: true });
   return { sent: true, messageId: message.id };
