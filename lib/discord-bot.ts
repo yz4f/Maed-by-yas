@@ -19,6 +19,8 @@ const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
 const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
 const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
 const DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID = 'resetFeatureAnnouncement';
+const DISCORD_SUPPORT_LINK_CONFIG_ID = 'supportLinkAnnouncement';
+const DISCORD_SUPPORT_LINK_URL = 'https://t3nn.wtf/support';
 const DISCORD_UPDATES_CHANNEL_ID = '1540878976166400060';
 const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
 const DISCORD_RESET_AUDIT_CATEGORY_NAME = '🔐・reset-logs';
@@ -721,6 +723,27 @@ async function ensureDiscordResetFeatureAnnouncementPublished() {
   return { messageId: message.id, published: true, refreshed: false };
 }
 
+async function ensureDiscordSupportLinkSent() {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال رابط الدعم.');
+  const reference = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_SUPPORT_LINK_CONFIG_ID);
+  const saved = await getDoc(reference);
+  if (saved.exists() && String(saved.data()?.url || '') === DISCORD_SUPPORT_LINK_URL && saved.data()?.messageId) {
+    return { sent: false, messageId: String(saved.data().messageId) };
+  }
+  const message = await postDiscordMessage(discordRoomChannels.smartSupport, token, {
+    content: DISCORD_SUPPORT_LINK_URL,
+    allowed_mentions: { parse: [] },
+  });
+  await setDoc(reference, {
+    messageId: message.id,
+    channelId: discordRoomChannels.smartSupport,
+    url: DISCORD_SUPPORT_LINK_URL,
+    sentAt: new Date().toISOString(),
+  }, { merge: true });
+  return { sent: true, messageId: message.id };
+}
+
 async function postDiscordMessage(channelId: string, token: string, data: Record<string, unknown>) {
   const response = await discordApi(`/channels/${channelId}/messages`, token, { method: 'POST', body: JSON.stringify(data) });
   if (!response.ok) throw new Error(`تعذر إرسال رسالة دعم Discord (HTTP ${response.status}).`);
@@ -1339,6 +1362,8 @@ export async function startDiscordBot() {
     if (migratedResetLogs) console.info(`[Discord Reset] Moved ${migratedResetLogs} active request logs to the private audit channel.`);
     const panel = await ensureDiscordResetPanelPublished();
     if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
+    const supportLink = await ensureDiscordSupportLinkSent();
+    if (supportLink.sent) console.info(`[Discord Support] Sent support link ${supportLink.messageId}.`);
     const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
     if (announcement.published) console.info(`[Discord Updates] Published reset feature announcement ${announcement.messageId}.`);
   } catch (error) {
