@@ -7,14 +7,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بإضافة مفاتيح إلى المخزون.' }, { status: 403 });
   }
   try {
-    const { productId, rawKeysText } = await req.json();
+    const { productId, rawKeysText, duration } = await req.json();
 
     if (!productId || !rawKeysText) {
       return NextResponse.json({ success: false, message: 'معرف المنتج ونص المفاتيح مطلوبين.' }, { status: 400 });
     }
 
-    const res = await StoreDB.bulkAddKeys(productId, rawKeysText, "Admin");
-    return NextResponse.json({ success: true, count: res.count });
+    const res = await StoreDB.bulkAddKeys(productId, rawKeysText, "Admin", duration);
+    return NextResponse.json({ success: true, count: res.count, skipped: res.skipped });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }

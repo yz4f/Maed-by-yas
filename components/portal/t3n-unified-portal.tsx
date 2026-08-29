@@ -51,7 +51,8 @@ import {
   Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType } from '@/types';
+import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
+import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
 import { HelpCenter } from './help-center';
 import { SupportNotificationBanner } from './support-notification-banner';
@@ -445,6 +446,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [singleKeyText, setSingleKeyText] = useState('');
   const [isAddingKeys, setIsAddingKeys] = useState(false);
   const [isAddingSingleKey, setIsAddingSingleKey] = useState(false);
+  const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('2 Days');
 
   // Extended Inventory Editing States
   const [editProductData, setEditProductData] = useState<{
@@ -598,18 +600,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const getLicenseTiming = (license: UserProduct) => {
     const parsedExpiry = license.expiresAt ? new Date(license.expiresAt).getTime() : Number.NaN;
     const hasValidExpiry = Number.isFinite(parsedExpiry) && parsedExpiry > 0;
+    const isLifetime = !license.expiresAt;
     const expiresAtMs = hasValidExpiry ? parsedExpiry : 0;
     const remainingMs = hasValidExpiry ? Math.max(0, expiresAtMs - licenseClock) : 0;
-    const isExpired = remainingMs === 0;
-    const isUsable = license.status === 'Active' && !isExpired;
+    const isExpired = !isLifetime && hasValidExpiry && remainingMs === 0;
+    const isUsable = license.status === 'Active' && (isLifetime || (hasValidExpiry && remainingMs > 0));
     const totalSeconds = Math.floor(remainingMs / 1000);
     const days = Math.floor(totalSeconds / 86_400);
     const hours = Math.floor((totalSeconds % 86_400) / 3_600);
     const minutes = Math.floor((totalSeconds % 3_600) / 60);
-    const countdown = lang === 'ar'
-      ? `${days}ي ${hours}س ${minutes}د`
-      : `${days}d ${hours}h ${minutes}m`;
-    return { expiresAtMs, remainingMs, isExpired, isUsable, countdown };
+    const countdown = isLifetime
+      ? (lang === 'ar' ? 'مدى الحياة' : 'Lifetime')
+      : lang === 'ar'
+        ? `${days}ي ${hours}س ${minutes}د`
+        : `${days}d ${hours}h ${minutes}m`;
+    return { expiresAtMs, remainingMs, isExpired, isUsable, countdown, isLifetime };
   };
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
   const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
@@ -1517,7 +1522,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch('/api/admin/keys/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: rawKeys.join('\n') })
+        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: rawKeys.join('\n'), duration: inventoryKeyDuration })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -1554,7 +1559,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const res = await fetch('/api/admin/keys/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: singleKeyText.trim() })
+        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: singleKeyText.trim(), duration: inventoryKeyDuration })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -3387,6 +3392,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <tr className={`border-b ${styles.borderNormal} ${styles.textMuted} font-sans font-bold`}>
                           <th className="pb-3.5 pr-2">{lang === 'ar' ? 'الكود (Key)' : 'Key'}</th>
                           <th className="pb-3.5">{lang === 'ar' ? 'المنتج المرتبط' : 'Associated Product'}</th>
+                          <th className="pb-3.5">{lang === 'ar' ? 'المدة' : 'Duration'}</th>
                           <th className="pb-3.5">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                           <th className="pb-3.5">{lang === 'ar' ? 'المستخدم' : 'Used By'}</th>
                           <th className="pb-3.5">{lang === 'ar' ? 'تاريخ الإنشاء' : 'Created At'}</th>
@@ -3406,6 +3412,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <td className="py-3.5 pr-2 font-bold text-indigo-500 dark:text-primary select-all">{keyObj.key}</td>
                               <td className={`py-3.5 font-sans ${styles.textTitle} font-semibold`}>
                                 {products.find((p) => p.id === keyObj.productId)?.name || keyObj.productId}
+                              </td>
+                              <td className={`py-3.5 font-sans ${styles.textMuted} text-[11px] font-bold`}>
+                                {durationLabel(keyObj.duration, lang)}
                               </td>
                               <td className="py-3.5 font-sans">
                                 {keyObj.isUsed ? (
@@ -3955,6 +3964,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         تم استبعاد {inventoryStock.duplicateCodes} كود مكرر من المخزون المتاح لحماية التفعيل.
                       </div>
                     )}
+                    <div className="pt-1">
+                      <div className={`mb-2 text-[11px] font-black ${styles.textTitle}`}>
+                        {lang === 'ar' ? 'مدة المفاتيح عند التفعيل' : 'Key duration after activation'}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {KEY_DURATION_OPTIONS.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setInventoryKeyDuration(option)}
+                            className={`rounded-lg border px-3 py-2 text-[11px] font-black transition-all cursor-pointer ${inventoryKeyDuration === option
+                              ? 'border-indigo-500 bg-indigo-500 text-white shadow-md shadow-indigo-500/20'
+                              : `${isDark ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}`}
+                          >
+                            {durationLabel(option, lang)}
+                          </button>
+                        ))}
+                      </div>
+                      <p className={`mt-2 text-[10px] leading-relaxed ${styles.textMuted}`}>
+                        {lang === 'ar'
+                          ? 'تُحسب نهاية الترخيص من لحظة تفعيل العميل، وليس من إضافة المفتاح للمخزون.'
+                          : 'Expiry starts when the customer activates the key, not when it is added to stock.'}
+                      </p>
+                    </div>
                     {!bulkAddOpen && (
                       <button 
                         onClick={() => setBulkAddOpen(true)}
@@ -4054,6 +4087,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <div className={`flex-1 text-sm ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-black'} font-mono break-all text-left select-all transition-colors`} dir="ltr">
                               {keyItem.key}
                             </div>
+                            <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold ${isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
+                              {durationLabel(keyItem.duration, lang)}
+                            </span>
                             <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold ${keyItem.isUsed ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300' : keyItem.isDisabled || keyItem.isArchived ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'}`}>
                               {keyItem.isUsed ? 'مستخدم' : keyItem.isDisabled || keyItem.isArchived ? 'غير متاح' : 'متاح'}
                             </span>

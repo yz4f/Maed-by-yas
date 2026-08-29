@@ -1,4 +1,5 @@
 import { StoreDB } from '@/lib/store-db';
+import { isLicenseCurrentlyActive } from '@/lib/license-duration';
 import type { User, UserProduct } from '@/types';
 import type { SessionActor } from '@/lib/request-security';
 
@@ -20,12 +21,7 @@ export async function getOwnedActiveLicense(actor: SessionActor, productId: stri
   if (!user || user.isBanned) return null;
 
   const licenses = await StoreDB.getUserProducts(user.id);
-  const license = licenses.find((item) => {
-    if (item.productId !== productId || item.status !== 'Active') return false;
-    if (!item.expiresAt) return false;
-    const expiresAtMs = new Date(item.expiresAt).getTime();
-    return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
-  });
+  const license = licenses.find((item) => item.productId === productId && isLicenseCurrentlyActive(item));
 
   return license ? { user, license } : null;
 }

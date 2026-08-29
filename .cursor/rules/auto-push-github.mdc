@@ -1,0 +1,14 @@
+---
+description: Commit and push every site change to GitHub immediately
+alwaysApply: true
+---
+
+# رفع GitHub فوري
+
+بعد أي تعديل على الموقع (كود، واجهة، API، إعدادات ظاهرة للعميل أو الإدارة):
+
+1. أنشئ commit مباشرة بدون انتظار طلب إضافي.
+2. ادفع إلى `origin` على الفرع الحالي فوراً (`git push`).
+3. لا تستخدم force push على `main`.
+4. لا ترفع ملفات أسرار مثل `.env`.
+5. إذا فشل الدفع، أصلحه وأعد المحاولة في نفس الجلسة.

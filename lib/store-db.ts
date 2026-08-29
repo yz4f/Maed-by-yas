@@ -1,4 +1,5 @@
 import { AuditEvent, Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
+import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction } from "firebase/firestore";
 
@@ -359,10 +360,11 @@ const LocalDB = {
     const d = getFallbackData();
     return d.keys.filter((k: any) => k.productId === productId);
   },
-  generateKeys(productId: string, count: number, prefix: string, createdById: string): {success: boolean, keys: string[]} {
+  generateKeys(productId: string, count: number, prefix: string, createdById: string, duration?: unknown): {success: boolean, keys: string[]} {
     const d = getFallbackData();
     const product = d.products.find((p: any) => p.id === productId);
     if (!product) return { success: false, keys: [] };
+    const licenseDuration = normalizeKeyDuration(duration);
     const generatedKeys: string[] = [];
     for (let i = 0; i < count; i++) {
       const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -374,7 +376,7 @@ const LocalDB = {
         isUsed: false,
         isDisabled: false,
         isArchived: false,
-        duration: '2 Days',
+        duration: licenseDuration,
         createdById,
         createdAt: new Date().toISOString()
       };
@@ -385,12 +387,13 @@ const LocalDB = {
     this.addLog('Key Creation', `تم إنشاء ${count} مفاتيح للمنتج ${product.name}`, createdById, 'Admin');
     return { success: true, keys: generatedKeys };
   },
-  bulkAddKeys(productId: string, rawKeysText: string, createdById: string): {success: boolean, count: number, skipped: number, message?: string} {
+  bulkAddKeys(productId: string, rawKeysText: string, createdById: string, duration?: unknown): {success: boolean, count: number, skipped: number, message?: string} {
     const d = getFallbackData();
     if (!d.products.some((product: Product) => product.id === productId)) {
       return { success: false, count: 0, skipped: 0, message: 'المنتج المطلوب غير موجود.' };
     }
 
+    const licenseDuration = normalizeKeyDuration(duration);
     const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
     const existingCodes = new Set(d.keys.map((key: Key) => key.key.trim().toUpperCase()));
     const acceptedCodes: string[] = [];
@@ -415,7 +418,7 @@ const LocalDB = {
         isUsed: false,
         isDisabled: false,
         isArchived: false,
-        duration: '2 Days',
+        duration: licenseDuration,
         createdById,
         createdAt
       } as Key);
@@ -508,16 +511,15 @@ const LocalDB = {
       user = d.users[userIdx];
     }
 
-    const alreadyActivated = d.userProducts.some((item: UserProduct) => {
-      if (item.userId !== user.id || item.productId !== product.id || item.status !== 'Active') return false;
-      const expiresAt = item.expiresAt;
-      return typeof expiresAt === 'string' && new Date(expiresAt).getTime() > Date.now();
-    });
+    const alreadyActivated = d.userProducts.some((item: UserProduct) =>
+      item.userId === user.id && item.productId === product.id && isLicenseCurrentlyActive(item)
+    );
     if (alreadyActivated) return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
 
+    const usedAt = new Date().toISOString();
     d.keys[keyIdx].isUsed = true;
     d.keys[keyIdx].usedByUserId = user.id;
-    d.keys[keyIdx].usedAt = new Date().toISOString();
+    d.keys[keyIdx].usedAt = usedAt;
 
     const userProduct: UserProduct = {
       id: `up-${Date.now()}`,
@@ -526,8 +528,8 @@ const LocalDB = {
       keyId: keyObj.id,
       keyString: keyObj.key,
       status: 'Active',
-      activatedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + PRODUCT_LICENSE_DURATION_MS).toISOString(),
+      activatedAt: usedAt,
+      expiresAt: computeLicenseExpiresAt(usedAt, keyObj.duration),
       discordRoleGranted: true
     };
     d.userProducts.push(userProduct);
@@ -586,7 +588,7 @@ const LocalDB = {
       productId,
       status: 'Active',
       activatedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + PRODUCT_LICENSE_DURATION_MS).toISOString(),
+      expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '2 Days'),
       discordRoleGranted: false
     };
     d.userProducts.push(userProduct);
@@ -851,12 +853,13 @@ export const StoreDB = {
     );
   },
 
-  async generateKeys(productId: string, count: number, prefix: string, createdById: string): Promise<{success: boolean; keys: string[]}> {
+  async generateKeys(productId: string, count: number, prefix: string, createdById: string, duration?: unknown): Promise<{success: boolean; keys: string[]}> {
     return runDbOp(
       async () => {
         const generatedKeys: string[] = [];
         const product = await this.getProductById(productId);
         if (!product) throw new Error("المنتج غير موجود");
+        const licenseDuration = normalizeKeyDuration(duration);
 
         for (let i = 0; i < count; i++) {
           const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -868,7 +871,7 @@ export const StoreDB = {
             isUsed: false,
             isDisabled: false,
             isArchived: false,
-            duration: '2 Days',
+            duration: licenseDuration,
             createdById,
             createdAt: new Date().toISOString()
           };
@@ -879,16 +882,17 @@ export const StoreDB = {
         await this.addLog('Key Creation', `تم إنشاء ${count} مفاتيح للمنتج ${product.name}`, createdById, 'Admin');
         return { success: true, keys: generatedKeys };
       },
-      () => LocalDB.generateKeys(productId, count, prefix, createdById)
+      () => LocalDB.generateKeys(productId, count, prefix, createdById, duration)
     );
   },
 
-  async bulkAddKeys(productId: string, rawKeysText: string, createdById: string): Promise<{success: boolean; count: number; skipped: number; message?: string}> {
+  async bulkAddKeys(productId: string, rawKeysText: string, createdById: string, duration?: unknown): Promise<{success: boolean; count: number; skipped: number; message?: string}> {
     return runDbOp(
       async () => {
         const db = getDb();
         const product = await this.getProductById(productId);
         if (!product) return { success: false, count: 0, skipped: 0, message: 'المنتج المطلوب غير موجود.' };
+        const licenseDuration = normalizeKeyDuration(duration);
 
         const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
         const existingKeys = await this.getKeys();
@@ -920,7 +924,7 @@ export const StoreDB = {
               isUsed: false,
               isDisabled: false,
               isArchived: false,
-              duration: '2 Days',
+              duration: licenseDuration,
               createdById,
               createdAt
             };
@@ -931,7 +935,7 @@ export const StoreDB = {
 
         return { success: true, count: acceptedCodes.length, skipped };
       },
-      () => LocalDB.bulkAddKeys(productId, rawKeysText, createdById)
+      () => LocalDB.bulkAddKeys(productId, rawKeysText, createdById, duration)
     );
   },
 
@@ -1047,16 +1051,12 @@ export const StoreDB = {
         }
 
         const existingLicenses = await this.getUserProducts(user.id);
-        if (existingLicenses.some((license) => {
-          if (license.productId !== product.id || license.status !== 'Active') return false;
-          const expiresAt = license.expiresAt;
-          return typeof expiresAt === 'string' && new Date(expiresAt).getTime() > Date.now();
-        })) {
+        if (existingLicenses.some((license) => license.productId === product.id && isLicenseCurrentlyActive(license))) {
           return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
         }
 
         const usedAt = new Date().toISOString();
-        const expiresAt = new Date(Date.parse(usedAt) + PRODUCT_LICENSE_DURATION_MS).toISOString();
+        const expiresAt = computeLicenseExpiresAt(usedAt, keyObj.duration);
         const userProduct: UserProduct = {
           id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           userId: user.id,
@@ -1175,7 +1175,7 @@ export const StoreDB = {
           productId,
           status: 'Active',
           activatedAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + PRODUCT_LICENSE_DURATION_MS).toISOString(),
+          expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '2 Days'),
           discordRoleGranted: false
         };
         await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);
