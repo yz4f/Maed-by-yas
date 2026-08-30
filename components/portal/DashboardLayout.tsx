@@ -27,7 +27,7 @@ export function DashboardLayout({ sidebar, children, lang }: DashboardLayoutProp
       <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
       
       {/* Sidebar container - Fixed width, non-scrollable layout boundary */}
-      <div className="w-full md:w-[260px] shrink-0 z-10 md:h-full flex flex-col border-r border-white/[0.06] bg-[#0B0E14]">
+      <div className={`w-full md:w-[260px] shrink-0 z-10 md:h-full flex flex-col border-white/[0.06] bg-[#0B0E14] ${lang === 'ar' ? 'md:border-l' : 'md:border-r'}`}>
         {sidebar}
       </div>
 
