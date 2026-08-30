@@ -83,7 +83,8 @@ type WebsiteLogEvent =
   | { type: 'conversationOpened'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'login'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'logout'; customerId: string; customerName: string; customerImage?: string | null }
-  | { type: 'productActivated'; customerId: string; customerName: string; customerImage?: string | null; productName: string };
+  | { type: 'productActivated'; customerId: string; customerName: string; customerImage?: string | null; productName: string }
+  | { type: 'keyInventoryChanged'; customerId: string; customerName: string; customerImage?: string | null; productName: string; action: 'added' | 'restored' | 'deleted' | 'updated'; keyCount: number };
 
 type GatewayPacket = { op: number; d: any; s?: number | null; t?: string | null };
 
@@ -252,7 +253,9 @@ export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ m
       ? { channelId: channels.logoutAuditChannelId, color: 0x64748b, title: 'Website Sign-out', description: 'A customer signed out of the Ta3n platform.', label: 'Status', value: 'Signed out' }
       : event.type === 'conversationOpened'
         ? { channelId: channels.websiteEventsChannelId, color: 0x22d3ee, title: 'Support Conversation Opened', description: 'A customer opened a new Ta3n Assistant conversation from the website.', label: 'Event', value: 'Conversation opened' }
-        : { channelId: channels.websiteEventsChannelId, color: 0x22c55e, title: 'Product Activated', description: 'A product was activated successfully from the Ta3n platform.', label: 'Product', value: event.productName };
+        : event.type === 'keyInventoryChanged'
+          ? { channelId: channels.websiteEventsChannelId, color: event.action === 'deleted' ? 0xf97316 : event.action === 'updated' ? 0x38bdf8 : 0x22c55e, title: event.action === 'deleted' ? 'License Key Removed' : event.action === 'restored' ? 'License Key Restored' : event.action === 'updated' ? 'License Key Updated' : 'License Keys Added', description: 'An administrator changed the product key inventory from the Ta3n platform.', label: 'Product', value: `${event.productName} · ${event.keyCount} key(s)` }
+          : { channelId: channels.websiteEventsChannelId, color: 0x22c55e, title: 'Product Activated', description: 'A product was activated successfully from the Ta3n platform.', label: 'Product', value: event.productName };
 
   const embed = {
     color: config.color,

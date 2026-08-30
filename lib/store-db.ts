@@ -395,21 +395,33 @@ const LocalDB = {
 
     const licenseDuration = normalizeKeyDuration(duration);
     const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
-    const existingCodes = new Set(d.keys.map((key: Key) => key.key.trim().toUpperCase()));
+    const activeCodes = new Set(d.keys.filter((key: Key) => !key.isArchived || key.isUsed).map((key: Key) => key.key.trim().toUpperCase()));
+    const reusableByCode = new Map<string, Key>(d.keys.filter((key: Key) => key.isArchived && !key.isUsed).map((key: Key): [string, Key] => [key.key.trim().toUpperCase(), key]));
     const acceptedCodes: string[] = [];
+    const reusableKeys: Key[] = [];
     let skipped = 0;
-
     for (const keyString of lines) {
       const normalized = keyString.toUpperCase();
-      if (existingCodes.has(normalized)) {
+      if (activeCodes.has(normalized)) {
         skipped++;
         continue;
       }
-      existingCodes.add(normalized);
-      acceptedCodes.push(keyString);
+      const reusableKey = reusableByCode.get(normalized);
+      if (reusableKey) reusableKeys.push(reusableKey);
+      else acceptedCodes.push(keyString);
+      activeCodes.add(normalized);
     }
-
     const createdAt = new Date().toISOString();
+    reusableKeys.forEach((key) => Object.assign(key, {
+      productId,
+      duration: licenseDuration,
+      isUsed: false,
+      isDisabled: false,
+      isArchived: false,
+      archivedAt: null,
+      createdById,
+      restoredAt: createdAt,
+    }));
     acceptedCodes.forEach((keyString, index) => {
       d.keys.push({
         id: `key-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
@@ -424,8 +436,8 @@ const LocalDB = {
       } as Key);
     });
 
-    if (acceptedCodes.length > 0) saveFallbackData(d);
-    return { success: true, count: acceptedCodes.length, skipped };
+    if (acceptedCodes.length > 0 || reusableKeys.length > 0) saveFallbackData(d);
+    return { success: true, count: acceptedCodes.length + reusableKeys.length, skipped };
   },
   updateKey(id: string, updates: Partial<Key>): boolean {
     const d = getFallbackData();
@@ -896,20 +908,26 @@ export const StoreDB = {
 
         const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
         const existingKeys = await this.getKeys();
-        const existingCodes = new Set(existingKeys.map((key) => key.key.trim().toUpperCase()));
+        const activeCodes = new Set(existingKeys
+          .filter((key) => !key.isArchived || key.isUsed)
+          .map((key) => key.key.trim().toUpperCase()));
+        const reusableByCode = new Map<string, Key>(existingKeys
+          .filter((key) => key.isArchived && !key.isUsed)
+          .map((key): [string, Key] => [key.key.trim().toUpperCase(), key]));
         const acceptedCodes: string[] = [];
+        const reusableKeys: Key[] = [];
         let skipped = 0;
-
         for (const keyString of lines) {
           const normalized = keyString.toUpperCase();
-          if (existingCodes.has(normalized)) {
+          if (activeCodes.has(normalized)) {
             skipped++;
             continue;
           }
-          existingCodes.add(normalized);
-          acceptedCodes.push(keyString);
+          const reusableKey = reusableByCode.get(normalized);
+          if (reusableKey) reusableKeys.push(reusableKey);
+          else acceptedCodes.push(keyString);
+          activeCodes.add(normalized);
         }
-
         const createdAt = new Date().toISOString();
         const BATCH_SIZE = 400;
         for (let i = 0; i < acceptedCodes.length; i += BATCH_SIZE) {
@@ -932,8 +950,23 @@ export const StoreDB = {
           });
           await batch.commit();
         }
-
-        return { success: true, count: acceptedCodes.length, skipped };
+        for (let i = 0; i < reusableKeys.length; i += BATCH_SIZE) {
+          const batch = writeBatch(db);
+          reusableKeys.slice(i, i + BATCH_SIZE).forEach((key) => {
+            batch.update(doc(db, 'keys', key.id), {
+              productId,
+              duration: licenseDuration,
+              isUsed: false,
+              isDisabled: false,
+              isArchived: false,
+              archivedAt: null,
+              createdById,
+              restoredAt: createdAt,
+            });
+          });
+          await batch.commit();
+        }
+        return { success: true, count: acceptedCodes.length + reusableKeys.length, skipped };
       },
       () => LocalDB.bulkAddKeys(productId, rawKeysText, createdById, duration)
     );

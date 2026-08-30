@@ -446,6 +446,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [singleKeyText, setSingleKeyText] = useState('');
   const [isAddingKeys, setIsAddingKeys] = useState(false);
   const [isAddingSingleKey, setIsAddingSingleKey] = useState(false);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
   const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('2 Days');
 
   // Extended Inventory Editing States
@@ -1376,7 +1377,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
-  const handleDeleteKey = async (keyId: string) => {
+  const handleDeleteKey = (keyId: string) => {
+    if (deletingKeyId) return;
+    const keyItem = inventoryKeys.find((item) => item.id === keyId);
+    askConfirm(
+      lang === 'ar' ? 'حذف المفتاح من المخزون' : 'Delete key from inventory',
+      lang === 'ar' ? `سيتم أرشفة المفتاح غير المستخدم لمنتج ${keyItem?.productName || inventoryProduct?.name || 'هذا المنتج'} ويمكنك إدخاله من جديد لاحقاً. هل تريد المتابعة؟` : `This unused key will be archived and can be added again later. Continue?`,
+      async () => handleDeleteKeyNow(keyId)
+    );
+  };
+
+  const handleDeleteKeyNow = async (keyId: string) => {
+    if (deletingKeyId) return;
+    setDeletingKeyId(keyId);
     try {
       const res = await fetch('/api/keys', {
         method: 'DELETE',
@@ -1399,6 +1412,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     } catch (error: any) {
       console.error('Failed to delete key:', error);
       showToast(error?.message || 'تعذر حذف المفتاح. حاول مجدداً.', 'error');
+    } finally {
+      setDeletingKeyId(null);
     }
   };
 
@@ -4095,10 +4110,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             </span>
                             <button
                               onClick={() => handleDeleteKey(keyItem.id)}
-                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer"
+                              disabled={Boolean(deletingKeyId)}
+                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                               title="حذف المفتاح"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {deletingKeyId === keyItem.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                             </button>
                           </div>
                         ))}
