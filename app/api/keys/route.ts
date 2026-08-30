@@ -13,11 +13,13 @@ export async function GET(req: Request) {
     const productId = searchParams.get('productId');
 
     if (productId) {
-      const keys = await StoreDB.getKeysByProduct(productId);
+      const allProductKeys = await StoreDB.getKeysByProduct(productId);
+      const keys = allProductKeys.filter((key) => !key.isArchived);
       return NextResponse.json({ success: true, keys, stock: getKeyStockSummary(keys) });
     }
 
-    const keys = await StoreDB.getKeys();
+    const allKeys = await StoreDB.getKeys();
+    const keys = allKeys.filter((key) => !key.isArchived);
     return NextResponse.json({ success: true, keys, stock: getKeyStockSummary(keys) });
   } catch (err: any) {
     console.error("Keys API failed:", err);
@@ -80,7 +82,11 @@ export async function DELETE(req: Request) {
     }
     return NextResponse.json({
       success: result,
-      message: result ? 'تم حذف المفتاح غير المستخدم بنجاح.' : 'تعذر حذف المفتاح لأنه غير موجود أو مستخدم بالفعل.'
+      message: result
+        ? existingKey?.isUsed
+          ? 'تم حذف المفتاح من المخزون مع إبقاء ترخيص العميل فعالاً.'
+          : 'تم حذف المفتاح من المخزون، ويمكن إضافته من جديد لاحقاً.'
+        : 'تعذر حذف المفتاح لأنه غير موجود.'
     }, { status: result ? 200 : 400 });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });

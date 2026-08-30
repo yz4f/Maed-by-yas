@@ -1382,7 +1382,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     const keyItem = inventoryKeys.find((item) => item.id === keyId);
     askConfirm(
       lang === 'ar' ? 'حذف المفتاح من المخزون' : 'Delete key from inventory',
-      lang === 'ar' ? `سيتم أرشفة المفتاح غير المستخدم لمنتج ${keyItem?.productName || inventoryProduct?.name || 'هذا المنتج'} ويمكنك إدخاله من جديد لاحقاً. هل تريد المتابعة؟` : `This unused key will be archived and can be added again later. Continue?`,
+      lang === 'ar'
+        ? keyItem?.isUsed
+          ? `سيُزال المفتاح المستخدم من قائمة المخزون مع بقاء ترخيص العميل فعالاً وسجله محفوظاً. لن يصبح المفتاح قابلاً لإعادة الاستخدام. هل تريد المتابعة؟`
+          : `سيُحذف المفتاح من مخزون ${keyItem?.productName || inventoryProduct?.name || 'هذا المنتج'} ويمكنك إدخاله من جديد لاحقاً. هل تريد المتابعة؟`
+        : keyItem?.isUsed
+          ? `The used key will be removed from inventory while the customer license remains active. It cannot be reused. Continue?`
+          : `This unused key will be removed and can be added again later. Continue?`,
       async () => handleDeleteKeyNow(keyId)
     );
   };
@@ -1400,7 +1406,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'تعذر حذف المفتاح.');
       }
-      setKeyActionMessage(data.message || 'تم حذف المفتاح بنجاح.');
+      setKeyActionMessage(data.message || 'تم حذف المفتاح من قائمة المخزون بنجاح.');
+      showToast(data.message || 'تم حذف المفتاح من قائمة المخزون بنجاح.', 'success');
       if (inventoryProduct) {
         await Promise.all([
           loadInventoryKeys(inventoryProduct.id),

@@ -452,7 +452,7 @@ const LocalDB = {
   deleteKey(id: string): boolean {
     const d = getFallbackData();
     const key = d.keys.find((item: Key) => item.id === id);
-    if (!key || key.isUsed) return false;
+    if (!key) return false;
     Object.assign(key, {
       isArchived: true,
       isDisabled: true,
@@ -987,7 +987,7 @@ export const StoreDB = {
       async () => {
         const keyRef = doc(getDb(), 'keys', id);
         const keySnap = await getDoc(keyRef);
-        if (!keySnap.exists() || (keySnap.data() as Key).isUsed) return false;
+        if (!keySnap.exists()) return false;
         await updateDoc(keyRef, {
           isArchived: true,
           isDisabled: true,
