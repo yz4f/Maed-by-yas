@@ -48,7 +48,9 @@ import {
   Hash,
   Megaphone,
   Mic2,
-  Send
+  Send,
+  PanelRightClose,
+  PanelRightOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
@@ -167,14 +169,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('self-delivery.theme');
     const savedLanguage = window.localStorage.getItem('self-delivery.language');
+    const savedSidebar = window.localStorage.getItem('self-delivery.sidebar-collapsed');
     if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
     if (savedLanguage === 'ar' || savedLanguage === 'en') setLang(savedLanguage);
+    if (savedSidebar === 'true' || savedSidebar === 'false') setSidebarCollapsed(savedSidebar === 'true');
   }, []);
 
   useEffect(() => {
@@ -187,6 +192,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     window.localStorage.setItem('self-delivery.language', lang);
   }, [lang]);
+
+  useEffect(() => {
+    window.localStorage.setItem('self-delivery.sidebar-collapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   // Demo Local Authentication for instant local testing
   const [demoUser, setDemoUser] = useState<UserType | null>(null);
@@ -2216,6 +2225,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     );
   }
 
+  const activePageTitle = {
+    overview: lang === 'ar' ? 'الرئيسية' : 'Overview',
+    'my-products': lang === 'ar' ? 'منتجاتي' : 'My Products',
+    faqs: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions',
+    redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
+    tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help Center',
+    profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
+    admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
+    'admin-chats': lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Chats',
+  }[activeTab];
+
   return (
     <div
       className={`portal-shell portal-protected-content ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`}
@@ -2245,17 +2265,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         <div className="portal-mobile-brand flex min-w-0 items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span className="min-w-0"><strong className="notranslate block truncate text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div>
         <div className="flex items-center gap-1.5"><button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className={`h-8 min-w-8 rounded-lg border px-1.5 text-[9px] font-black ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{lang === 'ar' ? 'EN' : 'AR'}</button><button onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={lang === 'ar' ? 'تبديل المظهر' : 'Toggle theme'} className={`sd-icon-button !h-8 !w-8 inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}</button></div>
       </div>
-      <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
+      <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`portal-mobile-drawer fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
         <div className="mb-5 flex items-center justify-between px-1"><div className="portal-mobile-brand flex items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span><strong className="notranslate block text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
-        <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
+        <nav className="portal-mobile-nav min-h-0 flex-1 space-y-1 overflow-y-auto"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" /><span>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span><span className="portal-sidebar-badge">{activeProductCount}</span></button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin-chats'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin-chats' ? (isDark ? 'bg-violet-400/15 text-violet-100' : 'bg-violet-50 text-violet-800') : 'opacity-70'}`}><MessageSquare className="h-4 w-4" />{lang === 'ar' ? 'محادثات مساعد تعن' : 'Assistant Chats'}</button>}<a href="https://discord.gg/t3n" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold opacity-70 hover:opacity-100"><DiscordMark className="h-4 w-4" />{lang === 'ar' ? 'مجتمع ديسكورد' : 'Discord Community'}</a><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
         <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
       </motion.aside></>}</AnimatePresence>
 
       {/* Premium navigation panel */}
       <aside
-        className="portal-sidebar hidden md:flex flex-col shrink-0 h-full relative z-20 transition-colors duration-500"
+        className={`portal-sidebar ${sidebarCollapsed ? 'portal-sidebar--collapsed' : ''} hidden md:flex flex-col shrink-0 h-full relative z-20 transition-[width,background-color,border-color] duration-200`}
         style={{
-          width: '272px',
+          width: sidebarCollapsed ? '88px' : '260px',
           background: isDark ? 'linear-gradient(180deg, rgba(7, 21, 42, 0.92), rgba(4, 12, 26, 0.86))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(234, 245, 253, 0.74))',
           borderRight: lang === 'ar' ? 'none' : `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}`,
           borderLeft: lang === 'ar' ? `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}` : 'none',
@@ -2264,7 +2284,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* BRAND */}
         <div className="portal-sidebar-brand">
           <div className="portal-sidebar-brand__mark"><img src="/logo.png" alt="تعن" /></div>
-          <div className="min-w-0">
+          <div className="portal-sidebar-brand__copy min-w-0">
             <span className="portal-sidebar-brand__eyebrow">{lang === 'ar' ? 'تعن الرقمية' : 'TA3N DIGITAL'}</span>
             <strong className="portal-sidebar-brand__name notranslate" translate="no">{renderBrandText('تعن')}</strong>
             <span className="portal-sidebar-brand__caption">{lang === 'ar' ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</span>
@@ -2272,7 +2292,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
 
         {/* NAV */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="portal-sidebar-nav" style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* GENERAL */}
           <div>
@@ -2311,6 +2331,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             >
               <Package size={15} />
               <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'my-products' ? 700 : 500 }}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
+              <span className="portal-sidebar-badge" aria-label={lang === 'ar' ? `${activeProductCount} منتجات مفعلة` : `${activeProductCount} active products`}>{activeProductCount}</span>
             </button>
             {activeProductCount > 0 && <button
               onClick={() => setActiveTab('faqs')}
@@ -2424,8 +2445,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
 
         {/* BOTTOM — Profile Card + Logout */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="portal-sidebar-footer" style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div
+            className="portal-sidebar-user-card"
             onClick={() => setActiveTab('profile')}
             style={{
               display: 'flex', alignItems: 'center', gap: '10px',
@@ -2443,7 +2465,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
               onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="portal-sidebar-user-card__copy" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser.name}
               </span>
@@ -2465,7 +2487,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#555'; e.currentTarget.style.background = 'transparent'; }}
           >
             <LogOut size={13} />
-            <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+            <span className="portal-sidebar-logout-label">{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
           </button>
         </div>
       </aside>
@@ -2505,35 +2527,51 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* Structured portal header */}
         <header className={`portal-page-header flex items-center justify-between gap-4 animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
-          <div className="min-w-0">
-            <p className={`portal-page-header__eyebrow ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'بوابة تعن الرقمية' : 'TA3N · DIGITAL PORTAL'}</p>
-            <h1 className={`portal-page-header__title text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
-              {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
-              {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
-              {activeTab === 'faqs' && (lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions')}
-              {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
-              {activeTab === 'tickets' && (lang === 'ar' ? 'مركز المساعدة' : 'Help Center')}
-              {activeTab === 'profile' && (lang === 'ar' ? 'الملف الشخصي' : 'Profile')}
-              {activeTab === 'admin' && (lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control')}
-              {activeTab === 'admin-chats' && (lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Chats')}
-            </h1>
+          <div className="portal-page-header__copy min-w-0">
+            <nav aria-label={lang === 'ar' ? 'مسار التنقل' : 'Breadcrumb'} className={`portal-breadcrumbs ${isDark ? 'text-sky-200/65' : 'text-sky-700/70'}`}>
+              <button type="button" onClick={() => setActiveTab('overview')}>{lang === 'ar' ? 'بوابة تعن الرئيسية' : 'Ta3n Portal'}</button>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">{activePageTitle}</span>
+            </nav>
+            <h1 className={`portal-page-header__title text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{activePageTitle}</h1>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="portal-page-header__actions flex items-center gap-2">
             <button
+              type="button"
+              onClick={() => setSidebarCollapsed((current) => !current)}
+              title={sidebarCollapsed ? (lang === 'ar' ? 'إظهار الشريط الجانبي' : 'Expand sidebar') : (lang === 'ar' ? 'إخفاء الشريط الجانبي' : 'Collapse sidebar')}
+              aria-label={sidebarCollapsed ? (lang === 'ar' ? 'إظهار الشريط الجانبي' : 'Expand sidebar') : (lang === 'ar' ? 'إخفاء الشريط الجانبي' : 'Collapse sidebar')}
+              aria-pressed={sidebarCollapsed}
+              className={`portal-header-action hidden h-10 w-10 place-items-center rounded-xl border md:grid ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+            >
+              {sidebarCollapsed ? <PanelRightOpen className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
               title={lang === 'ar' ? 'English' : 'العربية'}
               aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-              className={`h-10 min-w-10 rounded-xl border px-2 text-[10px] font-black tracking-wide transition-all duration-200 active:scale-95 ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+              className={`portal-header-action h-10 min-w-10 rounded-xl border px-2 text-[10px] font-black tracking-wide ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
             >
               <span className="inline-flex items-center gap-1"><Globe className="h-3.5 w-3.5" />{lang === 'ar' ? 'EN' : 'AR'}</span>
             </button>
             <button
+              type="button"
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
               title={isDark ? (lang === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (lang === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
-              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all duration-200 active:scale-95 ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+              aria-label={isDark ? (lang === 'ar' ? 'تفعيل الوضع الفاتح' : 'Enable light mode') : (lang === 'ar' ? 'تفعيل الوضع الداكن' : 'Enable dark mode')}
+              className={`portal-header-action h-10 w-10 rounded-xl border flex items-center justify-center ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('profile')}
+              className={`portal-header-user hidden items-center gap-2.5 rounded-xl border px-2 py-1.5 lg:flex ${isDark ? 'border-white/[.1] bg-white/[.045] text-slate-100 hover:bg-white/[.075]' : 'border-slate-200 bg-white/80 text-slate-800 hover:bg-white'}`}
+            >
+              <img src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt={currentUser.name} onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
+              <span className="min-w-0 text-start"><strong className="block max-w-28 truncate text-[11px] font-black">{currentUser.name}</strong><small className="mt-0.5 flex items-center gap-1 text-[9px] font-bold text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{lang === 'ar' ? 'متصل' : 'Online'}</small></span>
             </button>
           </div>
         </header>
