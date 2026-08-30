@@ -2485,3 +2485,131 @@ body {
     opacity: .42;
   }
 }
+
+/* Unified scroll and menu containment: visible, predictable, and aligned with the portal surface. */
+.portal-shell,
+.portal-shell * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(91, 151, 197, .74) rgba(5, 14, 25, .34);
+}
+
+.portal-shell *::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.portal-shell *::-webkit-scrollbar-track {
+  background: rgba(5, 14, 25, .34);
+  border-radius: 999px;
+}
+
+.portal-shell *::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(103, 183, 235, .82), rgba(48, 95, 139, .88)) padding-box;
+}
+
+.portal-shell *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(139, 216, 255, .96), rgba(62, 126, 179, .96)) padding-box;
+}
+
+.portal-shell--light,
+.portal-shell--light * {
+  scrollbar-color: rgba(47, 122, 173, .68) rgba(210, 229, 242, .54);
+}
+
+.portal-shell--light *::-webkit-scrollbar-track {
+  background: rgba(210, 229, 242, .54);
+}
+
+.portal-shell .portal-scroll-region {
+  scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  scroll-padding-block: 18px;
+}
+
+.portal-shell .portal-content-frame,
+.portal-shell .portal-content-frame > *,
+.portal-shell .admin-workspace,
+.portal-shell .admin-workspace > *,
+.portal-shell .admin-navigation,
+.portal-shell .admin-navigation > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.portal-shell select {
+  max-width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color-scheme: dark;
+}
+
+.portal-shell--light select {
+  color-scheme: light;
+}
+
+.portal-shell select option,
+.portal-shell select optgroup {
+  background: #0b1726;
+  color: #e8f3fb;
+}
+
+.portal-shell--light select option,
+.portal-shell--light select optgroup {
+  background: #f8fbfd;
+  color: #10243a;
+}
+
+.portal-shell [role="menu"],
+.portal-shell [role="listbox"],
+.portal-shell [data-radix-popper-content-wrapper] > * {
+  max-width: min(30rem, calc(100vw - 24px));
+  max-height: min(70vh, 32rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--portal-radius-sm);
+  scrollbar-gutter: stable;
+}
+
+.portal-shell [role="menuitem"],
+.portal-shell [role="option"],
+.portal-shell .admin-navigation__item {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.portal-shell [role="menuitem"] > *,
+.portal-shell [role="option"] > *,
+.portal-shell .admin-navigation__item > * {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .portal-shell *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .portal-shell .portal-scroll-region {
+    scrollbar-gutter: auto;
+    scroll-padding-top: 76px;
+  }
+
+  .portal-shell [role="menu"],
+  .portal-shell [role="listbox"],
+  .portal-shell [data-radix-popper-content-wrapper] > * {
+    max-width: calc(100vw - 16px);
+    max-height: min(66vh, 28rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-shell .portal-scroll-region {
+    scroll-behavior: auto;
+  }
+}

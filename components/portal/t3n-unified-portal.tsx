@@ -2473,7 +2473,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
 
       {/* Main Content Area */}
-      <main className="portal-main-content flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 scrollbar-none relative z-10">
+      <main className="portal-main-content portal-scroll-region flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
         <div className="portal-content-frame max-w-[1520px] mx-auto space-y-6">
 
         {currentUser?.warningMessage && (
