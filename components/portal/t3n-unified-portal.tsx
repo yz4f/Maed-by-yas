@@ -56,8 +56,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
-import { DiscordMark } from './discord-mark';
-import { PortalWelcome } from './portal-welcome';
 import { PortalNavigation } from './portal-navigation';
 import { HelpCenter } from './help-center';
 import { SupportNotificationBanner } from './support-notification-banner';
@@ -75,6 +73,17 @@ interface T3NUnifiedPortalProps {
 }
 
 const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
+
+function DiscordMark({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none">
+      <path d="M7.05 6.34c1.28-.95 2.8-1.42 4.95-1.42s3.67.47 4.95 1.42c1.18 1.5 1.8 3.54 1.8 5.9 0 2.34-.62 4.34-1.8 5.82-1.2.9-2.8 1.45-4.95 1.45s-3.75-.55-4.95-1.45c-1.18-1.48-1.8-3.48-1.8-5.82 0-2.36.62-4.4 1.8-5.9Z" fill="currentColor" />
+      <path d="M8.15 8.44c.55.2 1.04.47 1.47.8M15.85 8.44c-.55.2-1.04.47-1.47.8M8.9 15.3c1.78.86 4.42.86 6.2 0" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
+      <circle cx="9.6" cy="12.25" r="1.05" fill="var(--portal-icon-cutout, #0b1523)" />
+      <circle cx="14.4" cy="12.25" r="1.05" fill="var(--portal-icon-cutout, #0b1523)" />
+    </svg>
+  );
+}
 
 export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const { data: session, status } = useSession();
@@ -1653,13 +1662,455 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   if (!isLoggedIn) {
     return (
-      <PortalWelcome
-        lang={lang}
-        isDark={isDark}
-        onToggleLanguage={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-        onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
-        onSignIn={() => signIn('discord')}
-      >
+      <div className={`redeem-page-wrapper ${isDark ? 'redeem-page-wrapper--dark' : 'redeem-page-wrapper--light'} min-h-screen w-full relative overflow-hidden select-none`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .redeem-page-wrapper {
+            --night: #081321;
+            --deep-blue: #10213a;
+            --royal-blue: #4567d8;
+            --sky: #8edbff;
+            --ice: #f4f8fc;
+            --silver: #c8d4e2;
+            --muted: #a8b8ca;
+            --glass: rgba(15, 27, 43, 0.82);
+            --glass-border: rgba(193, 216, 240, 0.19);
+            --discord: #5865f2;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            isolation: isolate;
+            color: var(--ice);
+            background: linear-gradient(125deg, rgba(4, 12, 24, 0.80) 0%, rgba(9, 31, 61, 0.72) 49%, rgba(4, 14, 28, 0.84) 100%), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, var(--night);
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+          }
+          .redeem-page-wrapper .login-background {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            pointer-events: none;
+          }
+          .redeem-page-wrapper .bg-gfx {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            background:
+              linear-gradient(125deg, rgba(2, 10, 24, 0.24) 0%, rgba(4, 29, 66, 0.16) 49%, rgba(2, 12, 28, 0.28) 100%),
+              url('/images/t3n-login-azure-clean.png') center center / cover no-repeat,
+              #061524;
+          }
+          .redeem-page-wrapper .bg-gfx::before,
+          .redeem-page-wrapper .bg-gfx::after {
+            content: '';
+            position: absolute;
+            inset: -12%;
+            pointer-events: none;
+          }
+          .redeem-page-wrapper .bg-gfx::before {
+            opacity: 0.18;
+            filter: blur(28px);
+            background:
+              radial-gradient(ellipse 42% 28% at 25% 50%, rgba(152, 223, 255, 0.17), transparent 72%),
+              radial-gradient(ellipse 34% 28% at 79% 27%, rgba(116, 208, 255, 0.12), transparent 75%);
+            animation: mistFloat 16s ease-in-out infinite alternate;
+          }
+          .redeem-page-wrapper .bg-gfx::after {
+            opacity: 0.16;
+            background: linear-gradient(118deg, rgba(255,255,255,0.045), transparent 31%, rgba(197,226,248,0.075) 59%, transparent 83%);
+          }
+          .redeem-page-wrapper .grid-lines {
+            display: none;
+            position: absolute;
+            inset: 0;
+            opacity: 0.18;
+            background-image:
+              linear-gradient(rgba(215, 236, 253, 0.08) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(215, 236, 253, 0.08) 1px, transparent 1px);
+            background-size: 68px 68px;
+            mask-image: radial-gradient(ellipse at 50% 46%, black 0%, transparent 72%);
+          }
+          .redeem-page-wrapper .blue-orb {
+            display: none;
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(2px);
+            opacity: 0.46;
+            pointer-events: none;
+          }
+          .redeem-page-wrapper .blue-orb.one {
+            width: min(44vw, 640px);
+            aspect-ratio: 1;
+            top: -24vw;
+            right: -12vw;
+            background: radial-gradient(circle at 42% 58%, rgba(138, 221, 255, 0.55) 0%, rgba(45, 136, 201, 0.32) 36%, transparent 70%);
+            animation: driftOne 12s ease-in-out infinite;
+          }
+          .redeem-page-wrapper .blue-orb.two {
+            width: min(47vw, 720px);
+            aspect-ratio: 1;
+            bottom: -31vw;
+            left: -13vw;
+            background: radial-gradient(circle at 58% 38%, rgba(123, 211, 255, 0.46) 0%, rgba(28, 104, 178, 0.28) 39%, transparent 70%);
+            animation: driftTwo 15s ease-in-out infinite;
+          }
+          .redeem-page-wrapper .silver-ribbon {
+            display: none;
+            position: absolute;
+            width: 66vw;
+            height: 31vw;
+            min-width: 760px;
+            min-height: 360px;
+            border: 1px solid rgba(231, 244, 255, 0.38);
+            border-radius: 50%;
+            box-shadow: 0 0 0 9px rgba(192, 216, 235, 0.045), 0 0 64px rgba(134, 207, 247, 0.14), inset 0 0 38px rgba(228, 241, 255, 0.06);
+            background: linear-gradient(115deg, rgba(206, 225, 240, 0.17), transparent 18%, rgba(91, 183, 234, 0.08) 50%, rgba(229, 237, 245, 0.13) 82%, transparent);
+            transform: rotate(-23deg);
+            pointer-events: none;
+          }
+          .redeem-page-wrapper .ribbon-one { top: -13vw; left: 19vw; }
+          .redeem-page-wrapper .ribbon-two {
+            bottom: -16vw;
+            right: 18vw;
+            transform: rotate(-23deg) scale(0.82);
+            opacity: 0.72;
+          }
+          .redeem-page-wrapper .wordmark-ghost {
+            position: absolute;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Almarai', sans-serif;
+            font-weight: 900;
+            font-size: min(25vw, 340px);
+            letter-spacing: 0.14em;
+            white-space: nowrap;
+            user-select: none;
+            pointer-events: none;
+            color: transparent;
+            background: linear-gradient(110deg, rgba(234, 246, 255, 0.03), rgba(235, 248, 255, 0.26), rgba(134, 202, 239, 0.05));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-stroke: 1px rgba(220, 239, 255, 0.15);
+          }
+          .redeem-page-wrapper .noise {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.035;
+            mix-blend-mode: soft-light;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          }
+          .redeem-page-wrapper .stage {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: min(1240px, 100%);
+            padding: 116px 6vw 86px;
+            gap: clamp(56px, 9vw, 144px);
+          }
+          .redeem-page-wrapper .brand-corner {
+            position: fixed;
+            top: 28px;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 3px 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            animation: fadeDown .7s ease both;
+          }
+          .redeem-page-wrapper .brand-corner .mark {
+            width: 43px;
+            height: 43px;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            box-shadow: none;
+          }
+          .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border: 0; border-radius: 50%; object-fit: cover; box-shadow: none; }
+          .redeem-page-wrapper .brand-corner > div:last-child { padding-inline-start: 0; border-inline-start: 0; }
+          .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 21px; line-height: 1; letter-spacing: 0.03em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.28); }
+          .redeem-page-wrapper .brand-tag { display: none; }
+          .redeem-page-wrapper .copy { flex: 1; max-width: 554px; animation: fadeRight .8s ease both .1s; }
+          .redeem-page-wrapper .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            margin-bottom: 22px;
+            border: 1px solid rgba(223, 242, 255, 0.28);
+            border-radius: 999px;
+            background: rgba(131, 202, 244, 0.11);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+            color: #c4eaff;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+          }
+          .redeem-page-wrapper .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: #a8e7ff; box-shadow: 0 0 10px #a8e7ff; }
+          .redeem-page-wrapper .headline {
+            margin-bottom: 19px;
+            color: #f6fbff;
+            font-family: 'Almarai', sans-serif;
+            font-size: clamp(38px, 4.3vw, 58px);
+            font-weight: 900;
+            line-height: 1.18;
+            text-align: right;
+            text-shadow: 0 5px 24px rgba(0, 12, 33, 0.28);
+          }
+          .redeem-page-wrapper[dir='ltr'] .headline { text-align: left; }
+          .redeem-page-wrapper .headline .grad { background: linear-gradient(110deg, #d7f4ff 8%, #72d0ff 44%, #c5d8e6 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+          .redeem-page-wrapper .subtext { max-width: 445px; color: #c4d3e1; font-size: 15.5px; line-height: 1.95; text-align: right; text-shadow: 0 2px 14px rgba(0, 10, 29, 0.4); }
+          .redeem-page-wrapper[dir='ltr'] .subtext { text-align: left; }
+          .redeem-page-wrapper .mini-stats { display: flex; gap: 0; margin-top: 36px; border-right: 1px solid rgba(222, 241, 255, 0.34); }
+          .redeem-page-wrapper[dir='ltr'] .mini-stats { border-right: 0; border-left: 1px solid rgba(222, 241, 255, 0.34); }
+          .redeem-page-wrapper .mini-stats div { min-width: 104px; padding: 0 18px; text-align: right; border-left: 1px solid rgba(222, 241, 255, 0.22); }
+          .redeem-page-wrapper[dir='ltr'] .mini-stats div { text-align: left; border-left: 0; border-right: 1px solid rgba(222, 241, 255, 0.22); }
+          .redeem-page-wrapper .mini-stats div:first-child { padding-right: 0; }
+          .redeem-page-wrapper[dir='ltr'] .mini-stats div:first-child { padding-right: 18px; padding-left: 0; }
+          .redeem-page-wrapper .mini-stats div .n { color: #f4faff; font-family: 'Almarai', sans-serif; font-size: 22px; font-weight: 900; }
+          .redeem-page-wrapper .mini-stats div .l { margin-top: 5px; color: #a8c4d8; font-size: 11px; font-weight: 600; }
+          .redeem-page-wrapper .card {
+            width: min(382px, 100%);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            padding: 28px 30px 31px;
+            border: 1px solid rgba(219, 241, 255, 0.29);
+            border-radius: 23px;
+            color: var(--ice);
+            text-align: center;
+            background: linear-gradient(155deg, rgba(22, 37, 57, 0.96), rgba(13, 23, 38, 0.98) 57%, rgba(18, 33, 52, 0.96));
+            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.42), 0 0 0 5px rgba(170, 211, 246, 0.045), inset 0 1px 0 rgba(255,255,255,0.10);
+            backdrop-filter: blur(26px) saturate(125%);
+            -webkit-backdrop-filter: blur(26px) saturate(125%);
+            animation: fadeUp .8s ease both .25s;
+          }
+          .redeem-page-wrapper .card::before { content: ''; position: absolute; top: 0; right: 14%; left: 14%; height: 1px; background: linear-gradient(90deg, transparent, rgba(238,249,255,0.86), transparent); box-shadow: 0 0 18px rgba(154,218,255,0.72); }
+          .redeem-page-wrapper .card::after { content: ''; position: absolute; width: 280px; height: 280px; top: -166px; left: -104px; border-radius: 50%; background: radial-gradient(circle, rgba(117,202,249,0.18), transparent 70%); pointer-events: none; }
+          .redeem-page-wrapper .card-topline { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 7px; margin-bottom: 18px; color: #b8dcf3; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; }
+          .redeem-page-wrapper .card-topline i { width: 6px; height: 6px; border-radius: 50%; background: #82e5ff; box-shadow: 0 0 10px #82e5ff; }
+          .redeem-page-wrapper .card-icon { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin: 0 auto 19px; border: 1px solid rgba(220,240,254,0.36); border-radius: 19px; color: #b9ecff; background: linear-gradient(145deg, rgba(166,225,255,0.28), rgba(33,101,164,0.17)); box-shadow: 0 0 30px rgba(100,207,255,0.2), inset 0 1px 0 rgba(255,255,255,0.18); }
+          .redeem-page-wrapper .card-icon svg { width: 28px; height: 28px; }
+          .redeem-page-wrapper .card h2 { position: relative; z-index: 1; margin-bottom: 11px; color: #f5fbff; font-family: 'Almarai', sans-serif; font-size: 21px; font-weight: 900; }
+          .redeem-page-wrapper .card p { position: relative; z-index: 1; margin-bottom: 25px; color: #bed1e0; font-size: 13.5px; line-height: 1.85; }
+          .redeem-page-wrapper .discord-btn { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 1px solid rgba(206,226,255,0.38); border-radius: 14px; cursor: pointer; color: white; background: linear-gradient(105deg, #385fc8 0%, #5c75e8 52%, #4165cc 100%); box-shadow: 0 12px 28px rgba(38, 82, 191, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); font-family: inherit; font-size: 14.5px; font-weight: 800; transition: transform .22s ease, box-shadow .22s ease, filter .22s ease; }
+          .redeem-page-wrapper .discord-btn:hover { transform: translateY(-3px); filter: brightness(1.08); box-shadow: 0 18px 35px rgba(51, 93, 211, 0.48), inset 0 1px 0 rgba(255,255,255,0.28); }
+          .redeem-page-wrapper .discord-btn svg { width: 19px; height: 19px; }
+          .redeem-page-wrapper .divider { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin: 22px 0 18px; }
+          .redeem-page-wrapper .divider .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(215,235,249,0.34), transparent); }
+          .redeem-page-wrapper .divider span { color: #a9bfd0; font-size: 10px; font-weight: 700; }
+          .redeem-page-wrapper .alt-link { position: relative; z-index: 1; color: #adbfce; font-size: 13px; }
+          .redeem-page-wrapper .alt-link button { border: none; padding: 0; cursor: pointer; color: #bce9ff; background: transparent; font-family: inherit; font-weight: 800; text-decoration: none; }
+          .redeem-page-wrapper .alt-link button:hover { color: #fff; text-decoration: underline; }
+          .redeem-page-wrapper .floating-ctrls { position: fixed; top: 26px; z-index: 6; display: flex; align-items: center; gap: 9px; }
+          .redeem-page-wrapper .floating-ctrls button { height: 42px; border: 1px solid rgba(203,224,245,0.18); border-radius: 13px; cursor: pointer; color: #eaf4ff; background: rgba(15, 27, 43, 0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+          .redeem-page-wrapper .floating-ctrls button:hover { transform: translateY(-2px); border-color: rgba(142,219,255,0.54); background: rgba(26, 48, 76, 0.94); }
+          .redeem-page-wrapper--light { --night: #eef7fd; --deep-blue: #dceefa; --ice: #102845; --silver: #6e8eaa; --muted: #5d7893; --glass: rgba(255, 255, 255, 0.68); --glass-border: rgba(73, 137, 185, 0.22); color: #102845; background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
+          .redeem-page-wrapper--light .bg-gfx { background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
+          .redeem-page-wrapper--light .bg-gfx::before { opacity: 0.10; background: linear-gradient(115deg, rgba(255,255,255,0.7), transparent 35%, rgba(95,168,212,0.12) 66%, transparent 85%); }
+          .redeem-page-wrapper--light .grid-lines { opacity: 0.6; background-image: linear-gradient(rgba(56, 125, 175, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 125, 175, 0.1) 1px, transparent 1px); }
+          .redeem-page-wrapper--light .silver-ribbon { border-color: rgba(69, 134, 179, 0.28); background: linear-gradient(115deg, rgba(255,255,255,0.46), transparent 18%, rgba(83, 165, 215, 0.09) 50%, rgba(255,255,255,0.42) 82%, transparent); box-shadow: 0 0 0 9px rgba(104, 169, 211, 0.06), 0 0 64px rgba(86, 170, 226, 0.14), inset 0 0 38px rgba(255,255,255,0.32); }
+          .redeem-page-wrapper--light .wordmark-ghost { background: linear-gradient(110deg, rgba(36, 104, 151, 0.05), rgba(64, 137, 185, 0.22), rgba(45, 119, 167, 0.04)); -webkit-text-stroke-color: rgba(56, 125, 175, 0.16); }
+          .redeem-page-wrapper--light .floating-ctrls button { border-color: rgba(67, 132, 177, 0.2); color: #163754; background: rgba(255, 255, 255, 0.64); box-shadow: 0 14px 40px rgba(50, 111, 153, 0.12), inset 0 1px 0 rgba(255,255,255,0.78); }
+          .redeem-page-wrapper--light .brand-corner { border: 0; color: #163754; background: transparent; box-shadow: none; }
+          .redeem-page-wrapper--light .brand-name, .redeem-page-wrapper--light .headline, .redeem-page-wrapper--light .card h2 { color: #102845; text-shadow: none; }
+          .redeem-page-wrapper--light .brand-tag, .redeem-page-wrapper--light .card-topline { color: #2873a8; }
+          .redeem-page-wrapper--light .headline .grad { background: linear-gradient(110deg, #155a90 8%, #2e93ce 48%, #426d90 100%); -webkit-background-clip: text; background-clip: text; }
+          .redeem-page-wrapper--light .subtext, .redeem-page-wrapper--light .card p { color: #506e89; text-shadow: none; }
+          .redeem-page-wrapper--light .mini-stats { border-color: rgba(67, 132, 177, 0.28); }
+          .redeem-page-wrapper--light .mini-stats div { border-color: rgba(67, 132, 177, 0.2); }
+          .redeem-page-wrapper--light .mini-stats div .n { color: #173b5d; }
+          .redeem-page-wrapper--light .mini-stats div .l, .redeem-page-wrapper--light .alt-link { color: #5d7893; }
+          .redeem-page-wrapper--light .card { color: #102845; border-color: rgba(73, 137, 185, 0.25); background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(232, 245, 253, 0.9) 58%, rgba(211, 234, 247, 0.72)); box-shadow: 0 30px 90px rgba(49, 113, 157, 0.16), 0 0 0 5px rgba(104, 174, 219, 0.06), inset 0 1px 0 rgba(255,255,255,0.88); }
+          .redeem-page-wrapper--light .card::before { background: linear-gradient(90deg, transparent, rgba(47, 138, 196, 0.7), transparent); box-shadow: 0 0 18px rgba(76, 173, 226, 0.52); }
+          .redeem-page-wrapper--light .card-icon { color: #1c6b9f; border-color: rgba(76, 149, 196, 0.26); background: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(143, 209, 242, 0.3)); }
+          .redeem-page-wrapper--light .divider .line { background: linear-gradient(90deg, transparent, rgba(67, 132, 177, 0.32), transparent); }
+          .redeem-page-wrapper--light .divider span { color: #61809b; }
+          .redeem-page-wrapper--light .alt-link button { color: #2176ae; }
+          @keyframes mistFloat { from { transform: translate3d(-1.5%, -1%, 0) scale(1); } to { transform: translate3d(2%, 1.5%, 0) scale(1.05); } }
+          @keyframes driftOne { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-22px, 18px, 0) scale(1.04); } }
+          @keyframes driftTwo { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(24px, -18px, 0) scale(1.03); } }
+          @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes fadeRight { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+          @keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+          @media (max-width: 900px) {
+            .redeem-page-wrapper .stage { flex-direction: column; gap: 46px; padding: 126px 24px 64px; text-align: center; }
+            .redeem-page-wrapper .copy { max-width: 100%; }
+            .redeem-page-wrapper .headline, .redeem-page-wrapper .subtext { text-align: center !important; margin-left: auto; margin-right: auto; }
+            .redeem-page-wrapper .mini-stats { justify-content: center; border: 0; }
+            .redeem-page-wrapper .mini-stats div { min-width: auto; padding: 0 13px; text-align: center !important; }
+            .redeem-page-wrapper .mini-stats div:first-child { padding-right: 13px; }
+            .redeem-page-wrapper .silver-ribbon { min-width: 560px; min-height: 280px; }
+          }
+          @media (max-width: 560px) {
+            .redeem-page-wrapper .brand-corner { top: 18px; padding: 6px 9px 6px 6px; }
+            .redeem-page-wrapper .brand-corner .mark { width: 39px; height: 39px; border-radius: 50%; }
+            .redeem-page-wrapper .brand-name { font-size: 16px; }
+            .redeem-page-wrapper .floating-ctrls { top: 74px !important; }
+            .redeem-page-wrapper .stage { padding-top: 150px; }
+            .redeem-page-wrapper .headline { font-size: 36px; }
+            .redeem-page-wrapper .mini-stats { gap: 0; }
+            .redeem-page-wrapper .mini-stats div { padding: 0 9px; }
+            .redeem-page-wrapper .mini-stats div .n { font-size: 18px; }
+            .redeem-page-wrapper .mini-stats div .l { font-size: 10px; }
+            .redeem-page-wrapper .card { padding: 27px 23px 28px; }
+          }
+        ` }} />
+
+        <img className="login-background" src="/images/t3n-login-azure-clean.png" alt="" aria-hidden="true" />
+        {/* Interwoven blue and silver background */}
+        <div className="bg-gfx" aria-hidden="true">
+          <div className="grid-lines" />
+          <div className="blue-orb one" />
+          <div className="blue-orb two" />
+          <div className="silver-ribbon ribbon-one" />
+          <div className="silver-ribbon ribbon-two" />
+        </div>
+        <div className="noise" />
+
+        {/* Prominent brand signature */}
+        <div className="brand-corner" style={{ [lang === 'ar' ? 'right' : 'left']: '42px' }}>
+          <div className="mark">
+            <img src="/logo.png?v=6" alt="شعار تعن" />
+          </div>
+          <div>
+            <div className="brand-name">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</div>
+            <div className="brand-tag">{lang === 'ar' ? 'منصة التراخيص' : 'LICENSE PLATFORM'}</div>
+          </div>
+        </div>
+
+        {/* Floating Controls Container (Theme & Language Switchers) */}
+        <div className="floating-ctrls" style={{ [lang === 'ar' ? 'left' : 'right']: '20px' }}>
+          {/* Theme Switcher */}
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="w-10"
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+          </button>
+
+          {/* Language Switcher */}
+          <button
+            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+            className="px-4 gap-2"
+            title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
+          >
+            <span className="text-sm flex items-center justify-center leading-none">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
+            <span className="leading-none">{lang === 'ar' ? 'English' : 'عربي'}</span>
+          </button>
+        </div>
+
+        <div className="stage">
+          {/* Left / Copy Section */}
+          <div className="copy">
+            <div className="eyebrow">
+              <span className="dot" />
+              {lang === 'ar' ? 'تفعيل الترخيص' : 'License Activation'}
+            </div>
+            
+            <h1 className="headline">
+              {lang === 'ar' ? (
+                <>
+                  فعّل <span className="grad">مفتاح الترخيص</span><br />الخاص بك
+                </>
+              ) : (
+                <>
+                  Activate Your <span className="grad">License Key</span>
+                </>
+              )}
+            </h1>
+            
+            <p className="subtext">
+              {lang === 'ar' 
+                ? 'أدخل مفتاح الترخيص لفتح منتجك والحصول على وصول فوري لكل الميزات والتحديثات.' 
+                : 'Enter your license key to unlock your product and get instant access to all features and updates.'}
+            </p>
+            
+            <div className="mini-stats">
+              <div>
+                <div className="n">2,400+</div>
+                <div className="l">{lang === 'ar' ? 'عضو نشط' : 'Active Members'}</div>
+              </div>
+              <div>
+                <div className="n">99.9%</div>
+                <div className="l">{lang === 'ar' ? 'وقت التشغيل' : 'Uptime'}</div>
+              </div>
+              <div>
+                <div className="n">24/7</div>
+                <div className="l">{lang === 'ar' ? 'دعم فني' : 'Technical Support'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Side Discord access card */}
+          <div className="card">
+            <div className="card-topline"><i /> {lang === 'ar' ? 'تسجيل دخول' : 'LOGIN'}</div>
+            <div className="card-icon">
+              <DiscordMark className="h-7 w-7" />
+            </div>
+            
+            <h2>{lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}</h2>
+            
+            <p>
+              {lang === 'ar' 
+                ? 'اربط حساب ديسكورد الخاص بك لاسترداد وإدارة تراخيصك.' 
+                : 'Link your Discord account to redeem and manage your licenses.'}
+            </p>
+            
+            <button 
+              onClick={() => signIn('discord')}
+              className="discord-btn"
+            >
+              <span className="discord-btn__icon" aria-hidden="true"><DiscordMark className="h-5 w-5" /></span>
+              <span>{lang === 'ar' ? 'المتابعة عبر ديسكورد' : 'Continue with Discord'}</span>
+            </button>
+            
+            <div className="divider">
+              <span className="line" />
+              <span>{lang === 'ar' ? 'أو' : 'OR'}</span>
+              <span className="line" />
+            </div>
+            
+            <div className="alt-link">
+              <a href="https://t3nnn.com/" target="_blank" rel="noreferrer">
+                {lang === 'ar' ? 'شراء مفتاح' : 'Buy a Key'}
+              </a>
+              <span className="alt-link__dot" aria-hidden="true">•</span>
+              <span>{lang === 'ar' ? 'هل أنت جديد؟' : 'New member?'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Copyright Footer */}
+        <div 
+          className="absolute bottom-6 left-8 text-xs font-medium text-slate-500 tracking-wide z-10"
+          dir="rtl"
+        >
+          © 2026 جميع الحقوق محفوظة لمنصة {renderBrandText('تعن')}
+        </div>
+
         {/* Guest Key Redemption Modal */}
         {guestModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -1711,7 +2162,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
           </div>
         )}
-      </PortalWelcome>
+      </div>
     );
   }
 

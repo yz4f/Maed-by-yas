@@ -66,23 +66,23 @@ export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin,
 
   const navigate = (tab: PortalTab) => { onNavigate(tab); onMobileChange(false); };
   const groups: { title: string; items: NavigationItem[] }[] = [
-    { title: ar ? 'مساحتك' : 'WORKSPACE', items: [
-      { tab: 'overview', label: ar ? 'نظرة عامة' : 'Overview', icon: LayoutGrid },
+    { title: ar ? 'عام' : 'GENERAL', items: [
+      { tab: 'overview', label: ar ? 'الرئيسية' : 'Overview', icon: LayoutGrid },
       { tab: 'my-products', label: ar ? 'منتجاتي' : 'My products', icon: Package, count: productCount },
       { tab: 'redeem', label: ar ? 'تفعيل مفتاح' : 'Activate a key', icon: KeyRound },
     ] },
-    { title: ar ? 'المساعدة والمجتمع' : 'HELP & COMMUNITY', items: [
+    { title: ar ? 'الدعم' : 'SUPPORT', items: [
       { tab: 'tickets', label: ar ? 'مركز المساعدة' : 'Help center', icon: Headphones },
-      ...(productCount > 0 ? [{ tab: 'faqs' as const, label: ar ? 'الأسئلة الشائعة' : 'FAQs & guides', icon: BookOpen }] : []),
-      ...(isAdmin ? [{ tab: 'admin-chats' as const, label: ar ? 'محادثات المساعد' : 'Assistant chats', icon: MessageSquare }] : []),
+      ...(productCount > 0 ? [{ tab: 'faqs' as const, label: ar ? 'الأسئلة الشائعة' : 'FAQs', icon: BookOpen }] : []),
+      ...(isAdmin ? [{ tab: 'admin-chats' as const, label: ar ? 'محادثات مساعد تعن' : 'Assistant Chats', icon: MessageSquare }] : []),
     ] },
     { title: ar ? 'الحساب' : 'ACCOUNT', items: [
-      { tab: 'profile', label: ar ? 'الملف الشخصي' : 'My profile', icon: UserRound },
-      ...(isAdmin ? [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Administration', icon: ShieldCheck }] : []),
+      { tab: 'profile', label: ar ? 'الملف الشخصي' : 'Profile', icon: UserRound },
+      ...(isAdmin ? [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Admin Control', icon: ShieldCheck }] : []),
     ] },
   ];
 
-  const brand = <><Image src="/logo.png" width={42} height={42} alt="" /><span className={css.brandCopy}><strong translate="no">تعن<span>.</span></strong><small>YOUR DIGITAL SPACE</small></span></>;
+  const brand = <><Image src="/logo.png" width={42} height={42} alt="" /><span className={css.brandCopy}><strong translate="no">تعن</strong><small>{ar ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</small></span></>;
   const navigation = (compact: boolean) => <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'}>
     {groups.map((group, index) => <div className={css.group} key={group.title}><p className={css.groupTitle}>{group.title}</p>
       {group.items.map(({ tab, label, icon: Icon, count }) => <button type="button" key={tab} className={css.item} data-active={activeTab === tab} aria-current={activeTab === tab ? 'page' : undefined} aria-label={label} title={compact ? label : undefined} onClick={() => navigate(tab)}><span className={css.itemIcon}><Icon size={19} strokeWidth={1.7} /></span><span className={css.itemLabel}>{label}</span>{count !== undefined ? <span className={css.badge}>{count}</span> : activeTab === tab && <Chevron className={css.chevron} size={14} />}</button>)}
@@ -98,7 +98,6 @@ export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin,
     <aside className={`${css.sidebar} ${collapsed ? css.collapsed : ''}`} aria-label={ar ? 'التنقّل' : 'Navigation'}>
       <button type="button" className={css.brand} onClick={() => navigate('overview')} aria-label={ar ? 'تعن — الرئيسية' : 'TA3N — Home'}>{brand}</button>
       {navigation(collapsed)}
-      {!collapsed && <a className={css.supportCard} href="https://discord.gg/t3n" target="_blank" rel="noopener noreferrer"><Headphones size={21} /><strong>{ar ? 'تحتاج مساعدة؟' : 'Need a hand?'}</strong><span>{ar ? 'مجتمع تعن أقرب لك' : 'Your community is here'}<Arrow size={13} /></span></a>}
       {footer}
     </aside>
     <div className={css.mobileBar}>

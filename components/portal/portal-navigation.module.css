@@ -1,4 +1,4 @@
-.sidebar, .drawer { display: flex; flex-direction: column; background: var(--luxe-panel); color: var(--luxe-ink); border-inline-end: 1px solid var(--luxe-line); font-family: 'IBM Plex Sans Arabic', sans-serif; }
+.sidebar, .drawer { display: flex; flex-direction: column; background: var(--luxe-panel); color: var(--luxe-ink); border-inline-end: 1px solid var(--luxe-line); font-family: 'TA3N Portal', sans-serif; }
 .sidebar { width: 266px; flex-shrink: 0; height: 100%; position: relative; z-index: 20; transition: width .2s; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 26px 22px; min-height: 106px; text-align: start; }
 .brand img, .mobileBrand img { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--luxe-line); }
