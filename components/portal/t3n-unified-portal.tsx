@@ -57,6 +57,7 @@ import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as Us
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
 import { PortalNavigation } from './portal-navigation';
+import { DiscordMark as DiscordIcon } from './discord-mark';
 import { HelpCenter } from './help-center';
 import { SupportNotificationBanner } from './support-notification-banner';
 const FaqPage = dynamic(() => import('./faq-page').then((module) => module.FaqPage), { ssr: false });
@@ -2465,7 +2466,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-[#252a34] border-white/[0.12]' : 'bg-slate-100 border-slate-200'}`}>
-                      <DiscordMark className="w-[21px] h-[21px]" />
+                      <DiscordIcon className="h-5 w-5" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'انضم إلى ديسكورد' : 'Join Discord'}</span>
