@@ -89,6 +89,54 @@
 .portal-shell.portal-luxe .product-license-card { border-color: var(--luxe-line) !important; background: var(--luxe-panel) !important; }
 .portal-shell.portal-luxe .admin-navigation { background: var(--luxe-panel) !important; border-color: var(--luxe-line) !important; }
 .portal-shell.portal-luxe .admin-navigation__item { border-radius: 10px !important; }
+.portal-shell.portal-luxe .help-center-experience,
+.portal-shell.portal-luxe .faq-experience > section,
+.portal-shell.portal-luxe .admin-hero,
+.portal-shell.portal-luxe .admin-section .glass-card,
+.portal-shell.portal-luxe .admin-chat-sidebar,
+.portal-shell.portal-luxe .admin-chat-workspace > section {
+  border-color: var(--luxe-line) !important;
+  background: var(--luxe-panel) !important;
+  box-shadow: 0 8px 26px -18px rgba(0, 0, 0, .28) !important;
+}
+.portal-shell.portal-luxe .help-center-experience { border-radius: 18px !important; }
+.portal-shell.portal-luxe .help-center-experience :is(.bg-cyan-400, .bg-sky-400) { background-color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .help-center-experience :is(.text-cyan-300, .text-cyan-200) { color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .faq-experience > section:first-child {
+  background: radial-gradient(circle at 100% 0, var(--luxe-soft), transparent 38%), var(--luxe-panel) !important;
+}
+.portal-shell.portal-luxe .faq-experience :is(input, select, textarea) { color: var(--luxe-ink); }
+.portal-shell.portal-luxe .faq-experience input::placeholder { color: var(--luxe-muted); opacity: .82; }
+.portal-shell.portal-luxe .faq-experience details { border-color: var(--luxe-line) !important; background: var(--luxe-raised) !important; }
+.portal-shell.portal-luxe .faq-experience details[open] { border-color: var(--luxe-accent-line) !important; background: var(--luxe-soft) !important; }
+.portal-shell.portal-luxe .faq-experience :is(.bg-gradient-to-r, .bg-gradient-to-l) { background-image: none !important; background-color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .product-library { max-width: 1280px; }
+.portal-shell.portal-luxe .product-license-card { border-radius: 16px !important; box-shadow: 0 8px 25px -18px rgba(0, 0, 0, .28) !important; }
+.portal-shell.portal-luxe .product-license-card:hover { border-color: var(--luxe-accent-line) !important; transform: translateY(-2px); }
+.portal-shell.portal-luxe .admin-workspace { max-width: 1420px; }
+.portal-shell.portal-luxe .admin-hero { padding: 24px !important; border-radius: 17px !important; }
+.portal-shell.portal-luxe .admin-hero__eyebrow { color: var(--luxe-accent) !important; font-size: 10px; letter-spacing: .08em; }
+.portal-shell.portal-luxe .admin-navigation {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  overflow-x: auto;
+  padding: 7px !important;
+  scrollbar-width: none;
+}
+.portal-shell.portal-luxe .admin-navigation::-webkit-scrollbar { display: none; }
+.portal-shell.portal-luxe .admin-navigation__item { flex: 0 0 auto; min-height: 42px; padding-inline: 15px !important; color: var(--luxe-muted) !important; }
+.portal-shell.portal-luxe .admin-navigation__item:hover { color: var(--luxe-ink) !important; background: var(--luxe-hover) !important; }
+.portal-shell.portal-luxe .admin-navigation__item[aria-selected='true'] { background: var(--luxe-soft) !important; box-shadow: inset 0 0 0 1px var(--luxe-accent-line) !important; color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .admin-section .glass-card { border-radius: 17px !important; padding: 22px !important; }
+.portal-shell.portal-luxe .admin-section .glass-card :is(.bg-indigo-500, .bg-sky-500) { background-color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .admin-section .glass-card :is(.text-indigo-500, .text-sky-400, .text-indigo-650) { color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .admin-chat-workspace > section { border-radius: 18px !important; }
+.portal-shell.portal-luxe .admin-chat-sidebar { border-radius: 18px !important; }
+.portal-shell.portal-luxe .admin-chat-workspace :is(.bg-cyan-400, .bg-violet-500) { background-color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .admin-chat-workspace :is(.text-cyan-300, .text-violet-200) { color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe :is(input, select, textarea) { border-color: var(--luxe-line); }
+.portal-shell.portal-luxe :is(input, select, textarea):focus { border-color: var(--luxe-accent-line) !important; }
 .portal-luxe :is(button, a):focus-visible { outline: 2px solid var(--luxe-accent); outline-offset: 3px; }
 .portal-luxe, .portal-luxe * { scrollbar-color: #3b585c var(--luxe-bg); }
 @media (max-width: 1150px) { .portal-luxe .portal-main-content { padding: 25px; } .portal-luxe .overview-welcome-card h2 { font-size: 20px; } }

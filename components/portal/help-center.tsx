@@ -53,7 +53,7 @@ export function HelpCenter({ lang, isDark, onNotify, onOpenGuide }: HelpCenterPr
   const muted = isDark ? 'text-slate-400' : 'text-slate-500';
   const softSurface = isDark ? 'border-white/[.08] bg-white/[.035]' : 'border-slate-200/80 bg-slate-50/80';
 
-  return <section dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`relative isolate overflow-hidden rounded-[28px] border ${surface}`}>
+  return <section dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`help-center-experience relative isolate overflow-hidden rounded-[28px] border ${surface}`}>
     <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_12%_8%,rgba(34,211,238,.18),transparent_28%),radial-gradient(circle_at_87%_88%,rgba(99,102,241,.14),transparent_31%),linear-gradient(115deg,rgba(7,20,38,.08),transparent_55%)]" />
     <div className="pointer-events-none absolute -top-24 start-[43%] -z-10 h-52 w-52 rounded-full bg-cyan-300/[.08] blur-3xl" />
 

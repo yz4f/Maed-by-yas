@@ -49,8 +49,6 @@ import {
   Megaphone,
   Mic2,
   Send,
-  PanelRightClose,
-  PanelRightOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
@@ -232,6 +230,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [showExpiredLicenses, setShowExpiredLicenses] = useState(false);
   const userProductsRequestInFlightRef = useRef(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
@@ -555,7 +554,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('products');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -2273,6 +2272,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         isAdmin={isAdmin}
         productCount={activeProductCount}
         collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((current) => !current)}
         mobileOpen={mobileMenuOpen}
         onMobileChange={setMobileMenuOpen}
         onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
@@ -2326,16 +2326,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <div className="portal-page-header__actions flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setSidebarCollapsed((current) => !current)}
-              title={sidebarCollapsed ? (lang === 'ar' ? 'إظهار الشريط الجانبي' : 'Expand sidebar') : (lang === 'ar' ? 'إخفاء الشريط الجانبي' : 'Collapse sidebar')}
-              aria-label={sidebarCollapsed ? (lang === 'ar' ? 'إظهار الشريط الجانبي' : 'Expand sidebar') : (lang === 'ar' ? 'إخفاء الشريط الجانبي' : 'Collapse sidebar')}
-              aria-pressed={sidebarCollapsed}
-              className={`portal-header-action hidden h-10 w-10 place-items-center rounded-xl border md:grid ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
-            >
-              {sidebarCollapsed ? <PanelRightOpen className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
               title={lang === 'ar' ? 'English' : 'العربية'}
               aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
@@ -2351,14 +2341,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               className={`portal-header-action h-10 w-10 rounded-xl border flex items-center justify-center ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('profile')}
-              className={`portal-header-user hidden items-center gap-2.5 rounded-xl border px-2 py-1.5 lg:flex ${isDark ? 'border-white/[.1] bg-white/[.045] text-slate-100 hover:bg-white/[.075]' : 'border-slate-200 bg-white/80 text-slate-800 hover:bg-white'}`}
-            >
-              <img src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt={currentUser.name} onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
-              <span className="min-w-0 text-start"><strong className="block max-w-28 truncate text-[11px] font-black">{currentUser.name}</strong><small className="mt-0.5 flex items-center gap-1 text-[9px] font-bold text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{lang === 'ar' ? 'متصل' : 'Online'}</small></span>
             </button>
           </div>
         </header>
@@ -2622,10 +2604,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'احتفظنا بها لسجلّك، ويمكن تجديدها من خلال الدعم أو مفتاح جديد.' : 'Kept for your records; renew with support or a new key.'}</p>
                             </div>
                           </div>
-                          <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-bold text-slate-400">{inactiveProductCount}</span>
+                          <button
+                            type="button"
+                            onClick={() => setShowExpiredLicenses((current) => !current)}
+                            aria-expanded={showExpiredLicenses}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-3 py-2 text-[11px] font-bold text-slate-300 transition hover:border-sky-300/30 hover:bg-sky-300/[0.06] hover:text-sky-100"
+                          >
+                            <span>{showExpiredLicenses ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'عرض' : 'Show')}</span>
+                            <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-slate-400">{inactiveProductCount}</span>
+                            <ArrowLeft className={`h-3.5 w-3.5 transition-transform ${showExpiredLicenses ? 'rotate-90' : ''}`} />
+                          </button>
                         </div>
                       )}
-                    <article
+                    {(canUseProduct || showExpiredLicenses) && <article
                       className={`product-license-card product-license-card--premium group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
@@ -2695,7 +2686,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <span className="min-w-0 text-start"><span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span><span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'أرسل السبب لفريق دعم تعن دون مشاركة المفتاح' : 'Send the reason to Ta3n Support without sharing the key'}</span></span>
                         </button>
                       </div>
-                    </article>
+                    </article>}
                     </React.Fragment>
                   );
                 })}
@@ -2926,7 +2917,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
 
             {/* Admin Sub-Tabs Navigation */}
-            <div className={`admin-navigation grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-full`}>
+            <div role="tablist" aria-label={lang === 'ar' ? 'أقسام لوحة الإدارة' : 'Admin sections'} className={`admin-navigation grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-full`}>
               {[
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
@@ -2943,6 +2934,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 return (
                   <button
                     key={tab.id}
+                    role="tab"
+                    aria-selected={isActive}
                     onClick={() => setAdminSectionTab(tab.id as any)}
                     className={`admin-navigation__item flex min-w-0 items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       isActive 

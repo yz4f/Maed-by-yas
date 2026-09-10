@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ArrowUpLeft, ArrowUpRight, BookOpen, ChevronLeft, ChevronRight, Headphones, KeyRound, LayoutGrid, LogOut, Menu, MessageSquare, Moon, Package, ShieldCheck, Sun, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowUpLeft, ArrowUpRight, BookOpen, ChevronLeft, ChevronRight, Headphones, KeyRound, LayoutGrid, LogOut, Menu, MessageSquare, Moon, Package, PanelRightClose, PanelRightOpen, ShieldCheck, Sun, UserRound, X, type LucideIcon } from 'lucide-react';
 import { DiscordMark } from './discord-mark';
 import css from './portal-navigation.module.css';
 
@@ -15,6 +15,7 @@ interface PortalNavigationProps {
   isAdmin: boolean;
   productCount: number;
   collapsed: boolean;
+  onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileChange: (open: boolean) => void;
   onToggleTheme: () => void;
@@ -24,7 +25,7 @@ interface PortalNavigationProps {
 }
 interface NavigationItem { tab: PortalTab; label: string; icon: LucideIcon; count?: number }
 
-export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin, productCount, collapsed, mobileOpen, onMobileChange, onToggleTheme, onToggleLanguage, onLogout, user }: PortalNavigationProps) {
+export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin, productCount, collapsed, onToggleCollapsed, mobileOpen, onMobileChange, onToggleTheme, onToggleLanguage, onLogout, user }: PortalNavigationProps) {
   const ar = lang === 'ar';
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -96,7 +97,10 @@ export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin,
 
   return <>
     <aside className={`${css.sidebar} ${collapsed ? css.collapsed : ''}`} aria-label={ar ? 'التنقّل' : 'Navigation'}>
-      <button type="button" className={css.brand} onClick={() => navigate('overview')} aria-label={ar ? 'تعن — الرئيسية' : 'TA3N — Home'}>{brand}</button>
+      <div className={css.brandRow}>
+        <button type="button" className={css.brand} onClick={() => navigate('overview')} aria-label={ar ? 'تعن — الرئيسية' : 'TA3N — Home'}>{brand}</button>
+        <button type="button" className={`${css.collapseButton} ${css.iconButton}`} onClick={onToggleCollapsed} title={collapsed ? (ar ? 'إظهار القائمة' : 'Expand navigation') : (ar ? 'طي القائمة' : 'Collapse navigation')} aria-label={collapsed ? (ar ? 'إظهار القائمة' : 'Expand navigation') : (ar ? 'طي القائمة' : 'Collapse navigation')} aria-pressed={collapsed}>{collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}</button>
+      </div>
       {navigation(collapsed)}
       {footer}
     </aside>

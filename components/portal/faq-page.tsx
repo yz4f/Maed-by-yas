@@ -1,6 +1,7 @@
 'use client';
 
-import { BookOpen, ChevronDown, CircleHelp, Download, ImagePlus, KeyRound, MessageCircle, PackageOpen, ShieldCheck, Wrench } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BookOpen, ChevronDown, CircleHelp, ImagePlus, KeyRound, MessageCircle, PackageOpen, Search, ShieldCheck, Wrench, X } from 'lucide-react';
 
 type Language = 'ar' | 'en';
 
@@ -104,8 +105,18 @@ const faqGroups: Record<Language, FaqGroup[]> = {
 
 const iconFor = (icon: FaqGroup['icon']) => icon === 'product' ? PackageOpen : icon === 'troubleshoot' ? Wrench : icon === 'license' ? KeyRound : MessageCircle;
 
+const normalizeSearch = (value: string) => value
+  .toLocaleLowerCase('ar')
+  .replace(/[أإآ]/g, 'ا')
+  .replace(/ى/g, 'ي')
+  .replace(/ة/g, 'ه')
+  .replace(/ـ/g, '')
+  .replace(/[\u064B-\u065F\u0670]/g, '')
+  .trim();
+
 export function FaqPage({ lang, isDark, onOpenProducts, onOpenAssistant }: FaqPageProps) {
   const groups = faqGroups[lang];
+  const [search, setSearch] = useState('');
   const copy = lang === 'ar' ? {
     eyebrow: 'دليل الاستخدام',
     title: 'الأسئلة الشائعة',
@@ -113,6 +124,9 @@ export function FaqPage({ lang, isDark, onOpenProducts, onOpenAssistant }: FaqPa
     products: 'فتح منتجاتي',
     assistant: 'فتح مساعد تعن',
     note: 'لم تجد إجابتك؟ اكتب للمساعد وأرفق صورة واضحة للخطأ إن وجدت.',
+    search: 'ابحث عن سؤال أو كلمة مفتاحية…',
+    noResults: 'لم يتم العثور على نتيجة مطابقة.',
+    clear: 'مسح البحث',
   } : {
     eyebrow: 'PRODUCT GUIDE',
     title: 'Frequently asked questions',
@@ -120,26 +134,40 @@ export function FaqPage({ lang, isDark, onOpenProducts, onOpenAssistant }: FaqPa
     products: 'Open My Products',
     assistant: 'Open Ta3n Assistant',
     note: 'Did not find your answer? Message the assistant and attach a clear screenshot if available.',
+    search: 'Search a question or keyword…',
+    noResults: 'No matching result was found.',
+    clear: 'Clear search',
   };
+  const normalizedQuery = normalizeSearch(search);
+  const filteredGroups = useMemo(() => groups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !normalizedQuery || normalizeSearch(`${group.label} ${group.title} ${item.question} ${item.answer}`).includes(normalizedQuery)),
+  })).filter((group) => group.items.length > 0), [groups, normalizedQuery]);
 
-  return <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-6 pb-8">
-    <section className={`relative isolate overflow-hidden rounded-[28px] border px-5 py-7 sm:px-7 sm:py-8 ${isDark ? 'border-cyan-300/[.16] bg-[#0b1626] text-slate-100' : 'border-sky-100 bg-white text-slate-900 shadow-[0_16px_44px_rgba(22,78,120,.08)]'}`}>
+  return <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="faq-experience mx-auto max-w-none space-y-5 pb-8">
+    <section className={`relative isolate overflow-hidden rounded-2xl border px-5 py-6 sm:px-7 ${isDark ? 'border-cyan-300/[.16] bg-[#0b1626] text-slate-100' : 'border-sky-100 bg-white text-slate-900 shadow-[0_16px_44px_rgba(22,78,120,.08)]'}`}>
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_95%_0%,rgba(34,211,238,.18),transparent_34%),radial-gradient(circle_at_8%_100%,rgba(59,130,246,.10),transparent_36%)]" />
       <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-        <div className="max-w-2xl"><div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/[.08] px-3 py-1.5 text-[9px] font-black tracking-[.16em] text-cyan-300"><CircleHelp className="h-3.5 w-3.5" />{copy.eyebrow}</div><h2 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">{copy.title}</h2><p className={`mt-2 max-w-xl text-xs leading-6 sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{copy.subtitle}</p></div>
+        <div className="max-w-2xl"><div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/[.08] px-3 py-1.5 text-[10px] font-bold text-cyan-300"><CircleHelp className="h-3.5 w-3.5" />{copy.eyebrow}</div><h2 className="mt-3 text-xl font-bold tracking-tight sm:text-2xl">{copy.title}</h2><p className={`mt-2 max-w-xl text-sm leading-6 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{copy.subtitle}</p></div>
         <div className="flex flex-wrap gap-2"><button onClick={onOpenProducts} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-[11px] font-black transition hover:-translate-y-px active:scale-[.97] ${isDark ? 'border-white/[.12] bg-white/[.05] text-slate-100 hover:bg-white/[.09]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><BookOpen className="h-3.5 w-3.5 text-cyan-300" />{copy.products}</button><button onClick={onOpenAssistant} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-3.5 py-2.5 text-[11px] font-black text-slate-950 shadow-[0_10px_22px_rgba(34,211,238,.18)] transition hover:brightness-110 active:scale-[.97]"><MessageCircle className="h-3.5 w-3.5" />{copy.assistant}</button></div>
       </div>
+      <label className={`mt-5 flex min-h-11 items-center gap-2 rounded-xl border px-3 ${isDark ? 'border-white/[.1] bg-black/15 text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-900'}`}>
+        <Search className="h-4 w-4 shrink-0 text-cyan-300" />
+        <span className="sr-only">{copy.search}</span>
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={copy.search} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" />
+        {search && <button type="button" onClick={() => setSearch('')} title={copy.clear} aria-label={copy.clear} className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-white/[.08] hover:text-cyan-200"><X className="h-4 w-4" /></button>}
+      </label>
     </section>
 
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-      {groups.map((group) => {
+    {filteredGroups.length > 0 ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {filteredGroups.map((group) => {
         const Icon = iconFor(group.icon);
         return <section key={group.title} className={`rounded-[24px] border p-4 sm:p-5 ${isDark ? 'border-white/[.08] bg-[#0b1422]' : 'border-slate-200 bg-white shadow-[0_12px_28px_rgba(22,78,120,.05)]'}`}>
           <div className="flex items-center gap-3"><span className={`grid h-10 w-10 place-items-center rounded-2xl border ${isDark ? 'border-cyan-300/15 bg-cyan-400/[.08] text-cyan-300' : 'border-sky-100 bg-sky-50 text-sky-700'}`}><Icon className="h-4.5 w-4.5" /></span><div><p className={`text-[9px] font-black tracking-[.14em] ${isDark ? 'text-cyan-200/70' : 'text-sky-700/70'}`}>{group.label}</p><h3 className={`mt-0.5 text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{group.title}</h3></div></div>
-          <div className="mt-4 space-y-2.5">{group.items.map((item) => <details key={item.question} className={`group rounded-2xl border px-3.5 py-3 transition-[background-color,border-color,transform] duration-200 ease-out hover:-translate-y-px ${isDark ? 'border-white/[.08] bg-white/[.025] open:border-cyan-300/[.24] open:bg-cyan-400/[.055]' : 'border-slate-100 bg-slate-50 open:border-sky-200 open:bg-sky-50/60'}`}><summary className={`flex cursor-pointer list-none items-start justify-between gap-3 text-[11px] font-black leading-5 ${isDark ? 'text-slate-100' : 'text-slate-800'}`}><span>{item.question}</span><ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300 transition-transform duration-200 ease-out group-open:rotate-180" /></summary><p className={`mt-3 border-t pt-3 text-[11px] leading-6 ${isDark ? 'border-white/[.07] text-slate-400' : 'border-slate-200 text-slate-600'}`}>{item.answer}</p></details>)}</div>
+          <div className="mt-4 space-y-2.5">{group.items.map((item) => <details key={item.question} className={`group rounded-xl border px-3.5 py-3 transition-[background-color,border-color] duration-150 ${isDark ? 'border-white/[.08] bg-white/[.025] open:border-cyan-300/[.24] open:bg-cyan-400/[.055]' : 'border-slate-100 bg-slate-50 open:border-sky-200 open:bg-sky-50/60'}`}><summary className={`flex cursor-pointer list-none items-start justify-between gap-3 text-xs font-bold leading-5 ${isDark ? 'text-slate-100' : 'text-slate-800'}`}><span>{item.question}</span><ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300 transition-transform duration-150 group-open:rotate-180" /></summary><p className={`mt-3 border-t pt-3 text-sm leading-6 ${isDark ? 'border-white/[.07] text-slate-400' : 'border-slate-200 text-slate-600'}`}>{item.answer}</p></details>)}</div>
         </section>;
       })}
-    </div>
+    </div> : <section className={`grid min-h-48 place-items-center rounded-2xl border p-6 text-center ${isDark ? 'border-white/[.09] bg-white/[.025] text-slate-300' : 'border-slate-200 bg-white text-slate-700'}`}><div><Search className="mx-auto h-6 w-6 text-cyan-300" /><p className="mt-3 text-sm font-bold">{copy.noResults}</p><button type="button" onClick={() => setSearch('')} className="mt-3 text-xs font-bold text-cyan-300 hover:underline">{copy.clear}</button></div></section>}
 
     <section className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-white/[.08] bg-white/[.025]' : 'border-slate-200 bg-slate-50'}`}><p className={`flex items-start gap-2 text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}><ImagePlus className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />{copy.note}</p><div className="flex items-center gap-1.5 text-[10px] font-bold text-cyan-300"><ShieldCheck className="h-3.5 w-3.5" />{lang === 'ar' ? 'مخصص للعملاء ذوي المنتجات المفعلة' : 'Available for customers with active products'}</div></section>
   </div>;
