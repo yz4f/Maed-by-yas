@@ -56,6 +56,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
+import { DiscordMark } from './discord-mark';
+import { PortalWelcome } from './portal-welcome';
+import { PortalNavigation } from './portal-navigation';
 import { HelpCenter } from './help-center';
 import { SupportNotificationBanner } from './support-notification-banner';
 const FaqPage = dynamic(() => import('./faq-page').then((module) => module.FaqPage), { ssr: false });
@@ -72,17 +75,6 @@ interface T3NUnifiedPortalProps {
 }
 
 const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
-
-function DiscordMark({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none">
-      <path d="M7.05 6.34c1.28-.95 2.8-1.42 4.95-1.42s3.67.47 4.95 1.42c1.18 1.5 1.8 3.54 1.8 5.9 0 2.34-.62 4.34-1.8 5.82-1.2.9-2.8 1.45-4.95 1.45s-3.75-.55-4.95-1.45c-1.18-1.48-1.8-3.48-1.8-5.82 0-2.36.62-4.4 1.8-5.9Z" fill="currentColor" />
-      <path d="M8.15 8.44c.55.2 1.04.47 1.47.8M15.85 8.44c-.55.2-1.04.47-1.47.8M8.9 15.3c1.78.86 4.42.86 6.2 0" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
-      <circle cx="9.6" cy="12.25" r="1.05" fill="var(--portal-icon-cutout, #0b1523)" />
-      <circle cx="14.4" cy="12.25" r="1.05" fill="var(--portal-icon-cutout, #0b1523)" />
-    </svg>
-  );
-}
 
 export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const { data: session, status } = useSession();
@@ -1661,455 +1653,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   if (!isLoggedIn) {
     return (
-      <div className={`redeem-page-wrapper ${isDark ? 'redeem-page-wrapper--dark' : 'redeem-page-wrapper--light'} min-h-screen w-full relative overflow-hidden select-none`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-        <style dangerouslySetInnerHTML={{ __html: `
-          .redeem-page-wrapper {
-            --night: #081321;
-            --deep-blue: #10213a;
-            --royal-blue: #4567d8;
-            --sky: #8edbff;
-            --ice: #f4f8fc;
-            --silver: #c8d4e2;
-            --muted: #a8b8ca;
-            --glass: rgba(15, 27, 43, 0.82);
-            --glass-border: rgba(193, 216, 240, 0.19);
-            --discord: #5865f2;
-            min-height: 100vh;
-            width: 100%;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            isolation: isolate;
-            color: var(--ice);
-            background: linear-gradient(125deg, rgba(4, 12, 24, 0.80) 0%, rgba(9, 31, 61, 0.72) 49%, rgba(4, 14, 28, 0.84) 100%), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, var(--night);
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-          }
-          .redeem-page-wrapper .login-background {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            pointer-events: none;
-          }
-          .redeem-page-wrapper .bg-gfx {
-            display: none;
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            overflow: hidden;
-            background:
-              linear-gradient(125deg, rgba(2, 10, 24, 0.24) 0%, rgba(4, 29, 66, 0.16) 49%, rgba(2, 12, 28, 0.28) 100%),
-              url('/images/t3n-login-azure-clean.png') center center / cover no-repeat,
-              #061524;
-          }
-          .redeem-page-wrapper .bg-gfx::before,
-          .redeem-page-wrapper .bg-gfx::after {
-            content: '';
-            position: absolute;
-            inset: -12%;
-            pointer-events: none;
-          }
-          .redeem-page-wrapper .bg-gfx::before {
-            opacity: 0.18;
-            filter: blur(28px);
-            background:
-              radial-gradient(ellipse 42% 28% at 25% 50%, rgba(152, 223, 255, 0.17), transparent 72%),
-              radial-gradient(ellipse 34% 28% at 79% 27%, rgba(116, 208, 255, 0.12), transparent 75%);
-            animation: mistFloat 16s ease-in-out infinite alternate;
-          }
-          .redeem-page-wrapper .bg-gfx::after {
-            opacity: 0.16;
-            background: linear-gradient(118deg, rgba(255,255,255,0.045), transparent 31%, rgba(197,226,248,0.075) 59%, transparent 83%);
-          }
-          .redeem-page-wrapper .grid-lines {
-            display: none;
-            position: absolute;
-            inset: 0;
-            opacity: 0.18;
-            background-image:
-              linear-gradient(rgba(215, 236, 253, 0.08) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(215, 236, 253, 0.08) 1px, transparent 1px);
-            background-size: 68px 68px;
-            mask-image: radial-gradient(ellipse at 50% 46%, black 0%, transparent 72%);
-          }
-          .redeem-page-wrapper .blue-orb {
-            display: none;
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(2px);
-            opacity: 0.46;
-            pointer-events: none;
-          }
-          .redeem-page-wrapper .blue-orb.one {
-            width: min(44vw, 640px);
-            aspect-ratio: 1;
-            top: -24vw;
-            right: -12vw;
-            background: radial-gradient(circle at 42% 58%, rgba(138, 221, 255, 0.55) 0%, rgba(45, 136, 201, 0.32) 36%, transparent 70%);
-            animation: driftOne 12s ease-in-out infinite;
-          }
-          .redeem-page-wrapper .blue-orb.two {
-            width: min(47vw, 720px);
-            aspect-ratio: 1;
-            bottom: -31vw;
-            left: -13vw;
-            background: radial-gradient(circle at 58% 38%, rgba(123, 211, 255, 0.46) 0%, rgba(28, 104, 178, 0.28) 39%, transparent 70%);
-            animation: driftTwo 15s ease-in-out infinite;
-          }
-          .redeem-page-wrapper .silver-ribbon {
-            display: none;
-            position: absolute;
-            width: 66vw;
-            height: 31vw;
-            min-width: 760px;
-            min-height: 360px;
-            border: 1px solid rgba(231, 244, 255, 0.38);
-            border-radius: 50%;
-            box-shadow: 0 0 0 9px rgba(192, 216, 235, 0.045), 0 0 64px rgba(134, 207, 247, 0.14), inset 0 0 38px rgba(228, 241, 255, 0.06);
-            background: linear-gradient(115deg, rgba(206, 225, 240, 0.17), transparent 18%, rgba(91, 183, 234, 0.08) 50%, rgba(229, 237, 245, 0.13) 82%, transparent);
-            transform: rotate(-23deg);
-            pointer-events: none;
-          }
-          .redeem-page-wrapper .ribbon-one { top: -13vw; left: 19vw; }
-          .redeem-page-wrapper .ribbon-two {
-            bottom: -16vw;
-            right: 18vw;
-            transform: rotate(-23deg) scale(0.82);
-            opacity: 0.72;
-          }
-          .redeem-page-wrapper .wordmark-ghost {
-            position: absolute;
-            top: 48%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Almarai', sans-serif;
-            font-weight: 900;
-            font-size: min(25vw, 340px);
-            letter-spacing: 0.14em;
-            white-space: nowrap;
-            user-select: none;
-            pointer-events: none;
-            color: transparent;
-            background: linear-gradient(110deg, rgba(234, 246, 255, 0.03), rgba(235, 248, 255, 0.26), rgba(134, 202, 239, 0.05));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-stroke: 1px rgba(220, 239, 255, 0.15);
-          }
-          .redeem-page-wrapper .noise {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
-            opacity: 0.035;
-            mix-blend-mode: soft-light;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-          }
-          .redeem-page-wrapper .stage {
-            position: relative;
-            z-index: 2;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: min(1240px, 100%);
-            padding: 116px 6vw 86px;
-            gap: clamp(56px, 9vw, 144px);
-          }
-          .redeem-page-wrapper .brand-corner {
-            position: fixed;
-            top: 28px;
-            z-index: 6;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 3px 0;
-            border: 0;
-            border-radius: 0;
-            background: transparent;
-            box-shadow: none;
-            animation: fadeDown .7s ease both;
-          }
-          .redeem-page-wrapper .brand-corner .mark {
-            width: 43px;
-            height: 43px;
-            padding: 0;
-            border: 0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            box-shadow: none;
-          }
-          .redeem-page-wrapper .brand-corner .mark img { width: 100%; height: 100%; border: 0; border-radius: 50%; object-fit: cover; box-shadow: none; }
-          .redeem-page-wrapper .brand-corner > div:last-child { padding-inline-start: 0; border-inline-start: 0; }
-          .redeem-page-wrapper .brand-name { font-family: 'Almarai', sans-serif; font-weight: 900; font-size: 21px; line-height: 1; letter-spacing: 0.03em; color: #fff; text-shadow: 0 1px 14px rgba(176, 228, 255, 0.28); }
-          .redeem-page-wrapper .brand-tag { display: none; }
-          .redeem-page-wrapper .copy { flex: 1; max-width: 554px; animation: fadeRight .8s ease both .1s; }
-          .redeem-page-wrapper .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 14px;
-            margin-bottom: 22px;
-            border: 1px solid rgba(223, 242, 255, 0.28);
-            border-radius: 999px;
-            background: rgba(131, 202, 244, 0.11);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-            color: #c4eaff;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-          }
-          .redeem-page-wrapper .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: #a8e7ff; box-shadow: 0 0 10px #a8e7ff; }
-          .redeem-page-wrapper .headline {
-            margin-bottom: 19px;
-            color: #f6fbff;
-            font-family: 'Almarai', sans-serif;
-            font-size: clamp(38px, 4.3vw, 58px);
-            font-weight: 900;
-            line-height: 1.18;
-            text-align: right;
-            text-shadow: 0 5px 24px rgba(0, 12, 33, 0.28);
-          }
-          .redeem-page-wrapper[dir='ltr'] .headline { text-align: left; }
-          .redeem-page-wrapper .headline .grad { background: linear-gradient(110deg, #d7f4ff 8%, #72d0ff 44%, #c5d8e6 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-          .redeem-page-wrapper .subtext { max-width: 445px; color: #c4d3e1; font-size: 15.5px; line-height: 1.95; text-align: right; text-shadow: 0 2px 14px rgba(0, 10, 29, 0.4); }
-          .redeem-page-wrapper[dir='ltr'] .subtext { text-align: left; }
-          .redeem-page-wrapper .mini-stats { display: flex; gap: 0; margin-top: 36px; border-right: 1px solid rgba(222, 241, 255, 0.34); }
-          .redeem-page-wrapper[dir='ltr'] .mini-stats { border-right: 0; border-left: 1px solid rgba(222, 241, 255, 0.34); }
-          .redeem-page-wrapper .mini-stats div { min-width: 104px; padding: 0 18px; text-align: right; border-left: 1px solid rgba(222, 241, 255, 0.22); }
-          .redeem-page-wrapper[dir='ltr'] .mini-stats div { text-align: left; border-left: 0; border-right: 1px solid rgba(222, 241, 255, 0.22); }
-          .redeem-page-wrapper .mini-stats div:first-child { padding-right: 0; }
-          .redeem-page-wrapper[dir='ltr'] .mini-stats div:first-child { padding-right: 18px; padding-left: 0; }
-          .redeem-page-wrapper .mini-stats div .n { color: #f4faff; font-family: 'Almarai', sans-serif; font-size: 22px; font-weight: 900; }
-          .redeem-page-wrapper .mini-stats div .l { margin-top: 5px; color: #a8c4d8; font-size: 11px; font-weight: 600; }
-          .redeem-page-wrapper .card {
-            width: min(382px, 100%);
-            flex-shrink: 0;
-            position: relative;
-            overflow: hidden;
-            padding: 28px 30px 31px;
-            border: 1px solid rgba(219, 241, 255, 0.29);
-            border-radius: 23px;
-            color: var(--ice);
-            text-align: center;
-            background: linear-gradient(155deg, rgba(22, 37, 57, 0.96), rgba(13, 23, 38, 0.98) 57%, rgba(18, 33, 52, 0.96));
-            box-shadow: 0 28px 75px rgba(0, 7, 22, 0.42), 0 0 0 5px rgba(170, 211, 246, 0.045), inset 0 1px 0 rgba(255,255,255,0.10);
-            backdrop-filter: blur(26px) saturate(125%);
-            -webkit-backdrop-filter: blur(26px) saturate(125%);
-            animation: fadeUp .8s ease both .25s;
-          }
-          .redeem-page-wrapper .card::before { content: ''; position: absolute; top: 0; right: 14%; left: 14%; height: 1px; background: linear-gradient(90deg, transparent, rgba(238,249,255,0.86), transparent); box-shadow: 0 0 18px rgba(154,218,255,0.72); }
-          .redeem-page-wrapper .card::after { content: ''; position: absolute; width: 280px; height: 280px; top: -166px; left: -104px; border-radius: 50%; background: radial-gradient(circle, rgba(117,202,249,0.18), transparent 70%); pointer-events: none; }
-          .redeem-page-wrapper .card-topline { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 7px; margin-bottom: 18px; color: #b8dcf3; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; }
-          .redeem-page-wrapper .card-topline i { width: 6px; height: 6px; border-radius: 50%; background: #82e5ff; box-shadow: 0 0 10px #82e5ff; }
-          .redeem-page-wrapper .card-icon { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin: 0 auto 19px; border: 1px solid rgba(220,240,254,0.36); border-radius: 19px; color: #b9ecff; background: linear-gradient(145deg, rgba(166,225,255,0.28), rgba(33,101,164,0.17)); box-shadow: 0 0 30px rgba(100,207,255,0.2), inset 0 1px 0 rgba(255,255,255,0.18); }
-          .redeem-page-wrapper .card-icon svg { width: 28px; height: 28px; }
-          .redeem-page-wrapper .card h2 { position: relative; z-index: 1; margin-bottom: 11px; color: #f5fbff; font-family: 'Almarai', sans-serif; font-size: 21px; font-weight: 900; }
-          .redeem-page-wrapper .card p { position: relative; z-index: 1; margin-bottom: 25px; color: #bed1e0; font-size: 13.5px; line-height: 1.85; }
-          .redeem-page-wrapper .discord-btn { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 1px solid rgba(206,226,255,0.38); border-radius: 14px; cursor: pointer; color: white; background: linear-gradient(105deg, #385fc8 0%, #5c75e8 52%, #4165cc 100%); box-shadow: 0 12px 28px rgba(38, 82, 191, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); font-family: inherit; font-size: 14.5px; font-weight: 800; transition: transform .22s ease, box-shadow .22s ease, filter .22s ease; }
-          .redeem-page-wrapper .discord-btn:hover { transform: translateY(-3px); filter: brightness(1.08); box-shadow: 0 18px 35px rgba(51, 93, 211, 0.48), inset 0 1px 0 rgba(255,255,255,0.28); }
-          .redeem-page-wrapper .discord-btn svg { width: 19px; height: 19px; }
-          .redeem-page-wrapper .divider { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin: 22px 0 18px; }
-          .redeem-page-wrapper .divider .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(215,235,249,0.34), transparent); }
-          .redeem-page-wrapper .divider span { color: #a9bfd0; font-size: 10px; font-weight: 700; }
-          .redeem-page-wrapper .alt-link { position: relative; z-index: 1; color: #adbfce; font-size: 13px; }
-          .redeem-page-wrapper .alt-link button { border: none; padding: 0; cursor: pointer; color: #bce9ff; background: transparent; font-family: inherit; font-weight: 800; text-decoration: none; }
-          .redeem-page-wrapper .alt-link button:hover { color: #fff; text-decoration: underline; }
-          .redeem-page-wrapper .floating-ctrls { position: fixed; top: 26px; z-index: 6; display: flex; align-items: center; gap: 9px; }
-          .redeem-page-wrapper .floating-ctrls button { height: 42px; border: 1px solid rgba(203,224,245,0.18); border-radius: 13px; cursor: pointer; color: #eaf4ff; background: rgba(15, 27, 43, 0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
-          .redeem-page-wrapper .floating-ctrls button:hover { transform: translateY(-2px); border-color: rgba(142,219,255,0.54); background: rgba(26, 48, 76, 0.94); }
-          .redeem-page-wrapper--light { --night: #eef7fd; --deep-blue: #dceefa; --ice: #102845; --silver: #6e8eaa; --muted: #5d7893; --glass: rgba(255, 255, 255, 0.68); --glass-border: rgba(73, 137, 185, 0.22); color: #102845; background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
-          .redeem-page-wrapper--light .bg-gfx { background: linear-gradient(125deg, rgba(240, 250, 255, 0.14), rgba(197, 234, 252, 0.09) 49%, rgba(239, 250, 255, 0.18)), url('/images/t3n-login-azure-clean.png') center center / cover no-repeat, #d9edf9; }
-          .redeem-page-wrapper--light .bg-gfx::before { opacity: 0.10; background: linear-gradient(115deg, rgba(255,255,255,0.7), transparent 35%, rgba(95,168,212,0.12) 66%, transparent 85%); }
-          .redeem-page-wrapper--light .grid-lines { opacity: 0.6; background-image: linear-gradient(rgba(56, 125, 175, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 125, 175, 0.1) 1px, transparent 1px); }
-          .redeem-page-wrapper--light .silver-ribbon { border-color: rgba(69, 134, 179, 0.28); background: linear-gradient(115deg, rgba(255,255,255,0.46), transparent 18%, rgba(83, 165, 215, 0.09) 50%, rgba(255,255,255,0.42) 82%, transparent); box-shadow: 0 0 0 9px rgba(104, 169, 211, 0.06), 0 0 64px rgba(86, 170, 226, 0.14), inset 0 0 38px rgba(255,255,255,0.32); }
-          .redeem-page-wrapper--light .wordmark-ghost { background: linear-gradient(110deg, rgba(36, 104, 151, 0.05), rgba(64, 137, 185, 0.22), rgba(45, 119, 167, 0.04)); -webkit-text-stroke-color: rgba(56, 125, 175, 0.16); }
-          .redeem-page-wrapper--light .floating-ctrls button { border-color: rgba(67, 132, 177, 0.2); color: #163754; background: rgba(255, 255, 255, 0.64); box-shadow: 0 14px 40px rgba(50, 111, 153, 0.12), inset 0 1px 0 rgba(255,255,255,0.78); }
-          .redeem-page-wrapper--light .brand-corner { border: 0; color: #163754; background: transparent; box-shadow: none; }
-          .redeem-page-wrapper--light .brand-name, .redeem-page-wrapper--light .headline, .redeem-page-wrapper--light .card h2 { color: #102845; text-shadow: none; }
-          .redeem-page-wrapper--light .brand-tag, .redeem-page-wrapper--light .card-topline { color: #2873a8; }
-          .redeem-page-wrapper--light .headline .grad { background: linear-gradient(110deg, #155a90 8%, #2e93ce 48%, #426d90 100%); -webkit-background-clip: text; background-clip: text; }
-          .redeem-page-wrapper--light .subtext, .redeem-page-wrapper--light .card p { color: #506e89; text-shadow: none; }
-          .redeem-page-wrapper--light .mini-stats { border-color: rgba(67, 132, 177, 0.28); }
-          .redeem-page-wrapper--light .mini-stats div { border-color: rgba(67, 132, 177, 0.2); }
-          .redeem-page-wrapper--light .mini-stats div .n { color: #173b5d; }
-          .redeem-page-wrapper--light .mini-stats div .l, .redeem-page-wrapper--light .alt-link { color: #5d7893; }
-          .redeem-page-wrapper--light .card { color: #102845; border-color: rgba(73, 137, 185, 0.25); background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(232, 245, 253, 0.9) 58%, rgba(211, 234, 247, 0.72)); box-shadow: 0 30px 90px rgba(49, 113, 157, 0.16), 0 0 0 5px rgba(104, 174, 219, 0.06), inset 0 1px 0 rgba(255,255,255,0.88); }
-          .redeem-page-wrapper--light .card::before { background: linear-gradient(90deg, transparent, rgba(47, 138, 196, 0.7), transparent); box-shadow: 0 0 18px rgba(76, 173, 226, 0.52); }
-          .redeem-page-wrapper--light .card-icon { color: #1c6b9f; border-color: rgba(76, 149, 196, 0.26); background: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(143, 209, 242, 0.3)); }
-          .redeem-page-wrapper--light .divider .line { background: linear-gradient(90deg, transparent, rgba(67, 132, 177, 0.32), transparent); }
-          .redeem-page-wrapper--light .divider span { color: #61809b; }
-          .redeem-page-wrapper--light .alt-link button { color: #2176ae; }
-          @keyframes mistFloat { from { transform: translate3d(-1.5%, -1%, 0) scale(1); } to { transform: translate3d(2%, 1.5%, 0) scale(1.05); } }
-          @keyframes driftOne { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-22px, 18px, 0) scale(1.04); } }
-          @keyframes driftTwo { 0%, 100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(24px, -18px, 0) scale(1.03); } }
-          @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-          @keyframes fadeRight { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
-          @keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
-          @media (max-width: 900px) {
-            .redeem-page-wrapper .stage { flex-direction: column; gap: 46px; padding: 126px 24px 64px; text-align: center; }
-            .redeem-page-wrapper .copy { max-width: 100%; }
-            .redeem-page-wrapper .headline, .redeem-page-wrapper .subtext { text-align: center !important; margin-left: auto; margin-right: auto; }
-            .redeem-page-wrapper .mini-stats { justify-content: center; border: 0; }
-            .redeem-page-wrapper .mini-stats div { min-width: auto; padding: 0 13px; text-align: center !important; }
-            .redeem-page-wrapper .mini-stats div:first-child { padding-right: 13px; }
-            .redeem-page-wrapper .silver-ribbon { min-width: 560px; min-height: 280px; }
-          }
-          @media (max-width: 560px) {
-            .redeem-page-wrapper .brand-corner { top: 18px; padding: 6px 9px 6px 6px; }
-            .redeem-page-wrapper .brand-corner .mark { width: 39px; height: 39px; border-radius: 50%; }
-            .redeem-page-wrapper .brand-name { font-size: 16px; }
-            .redeem-page-wrapper .floating-ctrls { top: 74px !important; }
-            .redeem-page-wrapper .stage { padding-top: 150px; }
-            .redeem-page-wrapper .headline { font-size: 36px; }
-            .redeem-page-wrapper .mini-stats { gap: 0; }
-            .redeem-page-wrapper .mini-stats div { padding: 0 9px; }
-            .redeem-page-wrapper .mini-stats div .n { font-size: 18px; }
-            .redeem-page-wrapper .mini-stats div .l { font-size: 10px; }
-            .redeem-page-wrapper .card { padding: 27px 23px 28px; }
-          }
-        ` }} />
-
-        <img className="login-background" src="/images/t3n-login-azure-clean.png" alt="" aria-hidden="true" />
-        {/* Interwoven blue and silver background */}
-        <div className="bg-gfx" aria-hidden="true">
-          <div className="grid-lines" />
-          <div className="blue-orb one" />
-          <div className="blue-orb two" />
-          <div className="silver-ribbon ribbon-one" />
-          <div className="silver-ribbon ribbon-two" />
-        </div>
-        <div className="noise" />
-
-        {/* Prominent brand signature */}
-        <div className="brand-corner" style={{ [lang === 'ar' ? 'right' : 'left']: '42px' }}>
-          <div className="mark">
-            <img src="/logo.png?v=6" alt="شعار تعن" />
-          </div>
-          <div>
-            <div className="brand-name">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</div>
-            <div className="brand-tag">{lang === 'ar' ? 'منصة التراخيص' : 'LICENSE PLATFORM'}</div>
-          </div>
-        </div>
-
-        {/* Floating Controls Container (Theme & Language Switchers) */}
-        <div className="floating-ctrls" style={{ [lang === 'ar' ? 'left' : 'right']: '20px' }}>
-          {/* Theme Switcher */}
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="w-10"
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
-          </button>
-
-          {/* Language Switcher */}
-          <button
-            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className="px-4 gap-2"
-            title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
-          >
-            <span className="text-sm flex items-center justify-center leading-none">{lang === 'ar' ? '🇺🇸' : '🇸🇦'}</span>
-            <span className="leading-none">{lang === 'ar' ? 'English' : 'عربي'}</span>
-          </button>
-        </div>
-
-        <div className="stage">
-          {/* Left / Copy Section */}
-          <div className="copy">
-            <div className="eyebrow">
-              <span className="dot" />
-              {lang === 'ar' ? 'تفعيل الترخيص' : 'License Activation'}
-            </div>
-            
-            <h1 className="headline">
-              {lang === 'ar' ? (
-                <>
-                  فعّل <span className="grad">مفتاح الترخيص</span><br />الخاص بك
-                </>
-              ) : (
-                <>
-                  Activate Your <span className="grad">License Key</span>
-                </>
-              )}
-            </h1>
-            
-            <p className="subtext">
-              {lang === 'ar' 
-                ? 'أدخل مفتاح الترخيص لفتح منتجك والحصول على وصول فوري لكل الميزات والتحديثات.' 
-                : 'Enter your license key to unlock your product and get instant access to all features and updates.'}
-            </p>
-            
-            <div className="mini-stats">
-              <div>
-                <div className="n">2,400+</div>
-                <div className="l">{lang === 'ar' ? 'عضو نشط' : 'Active Members'}</div>
-              </div>
-              <div>
-                <div className="n">99.9%</div>
-                <div className="l">{lang === 'ar' ? 'وقت التشغيل' : 'Uptime'}</div>
-              </div>
-              <div>
-                <div className="n">24/7</div>
-                <div className="l">{lang === 'ar' ? 'دعم فني' : 'Technical Support'}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Side Discord access card */}
-          <div className="card">
-            <div className="card-topline"><i /> {lang === 'ar' ? 'تسجيل دخول' : 'LOGIN'}</div>
-            <div className="card-icon">
-              <DiscordMark className="h-7 w-7" />
-            </div>
-            
-            <h2>{lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}</h2>
-            
-            <p>
-              {lang === 'ar' 
-                ? 'اربط حساب ديسكورد الخاص بك لاسترداد وإدارة تراخيصك.' 
-                : 'Link your Discord account to redeem and manage your licenses.'}
-            </p>
-            
-            <button 
-              onClick={() => signIn('discord')}
-              className="discord-btn"
-            >
-              <span className="discord-btn__icon" aria-hidden="true"><DiscordMark className="h-5 w-5" /></span>
-              <span>{lang === 'ar' ? 'المتابعة عبر ديسكورد' : 'Continue with Discord'}</span>
-            </button>
-            
-            <div className="divider">
-              <span className="line" />
-              <span>{lang === 'ar' ? 'أو' : 'OR'}</span>
-              <span className="line" />
-            </div>
-            
-            <div className="alt-link">
-              <a href="https://t3nnn.com/" target="_blank" rel="noreferrer">
-                {lang === 'ar' ? 'شراء مفتاح' : 'Buy a Key'}
-              </a>
-              <span className="alt-link__dot" aria-hidden="true">•</span>
-              <span>{lang === 'ar' ? 'هل أنت جديد؟' : 'New member?'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Copyright Footer */}
-        <div 
-          className="absolute bottom-6 left-8 text-xs font-medium text-slate-500 tracking-wide z-10"
-          dir="rtl"
-        >
-          © 2026 جميع الحقوق محفوظة لمنصة {renderBrandText('تعن')}
-        </div>
-
+      <PortalWelcome
+        lang={lang}
+        isDark={isDark}
+        onToggleLanguage={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+        onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
+        onSignIn={() => signIn('discord')}
+      >
         {/* Guest Key Redemption Modal */}
         {guestModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -2161,7 +1711,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             </div>
           </div>
         )}
-      </div>
+      </PortalWelcome>
     );
   }
 
@@ -2238,7 +1788,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   return (
     <div
-      className={`portal-shell portal-protected-content ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`}
+      className={`portal-shell portal-luxe portal-protected-content ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`}
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
       onCopy={(event) => {
         const target = event.target as HTMLElement;
@@ -2260,239 +1810,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <SupportNotificationBanner lang={lang} isDark={isDark} />
 
       {/* Compact mobile top bar and navigation drawer */}
-      <div className={`portal-mobile-bar fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
-        <button onClick={() => setMobileMenuOpen(true)} aria-label={lang === 'ar' ? 'فتح القائمة' : 'Open navigation'} className={`sd-icon-button inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}><Menu className="h-4 w-4" /></button>
-        <div className="portal-mobile-brand flex min-w-0 items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span className="min-w-0"><strong className="notranslate block truncate text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div>
-        <div className="flex items-center gap-1.5"><button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className={`h-8 min-w-8 rounded-lg border px-1.5 text-[9px] font-black ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{lang === 'ar' ? 'EN' : 'AR'}</button><button onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={lang === 'ar' ? 'تبديل المظهر' : 'Toggle theme'} className={`sd-icon-button !h-8 !w-8 inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}</button></div>
-      </div>
-      <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`portal-mobile-drawer fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
-        <div className="mb-5 flex items-center justify-between px-1"><div className="portal-mobile-brand flex items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span><strong className="notranslate block text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
-        <nav className="portal-mobile-nav min-h-0 flex-1 space-y-1 overflow-y-auto"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" /><span>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span><span className="portal-sidebar-badge">{activeProductCount}</span></button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin-chats'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin-chats' ? (isDark ? 'bg-violet-400/15 text-violet-100' : 'bg-violet-50 text-violet-800') : 'opacity-70'}`}><MessageSquare className="h-4 w-4" />{lang === 'ar' ? 'محادثات مساعد تعن' : 'Assistant Chats'}</button>}<a href="https://discord.gg/t3n" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold opacity-70 hover:opacity-100"><DiscordMark className="h-4 w-4" />{lang === 'ar' ? 'مجتمع ديسكورد' : 'Discord Community'}</a><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
-        <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
-      </motion.aside></>}</AnimatePresence>
-
-      {/* Premium navigation panel */}
-      <aside
-        className={`portal-sidebar ${sidebarCollapsed ? 'portal-sidebar--collapsed' : ''} hidden md:flex flex-col shrink-0 h-full relative z-20 transition-[width,background-color,border-color] duration-200`}
-        style={{
-          width: sidebarCollapsed ? '88px' : '260px',
-          background: isDark ? 'linear-gradient(180deg, rgba(7, 21, 42, 0.92), rgba(4, 12, 26, 0.86))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(234, 245, 253, 0.74))',
-          borderRight: lang === 'ar' ? 'none' : `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}`,
-          borderLeft: lang === 'ar' ? `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}` : 'none',
+      <PortalNavigation
+        activeTab={activeTab}
+        onNavigate={(tab) => {
+          if (tab === 'redeem') setGuestModalOpen(true);
+          else setActiveTab(tab);
         }}
-      >
-        {/* BRAND */}
-        <div className="portal-sidebar-brand">
-          <div className="portal-sidebar-brand__mark"><img src="/logo.png" alt="تعن" /></div>
-          <div className="portal-sidebar-brand__copy min-w-0">
-            <span className="portal-sidebar-brand__eyebrow">{lang === 'ar' ? 'تعن الرقمية' : 'TA3N DIGITAL'}</span>
-            <strong className="portal-sidebar-brand__name notranslate" translate="no">{renderBrandText('تعن')}</strong>
-            <span className="portal-sidebar-brand__caption">{lang === 'ar' ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</span>
-          </div>
-        </div>
-
-        {/* NAV */}
-        <div className="portal-sidebar-nav" style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-          {/* GENERAL */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'عام' : 'GENERAL'}
-            </div>
-            <button
-              onClick={() => setActiveTab('overview')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'overview' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
-                border: activeTab === 'overview' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
-                color: activeTab === 'overview' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
-              }}
-            >
-              <LayoutDashboard size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'overview' ? 700 : 500 }}>{lang === 'ar' ? 'الرئيسية' : 'Overview'}</span>
-            </button>
-          </div>
-
-          {/* LICENSE */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'الرخص' : 'LICENSE'}
-            </div>
-            <button
-              onClick={() => setActiveTab('my-products')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'my-products' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
-                border: activeTab === 'my-products' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
-                color: activeTab === 'my-products' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
-              }}
-            >
-              <Package size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'my-products' ? 700 : 500 }}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
-              <span className="portal-sidebar-badge" aria-label={lang === 'ar' ? `${activeProductCount} منتجات مفعلة` : `${activeProductCount} active products`}>{activeProductCount}</span>
-            </button>
-            {activeProductCount > 0 && <button
-              onClick={() => setActiveTab('faqs')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'faqs' ? (isDark ? 'rgba(94, 211, 255, 0.11)' : 'rgba(56, 154, 215, 0.10)') : 'transparent',
-                border: activeTab === 'faqs' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.25)' : 'rgba(46, 132, 190, 0.20)'}` : '1px solid transparent',
-                color: activeTab === 'faqs' ? (isDark ? '#bcecff' : '#155c8b') : (isDark ? '#7e99ad' : '#597187'),
-              }}
-            >
-              <HelpCircle size={15} />
-              <span style={{ fontSize: '13px', fontWeight: activeTab === 'faqs' ? 700 : 500 }}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</span>
-            </button>}
-          </div>
-
-          {/* SUPPORT */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: isDark ? '#7490a8' : '#5f7890', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'الدعم' : 'SUPPORT'}
-            </div>
-            {isAdmin && <button
-              onClick={() => setActiveTab('admin-chats')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'admin-chats' ? (isDark ? 'linear-gradient(135deg, rgba(99,102,241,.22), rgba(34,211,238,.12))' : 'linear-gradient(135deg, rgba(99,102,241,.13), rgba(34,211,238,.09))') : 'transparent',
-                border: activeTab === 'admin-chats' ? `1px solid ${isDark ? 'rgba(139, 130, 255, .35)' : 'rgba(99,102,241,.24)'}` : '1px solid transparent',
-                color: activeTab === 'admin-chats' ? (isDark ? '#e5e2ff' : '#4338ca') : (isDark ? '#94a8bc' : '#597187'),
-                boxShadow: activeTab === 'admin-chats' ? '0 8px 20px rgba(79,70,229,.12)' : 'none',
-              }}
-            >
-              <MessageSquare size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'admin-chats' ? 700 : 500 }}>{lang === 'ar' ? 'محادثات مساعد تعن' : 'Assistant Chats'}</span>
-              <span style={{ marginInlineStart: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: activeTab === 'admin-chats' ? '#a78bfa' : (isDark ? '#35536b' : '#9ab3c7'), boxShadow: activeTab === 'admin-chats' ? '0 0 12px rgba(167,139,250,.82)' : 'none' }} />
-            </button>}
-            <button
-              onClick={() => setActiveTab('tickets')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'tickets' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(56, 154, 215, 0.11)') : 'transparent',
-                border: activeTab === 'tickets' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.25)' : 'rgba(46, 132, 190, 0.20)'}` : '1px solid transparent',
-                color: activeTab === 'tickets' ? (isDark ? '#bcecff' : '#155c8b') : (isDark ? '#7893aa' : '#597187'),
-              }}
-            >
-              <HelpCircle size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'tickets' ? 700 : 500 }}>{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</span>
-              <span style={{ marginInlineStart: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: activeTab === 'tickets' ? '#5ed3ff' : (isDark ? '#35536b' : '#9ab3c7'), boxShadow: activeTab === 'tickets' ? '0 0 12px rgba(94,211,255,.72)' : 'none' }} />
-            </button>
-          </div>
-
-          {/* COMMUNITY */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
-            </div>
-            <a
-              href="https://discord.gg/t3n"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                border: '1px solid transparent', color: isDark ? '#91aabd' : '#567084', textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = isDark ? '#d8f2ff' : '#0f5f7a'; e.currentTarget.style.background = isDark ? 'rgba(94,201,255,0.06)' : 'rgba(14,116,144,0.06)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = isDark ? '#91aabd' : '#567084'; e.currentTarget.style.background = 'transparent'; }}
-            >
-              <DiscordMark className="h-[16px] w-[16px] shrink-0" />
-              <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{lang === 'ar' ? 'ديسكورد' : 'Discord'}</span>
-            </a>
-          </div>
-
-          {/* ACCOUNT */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'الحساب' : 'ACCOUNT'}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <button
-                onClick={() => setActiveTab('profile')}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'profile' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
-                border: activeTab === 'profile' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
-                color: activeTab === 'profile' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
-                }}
-              >
-                <User size={15} />
-                <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'profile' ? 700 : 500 }}>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
-              </button>
-              {isAdmin && (
-                <button
-                  onClick={() => setActiveTab('admin')}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                    background: activeTab === 'admin' ? 'rgba(251,191,36,0.08)' : 'transparent',
-                    border: activeTab === 'admin' ? '1px solid rgba(251,191,36,0.2)' : '1px solid transparent',
-                    color: activeTab === 'admin' ? '#fbbf24' : '#7a6a30',
-                  }}
-                >
-                  <Shield size={15} />
-                  <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'admin' ? 700 : 500 }}>{lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control'}</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* BOTTOM — Profile Card + Logout */}
-        <div className="portal-sidebar-footer" style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div
-            className="portal-sidebar-user-card"
-            onClick={() => setActiveTab('profile')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px', borderRadius: '10px', cursor: 'pointer',
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-              transition: 'all 0.15s',
-            }}
-            dir="ltr"
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-          >
-            <img
-              src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-              alt="Avatar"
-              style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
-              onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-            />
-            <div className="portal-sidebar-user-card__copy" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentUser.name}
-              </span>
-              <span style={{ fontSize: '10px', color: '#555', fontWeight: 500 }}>
-                {currentUser.role === 'Boss' || currentUser.role === 'Co-Boss' || currentUser.role === 'Admin' ? (lang === 'ar' ? 'المالك' : 'Owner') : 'Discord'}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%', height: '34px', borderRadius: '9px', cursor: 'pointer',
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
-              color: '#555', fontSize: '12px', fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.05)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#555'; e.currentTarget.style.background = 'transparent'; }}
-          >
-            <LogOut size={13} />
-            <span className="portal-sidebar-logout-label">{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
-          </button>
-        </div>
-      </aside>
-
-
+        lang={lang}
+        isDark={isDark}
+        isAdmin={isAdmin}
+        productCount={activeProductCount}
+        collapsed={sidebarCollapsed}
+        mobileOpen={mobileMenuOpen}
+        onMobileChange={setMobileMenuOpen}
+        onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
+        onToggleLanguage={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+        onLogout={handleLogout}
+        user={currentUser}
+      />
 
       {/* Main Content Area */}
       <main className="portal-main-content portal-scroll-region flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
@@ -2679,7 +2014,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-[#252a34] border-white/[0.12]' : 'bg-slate-100 border-slate-200'}`}>
-                      <img src="/discord-logo.png" alt="Discord" className="w-[28px] h-[28px] rounded-[9px] object-cover" />
+                      <DiscordMark className="w-[21px] h-[21px]" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'انضم إلى ديسكورد' : 'Join Discord'}</span>

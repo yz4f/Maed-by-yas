@@ -8,6 +8,7 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: { sans: ['IBM Plex Sans Arabic', 'Arial', 'sans-serif'] },
       colors: {
         brand: {
           dark: '#050505', // True black background

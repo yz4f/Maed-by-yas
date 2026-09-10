@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import type { Product } from '@/types';
 
 const T3NUnifiedPortal = dynamic(
@@ -8,10 +9,11 @@ const T3NUnifiedPortal = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-screen bg-[#08090d] flex items-center justify-center">
+      <div className="min-h-screen bg-[#090f15] flex items-center justify-center" role="status" aria-label="جاري تحميل البوابة">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin" />
-          <p className="text-cyan-400 font-mono text-sm animate-pulse">جاري تحميل البوابة...</p>
+          <Image src="/logo.png" alt="تعن" width={54} height={54} className="rounded-2xl" />
+          <div className="w-6 h-6 border-2 border-emerald-200/15 border-t-emerald-200 rounded-full animate-spin motion-reduce:animate-none" />
+          <p className="text-emerald-100/70 text-xs">جاري تحميل البوابة...</p>
         </div>
       </div>
     ),
