@@ -48,12 +48,14 @@ import {
   Hash,
   Megaphone,
   Mic2,
-  Send
+  Send,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
+import { PortalNavigation } from './portal-navigation';
+import { DiscordMark as DiscordIcon } from './discord-mark';
 import { HelpCenter } from './help-center';
 import { SupportNotificationBanner } from './support-notification-banner';
 const FaqPage = dynamic(() => import('./faq-page').then((module) => module.FaqPage), { ssr: false });
@@ -167,14 +169,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('self-delivery.theme');
     const savedLanguage = window.localStorage.getItem('self-delivery.language');
+    const savedSidebar = window.localStorage.getItem('self-delivery.sidebar-collapsed');
     if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
     if (savedLanguage === 'ar' || savedLanguage === 'en') setLang(savedLanguage);
+    if (savedSidebar === 'true' || savedSidebar === 'false') setSidebarCollapsed(savedSidebar === 'true');
   }, []);
 
   useEffect(() => {
@@ -187,6 +192,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     window.localStorage.setItem('self-delivery.language', lang);
   }, [lang]);
+
+  useEffect(() => {
+    window.localStorage.setItem('self-delivery.sidebar-collapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   // Demo Local Authentication for instant local testing
   const [demoUser, setDemoUser] = useState<UserType | null>(null);
@@ -221,6 +230,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [showExpiredLicenses, setShowExpiredLicenses] = useState(false);
   const userProductsRequestInFlightRef = useRef(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
@@ -446,6 +456,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [singleKeyText, setSingleKeyText] = useState('');
   const [isAddingKeys, setIsAddingKeys] = useState(false);
   const [isAddingSingleKey, setIsAddingSingleKey] = useState(false);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
   const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('2 Days');
 
   // Extended Inventory Editing States
@@ -543,7 +554,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('products');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -1376,7 +1387,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
 
-  const handleDeleteKey = async (keyId: string) => {
+  const handleDeleteKey = (keyId: string) => {
+    if (deletingKeyId) return;
+    const keyItem = inventoryKeys.find((item) => item.id === keyId);
+    askConfirm(
+      lang === 'ar' ? 'حذف المفتاح من المخزون' : 'Delete key from inventory',
+      lang === 'ar'
+        ? keyItem?.isUsed
+          ? `سيُزال المفتاح المستخدم من قائمة المخزون مع بقاء ترخيص العميل فعالاً وسجله محفوظاً. لن يصبح المفتاح قابلاً لإعادة الاستخدام. هل تريد المتابعة؟`
+          : `سيُحذف المفتاح من مخزون ${keyItem?.productName || inventoryProduct?.name || 'هذا المنتج'} ويمكنك إدخاله من جديد لاحقاً. هل تريد المتابعة؟`
+        : keyItem?.isUsed
+          ? `The used key will be removed from inventory while the customer license remains active. It cannot be reused. Continue?`
+          : `This unused key will be removed and can be added again later. Continue?`,
+      async () => handleDeleteKeyNow(keyId)
+    );
+  };
+
+  const handleDeleteKeyNow = async (keyId: string) => {
+    if (deletingKeyId) return;
+    setDeletingKeyId(keyId);
     try {
       const res = await fetch('/api/keys', {
         method: 'DELETE',
@@ -1387,7 +1416,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'تعذر حذف المفتاح.');
       }
-      setKeyActionMessage(data.message || 'تم حذف المفتاح بنجاح.');
+      setKeyActionMessage(data.message || 'تم حذف المفتاح من قائمة المخزون بنجاح.');
+      showToast(data.message || 'تم حذف المفتاح من قائمة المخزون بنجاح.', 'success');
       if (inventoryProduct) {
         await Promise.all([
           loadInventoryKeys(inventoryProduct.id),
@@ -1399,6 +1429,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     } catch (error: any) {
       console.error('Failed to delete key:', error);
       showToast(error?.message || 'تعذر حذف المفتاح. حاول مجدداً.', 'error');
+    } finally {
+      setDeletingKeyId(null);
     }
   };
 
@@ -2194,9 +2226,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     );
   }
 
+  const activePageTitle = {
+    overview: lang === 'ar' ? 'الرئيسية' : 'Overview',
+    'my-products': lang === 'ar' ? 'منتجاتي' : 'My Products',
+    faqs: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions',
+    redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
+    tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help Center',
+    profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
+    admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
+    'admin-chats': lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Chats',
+  }[activeTab];
+
   return (
     <div
-      className={`portal-shell portal-protected-content ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`}
+      className={`portal-shell portal-luxe portal-protected-content ${isDark ? 'portal-shell--dark' : 'portal-shell--light'} flex h-screen overflow-hidden transition-colors duration-500 relative`}
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
       onCopy={(event) => {
         const target = event.target as HTMLElement;
@@ -2218,240 +2261,28 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <SupportNotificationBanner lang={lang} isDark={isDark} />
 
       {/* Compact mobile top bar and navigation drawer */}
-      <div className={`portal-mobile-bar fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b px-3 md:hidden ${isDark ? 'border-slate-700/60 bg-[#0b1322]/95 text-slate-100' : 'border-slate-200 bg-white/95 text-slate-900'} backdrop-blur-xl`}>
-        <button onClick={() => setMobileMenuOpen(true)} aria-label={lang === 'ar' ? 'فتح القائمة' : 'Open navigation'} className={`sd-icon-button inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}><Menu className="h-4 w-4" /></button>
-        <div className="portal-mobile-brand flex min-w-0 items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span className="min-w-0"><strong className="notranslate block truncate text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div>
-        <div className="flex items-center gap-1.5"><button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className={`h-8 min-w-8 rounded-lg border px-1.5 text-[9px] font-black ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{lang === 'ar' ? 'EN' : 'AR'}</button><button onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={lang === 'ar' ? 'تبديل المظهر' : 'Toggle theme'} className={`sd-icon-button !h-8 !w-8 inline-flex items-center justify-center border ${isDark ? 'border-white/10 bg-white/[0.05]' : 'border-slate-200 bg-white'}`}>{isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}</button></div>
-      </div>
-      <AnimatePresence>{mobileMenuOpen && <><motion.button aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setMobileMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[1px] md:hidden" /><motion.aside initial={{ x: lang === 'ar' ? 300 : -300 }} animate={{ x: 0 }} exit={{ x: lang === 'ar' ? 300 : -300 }} transition={{ type: 'spring', stiffness: 330, damping: 30 }} className={`fixed bottom-0 top-0 z-50 flex w-[270px] flex-col border p-3 md:hidden ${lang === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} ${isDark ? 'border-slate-700 bg-[#0d1727] text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
-        <div className="mb-5 flex items-center justify-between px-1"><div className="portal-mobile-brand flex items-center gap-2.5"><span className="portal-mobile-brand__mark"><img src="/logo.png" alt="تعن" /></span><span><strong className="notranslate block text-sm font-black leading-none" translate="no">{renderBrandText('تعن')}</strong><small className="mt-1 block text-[8px] font-black tracking-[0.14em] opacity-60">{lang === 'ar' ? 'بوابة تعن' : 'TA3N PORTAL'}</small></span></div><button onClick={() => setMobileMenuOpen(false)} className={`sd-icon-button inline-flex items-center justify-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}><X className="h-4 w-4" /></button></div>
-        <nav className="space-y-1"><button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'overview' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><LayoutDashboard className="h-4 w-4" />{lang === 'ar' ? 'الرئيسية' : 'Overview'}</button><button onClick={() => { setActiveTab('my-products'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'my-products' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><Package className="h-4 w-4" />{lang === 'ar' ? 'منتجاتي' : 'My Products'}</button>{activeProductCount > 0 && <button onClick={() => { setActiveTab('faqs'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'faqs' ? (isDark ? 'bg-cyan-400/15 text-cyan-100' : 'bg-cyan-50 text-cyan-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</button>}<button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'tickets' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><HelpCircle className="h-4 w-4" />{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</button><button onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'profile' ? (isDark ? 'bg-sky-400/15 text-sky-100' : 'bg-sky-50 text-sky-800') : 'opacity-70'}`}><User className="h-4 w-4" />{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>{isAdmin && <button onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold ${activeTab === 'admin' ? (isDark ? 'bg-amber-400/15 text-amber-200' : 'bg-amber-50 text-amber-800') : 'opacity-70'}`}><Shield className="h-4 w-4" />{lang === 'ar' ? 'الإدارة' : 'Admin'}</button>}</nav>
-        <div className={`mt-auto border-t pt-3 ${isDark ? 'border-white/10' : 'border-slate-200'}`}><button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-400/20 px-3 py-2.5 text-xs font-bold text-rose-400"><LogOut className="h-4 w-4" />{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button></div>
-      </motion.aside></>}</AnimatePresence>
-
-      {/* Premium navigation panel */}
-      <aside
-        className="portal-sidebar hidden md:flex flex-col shrink-0 h-full relative z-20 transition-colors duration-500"
-        style={{
-          width: '272px',
-          background: isDark ? 'linear-gradient(180deg, rgba(7, 21, 42, 0.92), rgba(4, 12, 26, 0.86))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(234, 245, 253, 0.74))',
-          borderRight: lang === 'ar' ? 'none' : `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}`,
-          borderLeft: lang === 'ar' ? `1px solid ${isDark ? 'rgba(190, 225, 248, 0.13)' : 'rgba(55, 116, 168, 0.16)'}` : 'none',
+      <PortalNavigation
+        activeTab={activeTab}
+        onNavigate={(tab) => {
+          if (tab === 'redeem') setGuestModalOpen(true);
+          else setActiveTab(tab);
         }}
-      >
-        {/* BRAND */}
-        <div className="portal-sidebar-brand">
-          <div className="portal-sidebar-brand__mark"><img src="/logo.png" alt="تعن" /></div>
-          <div className="min-w-0">
-            <span className="portal-sidebar-brand__eyebrow">{lang === 'ar' ? 'تعن الرقمية' : 'TA3N DIGITAL'}</span>
-            <strong className="portal-sidebar-brand__name notranslate" translate="no">{renderBrandText('تعن')}</strong>
-            <span className="portal-sidebar-brand__caption">{lang === 'ar' ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</span>
-          </div>
-        </div>
-
-        {/* NAV */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-          {/* GENERAL */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'عام' : 'GENERAL'}
-            </div>
-            <button
-              onClick={() => setActiveTab('overview')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'overview' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
-                border: activeTab === 'overview' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
-                color: activeTab === 'overview' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
-              }}
-            >
-              <LayoutDashboard size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'overview' ? 700 : 500 }}>{lang === 'ar' ? 'الرئيسية' : 'Overview'}</span>
-            </button>
-          </div>
-
-          {/* LICENSE */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'الرخص' : 'LICENSE'}
-            </div>
-            <button
-              onClick={() => setActiveTab('my-products')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'my-products' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
-                border: activeTab === 'my-products' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
-                color: activeTab === 'my-products' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
-              }}
-            >
-              <Package size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'my-products' ? 700 : 500 }}>{lang === 'ar' ? 'منتجاتي' : 'My Products'}</span>
-            </button>
-            {activeProductCount > 0 && <button
-              onClick={() => setActiveTab('faqs')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'faqs' ? (isDark ? 'rgba(94, 211, 255, 0.11)' : 'rgba(56, 154, 215, 0.10)') : 'transparent',
-                border: activeTab === 'faqs' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.25)' : 'rgba(46, 132, 190, 0.20)'}` : '1px solid transparent',
-                color: activeTab === 'faqs' ? (isDark ? '#bcecff' : '#155c8b') : (isDark ? '#7e99ad' : '#597187'),
-              }}
-            >
-              <HelpCircle size={15} />
-              <span style={{ fontSize: '13px', fontWeight: activeTab === 'faqs' ? 700 : 500 }}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'FAQs'}</span>
-            </button>}
-          </div>
-
-          {/* SUPPORT */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: isDark ? '#7490a8' : '#5f7890', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'الدعم' : 'SUPPORT'}
-            </div>
-            {isAdmin && <button
-              onClick={() => setActiveTab('admin-chats')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'admin-chats' ? (isDark ? 'linear-gradient(135deg, rgba(99,102,241,.22), rgba(34,211,238,.12))' : 'linear-gradient(135deg, rgba(99,102,241,.13), rgba(34,211,238,.09))') : 'transparent',
-                border: activeTab === 'admin-chats' ? `1px solid ${isDark ? 'rgba(139, 130, 255, .35)' : 'rgba(99,102,241,.24)'}` : '1px solid transparent',
-                color: activeTab === 'admin-chats' ? (isDark ? '#e5e2ff' : '#4338ca') : (isDark ? '#94a8bc' : '#597187'),
-                boxShadow: activeTab === 'admin-chats' ? '0 8px 20px rgba(79,70,229,.12)' : 'none',
-              }}
-            >
-              <MessageSquare size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'admin-chats' ? 700 : 500 }}>{lang === 'ar' ? 'محادثات مساعد تعن' : 'Assistant Chats'}</span>
-              <span style={{ marginInlineStart: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: activeTab === 'admin-chats' ? '#a78bfa' : (isDark ? '#35536b' : '#9ab3c7'), boxShadow: activeTab === 'admin-chats' ? '0 0 12px rgba(167,139,250,.82)' : 'none' }} />
-            </button>}
-            <button
-              onClick={() => setActiveTab('tickets')}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'tickets' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(56, 154, 215, 0.11)') : 'transparent',
-                border: activeTab === 'tickets' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.25)' : 'rgba(46, 132, 190, 0.20)'}` : '1px solid transparent',
-                color: activeTab === 'tickets' ? (isDark ? '#bcecff' : '#155c8b') : (isDark ? '#7893aa' : '#597187'),
-              }}
-            >
-              <HelpCircle size={15} />
-              <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'tickets' ? 700 : 500 }}>{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</span>
-              <span style={{ marginInlineStart: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: activeTab === 'tickets' ? '#5ed3ff' : (isDark ? '#35536b' : '#9ab3c7'), boxShadow: activeTab === 'tickets' ? '0 0 12px rgba(94,211,255,.72)' : 'none' }} />
-            </button>
-          </div>
-
-          {/* COMMUNITY */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'المجتمع' : 'COMMUNITY'}
-            </div>
-            <a
-              href="https://discord.gg/t3n"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                border: '1px solid transparent', color: isDark ? '#91aabd' : '#567084', textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = isDark ? '#d8f2ff' : '#0f5f7a'; e.currentTarget.style.background = isDark ? 'rgba(94,201,255,0.06)' : 'rgba(14,116,144,0.06)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = isDark ? '#91aabd' : '#567084'; e.currentTarget.style.background = 'transparent'; }}
-            >
-              <DiscordMark className="h-[16px] w-[16px] shrink-0" />
-              <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{lang === 'ar' ? 'ديسكورد' : 'Discord'}</span>
-            </a>
-          </div>
-
-          {/* ACCOUNT */}
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 8px', marginBottom: '6px' }}>
-              {lang === 'ar' ? 'الحساب' : 'ACCOUNT'}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <button
-                onClick={() => setActiveTab('profile')}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === 'profile' ? (isDark ? 'rgba(94, 201, 255, 0.10)' : 'rgba(14, 116, 144, 0.09)') : 'transparent',
-                border: activeTab === 'profile' ? `1px solid ${isDark ? 'rgba(106, 207, 255, 0.22)' : 'rgba(14, 116, 144, 0.16)'}` : '1px solid transparent',
-                color: activeTab === 'profile' ? (isDark ? '#d8f2ff' : '#0f5f7a') : (isDark ? '#91aabd' : '#567084'),
-                }}
-              >
-                <User size={15} />
-                <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'profile' ? 700 : 500 }}>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
-              </button>
-              {isAdmin && (
-                <button
-                  onClick={() => setActiveTab('admin')}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '9px 10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
-                    background: activeTab === 'admin' ? 'rgba(251,191,36,0.08)' : 'transparent',
-                    border: activeTab === 'admin' ? '1px solid rgba(251,191,36,0.2)' : '1px solid transparent',
-                    color: activeTab === 'admin' ? '#fbbf24' : '#7a6a30',
-                  }}
-                >
-                  <Shield size={15} />
-                  <span style={{ fontSize: '13.5px', fontWeight: activeTab === 'admin' ? 700 : 500 }}>{lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control'}</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* BOTTOM — Profile Card + Logout */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div
-            onClick={() => setActiveTab('profile')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px', borderRadius: '10px', cursor: 'pointer',
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-              transition: 'all 0.15s',
-            }}
-            dir="ltr"
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-          >
-            <img
-              src={currentUser.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-              alt="Avatar"
-              style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
-              onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentUser.name}
-              </span>
-              <span style={{ fontSize: '10px', color: '#555', fontWeight: 500 }}>
-                {currentUser.role === 'Boss' || currentUser.role === 'Co-Boss' || currentUser.role === 'Admin' ? (lang === 'ar' ? 'المالك' : 'Owner') : 'Discord'}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%', height: '34px', borderRadius: '9px', cursor: 'pointer',
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
-              color: '#555', fontSize: '12px', fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.05)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#555'; e.currentTarget.style.background = 'transparent'; }}
-          >
-            <LogOut size={13} />
-            <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
-          </button>
-        </div>
-      </aside>
-
-
+        lang={lang}
+        isDark={isDark}
+        isAdmin={isAdmin}
+        productCount={activeProductCount}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((current) => !current)}
+        mobileOpen={mobileMenuOpen}
+        onMobileChange={setMobileMenuOpen}
+        onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
+        onToggleLanguage={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+        onLogout={handleLogout}
+        user={currentUser}
+      />
 
       {/* Main Content Area */}
-      <main className="portal-main-content flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 scrollbar-none relative z-10">
+      <main className="portal-main-content portal-scroll-region flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
         <div className="portal-content-frame max-w-[1520px] mx-auto space-y-6">
 
         {currentUser?.warningMessage && (
@@ -2483,33 +2314,31 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* Structured portal header */}
         <header className={`portal-page-header flex items-center justify-between gap-4 animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
-          <div className="min-w-0">
-            <p className={`portal-page-header__eyebrow ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'بوابة تعن الرقمية' : 'TA3N · DIGITAL PORTAL'}</p>
-            <h1 className={`portal-page-header__title text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
-              {activeTab === 'overview' && (lang === 'ar' ? 'الرئيسية' : 'Overview')}
-              {activeTab === 'my-products' && (lang === 'ar' ? 'منتجاتي' : 'My Products')}
-              {activeTab === 'faqs' && (lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions')}
-              {activeTab === 'redeem' && (lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key')}
-              {activeTab === 'tickets' && (lang === 'ar' ? 'مركز المساعدة' : 'Help Center')}
-              {activeTab === 'profile' && (lang === 'ar' ? 'الملف الشخصي' : 'Profile')}
-              {activeTab === 'admin' && (lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control')}
-              {activeTab === 'admin-chats' && (lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Chats')}
-            </h1>
+          <div className="portal-page-header__copy min-w-0">
+            <nav aria-label={lang === 'ar' ? 'مسار التنقل' : 'Breadcrumb'} className={`portal-breadcrumbs ${isDark ? 'text-sky-200/65' : 'text-sky-700/70'}`}>
+              <button type="button" onClick={() => setActiveTab('overview')}>{lang === 'ar' ? 'بوابة تعن الرئيسية' : 'Ta3n Portal'}</button>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">{activePageTitle}</span>
+            </nav>
+            <h1 className={`portal-page-header__title text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{activePageTitle}</h1>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="portal-page-header__actions flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
               title={lang === 'ar' ? 'English' : 'العربية'}
               aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-              className={`h-10 min-w-10 rounded-xl border px-2 text-[10px] font-black tracking-wide transition-all duration-200 active:scale-95 ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+              className={`portal-header-action h-10 min-w-10 rounded-xl border px-2 text-[10px] font-black tracking-wide ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
             >
               <span className="inline-flex items-center gap-1"><Globe className="h-3.5 w-3.5" />{lang === 'ar' ? 'EN' : 'AR'}</span>
             </button>
             <button
+              type="button"
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
               title={isDark ? (lang === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (lang === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
-              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all duration-200 active:scale-95 ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
+              aria-label={isDark ? (lang === 'ar' ? 'تفعيل الوضع الفاتح' : 'Enable light mode') : (lang === 'ar' ? 'تفعيل الوضع الداكن' : 'Enable dark mode')}
+              className={`portal-header-action h-10 w-10 rounded-xl border flex items-center justify-center ${isDark ? 'border-sky-100/15 bg-sky-100/[0.07] text-sky-100 hover:bg-sky-100/[0.14]' : 'border-sky-900/10 bg-white/70 text-sky-800 hover:bg-white shadow-sm'}`}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -2619,7 +2448,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-200 group-hover:scale-105 ${isDark ? 'bg-[#252a34] border-white/[0.12]' : 'bg-slate-100 border-slate-200'}`}>
-                      <img src="/discord-logo.png" alt="Discord" className="w-[28px] h-[28px] rounded-[9px] object-cover" />
+                      <DiscordIcon className="h-5 w-5" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'انضم إلى ديسكورد' : 'Join Discord'}</span>
@@ -2775,10 +2604,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'احتفظنا بها لسجلّك، ويمكن تجديدها من خلال الدعم أو مفتاح جديد.' : 'Kept for your records; renew with support or a new key.'}</p>
                             </div>
                           </div>
-                          <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-bold text-slate-400">{inactiveProductCount}</span>
+                          <button
+                            type="button"
+                            onClick={() => setShowExpiredLicenses((current) => !current)}
+                            aria-expanded={showExpiredLicenses}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-3 py-2 text-[11px] font-bold text-slate-300 transition hover:border-sky-300/30 hover:bg-sky-300/[0.06] hover:text-sky-100"
+                          >
+                            <span>{showExpiredLicenses ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'عرض' : 'Show')}</span>
+                            <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-slate-400">{inactiveProductCount}</span>
+                            <ArrowLeft className={`h-3.5 w-3.5 transition-transform ${showExpiredLicenses ? 'rotate-90' : ''}`} />
+                          </button>
                         </div>
                       )}
-                    <article
+                    {(canUseProduct || showExpiredLicenses) && <article
                       className={`product-license-card product-license-card--premium group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
@@ -2848,7 +2686,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <span className="min-w-0 text-start"><span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span><span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'أرسل السبب لفريق دعم تعن دون مشاركة المفتاح' : 'Send the reason to Ta3n Support without sharing the key'}</span></span>
                         </button>
                       </div>
-                    </article>
+                    </article>}
                     </React.Fragment>
                   );
                 })}
@@ -3079,7 +2917,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
 
             {/* Admin Sub-Tabs Navigation */}
-            <div className={`admin-navigation grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-full`}>
+            <div role="tablist" aria-label={lang === 'ar' ? 'أقسام لوحة الإدارة' : 'Admin sections'} className={`admin-navigation grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 p-1.5 bg-black/5 dark:bg-[#090b10] border ${styles.borderSubtle} rounded-2xl w-full`}>
               {[
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
@@ -3096,6 +2934,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 return (
                   <button
                     key={tab.id}
+                    role="tab"
+                    aria-selected={isActive}
                     onClick={() => setAdminSectionTab(tab.id as any)}
                     className={`admin-navigation__item flex min-w-0 items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       isActive 
@@ -4095,10 +3935,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             </span>
                             <button
                               onClick={() => handleDeleteKey(keyItem.id)}
-                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer"
+                              disabled={Boolean(deletingKeyId)}
+                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                               title="حذف المفتاح"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {deletingKeyId === keyItem.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                             </button>
                           </div>
                         ))}
