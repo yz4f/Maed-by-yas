@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
@@ -54,12 +54,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
-import { PortalNavigation } from './portal-navigation';
+import { PortalNavigation, type PortalTab } from './portal-navigation';
 import { DiscordMark as DiscordIcon } from './discord-mark';
 import { HelpCenter } from './help-center';
-import { SupportNotificationBanner } from './support-notification-banner';
-const FaqPage = dynamic(() => import('./faq-page').then((module) => module.FaqPage), { ssr: false });
-const AiAdminConversations = dynamic(() => import('./ai-admin-conversations').then((module) => module.AiAdminConversations), { ssr: false });
+import { Footer } from '@/components/ui/footer';
+const HelpAdminSection = dynamic(() => import('./help-admin-section').then((module) => module.HelpAdminSection), { ssr: false });
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const VoiceSupportAdmin = dynamic(() => import('./voice-support-admin').then((module) => module.VoiceSupportAdmin), { ssr: false });
@@ -135,7 +134,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'overview' | 'my-products' | 'faqs' | 'redeem' | 'tickets' | 'admin' | 'admin-chats' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<PortalTab>('overview');
 
   // Custom Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -180,6 +179,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
     if (savedLanguage === 'ar' || savedLanguage === 'en') setLang(savedLanguage);
     if (savedSidebar === 'true' || savedSidebar === 'false') setSidebarCollapsed(savedSidebar === 'true');
+    const tabParam = new URLSearchParams(window.location.search).get('tab');
+    if (tabParam === 'tickets' || tabParam === 'overview' || tabParam === 'my-products' || tabParam === 'redeem' || tabParam === 'profile' || tabParam === 'admin') {
+      setActiveTab(tabParam as PortalTab);
+    }
   }, []);
 
   useEffect(() => {
@@ -554,7 +557,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'conversations' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -630,9 +633,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
   const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
   const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived && !getLicenseTiming(product).isExpired).length;
-  useEffect(() => {
-    if (activeTab === 'faqs' && activeProductCount === 0) setActiveTab('my-products');
-  }, [activeTab, activeProductCount]);
 
   useEffect(() => {
     if (!resetRequestProduct) return;
@@ -2229,12 +2229,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const activePageTitle = {
     overview: lang === 'ar' ? 'الرئيسية' : 'Overview',
     'my-products': lang === 'ar' ? 'منتجاتي' : 'My Products',
-    faqs: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions',
     redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
     tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help Center',
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
-    'admin-chats': lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Chats',
   }[activeTab];
 
   return (
@@ -2258,7 +2256,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <div className="portal-ambient" aria-hidden="true" />
       <div className="portal-grid" aria-hidden="true" />
       <div className="portal-noise" aria-hidden="true" />
-      <SupportNotificationBanner lang={lang} isDark={isDark} />
 
       {/* Compact mobile top bar and navigation drawer */}
       <PortalNavigation
@@ -2350,17 +2347,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           <HelpCenter
             lang={lang}
             isDark={isDark}
-            isStaff={isAdmin}
-            onNotify={showToast}
-            onOpenProducts={() => setActiveTab('my-products')}
-            onOpenGuide={(destination) => {
-              const availableProduct = sortedUserProducts.find((product) => getLicenseTiming(product).isUsable);
-              if (!availableProduct) {
-                showToast(lang === 'ar' ? 'لا يوجد منتج مفعّل لفتح الشرح.' : 'There is no active product guide to open.', 'warning');
-                return;
+            onNavigateTab={(tab) => {
+              if (tab === 'overview' || tab === 'my-products' || tab === 'redeem') {
+                setActiveTab(tab as any);
               }
-              setGuideModalProduct(availableProduct);
-              setGuideView(destination === 'issues' ? 'issues' : 'notice');
             }}
           />
         )}
@@ -2695,7 +2685,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
           </div>
         )}
-        {activeTab === 'faqs' && activeProductCount > 0 && <FaqPage lang={lang} isDark={isDark} onOpenProducts={() => setActiveTab('my-products')} onOpenAssistant={() => setActiveTab('tickets')} />}
+
 
         {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
         {/* TAB 5: PROFILE */}
@@ -2830,16 +2820,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         )}
 
-        {/* ADMIN ASSISTANT CHATS: standalone fast workspace */}
-        {activeTab === 'admin-chats' && isAdmin && (
-          <div className="mx-auto max-w-6xl space-y-5 animate-slide-up">
-            <div className={`${styles.bgCard} border ${styles.borderNormal} flex flex-col gap-4 rounded-2xl p-5 shadow-sm md:flex-row md:items-center md:justify-between`}>
-              <div className="flex min-w-0 items-center gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-cyan-300/15 bg-cyan-400/10 text-cyan-300"><MessageSquare className="h-5 w-5" /></span><div><h2 className={`text-base font-black ${styles.textTitle}`}>{lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Chats'}</h2><p className={`mt-1 text-[11px] ${styles.textMuted}`}>{lang === 'ar' ? 'مساحة مستقلة للرد السريع ومتابعة صور ورسائل العملاء.' : 'A dedicated workspace for fast replies and customer messages.'}</p></div></div>
-              <button onClick={() => setActiveTab('admin')} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-black transition ${isDark ? 'border-white/[.1] text-slate-200 hover:bg-white/[.06]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}><Shield className="h-3.5 w-3.5" />{lang === 'ar' ? 'لوحة الإدارة' : 'Admin panel'}</button>
-            </div>
-            <AiAdminConversations lang={lang} isDark={isDark} onNotify={showToast} />
-          </div>
-        )}
+
 
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
@@ -2853,7 +2834,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'overview' && <Activity className="w-6 h-6 text-sky-500 dark:text-sky-400" />}
                     {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />}
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
-                    {adminSectionTab === 'conversations' && <MessageSquare className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
+                    {adminSectionTab === 'help' && <HelpCircle className="w-6 h-6 text-teal-500 dark:text-teal-400" />}
                     {adminSectionTab === 'voiceSessions' && <Mic2 className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'updates' && <Megaphone className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'resetRequests' && <RefreshCw className="w-6 h-6 text-amber-500 dark:text-amber-300" />}
@@ -2864,7 +2845,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'overview' && (lang === 'ar' ? 'نظرة عامة وإحصائيات' : 'Overview & Stats')}
                     {adminSectionTab === 'products' && (lang === 'ar' ? 'إدارة المنتجات والمخزون' : 'Products & Inventory')}
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
-                    {adminSectionTab === 'conversations' && (lang === 'ar' ? 'محادثات مساعد تعن' : 'Ta3n Assistant Conversations')}
+                    {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
                     {adminSectionTab === 'voiceSessions' && (lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Support Sessions')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
                     {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests')}
@@ -2876,7 +2857,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'overview' && (lang === 'ar' ? <>إحصائيات شاملة ومباشرة لمنصة {renderBrandText('تعن')} الرقمية.</> : 'Comprehensive live stats for the TA3N portal.')}
                   {adminSectionTab === 'products' && (lang === 'ar' ? 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.' : 'Full control over product settings and manual key addition.')}
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
-                  {adminSectionTab === 'conversations' && (lang === 'ar' ? 'راجع محادثات العملاء، استلم الحالة عند الحاجة، ثم أعد الرد إلى مساعد تعن بعد المتابعة.' : 'Review customer conversations, take over when needed, then return replies to Ta3n Assistant after follow-up.')}
+                  {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة تصنيفات وأسئلة مركز المساعدة، وتتبع الأسئلة الأكثر بحثاً وتعديل الإجابات باحترافية.' : 'Manage Help Center categories and FAQs, view real search stats, and edit rich answers.')}
                   {adminSectionTab === 'voiceSessions' && (lang === 'ar' ? 'أنشئ جلسة دعم صوتية خاصة واطلب موافقة العميل قبل الصوت أو مشاركة الشاشة.' : 'Create private voice sessions and request consent before audio or screen sharing.')}
                   {adminSectionTab === 'updates' && (lang === 'ar' ? 'أنشئ تحديثاً موثقاً بصورة، اعتمده، ثم انشره مرة واحدة إلى Discord.' : 'Create an image-backed update, approve it, then publish it once to Discord.')}
                   {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات العملاء لإعادة ضبط الترخيص، مع السبب والمفتاح ووقت الطلب.' : 'Customer license reset requests with their reason, key, and request time.')}
@@ -2923,6 +2904,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
                 { id: 'sitePresence', label: lang === 'ar' ? 'نشاط الموقع' : 'Site Presence', icon: UserCheck },
+                { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help Center', icon: HelpCircle },
                 { id: 'voiceSessions', label: lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Sessions', icon: Mic2 },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },
@@ -3520,8 +3502,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 </div>
               </div>
             )}
+
+            {/* ==================== SUB-TAB: HELP CENTER & FAQS ==================== */}
+            {adminSectionTab === 'help' && (
+              <div className="admin-section space-y-4">
+                <HelpAdminSection lang={lang} isDark={isDark} onNotify={showToast} />
+              </div>
+            )}
           </div>
         )}
+
+        {/* SITE FOOTER */}
+        <div className="pt-12 sm:pt-16">
+          <Footer lang={lang} />
+        </div>
         </div>
       </main>
 

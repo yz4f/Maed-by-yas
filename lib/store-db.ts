@@ -1,7 +1,8 @@
-import { AuditEvent, Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
+import { AuditEvent, Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
+
 
 // Safe dynamic imports for Server-side filesystem operations
 let fs: any;
@@ -131,6 +132,189 @@ export const initialProducts: Product[] = [
   }
 ];
 
+export const initialFaqCategories: FaqCategory[] = [
+  {
+    id: 'cat-keys',
+    name_ar: 'المفاتيح والتفعيل',
+    name_en: 'Keys & Activation',
+    description_ar: 'كل ما يتعلق بتفعيل المفاتيح وحالتها والمدة المتبقية.',
+    description_en: 'Everything related to key activation, status, and duration.',
+    icon: 'KeyRound',
+    sort_order: 1,
+    is_active: true,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cat-products',
+    name_ar: 'المنتجات والشروحات',
+    name_en: 'Products & Guides',
+    description_ar: 'شروحات المنتجات، اللودرات، وروابط التنزيل المباشرة.',
+    description_en: 'Product guides, loaders, and direct download links.',
+    icon: 'Package',
+    sort_order: 2,
+    is_active: true,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cat-troubleshoot',
+    name_ar: 'المشاكل الشائعة والحلول',
+    name_en: 'Troubleshooting & Fixes',
+    description_ar: 'حلول مشاكل Spoofer، أخطاء التشغيل، وملفات C++ Runtime.',
+    description_en: 'Fixes for Spoofer issues, runtime errors, and Visual C++ libraries.',
+    icon: 'Wrench',
+    sort_order: 3,
+    is_active: true,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cat-account',
+    name_ar: 'الحساب والأمان',
+    name_en: 'Account & Security',
+    description_ar: 'إدارة الحساب، الرستات، ورتب ديسكورد التلقائية.',
+    description_en: 'Account security, key resets, and automated Discord roles.',
+    icon: 'Shield',
+    sort_order: 4,
+    is_active: true,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+export const initialFaqs: FaqItem[] = [
+  {
+    id: 'faq-activate-key',
+    category_id: 'cat-keys',
+    question_ar: 'كيف أقوم بتفعيل المفتاح؟',
+    question_en: 'How do I activate my key?',
+    answer_ar: '1. توجه إلى تبويب «تفعيل مفتاح» من القائمة الجانبية.\n2. الصق المفتاح المستلم كاملاً وبدقة في خانة التفعيل.\n3. اضغط زر «تفعيل المفتاح الآن» لتأكيد العملية فورياً.\n4. بعد التفعيل سينتقل المفتاح مباشرة إلى تبويب «منتجاتي» مع إمكانية تحميل اللودر والاطلاع على الشرح.',
+    answer_en: '1. Navigate to the "Activate a key" tab from the sidebar.\n2. Paste your full product key into the activation field.\n3. Click "Activate Key Now" to immediately confirm.\n4. Once activated, the product appears under "My Products" with full download and guide access.',
+    keywords: ['تفعيل', 'مفتاح', 'تنشيط', 'activate', 'key', 'license'],
+    is_pinned: true,
+    is_published: true,
+    sort_order: 1,
+    views: 142,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-product-guide',
+    category_id: 'cat-products',
+    question_ar: 'أين أجد شرح المنتج وروابط التحميل؟',
+    question_en: 'Where can I find product guides and loader downloads?',
+    answer_ar: 'افتح صفحة «منتجاتي» من القائمة الجانبية، ثم اختر المنتج المفعّل واضغط «الشروحات والتعليمات». ستجد الفيديو التوضيحي وروابط تحميل اللودر والملفات المحدثة للتراخيص النشطة.',
+    answer_en: 'Open "My Products" from the sidebar, select your active product, and click "Guide". You will find the video tutorial and loader downloads for your active license.',
+    keywords: ['شرح', 'لودر', 'تحميل', 'فيديو', 'guide', 'download', 'loader'],
+    is_pinned: true,
+    is_published: true,
+    sort_order: 2,
+    views: 118,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-spoofer-error',
+    category_id: 'cat-troubleshoot',
+    question_ar: 'ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ في التشغيل؟',
+    question_en: 'What should I do if a Spoofer or runtime error occurs?',
+    answer_ar: 'تأكد من تشغيل اللودر كمسؤول (Run as Administrator)، وتعطيل برامج مكافحة الفيروسات مؤقتاً، وتثبيت حزم Visual C++ Redistributable المرفقة بالشرح. في حال استمرار المشكلة اتبع خطوات «حلول المشاكل» الموجودة داخل بطاقة المنتج.',
+    answer_en: 'Ensure you run the loader as Administrator, temporarily disable antivirus software, and install the Visual C++ Redistributable runtime. If issues persist, check the "Issue fixes" tab on your product card.',
+    keywords: ['خطأ', 'سبوفر', 'spoofer', 'error', 'تشغيل', 'runtime'],
+    is_pinned: true,
+    is_published: true,
+    sort_order: 3,
+    views: 95,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-find-key',
+    category_id: 'cat-keys',
+    question_ar: 'أين أجد مفتاح المنتج الخاص بي؟',
+    question_en: 'Where can I find my product key?',
+    answer_ar: 'افتح «منتجاتي» وستجد شريط المفتاح ضمن بطاقة الترخيص المفعّل الخاص بك. يمكنك استخدام زر النسخ السريع لنسخه بأمان.',
+    answer_en: 'Open "My Products" and your key is displayed directly on your active license card with a one-click copy button.',
+    keywords: ['مفتاحي', 'كود', 'أين المفتاح', 'find key', 'my key'],
+    is_pinned: false,
+    is_published: true,
+    sort_order: 4,
+    views: 64,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-hwid-reset',
+    category_id: 'cat-account',
+    question_ar: 'متى يحق لي طلب رستات (HWID Reset) للمفتاح؟',
+    question_en: 'When should I request a key reset (HWID Reset)?',
+    answer_ar: 'يمكنك طلب رستات من بطاقة المنتج عند تغيير قطع في جهازك أو إعادة تهيئة النظام. يرجى كتابة سبب واضح، وسيتم مراجعة وتحديث حالة الطلب داخل حسابك مباشرة.',
+    answer_en: 'You can request a reset from your product card if you upgraded hardware or reinstalled Windows. State a clear reason, and the status will update in your account.',
+    keywords: ['رستات', 'hwid', 'reset', 'تغيير جهاز'],
+    is_pinned: false,
+    is_published: true,
+    sort_order: 5,
+    views: 82,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-discord-role',
+    category_id: 'cat-account',
+    question_ar: 'هل تُمنح رتبة المنتج في ديسكورد تلقائياً بعد التفعيل؟',
+    question_en: 'Do Discord product roles get granted automatically after activation?',
+    answer_ar: 'نعم. عند تسجيل دخولك بحساب ديسكورد وتفعيل مفتاح صالح، يمنح النظام حسابك تلقائياً رتبة العميل (Customer) بالإضافة إلى رتبة المنتج المفعل في سيرفر ديسكورد الرسمي.',
+    answer_en: 'Yes. When logging in with Discord and activating a key, the system automatically assigns the Customer role and the specific product role in our Discord server.',
+    keywords: ['ديسكورد', 'رتبة', 'discord', 'role'],
+    is_pinned: false,
+    is_published: true,
+    sort_order: 6,
+    views: 73,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-download-expired',
+    category_id: 'cat-products',
+    question_ar: 'لماذا لا أستطيع تحميل اللودر أو فتح الشرح؟',
+    question_en: 'Why cannot I download the loader or view guides?',
+    answer_ar: 'التحميل والشروحات متاحة فقط للتراخيص النشطة والصالحة. في حال انتهاء مدة المفتاح يبقى المنتج مسجلاً في سجلك لكن خيارات التحميل والتشغيل تتوقف حتى تجديد الترخيص.',
+    answer_en: 'Downloads and guides are restricted to active licenses. If your license has expired, the item remains in your history but access is locked until renewed.',
+    keywords: ['تحميل', 'منتهي', 'expired', 'download', 'غير متاح'],
+    is_pinned: false,
+    is_published: true,
+    sort_order: 7,
+    views: 51,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+  {
+    id: 'faq-key-duration',
+    category_id: 'cat-keys',
+    question_ar: 'كيف أعرف مدة اشتراكي وموعد انتهائه؟',
+    question_en: 'How do I check my license status and expiration?',
+    answer_ar: 'في صفحة «منتجاتي» تعرض كل بطاقة ترخيص شريط الحالة والوقت المتبقي بالساعات والأيام بدقة متناهية، بالإضافة إلى نوع الترخيص (يومان، أسبوع، شهر، أو دائم).',
+    answer_en: 'In "My Products", each card displays a live countdown timer showing the remaining days and hours along with license type.',
+    keywords: ['مدة', 'اشتراك', 'انتهاء', 'duration', 'expires'],
+    is_pinned: false,
+    is_published: true,
+    sort_order: 8,
+    views: 89,
+    createdAt: new Date('2026-03-01').toISOString(),
+    updatedAt: new Date().toISOString(),
+    created_by: 'system',
+  },
+];
+
+
 // The JSON fallback is strictly a local-development aid. Production must never silently
 // switch to ephemeral filesystem storage because a Railway redeploy can discard it.
 const allowLocalFallback = process.env.NODE_ENV !== 'production' && process.env.ALLOW_LOCAL_DB_FALLBACK !== 'false';
@@ -224,16 +408,29 @@ function getFallbackData() {
             ipAddress: '127.0.0.1',
             createdAt: new Date().toISOString()
           }
-        ]
+        ],
+        faqCategories: initialFaqCategories,
+        faqs: initialFaqs,
+        faqSearchLogs: []
       };
       fs.writeFileSync(fallbackFilePath, JSON.stringify(initialData, null, 2), 'utf8');
       return initialData;
     }
     const raw = fs.readFileSync(/* turbopackIgnore: true */ fallbackFilePath, 'utf8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.faqCategories || !Array.isArray(parsed.faqCategories) || parsed.faqCategories.length === 0) {
+      parsed.faqCategories = initialFaqCategories;
+    }
+    if (!parsed.faqs || !Array.isArray(parsed.faqs) || parsed.faqs.length === 0) {
+      parsed.faqs = initialFaqs;
+    }
+    if (!parsed.faqSearchLogs || !Array.isArray(parsed.faqSearchLogs)) {
+      parsed.faqSearchLogs = [];
+    }
+    return parsed;
   } catch (err) {
     console.error("Failed to read fallback database file:", err);
-    return { products: initialProducts, users: [], userProducts: [], keys: [], logs: [] };
+    return { products: initialProducts, users: [], userProducts: [], keys: [], logs: [], faqCategories: initialFaqCategories, faqs: initialFaqs, faqSearchLogs: [] };
   }
 }
 
@@ -690,6 +887,234 @@ const LocalDB = {
       unusedKeys,
       productStockList,
       recentLogs
+    };
+  },
+
+  // -------------------------
+  // FAQ CATEGORIES (LocalDB)
+  // -------------------------
+  getFaqCategories(onlyActive = true): FaqCategory[] {
+    const d = getFallbackData();
+    const categories: FaqCategory[] = d.faqCategories || initialFaqCategories;
+    const faqs: FaqItem[] = d.faqs || initialFaqs;
+    const filtered = onlyActive ? categories.filter((c: FaqCategory) => c.is_active) : [...categories];
+    return filtered
+      .map((c: FaqCategory) => ({
+        ...c,
+        faqCount: faqs.filter((f: FaqItem) => f.category_id === c.id && f.is_published).length,
+      }))
+      .sort((a, b) => a.sort_order - b.sort_order);
+  },
+
+  getFaqCategoryById(id: string): FaqCategory | undefined {
+    const d = getFallbackData();
+    return (d.faqCategories || initialFaqCategories).find((c: FaqCategory) => c.id === id);
+  },
+
+  createFaqCategory(category: FaqCategory): { success: boolean; category?: FaqCategory; message?: string } {
+    const d = getFallbackData();
+    d.faqCategories = d.faqCategories || [...initialFaqCategories];
+    if (d.faqCategories.some((c: FaqCategory) => c.id === category.id)) {
+      return { success: false, message: 'التصنيف موجود مسبقاً' };
+    }
+    d.faqCategories.push(category);
+    saveFallbackData(d);
+    return { success: true, category };
+  },
+
+  updateFaqCategory(id: string, updates: Partial<FaqCategory>): { success: boolean; category?: FaqCategory; message?: string } {
+    const d = getFallbackData();
+    d.faqCategories = d.faqCategories || [...initialFaqCategories];
+    const idx = d.faqCategories.findIndex((c: FaqCategory) => c.id === id);
+    if (idx === -1) return { success: false, message: 'التصنيف غير موجود' };
+    d.faqCategories[idx] = { ...d.faqCategories[idx], ...updates, updatedAt: new Date().toISOString() };
+    saveFallbackData(d);
+    return { success: true, category: d.faqCategories[idx] };
+  },
+
+  deleteFaqCategory(id: string): { success: boolean; message?: string } {
+    const d = getFallbackData();
+    d.faqCategories = d.faqCategories || [...initialFaqCategories];
+    d.faqs = d.faqs || [...initialFaqs];
+    const inUse = d.faqs.some((f: FaqItem) => f.category_id === id);
+    if (inUse) {
+      return { success: false, message: 'لا يمكن حذف التصنيف لوجود أسئلة مرتبطة به. قم بنقل أو حذف الأسئلة أولاً.' };
+    }
+    d.faqCategories = d.faqCategories.filter((c: FaqCategory) => c.id !== id);
+    saveFallbackData(d);
+    return { success: true };
+  },
+
+  // -------------------------
+  // FAQS (LocalDB)
+  // -------------------------
+  getFaqs(options: { categoryId?: string; search?: string; onlyPublished?: boolean; isPinned?: boolean } = {}): FaqItem[] {
+    const d = getFallbackData();
+    let faqs: FaqItem[] = d.faqs || [...initialFaqs];
+    const categories: FaqCategory[] = d.faqCategories || [...initialFaqCategories];
+    const catMap = new Map(categories.map((c) => [c.id, c]));
+
+    if (options.onlyPublished !== false) {
+      faqs = faqs.filter((f) => f.is_published);
+    }
+    if (options.categoryId) {
+      faqs = faqs.filter((f) => f.category_id === options.categoryId);
+    }
+    if (options.isPinned !== undefined) {
+      faqs = faqs.filter((f) => f.is_pinned === options.isPinned);
+    }
+    if (options.search && options.search.trim()) {
+      const q = options.search.trim().toLowerCase();
+      faqs = faqs.filter((f) =>
+        (f.question_ar && f.question_ar.toLowerCase().includes(q)) ||
+        (f.question_en && f.question_en.toLowerCase().includes(q)) ||
+        (f.answer_ar && f.answer_ar.toLowerCase().includes(q)) ||
+        (f.answer_en && f.answer_en.toLowerCase().includes(q)) ||
+        (Array.isArray(f.keywords) && f.keywords.some((kw) => kw.toLowerCase().includes(q)))
+      );
+    }
+
+    return faqs
+      .map((f) => {
+        const cat = catMap.get(f.category_id);
+        return {
+          ...f,
+          category_name_ar: cat?.name_ar,
+          category_name_en: cat?.name_en,
+        };
+      })
+      .sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+        return a.sort_order - b.sort_order;
+      });
+  },
+
+  getFaqById(id: string): FaqItem | undefined {
+    const d = getFallbackData();
+    const faqs: FaqItem[] = d.faqs || [...initialFaqs];
+    const faq = faqs.find((f) => f.id === id);
+    if (!faq) return undefined;
+    const categories: FaqCategory[] = d.faqCategories || [...initialFaqCategories];
+    const cat = categories.find((c) => c.id === faq.category_id);
+    return {
+      ...faq,
+      category_name_ar: cat?.name_ar,
+      category_name_en: cat?.name_en,
+    };
+  },
+
+  createFaq(faq: FaqItem): { success: boolean; faq?: FaqItem; message?: string } {
+    const d = getFallbackData();
+    d.faqs = d.faqs || [...initialFaqs];
+    if (d.faqs.some((f: FaqItem) => f.id === faq.id)) {
+      return { success: false, message: 'السؤال موجود مسبقاً' };
+    }
+    d.faqs.push(faq);
+    saveFallbackData(d);
+    return { success: true, faq };
+  },
+
+  updateFaq(id: string, updates: Partial<FaqItem>): { success: boolean; faq?: FaqItem; message?: string } {
+    const d = getFallbackData();
+    d.faqs = d.faqs || [...initialFaqs];
+    const idx = d.faqs.findIndex((f: FaqItem) => f.id === id);
+    if (idx === -1) return { success: false, message: 'السؤال غير موجود' };
+    d.faqs[idx] = { ...d.faqs[idx], ...updates, updatedAt: new Date().toISOString() };
+    saveFallbackData(d);
+    return { success: true, faq: d.faqs[idx] };
+  },
+
+  deleteFaq(id: string): { success: boolean; message?: string } {
+    const d = getFallbackData();
+    d.faqs = d.faqs || [...initialFaqs];
+    const idx = d.faqs.findIndex((f: FaqItem) => f.id === id);
+    if (idx === -1) return { success: false, message: 'السؤال غير موجود' };
+    d.faqs.splice(idx, 1);
+    saveFallbackData(d);
+    return { success: true };
+  },
+
+  incrementFaqView(id: string): { success: boolean; views?: number } {
+    const d = getFallbackData();
+    d.faqs = d.faqs || [...initialFaqs];
+    const faq = d.faqs.find((f: FaqItem) => f.id === id);
+    if (faq) {
+      faq.views = (faq.views || 0) + 1;
+      saveFallbackData(d);
+      return { success: true, views: faq.views };
+    }
+    return { success: false };
+  },
+
+  logFaqSearch(queryStr: string, resultsCount: number, lang: 'ar' | 'en'): { success: boolean } {
+    const d = getFallbackData();
+    d.faqSearchLogs = d.faqSearchLogs || [];
+    d.faqSearchLogs.push({
+      id: `search-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      query: queryStr.trim(),
+      results_count: resultsCount,
+      lang,
+      createdAt: new Date().toISOString(),
+    });
+    if (d.faqSearchLogs.length > 500) {
+      d.faqSearchLogs = d.faqSearchLogs.slice(-500);
+    }
+    saveFallbackData(d);
+    return { success: true };
+  },
+
+  getFaqStats(): FaqStats {
+    const d = getFallbackData();
+    const faqs: FaqItem[] = d.faqs || [...initialFaqs];
+    const categories: FaqCategory[] = d.faqCategories || [...initialFaqCategories];
+    const searchLogs: FaqSearchLog[] = d.faqSearchLogs || [];
+
+    const totalFaqs = faqs.length;
+    const publishedFaqs = faqs.filter((f) => f.is_published).length;
+    const totalCategories = categories.length;
+
+    const mostViewedFaqs = [...faqs]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 5)
+      .map((f) => ({
+        id: f.id,
+        question_ar: f.question_ar,
+        question_en: f.question_en,
+        views: f.views || 0,
+        category_id: f.category_id,
+      }));
+
+    const totalSearches = searchLogs.length;
+
+    const queryCounts: Record<string, number> = {};
+    const zeroCounts: Record<string, number> = {};
+    for (const log of searchLogs) {
+      const q = (log.query || '').trim().toLowerCase();
+      if (!q) continue;
+      queryCounts[q] = (queryCounts[q] || 0) + 1;
+      if (log.results_count === 0) {
+        zeroCounts[q] = (zeroCounts[q] || 0) + 1;
+      }
+    }
+
+    const topSearchQueries = Object.entries(queryCounts)
+      .map(([query, count]) => ({ query, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const zeroResultQueries = Object.entries(zeroCounts)
+      .map(([query, count]) => ({ query, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      totalFaqs,
+      publishedFaqs,
+      totalCategories,
+      mostViewedFaqs,
+      totalSearches,
+      topSearchQueries,
+      zeroResultQueries,
     };
   }
 };
@@ -1410,6 +1835,285 @@ export const StoreDB = {
         };
       },
       () => LocalDB.getStats()
+    );
+  },
+
+  // -------------------------
+  // FAQ CATEGORIES (StoreDB)
+  // -------------------------
+  async getFaqCategories(onlyActive = true): Promise<FaqCategory[]> {
+    return runDbOp(
+      async () => {
+        const catSnap = await getDocs(collection(getDb(), 'faq_categories'));
+        let categories = catSnap.docs.map((d) => d.data() as FaqCategory);
+
+        if (categories.length === 0) {
+          for (const cat of initialFaqCategories) {
+            await setDoc(doc(getDb(), 'faq_categories', cat.id), cat);
+          }
+          categories = [...initialFaqCategories];
+        }
+
+        const faqsSnap = await getDocs(collection(getDb(), 'faqs'));
+        const faqs = faqsSnap.docs.map((d) => d.data() as FaqItem);
+
+        const filtered = onlyActive ? categories.filter((c) => c.is_active) : [...categories];
+        return filtered
+          .map((c) => ({
+            ...c,
+            faqCount: faqs.filter((f) => f.category_id === c.id && f.is_published).length,
+          }))
+          .sort((a, b) => a.sort_order - b.sort_order);
+      },
+      () => LocalDB.getFaqCategories(onlyActive)
+    );
+  },
+
+  async getFaqCategoryById(id: string): Promise<FaqCategory | undefined> {
+    return runDbOp(
+      async () => {
+        const snap = await getDoc(doc(getDb(), 'faq_categories', id));
+        if (snap.exists()) return snap.data() as FaqCategory;
+        return undefined;
+      },
+      () => LocalDB.getFaqCategoryById(id)
+    );
+  },
+
+  async createFaqCategory(category: FaqCategory): Promise<{ success: boolean; category?: FaqCategory; message?: string }> {
+    return runDbOp(
+      async () => {
+        const catRef = doc(getDb(), 'faq_categories', category.id);
+        const existing = await getDoc(catRef);
+        if (existing.exists()) return { success: false, message: 'التصنيف موجود مسبقاً' };
+        await setDoc(catRef, category);
+        return { success: true, category };
+      },
+      () => LocalDB.createFaqCategory(category)
+    );
+  },
+
+  async updateFaqCategory(id: string, updates: Partial<FaqCategory>): Promise<{ success: boolean; category?: FaqCategory; message?: string }> {
+    return runDbOp<{ success: boolean; category?: FaqCategory; message?: string }>(
+      async () => {
+        const catRef = doc(getDb(), 'faq_categories', id);
+        await updateDoc(catRef, { ...updates, updatedAt: new Date().toISOString() });
+        const snap = await getDoc(catRef);
+        return { success: true, category: snap.data() as FaqCategory };
+      },
+      () => LocalDB.updateFaqCategory(id, updates)
+    );
+  },
+
+  async deleteFaqCategory(id: string): Promise<{ success: boolean; message?: string }> {
+    return runDbOp<{ success: boolean; message?: string }>(
+      async () => {
+        const faqsSnap = await getDocs(query(collection(getDb(), 'faqs'), where('category_id', '==', id)));
+        if (!faqsSnap.empty) {
+          return { success: false, message: 'لا يمكن حذف التصنيف لوجود أسئلة مرتبطة به. قم بنقل أو حذف الأسئلة أولاً.' };
+        }
+        await deleteDoc(doc(getDb(), 'faq_categories', id));
+        return { success: true };
+      },
+      () => LocalDB.deleteFaqCategory(id)
+    );
+  },
+
+  // -------------------------
+  // FAQS (StoreDB)
+  // -------------------------
+  async getFaqs(options: { categoryId?: string; search?: string; onlyPublished?: boolean; isPinned?: boolean } = {}): Promise<FaqItem[]> {
+    return runDbOp(
+      async () => {
+        const snapshot = await getDocs(collection(getDb(), 'faqs'));
+        let faqs = snapshot.docs.map((d) => d.data() as FaqItem);
+
+        if (faqs.length === 0) {
+          for (const f of initialFaqs) {
+            await setDoc(doc(getDb(), 'faqs', f.id), f);
+          }
+          faqs = [...initialFaqs];
+        }
+
+        const categories = await this.getFaqCategories(false);
+        const catMap = new Map(categories.map((c) => [c.id, c]));
+
+        if (options.onlyPublished !== false) {
+          faqs = faqs.filter((f) => f.is_published);
+        }
+        if (options.categoryId) {
+          faqs = faqs.filter((f) => f.category_id === options.categoryId);
+        }
+        if (options.isPinned !== undefined) {
+          faqs = faqs.filter((f) => f.is_pinned === options.isPinned);
+        }
+        if (options.search && options.search.trim()) {
+          const q = options.search.trim().toLowerCase();
+          faqs = faqs.filter((f) =>
+            (f.question_ar && f.question_ar.toLowerCase().includes(q)) ||
+            (f.question_en && f.question_en.toLowerCase().includes(q)) ||
+            (f.answer_ar && f.answer_ar.toLowerCase().includes(q)) ||
+            (f.answer_en && f.answer_en.toLowerCase().includes(q)) ||
+            (Array.isArray(f.keywords) && f.keywords.some((kw) => kw.toLowerCase().includes(q)))
+          );
+        }
+
+        return faqs
+          .map((f) => {
+            const cat = catMap.get(f.category_id);
+            return {
+              ...f,
+              category_name_ar: cat?.name_ar,
+              category_name_en: cat?.name_en,
+            };
+          })
+          .sort((a, b) => {
+            if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+            return a.sort_order - b.sort_order;
+          });
+      },
+      () => LocalDB.getFaqs(options)
+    );
+  },
+
+  async getFaqById(id: string): Promise<FaqItem | undefined> {
+    return runDbOp(
+      async () => {
+        const snap = await getDoc(doc(getDb(), 'faqs', id));
+        if (!snap.exists()) return undefined;
+        const faq = snap.data() as FaqItem;
+        const cat = await this.getFaqCategoryById(faq.category_id);
+        return {
+          ...faq,
+          category_name_ar: cat?.name_ar,
+          category_name_en: cat?.name_en,
+        };
+      },
+      () => LocalDB.getFaqById(id)
+    );
+  },
+
+  async createFaq(faq: FaqItem): Promise<{ success: boolean; faq?: FaqItem; message?: string }> {
+    return runDbOp<{ success: boolean; faq?: FaqItem; message?: string }>(
+      async () => {
+        const faqRef = doc(getDb(), 'faqs', faq.id);
+        const existing = await getDoc(faqRef);
+        if (existing.exists()) return { success: false, message: 'السؤال موجود مسبقاً' };
+        await setDoc(faqRef, faq);
+        return { success: true, faq };
+      },
+      () => LocalDB.createFaq(faq)
+    );
+  },
+
+  async updateFaq(id: string, updates: Partial<FaqItem>): Promise<{ success: boolean; faq?: FaqItem; message?: string }> {
+    return runDbOp<{ success: boolean; faq?: FaqItem; message?: string }>(
+      async () => {
+        const faqRef = doc(getDb(), 'faqs', id);
+        await updateDoc(faqRef, { ...updates, updatedAt: new Date().toISOString() });
+        const snap = await getDoc(faqRef);
+        return { success: true, faq: snap.data() as FaqItem };
+      },
+      () => LocalDB.updateFaq(id, updates)
+    );
+  },
+
+  async deleteFaq(id: string): Promise<{ success: boolean; message?: string }> {
+    return runDbOp<{ success: boolean; message?: string }>(
+      async () => {
+        await deleteDoc(doc(getDb(), 'faqs', id));
+        return { success: true };
+      },
+      () => LocalDB.deleteFaq(id)
+    );
+  },
+
+  async incrementFaqView(id: string): Promise<{ success: boolean; views?: number }> {
+    return runDbOp<{ success: boolean; views?: number }>(
+      async () => {
+        const faqRef = doc(getDb(), 'faqs', id);
+        await updateDoc(faqRef, { views: increment(1) });
+        return { success: true };
+      },
+      () => LocalDB.incrementFaqView(id)
+    );
+  },
+
+  async logFaqSearch(queryStr: string, resultsCount: number, lang: 'ar' | 'en'): Promise<{ success: boolean }> {
+    return runDbOp(
+      async () => {
+        const logId = `search-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const log: FaqSearchLog = {
+          id: logId,
+          query: queryStr.trim(),
+          results_count: resultsCount,
+          lang,
+          createdAt: new Date().toISOString(),
+        };
+        await setDoc(doc(getDb(), 'faq_search_logs', logId), log);
+        return { success: true };
+      },
+      () => LocalDB.logFaqSearch(queryStr, resultsCount, lang)
+    );
+  },
+
+  async getFaqStats(): Promise<FaqStats> {
+    return runDbOp(
+      async () => {
+        const faqs = await this.getFaqs({ onlyPublished: false });
+        const categories = await this.getFaqCategories(false);
+        const searchSnap = await getDocs(collection(getDb(), 'faq_search_logs'));
+        const searchLogs = searchSnap.docs.map((d) => d.data() as FaqSearchLog);
+
+        const totalFaqs = faqs.length;
+        const publishedFaqs = faqs.filter((f) => f.is_published).length;
+        const totalCategories = categories.length;
+
+        const mostViewedFaqs = [...faqs]
+          .sort((a, b) => (b.views || 0) - (a.views || 0))
+          .slice(0, 5)
+          .map((f) => ({
+            id: f.id,
+            question_ar: f.question_ar,
+            question_en: f.question_en,
+            views: f.views || 0,
+            category_id: f.category_id,
+          }));
+
+        const totalSearches = searchLogs.length;
+
+        const queryCounts: Record<string, number> = {};
+        const zeroCounts: Record<string, number> = {};
+        for (const log of searchLogs) {
+          const q = (log.query || '').trim().toLowerCase();
+          if (!q) continue;
+          queryCounts[q] = (queryCounts[q] || 0) + 1;
+          if (log.results_count === 0) {
+            zeroCounts[q] = (zeroCounts[q] || 0) + 1;
+          }
+        }
+
+        const topSearchQueries = Object.entries(queryCounts)
+          .map(([query, count]) => ({ query, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        const zeroResultQueries = Object.entries(zeroCounts)
+          .map(([query, count]) => ({ query, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        return {
+          totalFaqs,
+          publishedFaqs,
+          totalCategories,
+          mostViewedFaqs,
+          totalSearches,
+          topSearchQueries,
+          zeroResultQueries,
+        };
+      },
+      () => LocalDB.getFaqStats()
     );
   }
 };

@@ -426,3 +426,65 @@ export interface SiteUpdate {
   discordError?: string | null;
   discordAttemptAt?: string | null;
 }
+
+// -------------------------------------------------------------
+// HELP CENTER & FAQ SYSTEM
+// -------------------------------------------------------------
+
+export interface FaqCategory {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
+  icon: string; // Lucide icon name (e.g. 'KeyRound', 'Package', 'Shield', 'HelpCircle', 'Wrench', 'Download', 'User')
+  sort_order: number;
+  is_active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  faqCount?: number;
+}
+
+export interface FaqItem {
+  id: string;
+  category_id: string;
+  category_name_ar?: string;
+  category_name_en?: string;
+  question_ar: string;
+  question_en: string;
+  answer_ar: string;
+  answer_en: string;
+  keywords: string[];
+  is_pinned: boolean;
+  is_published: boolean;
+  sort_order: number;
+  views: number;
+  createdAt: string;
+  updatedAt: string;
+  created_by?: string | null;
+}
+
+export interface FaqSearchLog {
+  id: string;
+  query: string;
+  results_count: number;
+  lang: 'ar' | 'en';
+  createdAt: string;
+}
+
+export interface FaqStats {
+  totalFaqs: number;
+  publishedFaqs: number;
+  totalCategories: number;
+  mostViewedFaqs: {
+    id: string;
+    question_ar: string;
+    question_en: string;
+    views: number;
+    category_id: string;
+  }[];
+  totalSearches: number;
+  topSearchQueries: { query: string; count: number }[];
+  zeroResultQueries: { query: string; count: number }[];
+}
+

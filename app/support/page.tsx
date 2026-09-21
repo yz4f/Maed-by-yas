@@ -1,7 +1,7 @@
-import { SupportHome } from '@/components/support/support-home';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default function SupportPage() {
-  return <SupportHome />;
+  redirect('/?tab=tickets');
 }
