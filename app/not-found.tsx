@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4" dir="rtl">
@@ -6,12 +8,12 @@ export default function NotFound() {
       <p className="text-sm text-slate-400 max-w-md mb-8">
         عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها إلى عنوان آخر في متجر تعن.
       </p>
-      <a
+      <Link
         href="/"
         className="px-6 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-extrabold text-xs shadow-lg hover:scale-105 transition-all"
       >
         العودة للصفحة الرئيسية
-      </a>
+      </Link>
     </div>
   );
 }

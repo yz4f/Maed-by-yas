@@ -1,0 +1,14 @@
+'use client';
+import { useCallback, useEffect, useState } from 'react';
+import { Check, Megaphone, Pin, X } from 'lucide-react';
+import type { Announcement } from '@/lib/announcements';
+type Item = Announcement & { readAt: string | null };
+export function CustomerAnnouncements({ lang }: { lang: string }) {
+ const [items,setItems]=useState<Item[]>([]); const [busy,setBusy]=useState(true); const ar=lang==='ar';
+ const load=useCallback(async()=>{try{const r=await fetch('/api/announcements',{cache:'no-store'});const d=await r.json();if(r.ok)setItems(d.announcements||[]);}finally{setBusy(false);}},[]);
+ useEffect(()=>{const t=window.setTimeout(()=>void load(),0);return()=>window.clearTimeout(t);},[load]);
+ async function act(item:Item,action:'read'|'dismiss'){const previous=items;if(action==='dismiss')setItems(current=>current.filter(x=>x.id!==item.id));else setItems(current=>current.map(x=>x.id===item.id?{...x,readAt:new Date().toISOString()}:x));try{const r=await fetch('/api/announcements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({announcementId:item.id,action})});if(!r.ok)throw new Error();}catch{setItems(previous);}}
+ if(busy||!items.length)return null;
+ const tones:Record<string,string>={INFO:'border-sky-400/30 bg-sky-500/[.07]',WARNING:'border-amber-400/30 bg-amber-500/[.07]',UPDATE:'border-cyan-400/30 bg-cyan-500/[.07]',IMPORTANT:'border-rose-400/30 bg-rose-500/[.07]'};
+ return <section aria-label={ar?'الإعلانات':'Announcements'} className="space-y-3">{items.map(item=><article key={item.id} onMouseEnter={()=>{if(!item.readAt)void act(item,'read');}} className={`relative rounded-2xl border p-4 sm:p-5 ${tones[item.type]||tones.INFO}`}><div className="flex items-start gap-3"><span className="mt-0.5 text-cyan-300"><Megaphone size={18}/></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-sm font-black">{ar ? item.titleAr : item.titleEn}</h2>{item.pinned&&<span className="inline-flex items-center gap-1 rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] text-cyan-200"><Pin size={11}/>{ar?'مثبّت':'Pinned'}</span>}{!item.readAt&&<span className="rounded-full bg-cyan-300 px-2 py-1 text-[9px] font-black text-slate-950">{ar?'جديد':'NEW'}</span>}</div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 opacity-80">{ar ? item.contentAr : item.contentEn}</p></div><div className="flex shrink-0 items-center gap-1">{!item.readAt&&<button type="button" onClick={()=>void act(item,'read')} title={ar?'تحديد كمقروء':'Mark as read'} className="rounded-lg p-2 opacity-65 hover:bg-white/10 hover:opacity-100"><Check size={16}/></button>}{item.dismissible&&<button type="button" onClick={()=>void act(item,'dismiss')} title={ar?'إخفاء الإعلان':'Dismiss announcement'} className="rounded-lg p-2 opacity-65 hover:bg-white/10 hover:opacity-100"><X size={16}/></button>}</div></div></article>)}</section>;
+}

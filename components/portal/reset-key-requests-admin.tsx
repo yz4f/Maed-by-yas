@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, Send, UserRound, XCircle } from 'lucide-react';
 import type { ResetRequest, ResetRequestStatus } from '@/types';
 
@@ -14,7 +15,7 @@ const darkStatusStyle: Record<ResetRequestStatus, string> = {
   PENDING: 'border-amber-300/20 bg-amber-300/[0.09] text-amber-100',
   APPROVED: 'border-sky-300/20 bg-sky-300/[0.09] text-sky-100',
   REJECTED: 'border-rose-300/20 bg-rose-300/[0.09] text-rose-100',
-  WAITING_FOR_CUSTOMER: 'border-violet-300/20 bg-violet-300/[0.09] text-violet-100',
+  WAITING_FOR_CUSTOMER: 'border-cyan-300/20 bg-cyan-300/[0.09] text-cyan-100',
   COMPLETED: 'border-emerald-300/20 bg-emerald-300/[0.09] text-emerald-100',
   CANCELLED: 'border-slate-300/20 bg-slate-300/[0.07] text-slate-200',
 };
@@ -23,7 +24,7 @@ const lightStatusStyle: Record<ResetRequestStatus, string> = {
   PENDING: 'border-amber-200 bg-amber-50 text-amber-800',
   APPROVED: 'border-sky-200 bg-sky-50 text-sky-800',
   REJECTED: 'border-rose-200 bg-rose-50 text-rose-800',
-  WAITING_FOR_CUSTOMER: 'border-violet-200 bg-violet-50 text-violet-800',
+  WAITING_FOR_CUSTOMER: 'border-cyan-200 bg-cyan-50 text-cyan-800',
   COMPLETED: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   CANCELLED: 'border-slate-200 bg-slate-50 text-slate-600',
 };
@@ -47,7 +48,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const requestCacheRef = useRef<ResetRequest[]>([]);
   const notifyRef = useRef(onNotify);
 
-  notifyRef.current = onNotify;
+  useEffect(() => { notifyRef.current = onNotify; }, [onNotify]);
 
   const load = useCallback(async () => {
     if (inFlightRef.current) return;
@@ -55,7 +56,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai?view=admin_resets', { credentials: 'same-origin', cache: 'no-store' });
+      const response = await fetch('/api/admin/reset-requests', { credentials: 'same-origin', cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحميل الطلبات.');
       const next = Array.isArray(data.requests) ? data.requests as ResetRequest[] : [];
@@ -71,8 +72,8 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
 
   useEffect(() => {
     mountedRef.current = true;
-    void load();
-    return () => { mountedRef.current = false; };
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => { mountedRef.current = false; window.clearTimeout(timer); };
   }, [load]);
 
   const copyKey = async (key: string, id: string) => {
@@ -103,11 +104,11 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const process = async (requestId: string, decision: 'approve' | 'reject' | 'complete') => {
     setBusyId(requestId);
     try {
-      const response = await fetch('/api/ai', {
+      const response = await fetch('/api/admin/reset-requests', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ action: 'process_reset', requestId, decision }),
+        body: JSON.stringify({ action: 'process', requestId, decision }),
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحديث الطلب.');
@@ -169,8 +170,8 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
             return <article key={request.id} className={`rounded-[22px] border p-4 transition ${cardClass}`}>
               <div className={`flex items-start justify-between gap-3 border-b pb-3 ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
                 <div className="flex min-w-0 items-center gap-3">
-                  <img src={request.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className={`h-11 w-11 rounded-2xl border object-cover ${isDark ? 'border-cyan-300/20' : 'border-sky-200'}`} onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
-                  <div className="min-w-0"><h4 className={`truncate text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{request.customerName}</h4><p className={`mt-0.5 text-[11px] ${muted}`}>{request.reference}</p><div className={`mt-2 inline-flex max-w-full items-center gap-2 rounded-xl border px-2 py-1 ${isDark ? 'border-cyan-300/[0.14] bg-cyan-300/[0.06] text-cyan-100' : 'border-sky-200 bg-sky-50 text-sky-800'}`}><img src={request.productImage || '/logo.png'} alt="" loading="lazy" className="h-5 w-5 shrink-0 rounded-md object-cover" onError={(event) => { event.currentTarget.src = '/logo.png'; }} /><span className="truncate text-[10px] font-black">{request.productName}</span></div></div>
+                  <Image src={request.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" width={44} height={44} unoptimized className={`h-11 w-11 rounded-2xl border object-cover ${isDark ? 'border-cyan-300/20' : 'border-sky-200'}`} />
+                  <div className="min-w-0"><h4 className={`truncate text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{request.customerName}</h4><p className={`mt-0.5 text-[11px] ${muted}`}>{request.reference}</p><div className={`mt-2 inline-flex max-w-full items-center gap-2 rounded-xl border px-2 py-1 ${isDark ? 'border-cyan-300/[0.14] bg-cyan-300/[0.06] text-cyan-100' : 'border-sky-200 bg-sky-50 text-sky-800'}`}><Image src={request.productImage || '/logo.png'} alt="" width={20} height={20} unoptimized loading="lazy" className="h-5 w-5 shrink-0 rounded-md object-cover" /><span className="truncate text-[10px] font-black">{request.productName}</span></div></div>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black ${statusStyle[request.status]}`}>{statusLabel(request.status, lang)}</span>
               </div>
