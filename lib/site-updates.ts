@@ -1,7 +1,7 @@
 import { collection, doc, getDocs, orderBy, query, runTransaction, setDoc, updateDoc } from 'firebase/firestore';
 import { db as getDb } from '@/lib/store-db';
 import { sendDiscordSiteUpdate } from '@/lib/discord-bot';
-import type { TicketActor } from '@/lib/ticket-auth';
+import type { AuthenticatedActor } from '@/lib/request-actor';
 import type { SiteUpdate, SiteUpdateKind, SiteUpdateStatus } from '@/types';
 
 const COLLECTION = 'siteUpdates';
@@ -51,7 +51,7 @@ export async function listSiteUpdates(): Promise<SiteUpdate[]> {
   return snapshot.docs.map((entry) => entry.data() as SiteUpdate);
 }
 
-export async function createSiteUpdate(actor: TicketActor, input: SiteUpdateInput): Promise<SiteUpdate> {
+export async function createSiteUpdate(actor: AuthenticatedActor, input: SiteUpdateInput): Promise<SiteUpdate> {
   const values = cleanInput(input);
   const createdAt = now();
   const update: SiteUpdate = {
@@ -77,7 +77,7 @@ export async function createSiteUpdate(actor: TicketActor, input: SiteUpdateInpu
   return update;
 }
 
-export async function updateSiteUpdate(actor: TicketActor, updateId: string, input: SiteUpdateInput): Promise<SiteUpdate> {
+export async function updateSiteUpdate(actor: AuthenticatedActor, updateId: string, input: SiteUpdateInput): Promise<SiteUpdate> {
   const values = cleanInput(input);
   let result: SiteUpdate | null = null;
   await runTransaction(database(), async (transaction) => {
@@ -93,7 +93,7 @@ export async function updateSiteUpdate(actor: TicketActor, updateId: string, inp
   return result;
 }
 
-export async function approveSiteUpdate(actor: TicketActor, updateId: string): Promise<SiteUpdate> {
+export async function approveSiteUpdate(actor: AuthenticatedActor, updateId: string): Promise<SiteUpdate> {
   let result: SiteUpdate | null = null;
   await runTransaction(database(), async (transaction) => {
     const ref = doc(database(), COLLECTION, updateId);
@@ -110,7 +110,7 @@ export async function approveSiteUpdate(actor: TicketActor, updateId: string): P
   return result;
 }
 
-export async function publishSiteUpdate(actor: TicketActor, updateId: string): Promise<SiteUpdate> {
+export async function publishSiteUpdate(actor: AuthenticatedActor, updateId: string): Promise<SiteUpdate> {
   const reserved = await runTransaction(database(), async (transaction): Promise<SiteUpdate> => {
     const ref = doc(database(), COLLECTION, updateId);
     const snapshot = await transaction.get(ref);

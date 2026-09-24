@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
-import { getClientIp, getSessionActor } from '@/lib/request-security';
+import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
 import type { ProductStatus } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +11,13 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ productId: string }> },
 ) {
+  if (!requestHasTrustedOrigin(req)) {
+    return NextResponse.json(
+      { success: false, message: 'مصدر الطلب غير موثوق.' },
+      { status: 403 },
+    );
+  }
+
   try {
     const actor = await getSessionActor();
     if (!actor) {
@@ -32,10 +39,10 @@ export async function PATCH(
     }
 
     const user = await StoreDB.getUserByDiscordId(actor.discordId);
-    if (!user) {
+    if (!user || user.isArchived || user.isBanned) {
       return NextResponse.json(
-        { success: false, message: 'تعذر العثور على حساب المستخدم.' },
-        { status: 404 },
+        { success: false, message: 'الحساب غير متاح لإدارة التراخيص.' },
+        { status: user ? 403 : 404 },
       );
     }
 

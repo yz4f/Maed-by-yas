@@ -4,6 +4,8 @@ import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 import { sendDiscordWebsiteLog } from './discord-bot';
 import { recordSiteLogin } from './site-presence';
+import { StoreDB } from './store-db';
+import { normalizeRole } from './permissions';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,7 +16,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }: any) {
+    async jwt({ token, profile }: any) {
       if (profile) {
         token.discordId = profile.id;
         token.image = profile.avatar
@@ -37,7 +39,14 @@ export const authOptions: NextAuthOptions = {
         ) {
           token.role = 'Co-Boss';
         } else {
-          token.role = 'Customer';
+          try {
+            const storedUser = await StoreDB.getUserByDiscordId(profile.id);
+            const storedRole = normalizeRole(storedUser?.role);
+            token.role = storedRole === 'Owner' ? 'Customer' : storedRole;
+          } catch (error) {
+            console.error('[Auth] Unable to load the assigned account role:', error);
+            token.role = 'Customer';
+          }
         }
 
         const customerName = profile.global_name || profile.username || 'Customer';
@@ -45,6 +54,18 @@ export const authOptions: NextAuthOptions = {
           recordSiteLogin({ discordId: profile.id, name: customerName, image: token.image, role: token.role || 'Customer' }),
           sendDiscordWebsiteLog({ type: 'login', customerId: profile.id, customerName, customerImage: token.image }),
         ]).catch((error) => console.error('[Website Presence] Login event failed:', error));
+      } else if (token.discordId && token.role !== 'Boss' && token.role !== 'Co-Boss') {
+        // Refresh database-managed roles whenever NextAuth renews the session.
+        // This makes role grants and revocations visible without another OAuth login.
+        try {
+          const storedUser = await StoreDB.getUserByDiscordId(String(token.discordId));
+          token.role = storedUser && !storedUser.isArchived && !storedUser.isBanned
+            ? (normalizeRole(storedUser.role) === 'Owner' ? 'Customer' : normalizeRole(storedUser.role))
+            : 'Customer';
+        } catch (error) {
+          console.error('[Auth] Unable to refresh the assigned account role:', error);
+          token.role = 'Customer';
+        }
       }
       return token;
     },

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const user = await StoreDB.getUserByDiscordId(actor.discordId);
-    if (!user) {
+    if (!user || user.isBanned || user.isArchived) {
       return NextResponse.json({ success: false, message: 'تعذر تهيئة حساب المستخدم. أعد تسجيل الدخول وحاول مجدداً.' }, { status: 401 });
     }
 

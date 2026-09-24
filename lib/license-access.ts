@@ -18,7 +18,7 @@ export async function getOwnedActiveLicense(actor: SessionActor, productId: stri
   if (!productId || productId.length > 160) return null;
 
   const user = await StoreDB.getUserByDiscordId(actor.discordId);
-  if (!user || user.isBanned) return null;
+  if (!user || user.isBanned || user.isArchived) return null;
 
   const licenses = await StoreDB.getUserProducts(user.id);
   const license = licenses.find((item) => item.productId === productId && isLicenseCurrentlyActive(item));
