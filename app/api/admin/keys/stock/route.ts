@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (!requestHasTrustedOrigin(req)) {
     return NextResponse.json({ success: false, message: 'تم رفض مصدر الطلب غير الموثوق.' }, { status: 403 });
   }
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('inventory.edit')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بإضافة مفاتيح إلى المخزون.' }, { status: 403 });
   }
   try {

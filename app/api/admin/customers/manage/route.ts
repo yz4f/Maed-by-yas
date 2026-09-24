@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { DiscordBotService } from '@/lib/discord';
-import { sendDiscordAdminDirectMessage } from '@/lib/discord-bot';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
+import { canManageRole, normalizeRole } from '@/lib/permissions';
 
 export async function POST(req: Request) {
   try {
@@ -13,24 +13,34 @@ export async function POST(req: Request) {
 
     const admin = await getSessionActor();
     if (!admin) return NextResponse.json({ success: false, message: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
-    if (!await isAuthorizedAdmin()) {
-      return NextResponse.json({ success: false, message: 'غير مصرح لك بتنفيذ عمليات إدارة العملاء.' }, { status: 403 });
-    }
-
     const body = await req.json();
-    const { action, userId, productId, status, warningMessage, banReason, banType, banExpiresAt, directMessage } = body;
-    const allowedActions = new Set(['remove_product', 'add_product', 'update_status', 'warn_user', 'ban_user', 'unban_user', 'send_discord_message']);
+    const { action, userId, productId, status, warningMessage, banReason, banType, banExpiresAt, role } = body;
+    const requiredPermission = action === 'ban_user' || action === 'unban_user' ? 'users.disable' : action === 'change_role' ? 'roles.manage' : 'users.edit';
+    if (!await isAuthorizedAdmin(requiredPermission)) return NextResponse.json({ success: false, message: 'غير مصرح لك بتنفيذ هذه العملية.' }, { status: 403 });
+    const allowedActions = new Set(['remove_product', 'add_product', 'update_status', 'warn_user', 'ban_user', 'unban_user', 'change_role']);
     if (!allowedActions.has(action) || typeof userId !== 'string' || !userId.trim()) {
       return NextResponse.json({ success: false, message: 'بيانات العملية غير صالحة.' }, { status: 400 });
     }
     if (['remove_product', 'add_product', 'update_status'].includes(action) && (typeof productId !== 'string' || !productId.trim())) {
       return NextResponse.json({ success: false, message: 'معرف المنتج مطلوب.' }, { status: 400 });
     }
+    if (action === 'change_role' && !['Admin', 'Moderator', 'Staff', 'Customer'].includes(role)) {
+      return NextResponse.json({ success: false, message: 'الدور المحدد غير صالح.' }, { status: 400 });
+    }
+    if (action === 'update_status' && !['Active', 'Inactive'].includes(status)) {
+      return NextResponse.json({ success: false, message: 'حالة المنتج المحددة غير صالحة.' }, { status: 400 });
+    }
+    if (action === 'ban_user' && banType !== undefined && !['temporary', 'permanent'].includes(banType)) {
+      return NextResponse.json({ success: false, message: 'نوع الحظر المحدد غير صالح.' }, { status: 400 });
+    }
+    if (action === 'warn_user' && (typeof warningMessage !== 'string' || !warningMessage.trim() || warningMessage.length > 500)) {
+      return NextResponse.json({ success: false, message: 'نص التحذير مطلوب ويجب ألا يتجاوز 500 حرف.' }, { status: 400 });
+    }
+    if (typeof userId !== 'string' || userId.length > 180 || (typeof productId === 'string' && productId.length > 180)) {
+      return NextResponse.json({ success: false, message: 'معرّف العميل أو المنتج غير صالح.' }, { status: 400 });
+    }
     if (action === 'ban_user' && banType === 'temporary' && (!banExpiresAt || Number.isNaN(new Date(banExpiresAt).getTime()) || new Date(banExpiresAt) <= new Date())) {
       return NextResponse.json({ success: false, message: 'تاريخ انتهاء الحظر المؤقت غير صالح.' }, { status: 400 });
-    }
-    if (action === 'send_discord_message' && (typeof directMessage !== 'string' || directMessage.trim().length < 2 || directMessage.trim().length > 1200)) {
-      return NextResponse.json({ success: false, message: 'اكتب رسالة بين حرفين و1200 حرف قبل الإرسال.' }, { status: 400 });
     }
 
     const adminName = admin.name;
@@ -42,37 +52,25 @@ export async function POST(req: Request) {
     }
     const userObj = userDetails.user;
 
-    // 1. SEND A SINGLE DISCORD DIRECT MESSAGE
-    if (action === 'send_discord_message') {
-      const discordId = String(userObj?.discordId || '').trim();
-      if (!/^\d{16,22}$/.test(discordId)) {
-        return NextResponse.json({ success: false, message: 'لا يوجد حساب Discord مرتبط وصالح لهذا العميل.' }, { status: 400 });
-      }
-      const result = await sendDiscordAdminDirectMessage({
-        customerDiscordId: discordId,
-        customerName: String(userObj?.name || 'عميل'),
-        body: directMessage.trim(),
-        staffName: adminName || 'دعم تعن',
-      });
-      if (!result.sent) {
-        return NextResponse.json({ success: false, message: 'تم منع إرسال رسالة مكررة خلال ثوانٍ قليلة.' }, { status: 429 });
-      }
-      await StoreDB.addLog(
-        'Discord Direct Message Sent',
-        `أرسل ${adminName || 'دعم تعن'} رسالة Discord خاصة إلى العميل ${userObj.name}.`,
-        adminId || 'admin-system',
-        adminName || 'دعم تعن',
-        ip,
-        {
-          eventType: 'discord_direct_message_sent', actorDiscordId: admin.discordId, actorName: adminName,
-          targetUserId: userId, targetDiscordId: discordId,
-          metadata: { action, messageLength: directMessage.trim().length },
-        }
-      );
-      return NextResponse.json({ success: true, message: 'تم إرسال الرسالة الخاصة إلى Discord العميل.' });
+    if (!canManageRole(admin.role, userObj.role)) {
+      return NextResponse.json({ success: false, message: 'لا تملك صلاحية إدارة حساب بهذا المستوى أو أعلى.' }, { status: 403 });
     }
 
-    // 2. REMOVE PRODUCT
+    if (action === 'change_role') {
+      if (normalizeRole(admin.role) !== 'Owner') return NextResponse.json({ success: false, message: 'تغيير أدوار الحسابات متاح للمالك فقط.' }, { status: 403 });
+      if (['Boss', 'Owner', 'Co-Boss'].includes(String(userObj.role))) return NextResponse.json({ success: false, message: 'لا يمكن تغيير دور حساب ذي صلاحيات سيادية.' }, { status: 403 });
+      const previousRole = userObj.role;
+      if (previousRole === role) return NextResponse.json({ success: true, role, message: 'الدور المحدد مستخدم بالفعل.' });
+      await StoreDB.updateUser(userId, { role });
+      await StoreDB.addLog('ADMIN_CHANGED_USER_ROLE', `${admin.name} changed ${userObj.name}'s role from ${previousRole} to ${role}.`, admin.discordId, admin.name, ip, {
+        eventType: 'admin_changed_user_role', actorUserId: admin.discordId, actorDiscordId: admin.discordId,
+        actorName: admin.name, targetUserId: userId, targetDiscordId: userObj.discordId,
+        metadata: { previousRole, newRole: role },
+      });
+      return NextResponse.json({ success: true, role, message: 'تم تحديث دور العميل. ستسري الصلاحيات الجديدة على طلباته فوراً، وتظهر قائمته المحدثة عند تجديد الجلسة.' });
+    }
+
+    // REMOVE PRODUCT
     if (action === 'remove_product') {
       await StoreDB.removeProductFromUser(userId, productId);
       const prod = await StoreDB.getProductById(productId);
@@ -203,27 +201,30 @@ export async function POST(req: Request) {
 
     // 6. UNBAN USER
     if (action === 'unban_user') {
+      const wasArchived = Boolean(userObj.isArchived);
       await StoreDB.updateUser(userId, {
         isBanned: false,
         banReason: null,
         banType: null,
-        banExpiresAt: null
+        banExpiresAt: null,
+        isArchived: false,
+        archivedAt: null,
       });
 
       await StoreDB.addLog(
-        'User Unbanned',
-        `قام المشرف ${adminName || 'Admin'} بفك حظر العميل ${userObj.name}`,
+        wasArchived ? 'User Reactivated' : 'User Unbanned',
+        wasArchived ? `قام المشرف ${adminName || 'Admin'} بإعادة تفعيل حساب العميل ${userObj.name}` : `قام المشرف ${adminName || 'Admin'} بفك حظر العميل ${userObj.name}`,
         adminId || 'admin-system',
         adminName || 'Admin',
         ip,
         {
-          eventType: 'user_unbanned', actorDiscordId: admin.discordId, actorName: adminName,
+          eventType: wasArchived ? 'user_reactivated' : 'user_unbanned', actorDiscordId: admin.discordId, actorName: adminName,
           targetUserId: userId, targetDiscordId: userObj.discordId || null,
-          metadata: { action },
+          metadata: { action: wasArchived ? 'reactivate_user' : action },
         }
       );
 
-      return NextResponse.json({ success: true, message: 'تم إلغاء حظر العميل بنجاح.' });
+      return NextResponse.json({ success: true, message: wasArchived ? 'تمت إعادة تفعيل حساب العميل.' : 'تم إلغاء حظر العميل بنجاح.' });
     }
 
     return NextResponse.json({ success: false, message: 'إجراء غير معروف' }, { status: 400 });

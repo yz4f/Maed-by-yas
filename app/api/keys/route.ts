@@ -5,7 +5,7 @@ import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/req
 import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
 
 export async function GET(req: Request) {
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('keys.view')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بالوصول إلى المفاتيح.' }, { status: 403 });
   }
   try {
@@ -21,9 +21,9 @@ export async function GET(req: Request) {
     const allKeys = await StoreDB.getKeys();
     const keys = allKeys.filter((key) => !key.isArchived);
     return NextResponse.json({ success: true, keys, stock: getKeyStockSummary(keys) });
-  } catch (err: any) {
-    console.error("Keys API failed:", err);
-    return NextResponse.json({ success: false, error: err.message, stack: err.stack }, { status: 500 });
+  } catch (error) {
+    console.error('Keys API failed:', error);
+    return NextResponse.json({ success: false, error: 'تعذر تحميل المفاتيح حالياً.' }, { status: 500 });
   }
 }
 
@@ -31,7 +31,7 @@ export async function DELETE(req: Request) {
   if (!requestHasTrustedOrigin(req)) {
     return NextResponse.json({ success: false, message: 'تم رفض مصدر الطلب غير الموثوق.' }, { status: 403 });
   }
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('inventory.edit')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المفاتيح.' }, { status: 403 });
   }
   try {
@@ -97,7 +97,7 @@ export async function PUT(req: Request) {
   if (!requestHasTrustedOrigin(req)) {
     return NextResponse.json({ success: false, message: 'تم رفض مصدر الطلب غير الموثوق.' }, { status: 403 });
   }
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('inventory.edit')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بإدارة المفاتيح.' }, { status: 403 });
   }
   try {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 
-const ADMIN_ROLES = new Set(['Boss', 'Co-Boss', 'Admin', 'Owner']);
+const ADMIN_ROLES = new Set(['Boss', 'Co-Boss', 'Admin', 'Moderator', 'Staff', 'Owner']);
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function hasTrustedOrigin(request: NextRequest): boolean {

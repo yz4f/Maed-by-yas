@@ -132,16 +132,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.portal-sidebar {
-  backdrop-filter: blur(22px) saturate(135%);
-  -webkit-backdrop-filter: blur(22px) saturate(135%);
-  box-shadow: 20px 0 54px rgba(0, 8, 25, 0.13), inset -1px 0 0 rgba(255, 255, 255, 0.08);
-}
-
-.portal-shell--light .portal-sidebar {
-  box-shadow: 20px 0 52px rgba(38, 96, 145, 0.1), inset -1px 0 0 rgba(255, 255, 255, 0.7);
-}
-
 .portal-shell--light main [class*="bg-[#0e0e11]"] {
   background: rgba(255, 255, 255, 0.72) !important;
   border-color: rgba(77, 124, 163, 0.15) !important;
@@ -202,15 +192,6 @@
 ::-webkit-scrollbar-thumb { background: #315b7c; border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: #8bd8ff; }
 
-/* Shared technical grid used by auxiliary dashboard layouts. */
-.bg-grid-pattern {
-  background-size: 44px 44px;
-  background-image:
-    linear-gradient(to right, rgba(184, 224, 248, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(184, 224, 248, 0.07) 1px, transparent 1px);
-}
-
-
 /* Graphite dashboard redesign: neutral, restrained, and high-contrast. */
 body {
   background: #09090a;
@@ -264,8 +245,6 @@ body {
 .portal-ambient::after { background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 70%); }
 .portal-grid { opacity: 0.22; background-image: linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px); }
 .portal-shell--light .portal-grid { opacity: 0.28; background-image: linear-gradient(rgba(24,24,27,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(24,24,27,0.055) 1px, transparent 1px); }
-.portal-sidebar { background: rgba(11,11,12,0.90) !important; border-color: rgba(255,255,255,0.075) !important; box-shadow: 18px 0 50px rgba(0,0,0,0.25), inset -1px 0 0 rgba(255,255,255,0.035) !important; }
-.portal-shell--light .portal-sidebar { background: rgba(250,250,250,0.90) !important; border-color: rgba(24,24,27,0.10) !important; }
 
 /* Remove saturated dashboard chrome; cyan remains only as a subtle state cue. */
 .portal-shell--dark button[class*="from-sky"],
@@ -280,20 +259,6 @@ body {
 .portal-shell--dark header { border-color: rgba(255,255,255,0.08) !important; }
 .portal-shell--dark header [class*="bg-sky"] { background: rgba(255,255,255,0.045) !important; color: #e4e4e7 !important; border-color: rgba(255,255,255,0.11) !important; }
 .portal-shell--dark header button[class*="from-sky"] { background: #f4f4f5 !important; color: #111113 !important; }
-
-.ticket-center--graphite { --graphite-panel: #111113; --graphite-elevated: #151518; }
-.ticket-center--graphite .ticket-hero { background: linear-gradient(120deg, #151518 0%, #111113 60%, #0e0e10 100%) !important; border-color: rgba(255,255,255,0.10) !important; box-shadow: 0 16px 34px rgba(0,0,0,0.18); }
-.ticket-center--graphite .ticket-hero .pointer-events-none { background: rgba(255,255,255,0.045) !important; }
-.ticket-center--graphite .ticket-primary { background: #f4f4f5 !important; color: #111113 !important; box-shadow: 0 12px 24px rgba(0,0,0,0.24) !important; }
-.ticket-center--graphite .ticket-primary:hover { background: #ffffff !important; }
-.ticket-center--graphite .ticket-filter--active { background: #f4f4f5 !important; color: #111113 !important; }
-.ticket-center--graphite .ticket-list--active { border-color: rgba(255,255,255,0.24) !important; background: rgba(255,255,255,0.075) !important; box-shadow: none !important; }
-.ticket-center--graphite .ticket-empty-icon { background: rgba(255,255,255,0.055) !important; }
-.ticket-center--graphite .ticket-empty-icon svg { color: #d4d4d8 !important; }
-.ticket-center--graphite [class*="text-sky-"] { color: #d4d4d8 !important; }
-.ticket-center--graphite [class*="border-sky-"] { border-color: rgba(255,255,255,0.12) !important; }
-.ticket-center--graphite [class*="bg-sky-"]:not(.ticket-primary):not(.ticket-filter--active) { background-color: rgba(255,255,255,0.05) !important; }
-.ticket-center--graphite select { color-scheme: dark; }
 
 ::-webkit-scrollbar-track { background: #09090a; }
 ::-webkit-scrollbar-thumb { background: #3f3f46; }
@@ -328,11 +293,6 @@ body {
   background-image:
     linear-gradient(rgba(214, 238, 255, 0.065) 1px, transparent 1px),
     linear-gradient(90deg, rgba(214, 238, 255, 0.065) 1px, transparent 1px);
-}
-.portal-shell--dark .portal-sidebar {
-  background: linear-gradient(180deg, rgba(9, 22, 38, 0.94), rgba(7, 18, 32, 0.92)) !important;
-  border-color: rgba(221, 239, 255, 0.13) !important;
-  box-shadow: 18px 0 58px rgba(0, 10, 26, 0.31), inset -1px 0 0 rgba(255,255,255,0.055) !important;
 }
 .portal-shell--dark .overview-welcome-card,
 .portal-shell--dark .overview-stat-card,
@@ -607,33 +567,6 @@ body {
   -webkit-touch-callout: default;
 }
 
-/* Compact ticket-management workspace */
-.ticket-center--graphite .ticket-workspace-header,
-.ticket-center--graphite .ticket-list-pane,
-.ticket-center--graphite .ticket-detail-pane {
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-}
-.ticket-center--graphite .ticket-row { border-radius: 0; }
-.ticket-center--graphite .ticket-row.ticket-list--active {
-  border-right: 2px solid rgba(125, 211, 252, 0.9) !important;
-  background: rgba(255, 255, 255, 0.07) !important;
-}
-.ticket-center--graphite .ticket-list-pane select,
-.ticket-center--graphite .ticket-metadata select { color-scheme: dark; }
-.ticket-center--graphite .ticket-detail-pane textarea { box-shadow: none; }
-.ticket-center--graphite .ticket-detail-pane textarea:focus { outline: none; }
-
-@media (max-width: 1279px) {
-  .ticket-center--graphite .ticket-metadata { border-inline-start: 0; }
-}
-
-@media (max-width: 767px) {
-  .ticket-center--graphite .ticket-workspace { display: block; }
-  .ticket-center--graphite .ticket-list-pane,
-  .ticket-center--graphite .ticket-detail-pane { min-height: calc(100dvh - 190px); }
-  .ticket-center--graphite .ticket-detail-pane { border-radius: 0.75rem; }
-}
-
 /* Shared premium SaaS design tokens */
 .portal-shell {
   --sd-radius-sm: 0.5rem;
@@ -714,7 +647,6 @@ body {
 .portal-shell table td { font-size: 0.72rem; }
 .portal-shell table tbody tr { transition: background-color 150ms ease; }
 .portal-shell .overflow-x-auto { border-radius: var(--sd-radius-md); }
-.portal-shell .portal-sidebar button { min-height: 2.35rem; }
 @media (max-width: 767px) {
   .portal-shell table { min-width: 42rem; }
   .portal-shell .glass-card.p-6 { padding: 0.85rem; }
@@ -844,12 +776,6 @@ body {
   border-color: var(--sd-border-strong) !important;
   box-shadow: 0 22px 46px rgba(1, 8, 18, 0.32), inset 0 1px 0 rgba(255,255,255,0.05) !important;
 }
-.portal-shell--dark .portal-sidebar {
-  background: linear-gradient(180deg, rgba(13, 25, 41, 0.96), rgba(9, 19, 32, 0.96)) !important;
-  border-color: rgba(196, 219, 243, 0.13) !important;
-}
-.portal-shell--dark .portal-sidebar button:not([class*="bg-"]) { color: #c9d6e5; }
-.portal-shell--dark .portal-sidebar button:hover { background-color: rgba(143, 205, 255, 0.075) !important; color: #f4f9ff !important; }
 .portal-shell--dark header,
 .portal-shell--dark [class*="border-white/"] { border-color: var(--sd-border) !important; }
 .portal-shell--dark main input:not([type="checkbox"]):not([type="radio"]),
@@ -876,10 +802,6 @@ body {
 .portal-shell--dark [class*="fixed"][class*="bg-black"] > [class*="rounded"] { border-color: var(--sd-border-strong) !important; }
 .portal-shell--dark .toast-card { background: linear-gradient(145deg, #17253a, #101c2d); border-color: var(--sd-border-strong); box-shadow: 0 16px 36px rgba(1, 8, 18, 0.34); }
 .portal-shell--dark .products-stat-card { background: linear-gradient(145deg, rgba(22, 35, 53, 0.98), rgba(16, 27, 43, 0.98)); border-color: var(--sd-border); }
-.portal-shell--dark .product-license-card,
-.portal-shell--dark .ticket-center--graphite .ticket-workspace-header,
-.portal-shell--dark .ticket-center--graphite .ticket-list-pane,
-.portal-shell--dark .ticket-center--graphite .ticket-detail-pane { box-shadow: var(--sd-shadow); }
 .portal-shell--dark ::-webkit-scrollbar-track { background: #091321; }
 .portal-shell--dark ::-webkit-scrollbar-thumb { background: #35516f; }
 .portal-shell--dark ::-webkit-scrollbar-thumb:hover { background: #5c8bb3; }
@@ -1038,10 +960,6 @@ body {
 }
 .portal-shell--light .product-license-card__key [class*="text-cyan"] { color: #2a6f96 !important; }
 .portal-shell--light .product-license-card__key button { border-color: rgba(25, 127, 178, 0.22) !important; background: rgba(14, 116, 144, 0.08) !important; color: #176a91 !important; }
-.portal-shell--light .portal-sidebar > div:last-child { border-top-color: rgba(39, 83, 119, 0.12) !important; }
-.portal-shell--light .portal-sidebar > div:last-child > div { background: rgba(245, 250, 254, 0.86) !important; border-color: rgba(39, 83, 119, 0.12) !important; }
-.portal-shell--light .portal-sidebar > div:last-child > div span:first-child { color: #18354d !important; }
-.portal-shell--light .portal-sidebar > div:last-child > button { border-color: rgba(39, 83, 119, 0.14) !important; color: #567084 !important; }
 .product-license-card__icon:has(img[style*="hidden"])::after {
   content: 'T3N';
   font: 800 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1077,191 +995,7 @@ body {
   background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(246,250,253,0.10));
 }
 
-
-/* Support Command Center — premium, information-first ticket operations. */
-.ticket-center--graphite {
-  --support-accent: #70d6ff;
-  --support-surface: rgba(13, 18, 28, 0.88);
-  --support-surface-raised: rgba(20, 28, 42, 0.94);
-}
-.ticket-center--graphite .support-command-shell { position: relative; }
-.ticket-center--graphite .support-command-nav,
-.ticket-center--graphite .support-command-header,
-.ticket-center--graphite .support-overview > section,
-.ticket-center--graphite .support-metric,
-.ticket-center--graphite .ticket-list-pane,
-.ticket-center--graphite .ticket-detail-pane {
-  border-color: rgba(148, 205, 240, 0.13) !important;
-  background: linear-gradient(145deg, rgba(19, 27, 41, 0.94), rgba(9, 13, 23, 0.92)) !important;
-  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.20);
-}
-.ticket-center--graphite .support-command-nav__item { color: #94a9bd; }
-.ticket-center--graphite .support-command-nav__item--active {
-  color: #edfaff !important;
-  background: linear-gradient(105deg, rgba(70, 184, 242, 0.22), rgba(78, 135, 236, 0.09)) !important;
-  box-shadow: inset 0 0 0 1px rgba(112, 214, 255, 0.20), 0 10px 24px rgba(0, 0, 0, 0.18);
-}
-.ticket-center--graphite .support-command-nav__item--active svg { color: var(--support-accent); }
-.ticket-center--graphite .support-hero { min-height: 178px; }
-.ticket-center--graphite .support-metric { transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), border-color 180ms ease; }
-.ticket-center--graphite .support-metric:hover { transform: translateY(-2px); border-color: rgba(112, 214, 255, 0.28) !important; }
-.ticket-center--graphite .ticket-list-pane { padding: 0.75rem; }
-.ticket-center--graphite .ticket-detail-pane { min-height: 620px; }
-.ticket-center--graphite .ticket-row { border-radius: 0.85rem; margin-bottom: 0.25rem; border: 1px solid transparent; }
-.ticket-center--graphite .ticket-row:hover { border-color: rgba(112, 214, 255, 0.14); transform: translateX(-1px); }
-.ticket-center--graphite .ticket-row.ticket-list--active { border-color: rgba(112, 214, 255, 0.30) !important; background: rgba(58, 154, 211, 0.12) !important; }
-.ticket-center--graphite .ticket-metadata { background: rgba(3, 7, 14, 0.28); }
-.ticket-center--graphite .ticket-primary { background: linear-gradient(135deg, #9be6ff, #65bdf2) !important; color: #05111e !important; }
-.ticket-center--graphite .ticket-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
-.ticket-center--graphite button:active { transform: scale(0.97); }
-
-@media (max-width: 1535px) {
-  .ticket-center--graphite .support-command-nav { position: static; overflow: hidden; }
-  .ticket-center--graphite .support-command-nav nav { display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: none; }
-  .ticket-center--graphite .support-command-nav nav::-webkit-scrollbar { display: none; }
-  .ticket-center--graphite .support-command-nav__item { flex: 0 0 auto; width: auto; min-width: max-content; }
-  .ticket-center--graphite .support-command-nav__item span:first-of-type { flex: none; }
-}
-@media (max-width: 640px) {
-  .ticket-center--graphite .support-command-header { padding: 0.85rem 1rem; }
-  .ticket-center--graphite .support-hero { min-height: 0; }
-  .ticket-center--graphite .ticket-detail-pane { min-height: calc(100dvh - 180px); }
-  .ticket-center--graphite .support-overview > section { padding: 1rem; }
-}
-
-.portal-shell--light .ticket-center--graphite .support-command-nav,
-.portal-shell--light .ticket-center--graphite .support-command-header,
-.portal-shell--light .ticket-center--graphite .support-overview > section,
-.portal-shell--light .ticket-center--graphite .support-metric,
-.portal-shell--light .ticket-center--graphite .ticket-list-pane,
-.portal-shell--light .ticket-center--graphite .ticket-detail-pane {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-color: rgba(38, 87, 128, 0.13) !important;
-}
-
-
-/* Conversation workspace — calmer ticket queue, stronger message hierarchy. */
-.ticket-center--graphite .ticket-workspace {
-  gap: 0.85rem;
-}
-.ticket-center--graphite .ticket-list-pane {
-  padding: 0.65rem;
-  border-radius: 1.15rem;
-  background: linear-gradient(180deg, rgba(18, 27, 41, 0.98), rgba(9, 14, 24, 0.96)) !important;
-}
-.ticket-center--graphite .ticket-detail-pane {
-  border-radius: 1.15rem;
-  background:
-    radial-gradient(circle at 8% 0%, rgba(67, 155, 216, 0.10), transparent 29rem),
-    linear-gradient(180deg, rgba(15, 23, 36, 0.98), rgba(8, 12, 21, 0.96)) !important;
-}
-.ticket-center--graphite .ticket-conversation-row {
-  position: relative;
-  overflow: hidden;
-  margin: 0;
-  border: 1px solid transparent;
-  border-radius: 0.9rem;
-}
-.ticket-center--graphite .ticket-conversation-row::before {
-  content: '';
-  position: absolute;
-  inset-block: 0.75rem;
-  inset-inline-start: 0;
-  width: 2px;
-  border-radius: 999px;
-  background: transparent;
-  transition: background 180ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-.ticket-center--graphite .ticket-conversation-row:hover {
-  border-color: rgba(112, 214, 255, 0.16);
-  transform: none;
-}
-.ticket-center--graphite .ticket-conversation-row.ticket-list--active {
-  border-color: rgba(112, 214, 255, 0.30) !important;
-  background: linear-gradient(100deg, rgba(46, 145, 208, 0.18), rgba(37, 99, 235, 0.055)) !important;
-  box-shadow: inset 0 0 0 1px rgba(112, 214, 255, 0.05), 0 10px 22px rgba(0, 0, 0, 0.14);
-}
-.ticket-center--graphite .ticket-conversation-row.ticket-list--active::before {
-  background: #70d6ff;
-  box-shadow: 0 0 12px rgba(112, 214, 255, 0.78);
-}
-.ticket-center--graphite .ticket-detail-pane > div > section:nth-of-type(2) {
-  min-height: 180px;
-}
-.ticket-center--graphite .ticket-detail-pane textarea {
-  min-height: 66px;
-  line-height: 1.65;
-}
-.ticket-center--graphite .ticket-message > div {
-  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-.ticket-center--graphite .ticket-message > div:hover {
-  transform: translateY(-1px);
-}
-.ticket-center--graphite .ticket-metadata {
-  min-width: 238px;
-  background: linear-gradient(180deg, rgba(3, 7, 14, 0.36), rgba(3, 7, 14, 0.18));
-}
-.ticket-center--graphite .ticket-filter--active {
-  background: linear-gradient(135deg, rgba(80, 192, 245, 0.23), rgba(71, 114, 222, 0.14)) !important;
-  color: #eaf8ff !important;
-  box-shadow: inset 0 0 0 1px rgba(112, 214, 255, 0.20);
-}
-@media (max-width: 1279px) {
-  .ticket-center--graphite .ticket-metadata { min-width: 0; }
-}
-@media (max-width: 640px) {
-  .ticket-center--graphite .ticket-list-pane { padding: 0.5rem; }
-  .ticket-center--graphite .ticket-conversation-row > div { padding: 0.7rem; }
-  .ticket-center--graphite .ticket-detail-pane { border-radius: 1rem; }
-  .ticket-center--graphite .ticket-message > div { max-width: 94%; }
-}
-
-.portal-shell--light .ticket-center--graphite .ticket-list-pane {
-  background: rgba(255, 255, 255, 0.94) !important;
-}
-.portal-shell--light .ticket-center--graphite .ticket-detail-pane {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.96)) !important;
-}
-
-/* Help center and navigation polish */
-.portal-sidebar {
-  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.025), -14px 0 46px rgba(2, 13, 30, 0.10);
-}
-
-.portal-sidebar button,
-.portal-sidebar a {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.portal-sidebar button:focus-visible,
-.portal-sidebar a:focus-visible {
-  outline: 2px solid rgba(94, 211, 255, 0.78);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .portal-sidebar button,
-  .portal-sidebar a {
-    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out !important;
-  }
-
-  .portal-sidebar button:not(:disabled):hover,
-  .portal-sidebar a:hover {
-    transform: translateX(-1px);
-  }
-
-  [dir='ltr'] .portal-sidebar button:not(:disabled):hover,
-  [dir='ltr'] .portal-sidebar a:hover {
-    transform: translateX(1px);
-  }
-}
-
-@media (max-width: 767px) {
-  .portal-sidebar {
-    box-shadow: none;
-  }
-}
+/* Keyboard focus and motion preferences for portal navigation. */
 
 /* Mobile loading and scrolling: defer below-the-fold license card paint without layout jumps. */
 @media (max-width: 767px) {
@@ -1571,22 +1305,7 @@ body {
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-.portal-sidebar {
-  border-radius: 0 !important;
-  box-shadow: 0 0 0 1px rgba(191, 228, 250, 0.03), 16px 0 48px rgba(0, 8, 20, 0.26) !important;
-}
 
-.portal-sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-height: 92px;
-  padding: 20px 18px;
-  border-bottom: 1px solid rgba(185, 224, 247, 0.12);
-  background: linear-gradient(138deg, rgba(102, 204, 239, 0.11), rgba(8, 21, 38, 0.015) 58%);
-}
-
-.portal-sidebar-brand__mark,
 .portal-mobile-brand__mark {
   display: grid;
   place-items: center;
@@ -1597,60 +1316,14 @@ body {
   box-shadow: 0 10px 26px rgba(3, 14, 28, 0.34), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
-.portal-sidebar-brand__mark {
-  width: 52px;
-  height: 52px;
-  border-radius: 17px;
-}
 
-.portal-sidebar-brand__mark img,
 .portal-mobile-brand__mark img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.portal-sidebar-brand__eyebrow,
-.portal-sidebar-brand__caption {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.portal-sidebar-brand__eyebrow {
-  color: #8bdff6;
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: .18em;
-}
-
-.portal-sidebar-brand__name {
-  display: block;
-  margin-top: 3px;
-  color: #f6fcff;
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -.04em;
-  line-height: 1;
-}
-
-.portal-sidebar-brand__caption {
-  margin-top: 6px;
-  color: rgba(208, 229, 243, 0.58);
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.portal-shell--light .portal-sidebar-brand {
-  border-bottom-color: rgba(41, 103, 142, 0.13);
-  background: linear-gradient(138deg, rgba(101, 207, 244, 0.15), rgba(255, 255, 255, 0.20) 58%);
-}
-.portal-shell--light .portal-sidebar-brand__name { color: #102d49; }
-.portal-shell--light .portal-sidebar-brand__eyebrow { color: #157696; }
-.portal-shell--light .portal-sidebar-brand__caption { color: #5b758b; }
-
-.portal-sidebar button:focus-visible,
 .portal-page-header button:focus-visible,
 .product-license-card button:focus-visible {
   outline: 2px solid var(--ta3n-accent);
@@ -1840,11 +1513,6 @@ body {
   .portal-shell *, .portal-shell *::before, .portal-shell *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .portal-sidebar button:hover { transform: translateX(-1px); }
-  [dir='ltr'] .portal-sidebar button:hover { transform: translateX(1px); }
-}
-
 /* Product card hierarchy fix: text first, key second, actions last. */
 .product-license-card--premium .product-license-card__body {
   display: flex !important;
@@ -1973,34 +1641,6 @@ body {
 .portal-ambient::after {
   opacity: .22 !important;
   filter: blur(18px) !important;
-}
-
-.portal-sidebar {
-  background: linear-gradient(180deg, rgba(8, 23, 39, .96), rgba(6, 17, 30, .94)) !important;
-  box-shadow: -1px 0 0 rgba(190,226,245,.08), 0 18px 42px rgba(0,8,20,.18) !important;
-}
-.portal-sidebar > div:nth-child(2) {
-  gap: 16px !important;
-  padding: 18px 14px !important;
-}
-.portal-sidebar > div:nth-child(2) > div {
-  display: grid;
-  gap: 4px;
-}
-.portal-sidebar > div:nth-child(2) > div > div:first-child {
-  margin: 0 7px 7px !important;
-  color: rgba(178, 210, 230, .52) !important;
-  font-size: 9px !important;
-  letter-spacing: .13em !important;
-}
-.portal-sidebar button,
-.portal-sidebar a {
-  min-height: 38px;
-  border-radius: var(--ui-radius-sm) !important;
-}
-.portal-sidebar > div:last-child {
-  padding: 14px !important;
-  border-top-color: rgba(180,217,239,.11) !important;
 }
 
 .portal-main-content {
@@ -2159,12 +1799,6 @@ body {
 }
 .guide-experience-body [class*="grid"] > img,
 .guide-experience-body [class*="grid"] > figure { min-width: 0; }
-
-/* Alerts communicate clearly without breaking the palette. */
-[role="alert"],
-.support-notification-banner {
-  border-radius: var(--ui-radius) !important;
-}
 .portal-shell [class*="bg-amber"] {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
 }
@@ -2326,12 +1960,6 @@ body {
   --portal-accent: #4fc3f7;
 }
 
-.portal-shell .portal-sidebar {
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  box-shadow: 18px 0 42px rgba(0, 8, 25, .16), inset -1px 0 0 rgba(255, 255, 255, .07);
-}
-
 .portal-shell .portal-page-header {
   min-height: 86px;
   padding: 18px 22px;
@@ -2405,14 +2033,14 @@ body {
   box-shadow: 0 16px 34px rgba(0, 5, 15, .27);
 }
 
-.portal-shell .portal-sidebar-brand__mark,
+
 .portal-shell .portal-mobile-brand__mark {
   overflow: hidden;
   border-radius: 14px;
   background: rgba(8, 21, 36, .72);
 }
 
-.portal-shell .portal-sidebar-brand__mark img,
+
 .portal-shell .portal-mobile-brand__mark img {
   display: block;
   width: 100%;
@@ -2435,7 +2063,7 @@ body {
   box-shadow: 0 10px 28px rgba(0, 7, 19, .18);
 }
 
-.portal-shell .portal-sidebar button:hover,
+
 .portal-shell .portal-mobile-bar button:hover,
 .portal-shell .admin-navigation__item:hover {
   filter: brightness(1.08);
@@ -2470,7 +2098,7 @@ body {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .portal-shell .portal-sidebar,
+
   .portal-shell .portal-mobile-bar,
   .portal-shell .glass-panel {
     backdrop-filter: none;
@@ -2614,106 +2242,7 @@ body {
   }
 }
 
-/* Navigation architecture: fixed RTL sidebar, compact mode, breadcrumbs, and support workspace. */
-.portal-shell .portal-sidebar {
-  width: 260px;
-  will-change: width;
-}
-
-.portal-shell .portal-sidebar-brand__mark {
-  box-shadow: 0 12px 30px rgba(0, 8, 22, .38), 0 0 24px rgba(59, 130, 246, .16), inset 0 1px 0 rgba(255, 255, 255, .13);
-}
-
-.portal-shell .portal-sidebar-nav > div {
-  position: relative;
-}
-
-.portal-shell .portal-sidebar-nav > div + div::before {
-  content: "";
-  position: absolute;
-  inset-inline: 8px;
-  top: -10px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(163, 215, 244, .11), transparent);
-}
-
-.portal-shell .portal-sidebar-nav button,
-.portal-shell .portal-sidebar-nav a {
-  position: relative;
-  min-height: 42px;
-  overflow: hidden;
-}
-
-.portal-shell .portal-sidebar-badge {
-  display: inline-grid;
-  min-width: 22px;
-  height: 22px;
-  margin-inline-start: auto;
-  place-items: center;
-  border: 1px solid rgba(96, 205, 255, .22);
-  border-radius: 999px;
-  background: rgba(59, 130, 246, .13);
-  color: #bcecff;
-  font-size: 9px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.portal-shell--light .portal-sidebar-badge {
-  border-color: rgba(30, 111, 173, .16);
-  background: rgba(59, 130, 246, .09);
-  color: #155c8b;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-brand {
-  justify-content: center;
-  padding-inline: 12px;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-brand__copy,
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav > div > div:first-child,
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav button > span:not(.portal-sidebar-badge),
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav a > span,
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-user-card__copy,
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-logout-label {
-  display: none !important;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav {
-  padding-inline: 13px !important;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav > div {
-  display: grid;
-  gap: 5px;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav button,
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-nav a,
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-footer button {
-  justify-content: center !important;
-  padding-inline: 0 !important;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-badge {
-  position: absolute;
-  inset-inline-end: 2px;
-  top: 2px;
-  min-width: 17px;
-  width: 17px;
-  height: 17px;
-  border-color: rgba(96, 205, 255, .32);
-  font-size: 8px;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-footer {
-  padding-inline: 12px !important;
-}
-
-.portal-shell .portal-sidebar--collapsed .portal-sidebar-user-card {
-  justify-content: center;
-  padding-inline: 0 !important;
-}
+/* Customer portal navigation: fixed RTL sidebar, compact mode, and breadcrumbs. */
 
 .portal-shell .portal-breadcrumbs {
   display: flex;
@@ -2770,29 +2299,6 @@ body {
   object-fit: cover;
 }
 
-.portal-shell .admin-chat-workspace {
-  align-items: start;
-}
-
-.portal-shell .admin-chat-sidebar {
-  position: sticky;
-  top: 0;
-  border-radius: var(--portal-radius-md) !important;
-}
-
-.portal-shell .admin-chat-filters {
-  background: linear-gradient(180deg, rgba(8, 21, 38, .34), rgba(8, 21, 38, .12));
-}
-
-.portal-shell--light .admin-chat-filters {
-  background: linear-gradient(180deg, rgba(238, 247, 252, .8), rgba(255, 255, 255, .65));
-}
-
-.portal-shell .admin-chat-list {
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-
 @media (max-width: 1100px) {
   .portal-shell .portal-header-user {
     display: none !important;
@@ -2811,16 +2317,6 @@ body {
 
   .portal-shell .portal-page-header__actions {
     gap: 6px;
-  }
-
-  .portal-shell .admin-chat-sidebar {
-    position: static;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .portal-shell .portal-sidebar {
-    transition-duration: .001ms !important;
   }
 }
 
@@ -2843,16 +2339,6 @@ body {
 .portal-shell .portal-mobile-nav > button:active,
 .portal-shell .portal-mobile-nav > a:active {
   transform: scale(.98);
-}
-
-.portal-shell .admin-chat-filters > div,
-.portal-shell .admin-chat-filters select {
-  min-height: 40px;
-}
-
-.portal-shell .admin-chat-filters input,
-.portal-shell .admin-chat-filters select {
-  font-size: 11px;
 }
 
 @media (max-width: 640px) {

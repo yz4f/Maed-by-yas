@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
+import { canManageRole } from '@/lib/permissions';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: RouteContext) {
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('users.view')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بعرض بيانات العميل.' }, { status: 403 });
   }
 
@@ -14,7 +15,14 @@ export async function GET(_req: Request, { params }: RouteContext) {
     const { id } = await params;
     const data = await StoreDB.getUserDetails(id);
     if (!data) return NextResponse.json({ success: false, message: 'العميل غير موجود.' }, { status: 404 });
-    return NextResponse.json({ success: true, ...data });
+    const [canViewKeys, canViewIp] = await Promise.all([isAuthorizedAdmin('keys.view'), isAuthorizedAdmin('settings.view')]);
+    const user = { ...data.user, lastIp: canViewIp ? data.user.lastIp : undefined };
+    const products = canViewKeys ? data.products : data.products.map((item) => {
+      const product = { ...item };
+      delete product.keyString;
+      return product;
+    });
+    return NextResponse.json({ success: true, user, products });
   } catch (error) {
     console.error('Admin customer detail request failed:', error);
     return NextResponse.json({ success: false, message: 'تعذر تحميل بيانات العميل حالياً.' }, { status: 500 });
@@ -25,7 +33,7 @@ export async function DELETE(req: Request, { params }: RouteContext) {
   if (!requestHasTrustedOrigin(req)) {
     return NextResponse.json({ success: false, message: 'تم رفض مصدر الطلب غير الموثوق.' }, { status: 403 });
   }
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('users.disable')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بأرشفة العميل.' }, { status: 403 });
   }
 
@@ -34,8 +42,9 @@ export async function DELETE(req: Request, { params }: RouteContext) {
     const { id } = await params;
     const details = await StoreDB.getUserDetails(id);
     if (!details) return NextResponse.json({ success: false, message: 'العميل غير موجود.' }, { status: 404 });
+    if (!actor || !canManageRole(actor.role, details.user.role)) return NextResponse.json({ success: false, message: 'لا تملك صلاحية أرشفة حساب بهذا المستوى أو أعلى.' }, { status: 403 });
 
-    const result = await StoreDB.deleteUser(id);
+    const result = await StoreDB.archiveUser(id);
     if (!result) return NextResponse.json({ success: false, message: 'تعذرت أرشفة العميل.' }, { status: 500 });
 
     await StoreDB.addLog(

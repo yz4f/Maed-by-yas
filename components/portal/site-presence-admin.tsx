@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { CircleDot, Clock3, RefreshCw, ShieldCheck, Users } from 'lucide-react';
 import type { SitePresence } from '@/types';
 
@@ -34,14 +35,15 @@ export function SitePresenceAdmin({ lang, isDark }: SitePresenceAdminProps) {
   }, []);
 
   useEffect(() => {
+    const initialLoad = window.setTimeout(() => { void load(); }, 0);
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') void load(true);
     };
-    void load();
     const interval = window.setInterval(refreshWhenVisible, 30_000);
     window.addEventListener('focus', refreshWhenVisible);
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
+      window.clearTimeout(initialLoad);
       window.clearInterval(interval);
       window.removeEventListener('focus', refreshWhenVisible);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
@@ -66,7 +68,7 @@ export function SitePresenceAdmin({ lang, isDark }: SitePresenceAdminProps) {
                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black ${isDark ? 'bg-emerald-300/[0.13] text-emerald-200' : 'bg-emerald-100 text-emerald-700'}`}><CircleDot size={12} className="animate-pulse" />{active.length} {onlineLabel}</span>
               </div>
               <p className={`max-w-2xl text-xs leading-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {lang === 'ar' ? 'تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين. لا يتم عرض البريد أو عنوان الشبكة أو محتوى المحادثات.' : 'Only accounts with a heartbeat in the last two minutes appear here. Email, network address, and chat content are never shown.'}
+                {lang === 'ar' ? 'تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين. ولا يتم عرض البريد أو عنوان الشبكة.' : 'Only accounts with a heartbeat in the last two minutes appear here. Email and network addresses are never shown.'}
               </p>
             </div>
           </div>
@@ -92,7 +94,7 @@ export function SitePresenceAdmin({ lang, isDark }: SitePresenceAdminProps) {
             {active.map((presence) => (
               <article key={presence.userId} className={`flex flex-col gap-4 px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-slate-50/80'}`}>
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative shrink-0"><img src={presence.image || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className={`h-10 w-10 rounded-full border object-cover ${isDark ? 'border-white/[0.13]' : 'border-slate-200'}`} /><span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#101216] bg-emerald-400" /></div>
+                <div className="relative shrink-0"><Image src={presence.image || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" width={40} height={40} unoptimized className={`h-10 w-10 rounded-full border object-cover ${isDark ? 'border-white/[0.13]' : 'border-slate-200'}`} /><span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#101216] bg-emerald-400" /></div>
                   <div className="min-w-0"><p className={`truncate text-sm font-black ${isDark ? 'text-white' : 'text-slate-950'}`}>{presence.name}</p><p className={`mt-0.5 truncate text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Discord ID: {presence.discordId}</p></div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">

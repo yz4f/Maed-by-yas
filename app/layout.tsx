@@ -5,9 +5,9 @@ import { Providers } from './providers';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://t3nn.wtf'),
-  title: 'T3N | منصة تسليم ذاتي',
-  description: 'منصة تسليم ذاتي لإدارة التراخيص والمنتجات والمفاتيح والتنزيلات في مكان واحد.',
-  applicationName: 'T3N',
+  title: 'عتن | بوابة العملاء',
+  description: 'بوابة عتن لإدارة المنتجات والتراخيص ومفاتيح التفعيل والتنزيلات.',
+  applicationName: 'عتن',
   icons: {
     icon: '/logo.png',
     shortcut: '/logo.png',
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
     locale: 'ar_SA',
     url: 'https://t3nn.wtf',
     siteName: 'T3N',
-    title: 'T3N | منصة تسليم ذاتي',
-    description: 'إدارة التراخيص والمنتجات والمفاتيح والتنزيلات بسهولة وأمان.',
+    title: 'عتن | بوابة العملاء',
+    description: 'إدارة منتجات عتن والتراخيص ومفاتيح التفعيل والتنزيلات.',
     images: [
       {
         url: '/t3n-social-preview.png',
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'T3N | منصة تسليم ذاتي',
+    title: 'عتن | بوابة العملاء',
     description: 'إدارة التراخيص والمنتجات والمفاتيح والتنزيلات بسهولة وأمان.',
     images: ['/t3n-social-preview.png'],
   },

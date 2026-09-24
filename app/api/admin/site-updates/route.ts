@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { actorCanManageAi } from '@/lib/t3n-ai';
-import { getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
+import { hasPermission } from '@/lib/permissions';
+import { getAuthenticatedActor, requestHasTrustedOrigin } from '@/lib/request-actor';
+import { getClientIp } from '@/lib/request-security';
 import { approveSiteUpdate, createSiteUpdate, listSiteUpdates, publishSiteUpdate, updateSiteUpdate } from '@/lib/site-updates';
+import { StoreDB } from '@/lib/store-db';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,10 +24,10 @@ const bodySchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('publish'), updateId: z.string().trim().min(1).max(160) }),
 ]);
 
-async function administrator() {
-  const actor = await getTicketActor();
+async function administrator(permission: 'announcements.view' | 'announcements.create' | 'announcements.publish' = 'announcements.view') {
+  const actor = await getAuthenticatedActor();
   if (!actor) throw new Error('يجب تسجيل الدخول أولاً.');
-  if (!actorCanManageAi(actor)) throw new Error('هذه العملية مخصصة للإدارة.');
+  if (!await hasPermission(actor, permission)) throw new Error('هذه العملية مخصصة للإدارة.');
   return actor;
 }
 
@@ -37,7 +39,7 @@ function failed(error: unknown) {
 
 export async function GET() {
   try {
-    await administrator();
+    await administrator('announcements.view');
     return NextResponse.json({ success: true, updates: await listSiteUpdates() });
   } catch (error) {
     return failed(error);
@@ -47,12 +49,18 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     if (!requestHasTrustedOrigin(request)) return NextResponse.json({ success: false, error: 'مصدر الطلب غير موثوق.' }, { status: 403 });
-    const actor = await administrator();
     const body = bodySchema.parse(await request.json());
-    if (body.action === 'create') return NextResponse.json({ success: true, update: await createSiteUpdate(actor, body.update) }, { status: 201 });
-    if (body.action === 'edit') return NextResponse.json({ success: true, update: await updateSiteUpdate(actor, body.updateId, body.update) });
-    if (body.action === 'approve') return NextResponse.json({ success: true, update: await approveSiteUpdate(actor, body.updateId) });
-    return NextResponse.json({ success: true, update: await publishSiteUpdate(actor, body.updateId) });
+    const actor = await administrator(body.action === 'publish' ? 'announcements.publish' : 'announcements.create');
+    let update;
+    if (body.action === 'create') update = await createSiteUpdate(actor, body.update);
+    else if (body.action === 'edit') update = await updateSiteUpdate(actor, body.updateId, body.update);
+    else if (body.action === 'approve') update = await approveSiteUpdate(actor, body.updateId);
+    else update = await publishSiteUpdate(actor, body.updateId);
+    await StoreDB.addLog(`Website Update ${body.action}`, `${actor.name} performed ${body.action} on ${update.id}.`, actor.id, actor.name, getClientIp(request), {
+      eventType: `website_update_${body.action}`, actorDiscordId: actor.id, actorName: actor.name,
+      metadata: { action: body.action, updateId: update.id, status: update.status },
+    });
+    return NextResponse.json({ success: true, update }, { status: body.action === 'create' ? 201 : 200 });
   } catch (error) {
     return failed(error);
   }

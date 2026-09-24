@@ -1,7 +1,8 @@
 import { AuditEvent, Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus } from '@/types';
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
+import { getDashboardMetrics, getRecentDashboardRecords } from '@/lib/dashboard-metrics';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 
 // Safe dynamic imports for Server-side filesystem operations
 let fs: any;
@@ -29,7 +30,7 @@ function getDb() {
     try {
       app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       db = getFirestore(app);
-    } catch (err) {}
+    } catch {}
   }
   return db;
 }
@@ -88,152 +89,35 @@ export const DISCORD_ROLES = {
   MEMBER: '1422761753573593088',
 };
 
-export const initialProducts: Product[] = [
-  {
-    id: 'prod-fortnite',
-    name: 'فك باند فورت نايت',
-    description: 'سبوفر فورت نايت الاحترافي الدائم - فك حظر الهاردوير (HWID) وتخطي أنظمة الحماية Easy Anti-Cheat و BattlEye بسرعة فائقة وبدون إعادة تهيئة النظام.',
-    image: '/fortnite-unban-logo.png',
-    cardColor: 'blue',
-    category: 'Spoofer',
-    displayOrder: 1,
-    version: 'v3.5.2',
-    fileSize: '24.8 MB',
-    fileUrl: '/discord.gg_t3n.rar',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    guideUrl: 'https://discord.gg/t3n',
-    downloadsCount: 1420,
-    isVisible: true,
-    isDisabled: false,
-    isArchived: false,
-    createdAt: new Date('2026-01-15').toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'prod-hwid-master',
-    name: 'سبوفر تعن',
-    description: 'أداة تنظيف مخلفات الألعاب وحظر الحسابات الشاملة (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).',
-    image: '/spoofer-logo.png',
-    cardColor: 'purple',
-    category: 'Utility',
-    displayOrder: 2,
-    version: 'v4.1.0',
-    fileSize: '100 MB',
-    fileUrl: '/discord.gg_t3n.rar',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    guideUrl: 'https://discord.gg/t3n',
-    downloadsCount: 2310,
-    isVisible: true,
-    isDisabled: false,
-    isArchived: false,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
-
 // The JSON fallback is strictly a local-development aid. Production must never silently
 // switch to ephemeral filesystem storage because a Railway redeploy can discard it.
-const allowLocalFallback = process.env.NODE_ENV !== 'production' && process.env.ALLOW_LOCAL_DB_FALLBACK !== 'false';
+const allowLocalFallback = process.env.NODE_ENV !== 'production' && process.env.ALLOW_LOCAL_DB_FALLBACK === 'true';
 let useLocalFallback = false;
 const fallbackFilePath = typeof window === 'undefined' ? path.join(process.cwd(), 'data', 'db-fallback.json') : '';
 
 function getFallbackData() {
-  if (typeof window !== 'undefined') return { products: initialProducts, users: [], userProducts: [], keys: [], logs: [] };
+  if (typeof window !== 'undefined') return { products: [], users: [], userProducts: [], keys: [], logs: [] };
   try {
     if (!fs.existsSync(path.dirname(fallbackFilePath))) {
       fs.mkdirSync(path.dirname(fallbackFilePath), { recursive: true });
     }
     if (!fs.existsSync(/* turbopackIgnore: true */ fallbackFilePath)) {
-      const initialData = {
-        products: initialProducts,
-        users: [
-          {
-            id: 'user-demo-customer',
-            discordId: '1397221350095192074',
-            name: 'Demo Customer',
-            email: 'customer@t3n-store.com',
-            image: 'https://cdn.discordapp.com/embed/avatars/1.png',
-            role: 'Customer',
-            discordRoles: [],
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-            lastIp: '127.0.0.1',
-            isBanned: false,
-            warningCount: 0,
-            warningMessage: null
-          },
-          {
-            id: 'user-demo-admin',
-            discordId: '1396965033316978839',
-            name: 'Demo Admin',
-            email: 'boss@t3n-store.com',
-            image: 'https://cdn.discordapp.com/embed/avatars/2.png',
-            role: 'Boss',
-            discordRoles: [],
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-            lastIp: '127.0.0.1',
-            isBanned: false,
-            warningCount: 0,
-            warningMessage: null
-          }
-        ],
-        userProducts: [
-          {
-            id: 'up-demo-1',
-            userId: 'user-demo-customer',
-            productId: 'prod-fortnite',
-            status: 'active',
-            activatedAt: new Date().toISOString(),
-            expiresAt: null
-          }
-        ],
-        keys: [
-          {
-            id: 'key-demo-1',
-            key: 'KEY-T3N-FORT-DEMO-PERM',
-            productId: 'prod-fortnite',
-            productName: 'فك باند فورت نايت',
-            duration: '2 Days',
-            isUsed: false,
-            usedByUserId: null,
-            usedByUserName: null,
-            usedAt: null,
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 'key-demo-2',
-            key: 'KEY-T3N-SPOOF-DEMO-PERM',
-            productId: 'prod-hwid-master',
-            productName: 'سبوفر تعن',
-            duration: '2 Days',
-            isUsed: false,
-            usedByUserId: null,
-            usedByUserName: null,
-            usedAt: null,
-            createdAt: new Date().toISOString()
-          }
-        ],
-        logs: [
-          {
-            id: 'log-1',
-            action: 'System Initialized',
-            details: 'تم بدء تشغيل نظام قاعدة البيانات الاحتياطية بنجاح.',
-            userId: 'system',
-            userName: 'T3N System',
-            ipAddress: '127.0.0.1',
-            createdAt: new Date().toISOString()
-          }
-        ]
-      };
+      const initialData = { products: [], users: [], userProducts: [], keys: [], logs: [] };
       fs.writeFileSync(fallbackFilePath, JSON.stringify(initialData, null, 2), 'utf8');
       return initialData;
     }
     const raw = fs.readFileSync(/* turbopackIgnore: true */ fallbackFilePath, 'utf8');
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    const demoUserIds = new Set(['user-demo-customer', 'user-demo-admin']);
+    const demoKeyIds = new Set(['key-demo-1', 'key-demo-2']);
+    data.users = (data.users || []).filter((user: User) => !demoUserIds.has(user.id));
+    data.userProducts = (data.userProducts || []).filter((product: UserProduct) => !demoUserIds.has(product.userId) && !demoKeyIds.has(product.keyId || ''));
+    data.keys = (data.keys || []).filter((key: Key) => !demoKeyIds.has(key.id) && !key.key?.includes('-DEMO-'));
+    data.logs = (data.logs || []).filter((log: SystemLog) => log.id !== 'log-1' && !demoUserIds.has(String(log.userId || '')));
+    return data;
   } catch (err) {
     console.error("Failed to read fallback database file:", err);
-    return { products: initialProducts, users: [], userProducts: [], keys: [], logs: [] };
+    return { products: [], users: [], userProducts: [], keys: [], logs: [] };
   }
 }
 
@@ -253,7 +137,7 @@ function saveFallbackData(data: any) {
 async function runDbOp<T>(firebaseOp: () => Promise<T>, localOp: () => T | Promise<T>): Promise<T> {
   if (useLocalFallback) {
     if (!allowLocalFallback) {
-      throw new Error('خدمة البيانات الدائمة غير متاحة حالياً. لم يتم استخدام أي تخزين مؤقت في الإنتاج.');
+      throw new Error('خدمة البيانات الدائمة غير متاحة حالياً. لم يتم استخدام التخزين المحلي الاحتياطي.');
     }
     return await localOp();
   }
@@ -263,7 +147,7 @@ async function runDbOp<T>(firebaseOp: () => Promise<T>, localOp: () => T | Promi
   } catch (err: any) {
     const detail = err?.message || String(err);
     if (!allowLocalFallback) {
-      console.error('Persistent Firestore operation failed in production:', detail);
+      console.error('Persistent Firestore operation failed; local fallback is disabled:', detail);
       throw new Error('تعذر الوصول إلى قاعدة البيانات الدائمة. لم تُنفذ العملية حفاظاً على بياناتك.');
     }
 
@@ -276,7 +160,7 @@ async function runDbOp<T>(firebaseOp: () => Promise<T>, localOp: () => T | Promi
 const LocalDB = {
   getProducts(): Product[] {
     const d = getFallbackData();
-    return d.products.sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+    return (d.products || []).sort((a: any, b: any) => a.displayOrder - b.displayOrder);
   },
   getProductById(id: string): Product | undefined {
     const d = getFallbackData();
@@ -284,10 +168,9 @@ const LocalDB = {
   },
   createProduct(product: Product): {success: boolean; product?: Product} {
     const d = getFallbackData();
-    if (!d.products.some((p: any) => p.id === product.id)) {
-      d.products.push(product);
-      saveFallbackData(d);
-    }
+    if (d.products.some((p: any) => p.id === product.id)) return { success: false };
+    d.products.push(product);
+    saveFallbackData(d);
     return { success: true, product };
   },
   updateProduct(id: string, updates: Partial<Product>): {success: boolean, product?: Product} {
@@ -337,7 +220,7 @@ const LocalDB = {
       saveFallbackData(d);
     }
   },
-  deleteUser(id: string): boolean {
+  archiveUser(id: string): boolean {
     const d = getFallbackData();
     const user = d.users.find((item: any) => item.id === id);
     if (!user) return false;
@@ -499,7 +382,7 @@ const LocalDB = {
     const product = d.products.find((p: any) => p.id === keyObj.productId);
     if (!product || product.isDisabled) return { success: false, message: 'المنتج المرتبط غير متاح' };
 
-    let userIdx = d.users.findIndex((u: any) => u.discordId === userDetails.discordId);
+    const userIdx = d.users.findIndex((u: any) => u.discordId === userDetails.discordId);
     let user;
     if (userIdx === -1) {
       user = {
@@ -628,6 +511,7 @@ const LocalDB = {
       ipAddress,
       createdAt: new Date().toISOString(),
       auditEventId: auditEvent?.id,
+      status: 'success',
     };
     if (auditEvent) {
       if (!Array.isArray(d.auditEvents)) d.auditEvents = [];
@@ -645,6 +529,16 @@ const LocalDB = {
     const product = d.products.find((p: any) => p.id === productId);
     if (product) {
       product.downloadsCount = (product.downloadsCount || 0) + 1;
+      const user = d.users.find((item: User) => item.id === userId);
+      d.logs.push({
+        id: `download-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        action: 'Product Download',
+        details: `Downloaded ${product.name}`,
+        userId,
+        userName: user?.name || 'Customer',
+        ipAddress,
+        createdAt: new Date().toISOString(),
+      });
     }
     saveFallbackData(d);
     return { success: true };
@@ -655,14 +549,16 @@ const LocalDB = {
     const keys = d.keys;
     const products = d.products;
     const logs = d.logs;
+    const userProducts = d.userProducts || [];
+    const metrics = getDashboardMetrics(users, keys, userProducts);
 
-    let totalUsers = users.length;
-    let totalProducts = products.length;
-    let totalKeys = keys.length;
-    let totalDownloads = products.reduce((acc: number, p: any) => acc + (p.downloadsCount || 0), 0);
+    const totalUsers = users.length;
+    const totalProducts = products.length;
+    const totalKeys = keys.length;
+    const totalDownloads = products.reduce((acc: number, p: any) => acc + (p.downloadsCount || 0), 0);
     
-    let activeProducts = products.filter((p: any) => !p.isDisabled && !p.isArchived).length;
-    let inactiveProducts = totalProducts - activeProducts;
+    const activeProducts = products.filter((p: any) => !p.isDisabled && !p.isArchived).length;
+    const inactiveProducts = totalProducts - activeProducts;
 
     const globalStock = getKeyStockSummary(keys as Key[]);
     const usedKeys = globalStock.used;
@@ -678,9 +574,11 @@ const LocalDB = {
     });
 
     const recentLogs = logs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 50);
+    const recentRecords = getRecentDashboardRecords(users, keys, products);
 
     return {
       totalUsers,
+      ...metrics,
       totalProducts,
       totalKeys,
       totalDownloads,
@@ -689,6 +587,7 @@ const LocalDB = {
       usedKeys,
       unusedKeys,
       productStockList,
+      ...recentRecords,
       recentLogs
     };
   }
@@ -702,16 +601,10 @@ export const StoreDB = {
     return runDbOp(
       async () => {
         const snapshot = await getDocs(collection(getDb(), "products"));
-        let products = snapshot.docs.map(doc => doc.data() as Product);
+        const products = snapshot.docs.map(doc => doc.data() as Product);
         
         // Seeding must be explicit. A production read must never recreate, overwrite, or
         // resurrect products from source code after an administrator archives them.
-        if (products.length === 0 && process.env.SEED_INITIAL_PRODUCTS === 'true') {
-          for (const prod of initialProducts) {
-            await setDoc(doc(getDb(), 'products', prod.id), prod);
-          }
-          products = [...initialProducts];
-        }
         return products.sort((a, b) => a.displayOrder - b.displayOrder);
       },
       () => LocalDB.getProducts()
@@ -732,12 +625,18 @@ export const StoreDB = {
   async createProduct(product: Product): Promise<{success: boolean; message?: string; product?: Product}> {
     return runDbOp(
       async () => {
-        await setDoc(doc(getDb(), "products", product.id), product);
-        return { success: true, product };
+        const productRef = doc(getDb(), "products", product.id);
+        return await runTransaction(getDb(), async (transaction) => {
+          const existing = await transaction.get(productRef);
+          if (existing.exists()) return { success: false, message: 'معرف المنتج مستخدم بالفعل.' };
+          transaction.set(productRef, product);
+          return { success: true, product };
+        });
       },
       () => {
         const res = LocalDB.createProduct(product);
-        return { success: res.success, product: res.product };
+        if (!res.success) return { success: false, message: 'معرف المنتج مستخدم بالفعل.' };
+        return { success: true, product };
       }
     );
   },
@@ -821,7 +720,7 @@ export const StoreDB = {
     );
   },
 
-  async deleteUser(id: string): Promise<boolean> {
+  async archiveUser(id: string): Promise<boolean> {
     return runDbOp(
       async () => {
         const userRef = doc(getDb(), 'users', id);
@@ -837,7 +736,7 @@ export const StoreDB = {
         });
         return true;
       },
-      () => LocalDB.deleteUser(id)
+      () => LocalDB.archiveUser(id)
     );
   },
 
@@ -1050,7 +949,7 @@ export const StoreDB = {
           return { success: false, message: 'المفتاح غير صحيح أو غير موجود' };
         }
         if (keySnap.size !== 1) {
-          return { success: false, message: 'تم اكتشاف تكرار لهذا المفتاح. تواصل مع الدعم قبل التفعيل.' };
+          return { success: false, message: 'تم اكتشاف أن هذا المفتاح مكرر، لذلك لا يمكن تفعيله.' };
         }
         
         const keyObj = keySnap.docs[0].data() as Key;
@@ -1245,6 +1144,7 @@ export const StoreDB = {
       userName: userName || null,
       ipAddress,
       createdAt: now,
+      status: 'success',
     };
     const auditEvent: AuditEvent = {
       id: `audit-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1258,7 +1158,6 @@ export const StoreDB = {
       targetDiscordId: context.targetDiscordId ?? null,
       productId: context.productId ?? null,
       keyId: context.keyId ?? null,
-      ticketId: context.ticketId ?? null,
       ipAddress: context.ipAddress ?? ipAddress,
       userAgent: context.userAgent ?? null,
       metadata: context.metadata ?? {},
@@ -1367,18 +1266,22 @@ export const StoreDB = {
         const productsSnap = await getDocs(collection(getDb(), "products"));
         const keysSnap = await getDocs(collection(getDb(), "keys"));
         const downloadsSnap = await getDocs(collection(getDb(), "downloads"));
+        const userProductsSnap = await getDocs(collection(getDb(), "userProducts"));
         
         const users = usersSnap.docs.map(d => d.data() as User);
         const keys = keysSnap.docs.map(d => d.data() as Key);
         const products = productsSnap.docs.map(d => d.data() as Product);
+        const userProducts = userProductsSnap.docs.map(d => d.data() as UserProduct);
+        const metrics = getDashboardMetrics(users, keys, userProducts);
+        const recentRecords = getRecentDashboardRecords(users, keys, products);
 
-        let totalUsers = users.length;
-        let totalProducts = products.length;
-        let totalKeys = keys.length;
-        let totalDownloads = downloadsSnap.size;
+        const totalUsers = users.length;
+        const totalProducts = products.length;
+        const totalKeys = keys.length;
+        const totalDownloads = downloadsSnap.size;
         
-        let activeProducts = products.filter(p => !p.isDisabled && !p.isArchived).length;
-        let inactiveProducts = totalProducts - activeProducts;
+        const activeProducts = products.filter(p => !p.isDisabled && !p.isArchived).length;
+        const inactiveProducts = totalProducts - activeProducts;
 
         const globalStock = getKeyStockSummary(keys);
         const usedKeys = globalStock.used;
@@ -1398,6 +1301,7 @@ export const StoreDB = {
 
         return {
           totalUsers,
+          ...metrics,
           totalProducts,
           totalKeys,
           totalDownloads,
@@ -1406,6 +1310,7 @@ export const StoreDB = {
           usedKeys,
           unusedKeys,
           productStockList,
+          ...recentRecords,
           recentLogs
         };
       },

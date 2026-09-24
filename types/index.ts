@@ -1,4 +1,4 @@
-export type RoleType = 'Boss' | 'Co-Boss' | 'Admin' | 'Member' | 'Customer';
+export type RoleType = 'Owner' | 'Boss' | 'Co-Boss' | 'Admin' | 'Moderator' | 'Staff' | 'Member' | 'Customer';
 export type ProductStatus = 'Active' | 'Inactive' | 'Suspended' | 'Revoked' | 'Expired';
 export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days' | '2 Days';
 
@@ -38,9 +38,25 @@ export interface Product {
   guideUrl?: string | null;
   downloadsCount: number;
   stockKeysCount?: number;
+  lowStockThreshold?: number;
   isVisible: boolean;
   isDisabled: boolean;
   isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductFaq {
+  id: string;
+  productId: string;
+  questionAr: string;
+  questionEn: string;
+  answerAr: string;
+  answerEn: string;
+  category: string;
+  priority: number;
+  weight: number;
+  enabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -89,7 +105,7 @@ export interface DownloadLog {
   userName?: string;
   productId: string;
   productName?: string;
-  ipAddress: string;
+  ipAddress?: string;
   downloadedAt: string;
 }
 
@@ -112,9 +128,10 @@ export interface SystemLog {
   userId?: string | null;
   discordId?: string | null;
   userName?: string | null;
-  ipAddress: string;
+  ipAddress?: string;
   createdAt: string;
   auditEventId?: string;
+  status?: 'success' | 'failure';
 }
 
 export interface AuditEvent {
@@ -129,7 +146,6 @@ export interface AuditEvent {
   targetDiscordId?: string | null;
   productId?: string | null;
   keyId?: string | null;
-  ticketId?: string | null;
   ipAddress?: string | null;
   userAgent?: string | null;
   metadata?: Record<string, unknown>;
@@ -137,8 +153,12 @@ export interface AuditEvent {
 
 export interface SystemStats {
   totalUsers: number;
+  activeUsers: number;
   totalProducts: number;
   totalKeys: number;
+  activeKeys: number;
+  expiredKeys: number;
+  todayActivations: number;
   totalDownloads: number;
   activeProducts: number;
   inactiveProducts: number;
@@ -149,6 +169,8 @@ export interface SystemStats {
     productName: string;
     stockCount: number;
   }[];
+  recentUsers: { id: string; name: string; discordId: string; createdAt: string }[];
+  recentActivations: { id: string; userName: string; productName: string; activatedAt: string }[];
   recentLogs: SystemLog[];
 }
 
@@ -160,209 +182,16 @@ export interface DiscordRoleConfig {
 }
 
 
-export type TicketStatus = 'new' | 'open' | 'in_progress' | 'awaiting_user' | 'awaiting_staff' | 'resolved' | 'closed';
-export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TicketDepartment = 'technical_support' | 'sales' | 'billing' | 'accounts';
-export type TicketCategory = 'technical' | 'account' | 'service' | 'suggestion' | 'other';
-
-export interface TicketAttachment {
-  id: string;
-  name: string;
-  url: string;
-  contentType: string;
-  size: number;
-  uploadedAt: string;
-  uploadedById: string;
-}
-
-export interface TicketMessage {
-  id: string;
-  ticketId: string;
-  authorId: string;
-  authorName: string;
-  authorImage?: string | null;
-  authorRole: 'customer' | 'staff';
-  body: string;
-  isInternal: boolean;
-  attachments: TicketAttachment[];
-  createdAt: string;
-}
-
-export interface TicketTimelineEvent {
-  id: string;
-  ticketId: string;
-  type: 'created' | 'claimed' | 'status_changed' | 'priority_changed' | 'assigned' | 'message' | 'note' | 'attachment' | 'resolved' | 'closed' | 'reopened' | 'customer_muted' | 'customer_unmuted';
-  actorId: string;
-  actorName: string;
-  message: string;
-  createdAt: string;
-}
-
-export interface SupportTicket {
-  id: string;
-  number: string;
-  title: string;
-  department?: TicketDepartment;
-  category: TicketCategory;
-  tags?: string[];
-  priority: TicketPriority;
-  status: TicketStatus;
-  userId: string;
-  userName: string;
-  userImage?: string | null;
-  assignedAgentId?: string | null;
-  assignedAgentName?: string | null;
-  assignedAgentImage?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  lastMessageAt: string;
-  resolvedAt?: string | null;
-  resolvedById?: string | null;
-  resolvedByName?: string | null;
-  closedAt?: string | null;
-  closedById?: string | null;
-  closedByName?: string | null;
-  finalClosed?: boolean;
-  slaDueAt?: string | null;
-  messageCount: number;
-}
-
-export interface TicketCustomerProfile {
-  id: string;
-  name: string;
-  email?: string | null;
-  image?: string | null;
-  role?: RoleType;
-  createdAt?: string | null;
-  ticketMuted: boolean;
-  mutedAt?: string | null;
-  mutedByName?: string | null;
-  muteReason?: string | null;
-}
-
-export interface TicketDetail {
-  ticket: SupportTicket;
-  messages: TicketMessage[];
-  timeline: TicketTimelineEvent[];
-  customer?: TicketCustomerProfile;
-}
-
-export interface TicketStats {
-  open: number;
-  unassigned: number;
-  inProgress: number;
-  awaitingUser: number;
-  closedToday: number;
-  urgent: number;
-  recentDays: { date: string; count: number }[];
-}
-
-export type AiConversationStatus = 'AI_ACTIVE' | 'WAITING_FOR_SUPPORT' | 'WAITING_FOR_CUSTOMER' | 'HUMAN_ACTIVE' | 'CLOSED';
-export type AiConversationCloseReason = 'INACTIVITY' | 'MANUAL' | null;
-export type AiMessageRole = 'customer' | 'assistant' | 'staff' | 'system';
-export type SupportNotificationType = 'INACTIVITY_WARNING' | 'CONVERSATION_AUTO_CLOSED' | 'RESET_COMPLETED';
-export type SupportNotificationPriority = 'high';
-export type AiKnowledgeCategory = 'ABOUT_STORE' | 'PRODUCTS' | 'PRODUCT_GUIDES' | 'FAQ' | 'TROUBLESHOOTING' | 'ACTIVATION' | 'KEYS' | 'ORDERS' | 'PAYMENTS' | 'REFUNDS' | 'SUPPORT_POLICY' | 'TERMS';
 export type ResetRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITING_FOR_CUSTOMER' | 'COMPLETED' | 'CANCELLED';
-
-export interface AiKnowledgeEntry {
-  id: string;
-  category: AiKnowledgeCategory;
-  title: string;
-  content: string;
-  enabled: boolean;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AiConversation {
-  id: string;
-  customerId: string;
-  customerDiscordId: string;
-  customerName: string;
-  customerImage?: string | null;
-  /** معرف ظاهر ومستقل لرابط جلسة الدعم، ولا يكشف معرف Discord. */
-  supportSessionId?: string | null;
-  status: AiConversationStatus;
-  createdAt: string;
-  updatedAt: string;
-  lastMessageAt: string;
-  /** وقت آخر رسالة من العميل فقط، وهو الأساس الوحيد لمؤقت الإغلاق. */
-  lastCustomerMessageAt?: string | null;
-  /** آخر قسم داخل البوابة سجله العميل؛ يستخدم للسياق فقط ولا يغيّر تبويبه تلقائياً. */
-  lastClientPage?: string | null;
-  lastClientPageAt?: string | null;
-  /** يضبط عند انتظار رد العميل ويستمر بعد إعادة تحميل الصفحة أو فتح الحساب من جهاز آخر. */
-  idleCloseAt?: string | null;
-  inactivityWarningAt?: string | null;
-  /** مهلة قصيرة تمنح الإدارة فرصة للرد قبل عودة المساعد إلى متابعة الحالة تلقائياً. */
-  supportWaitUntil?: string | null;
-  supportWaitLanguage?: 'ar' | 'en' | null;
-  /** موعد تنبيه Discord الخاص بعد رد دعم تعن إذا لم يصل رد من العميل. */
-  customerReplyReminderDueAt?: string | null;
-  customerReplyReminderSentAt?: string | null;
-  closedAt?: string | null;
-  closedReason?: AiConversationCloseReason;
-  reopenAt?: string | null;
-  messageCount: number;
-  humanAgentId?: string | null;
-  humanAgentName?: string | null;
-}
-
-export interface AiImageAttachment {
-  id: string;
-  name: string;
-  contentType: 'image/jpeg' | 'image/png' | 'image/webp';
-  size: number;
-  /** A small compressed preview only; the original image is never stored in Firestore. */
-  previewData?: string | null;
-}
-
-export interface AiMessage {
-  id: string;
-  conversationId: string;
-  role: AiMessageRole;
-  body: string;
-  visibleToCustomer: boolean;
-  createdAt: string;
-  resetRequestId?: string | null;
-  attachments?: AiImageAttachment[];
-}
-
-export interface SupportNotification {
+export interface ResetNotification {
   id: string;
   customerDiscordId: string;
-  conversationId: string;
-  type: SupportNotificationType;
-  priority: SupportNotificationPriority;
+  type: 'RESET_COMPLETED';
+  priority: 'high';
   title: string;
   message: string;
   createdAt: string;
   seenAt?: string | null;
-}
-
-export type VoiceSupportSessionStatus = 'PENDING_CONSENT' | 'WAITING_FOR_CUSTOMER' | 'ACTIVE' | 'STAFF_ASSISTANCE' | 'ENDED' | 'FAILED';
-
-export interface VoiceSupportSession {
-  id: string;
-  customerDiscordId: string;
-  customerName: string;
-  customerImage?: string | null;
-  createdById: string;
-  createdByName: string;
-  voiceChannelId?: string | null;
-  voiceChannelName?: string | null;
-  inviteUrl?: string | null;
-  status: VoiceSupportSessionStatus;
-  consentedAt?: string | null;
-  startedAt?: string | null;
-  endedAt?: string | null;
-  screenShareRequested: boolean;
-  staffJoined: boolean;
-  notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ResetRequest {

@@ -5,7 +5,7 @@ import { isAuthorizedAdmin } from '@/lib/admin-auth';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('keys.view')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بعرض المفاتيح.' }, { status: 403 });
   }
 

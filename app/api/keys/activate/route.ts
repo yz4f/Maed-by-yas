@@ -15,6 +15,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'يجب تسجيل الدخول عبر Discord قبل تفعيل المفتاح.' }, { status: 401 });
     }
 
+    const user = await StoreDB.getUserByDiscordId(actor.discordId);
+    if (user?.isArchived || user?.isBanned) {
+      return NextResponse.json({ success: false, message: 'الحساب غير متاح لتفعيل المفاتيح.' }, { status: 403 });
+    }
+
     const { keyString } = await req.json();
     if (!keyString || typeof keyString !== 'string') {
       return NextResponse.json({ success: false, message: 'مفتاح التفعيل مطلوب.' }, { status: 400 });

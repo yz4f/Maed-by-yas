@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   if (!requestHasTrustedOrigin(req)) {
     return NextResponse.json({ success: false, message: 'تم رفض مصدر الطلب غير الموثوق.' }, { status: 403 });
   }
-  if (!await isAuthorizedAdmin()) {
+  if (!await isAuthorizedAdmin('keys.disable')) {
     return NextResponse.json({ success: false, message: 'غير مصرح لك بإلغاء المفاتيح.' }, { status: 403 });
   }
 

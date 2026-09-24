@@ -19,11 +19,6 @@
 .item[data-active='true']::before { content: ''; position: absolute; inset-inline-start: -1px; top: 15px; bottom: 15px; width: 3px; border-radius: 3px; background: var(--luxe-accent); }
 .badge { margin-inline-start: auto; font: 10px/20px Arial, sans-serif; padding-inline: 6px; min-width: 22px; border-radius: 6px; text-align: center; background: var(--luxe-hover); color: var(--luxe-ink); }
 .chevron { margin-inline-start: auto; flex-shrink: 0; opacity: .65; }
-.supportCard { display: grid; grid-template-columns: 27px 1fr; column-gap: 9px; align-items: center; margin: 22px 16px; padding: 15px; border: 1px solid var(--luxe-line); border-radius: 12px; background: var(--luxe-soft); }
-.supportCard > svg { grid-row: span 2; color: var(--luxe-accent); }
-.supportCard strong { font-size: 11px; font-weight: 500; }
-.supportCard > span { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 9px; color: var(--luxe-muted); }
-.supportCard:hover { border-color: var(--luxe-accent-line); }
 .account { padding: 13px; border-top: 1px solid var(--luxe-line); }
 .user { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px; text-align: start; border-radius: 10px; }
 .user:hover { background: var(--luxe-hover); }
@@ -65,5 +60,15 @@
   .drawer .item { min-height: 49px; }
 }
 @keyframes reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-height: 740px) { .supportCard { display: none; } .brandRow { min-height: 88px; } .group + .group { margin-top: 15px; } }
+@media (max-height: 740px) { .brandRow { min-height: 88px; } .group + .group { margin-top: 15px; } }
 @media (prefers-reduced-motion: reduce) { .sidebar, .drawer, .item { animation: none; transition: none; } }
+
+.account { position: relative; }
+.accountMenu { position: absolute; inset-inline: 12px; bottom: calc(100% + 8px); z-index: 40; padding: 5px; border: 1px solid var(--luxe-line); border-radius: 11px; background: var(--luxe-panel); box-shadow: 0 12px 28px rgba(0, 0, 0, .16); }
+.accountMenu button { display: flex; width: 100%; min-height: 39px; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; text-align: start; font-size: 12px; color: var(--luxe-ink); }
+.accountMenu button:hover { background: var(--luxe-hover); color: var(--luxe-accent); }
+.accountMenu button:last-child { color: #e07b8d; }
+.itemLabel { font-size: 13px; }
+.brandRow { min-height: 90px; }
+.brandCopy small { letter-spacing: 0; font-size: 9px; }
+.userCopy small { display: block; }

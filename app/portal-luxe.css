@@ -9,16 +9,16 @@
 @font-face { font-family: 'TA3N Portal'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/ibm-plex-sans-arabic-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 
 .portal-shell.portal-luxe {
-  --luxe-bg: #0b121a;
-  --luxe-panel: #101b23;
-  --luxe-raised: #14222b;
-  --luxe-ink: #eef4f2;
-  --luxe-muted: #93a9ad;
-  --luxe-accent: #94e6c3;
-  --luxe-accent-line: rgba(148, 230, 195, .22);
-  --luxe-line: #24343e;
-  --luxe-soft: rgba(148, 230, 195, .065);
-  --luxe-hover: rgba(177, 206, 203, .05);
+  --luxe-bg: #071016;
+  --luxe-panel: #0a151d;
+  --luxe-raised: #0d1b24;
+  --luxe-ink: #eef8fa;
+  --luxe-muted: #91a7b2;
+  --luxe-accent: #52d8df;
+  --luxe-accent-line: rgba(110, 214, 225, .24);
+  --luxe-line: rgba(145, 190, 205, .12);
+  --luxe-soft: rgba(82, 216, 223, .10);
+  --luxe-hover: rgba(177, 206, 213, .05);
   --portal-focus: var(--luxe-accent);
   --portal-accent: var(--luxe-accent);
   --portal-ink: var(--luxe-ink);
@@ -44,19 +44,25 @@
   transition: none;
 }
 .portal-shell.portal-luxe.portal-shell--light {
-  --luxe-bg: #f2f5f3;
+  --luxe-bg: #f4f8f9;
   --luxe-panel: #ffffff;
-  --luxe-raised: #f7faf8;
-  --luxe-ink: #182f2e;
-  --luxe-muted: #607874;
-  --luxe-accent: #267353;
-  --luxe-accent-line: rgba(38, 115, 83, .22);
-  --luxe-line: #dbe5e0;
-  --luxe-soft: rgba(38, 115, 83, .055);
-  --luxe-hover: rgba(38, 115, 83, .04);
+  --luxe-raised: #f9fcfc;
+  --luxe-ink: #102027;
+  --luxe-muted: #657a83;
+  --luxe-accent: #18afc0;
+  --luxe-accent-line: rgba(24, 175, 192, .22);
+  --luxe-line: #dce8eb;
+  --luxe-soft: rgba(24, 175, 192, .08);
+  --luxe-hover: rgba(16, 32, 39, .035);
 }
 .portal-luxe .portal-ambient, .portal-luxe .portal-grid, .portal-luxe .portal-noise { display: none; }
 .portal-shell.portal-luxe .portal-main-content { padding: 30px 36px; background: var(--luxe-bg); }
+.portal-shell.portal-luxe { line-height: 1.6; }
+.portal-shell.portal-luxe .portal-content-frame { max-width: 1440px; }
+.portal-shell.portal-luxe .bg-indigo-600 { background-color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .hover\:bg-indigo-500:hover { background-color: color-mix(in srgb, var(--luxe-accent) 86%, white) !important; }
+.portal-shell.portal-luxe .text-indigo-600, .portal-shell.portal-luxe .text-indigo-500 { color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .border-indigo-600 { border-color: var(--luxe-accent) !important; }
 .portal-luxe .portal-content-frame { max-width: 1420px; }
 .portal-shell.portal-luxe .portal-page-header { padding: 0 0 25px; margin-bottom: 28px; border: 0 !important; border-bottom: 1px solid var(--luxe-line) !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; }
 .portal-shell.portal-luxe #portal-navigation-drawer { background: var(--luxe-panel); color: var(--luxe-ink); border-color: var(--luxe-line); }
@@ -89,27 +95,15 @@
 .portal-shell.portal-luxe .product-license-card { border-color: var(--luxe-line) !important; background: var(--luxe-panel) !important; }
 .portal-shell.portal-luxe .admin-navigation { background: var(--luxe-panel) !important; border-color: var(--luxe-line) !important; }
 .portal-shell.portal-luxe .admin-navigation__item { border-radius: 10px !important; }
-.portal-shell.portal-luxe .help-center-experience,
 .portal-shell.portal-luxe .faq-experience > section,
 .portal-shell.portal-luxe .admin-hero,
-.portal-shell.portal-luxe .admin-section .glass-card,
-.portal-shell.portal-luxe .admin-chat-sidebar,
-.portal-shell.portal-luxe .admin-chat-workspace > section {
+.portal-shell.portal-luxe .admin-section .glass-card {
   border-color: var(--luxe-line) !important;
   background: var(--luxe-panel) !important;
   box-shadow: 0 8px 26px -18px rgba(0, 0, 0, .28) !important;
 }
-.portal-shell.portal-luxe .help-center-experience { border-radius: 18px !important; }
-.portal-shell.portal-luxe .help-center-experience :is(.bg-cyan-400, .bg-sky-400) { background-color: var(--luxe-accent) !important; }
-.portal-shell.portal-luxe .help-center-experience :is(.text-cyan-300, .text-cyan-200) { color: var(--luxe-accent) !important; }
-.portal-shell.portal-luxe .faq-experience > section:first-child {
-  background: radial-gradient(circle at 100% 0, var(--luxe-soft), transparent 38%), var(--luxe-panel) !important;
-}
 .portal-shell.portal-luxe .faq-experience :is(input, select, textarea) { color: var(--luxe-ink); }
 .portal-shell.portal-luxe .faq-experience input::placeholder { color: var(--luxe-muted); opacity: .82; }
-.portal-shell.portal-luxe .faq-experience details { border-color: var(--luxe-line) !important; background: var(--luxe-raised) !important; }
-.portal-shell.portal-luxe .faq-experience details[open] { border-color: var(--luxe-accent-line) !important; background: var(--luxe-soft) !important; }
-.portal-shell.portal-luxe .faq-experience :is(.bg-gradient-to-r, .bg-gradient-to-l) { background-image: none !important; background-color: var(--luxe-accent) !important; }
 .portal-shell.portal-luxe .product-library { max-width: 1280px; }
 .portal-shell.portal-luxe .product-license-card { border-radius: 16px !important; box-shadow: 0 8px 25px -18px rgba(0, 0, 0, .28) !important; }
 .portal-shell.portal-luxe .product-license-card:hover { border-color: var(--luxe-accent-line) !important; transform: translateY(-2px); }
@@ -131,10 +125,6 @@
 .portal-shell.portal-luxe .admin-section .glass-card { border-radius: 17px !important; padding: 22px !important; }
 .portal-shell.portal-luxe .admin-section .glass-card :is(.bg-indigo-500, .bg-sky-500) { background-color: var(--luxe-accent) !important; }
 .portal-shell.portal-luxe .admin-section .glass-card :is(.text-indigo-500, .text-sky-400, .text-indigo-650) { color: var(--luxe-accent) !important; }
-.portal-shell.portal-luxe .admin-chat-workspace > section { border-radius: 18px !important; }
-.portal-shell.portal-luxe .admin-chat-sidebar { border-radius: 18px !important; }
-.portal-shell.portal-luxe .admin-chat-workspace :is(.bg-cyan-400, .bg-violet-500) { background-color: var(--luxe-accent) !important; }
-.portal-shell.portal-luxe .admin-chat-workspace :is(.text-cyan-300, .text-violet-200) { color: var(--luxe-accent) !important; }
 .portal-shell.portal-luxe :is(input, select, textarea) { border-color: var(--luxe-line); }
 .portal-shell.portal-luxe :is(input, select, textarea):focus { border-color: var(--luxe-accent-line) !important; }
 .portal-luxe :is(button, a):focus-visible { outline: 2px solid var(--luxe-accent); outline-offset: 3px; }
@@ -154,3 +144,26 @@
   .portal-shell.portal-luxe .overview-dashboard { gap: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .portal-luxe .overview-stat-card { transition: none !important; transform: none !important; } }
+
+/* Admin tools use a compact navigation rail and one focused workspace. */
+.portal-shell.portal-luxe .admin-panel-layout { display: grid; grid-template-columns: 218px minmax(0, 1fr); align-items: start; gap: 22px; }
+.portal-shell.portal-luxe .admin-panel-content { min-width: 0; }
+.portal-shell.portal-luxe .admin-panel-layout > .admin-navigation { display: flex !important; flex-direction: column !important; flex-wrap: nowrap !important; gap: 3px !important; position: sticky; top: 12px; overflow: visible !important; padding: 8px !important; border-radius: 14px !important; }
+.portal-shell.portal-luxe .admin-panel-layout .admin-navigation__item { width: 100%; justify-content: flex-start !important; min-height: 43px; padding-inline: 12px !important; border-radius: 9px !important; box-shadow: none !important; text-align: start; }
+.portal-shell.portal-luxe .admin-panel-layout .admin-navigation__item[aria-selected='true'] { background: var(--luxe-soft) !important; box-shadow: inset 0 0 0 1px var(--luxe-accent-line) !important; color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe .admin-panel-layout .admin-navigation__item:hover { transform: none !important; }
+.portal-shell.portal-luxe :is(.bg-indigo-600, .dark\:bg-primary) { background-color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe :is(.text-indigo-650, .text-indigo-600, .text-indigo-500, .text-indigo-400, .dark\:text-primary) { color: var(--luxe-accent) !important; }
+.portal-shell.portal-luxe :is(.border-indigo-600, .border-indigo-500) { border-color: var(--luxe-accent-line) !important; }
+.portal-shell.portal-luxe :is(.shadow-indigo-500\/10, .shadow-indigo-500\/15, .shadow-purple-500\/15) { box-shadow: none !important; }
+.portal-shell.portal-luxe .admin-section .glass-card { box-shadow: none !important; }
+@media (max-width: 900px) { .portal-shell.portal-luxe .admin-panel-layout { grid-template-columns: 1fr; gap: 15px; } .portal-shell.portal-luxe .admin-panel-layout > .admin-navigation { position: static; flex-direction: row !important; overflow-x: auto !important; } .portal-shell.portal-luxe .admin-panel-layout .admin-navigation__item { width: auto; flex: 0 0 auto; justify-content: center !important; } }
+
+.portal-shell.portal-luxe :is([class~='bg-[#0e0e11]'], [class~='bg-[#0D0D0F]'], [class~='bg-[#111113]'], [class~='bg-[#08080A]']) { background-color: var(--luxe-panel) !important; }
+.portal-shell.portal-luxe.portal-shell--light :is([class~='bg-black/40'], [class~='bg-black/50'], [class~='bg-black/80']) { background-color: var(--luxe-raised) !important; }
+.portal-shell.portal-luxe .profile-preferences :is(button[aria-pressed='true']) { background: var(--luxe-accent) !important; border-color: var(--luxe-accent) !important; color: #071016 !important; box-shadow: none !important; }
+
+.portal-shell.portal-luxe.portal-shell--light [class~='border-white/[0.08]'], .portal-shell.portal-luxe.portal-shell--light [class~='border-white/[0.05]'] { border-color: var(--luxe-line) !important; }
+.portal-shell.portal-luxe .profile-segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 5px; border: 1px solid var(--luxe-line); border-radius: 12px; background: var(--luxe-bg); }
+.portal-shell.portal-luxe .profile-segmented button { min-height: 39px; border: 1px solid transparent; border-radius: 8px; color: var(--luxe-muted); background: transparent; box-shadow: none; transition: background-color .15s ease, color .15s ease; }
+.portal-shell.portal-luxe .profile-segmented button[aria-pressed='true'] { background: var(--luxe-accent) !important; border-color: var(--luxe-accent) !important; color: #071016 !important; box-shadow: none !important; }

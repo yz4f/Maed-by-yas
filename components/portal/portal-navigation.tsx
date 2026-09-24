@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ArrowUpLeft, ArrowUpRight, BookOpen, ChevronLeft, ChevronRight, Headphones, KeyRound, LayoutGrid, LogOut, Menu, MessageSquare, Moon, Package, PanelRightClose, PanelRightOpen, ShieldCheck, Sun, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowUpLeft, ArrowUpRight, BookOpen, ChevronLeft, ChevronRight, KeyRound, LayoutGrid, LogOut, Menu, Moon, Package, PanelRightClose, PanelRightOpen, ShieldCheck, Sun, UserRound, X, type LucideIcon } from 'lucide-react';
 import { DiscordMark } from './discord-mark';
 import css from './portal-navigation.module.css';
 
-export type PortalTab = 'overview' | 'my-products' | 'faqs' | 'redeem' | 'tickets' | 'admin' | 'admin-chats' | 'profile';
+export type PortalTab = 'overview' | 'my-products' | 'faqs' | 'redeem' | 'admin' | 'profile';
 interface PortalNavigationProps {
   activeTab: PortalTab;
   onNavigate: (tab: PortalTab) => void;
@@ -21,7 +21,7 @@ interface PortalNavigationProps {
   onToggleTheme: () => void;
   onToggleLanguage: () => void;
   onLogout: () => void;
-  user: { name: string; image?: string | null };
+  user: { name: string; image?: string | null; role?: string };
 }
 interface NavigationItem { tab: PortalTab; label: string; icon: LucideIcon; count?: number }
 
@@ -30,6 +30,7 @@ export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin,
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const Arrow = ar ? ArrowUpLeft : ArrowUpRight;
   const Chevron = ar ? ChevronLeft : ChevronRight;
 
@@ -67,32 +68,26 @@ export function PortalNavigation({ activeTab, onNavigate, lang, isDark, isAdmin,
 
   const navigate = (tab: PortalTab) => { onNavigate(tab); onMobileChange(false); };
   const groups: { title: string; items: NavigationItem[] }[] = [
-    { title: ar ? 'عام' : 'GENERAL', items: [
+    { title: ar ? 'القائمة' : 'MENU', items: [
       { tab: 'overview', label: ar ? 'الرئيسية' : 'Overview', icon: LayoutGrid },
       { tab: 'my-products', label: ar ? 'منتجاتي' : 'My products', icon: Package, count: productCount },
       { tab: 'redeem', label: ar ? 'تفعيل مفتاح' : 'Activate a key', icon: KeyRound },
-    ] },
-    { title: ar ? 'الدعم' : 'SUPPORT', items: [
-      { tab: 'tickets', label: ar ? 'مركز المساعدة' : 'Help center', icon: Headphones },
-      ...(productCount > 0 ? [{ tab: 'faqs' as const, label: ar ? 'الأسئلة الشائعة' : 'FAQs', icon: BookOpen }] : []),
-      ...(isAdmin ? [{ tab: 'admin-chats' as const, label: ar ? 'محادثات مساعد تعن' : 'Assistant Chats', icon: MessageSquare }] : []),
-    ] },
-    { title: ar ? 'الحساب' : 'ACCOUNT', items: [
-      { tab: 'profile', label: ar ? 'الملف الشخصي' : 'Profile', icon: UserRound },
-      ...(isAdmin ? [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Admin Control', icon: ShieldCheck }] : []),
+      { tab: 'faqs', label: ar ? 'الأسئلة الشائعة' : 'FAQs', icon: BookOpen },
     ] },
   ];
 
-  const brand = <><Image src="/logo.png" width={42} height={42} alt="" /><span className={css.brandCopy}><strong translate="no">تعن</strong><small>{ar ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</small></span></>;
+  const brand = <><Image src="/logo.png" width={42} height={42} alt="" /><span className={css.brandCopy}><strong translate="no">عتن</strong><small>{ar ? 'بوابة المنتجات الرقمية' : 'Digital products portal'}</small></span></>;
   const navigation = (compact: boolean) => <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'}>
-    {groups.map((group, index) => <div className={css.group} key={group.title}><p className={css.groupTitle}>{group.title}</p>
+    {groups.map((group) => <div className={css.group} key={group.title}><p className={css.groupTitle}>{group.title}</p>
       {group.items.map(({ tab, label, icon: Icon, count }) => <button type="button" key={tab} className={css.item} data-active={activeTab === tab} aria-current={activeTab === tab ? 'page' : undefined} aria-label={label} title={compact ? label : undefined} onClick={() => navigate(tab)}><span className={css.itemIcon}><Icon size={19} strokeWidth={1.7} /></span><span className={css.itemLabel}>{label}</span>{count !== undefined ? <span className={css.badge}>{count}</span> : activeTab === tab && <Chevron className={css.chevron} size={14} />}</button>)}
-      {index === 1 && <a className={css.item} href="https://discord.gg/t3n" target="_blank" rel="noopener noreferrer" title={compact ? (ar ? 'مجتمع ديسكورد' : 'Discord community') : undefined} aria-label={ar ? 'مجتمع ديسكورد' : 'Discord community'}><span className={css.itemIcon}><DiscordMark width={18} height={18} /></span><span className={css.itemLabel}>{ar ? 'مجتمع ديسكورد' : 'Discord community'}</span><Arrow className={css.chevron} size={13} /></a>}
     </div>)}
+    <a className={css.item} href="https://discord.gg/t3n" target="_blank" rel="noopener noreferrer" title={compact ? (ar ? 'مجتمع ديسكورد' : 'Discord community') : undefined} aria-label={ar ? 'مجتمع ديسكورد' : 'Discord community'}><span className={css.itemIcon}><DiscordMark width={18} height={18} /></span><span className={css.itemLabel}>{ar ? 'مجتمع ديسكورد' : 'Discord community'}</span><Arrow className={css.chevron} size={13} /></a>
+    <div className={css.group}><p className={css.groupTitle}>{ar ? 'الحساب' : 'ACCOUNT'}</p><button type="button" className={css.item} data-active={activeTab === 'profile'} aria-current={activeTab === 'profile' ? 'page' : undefined} onClick={() => navigate('profile')}><span className={css.itemIcon}><UserRound size={19} strokeWidth={1.7} /></span><span className={css.itemLabel}>{ar ? 'الملف الشخصي' : 'Profile'}</span>{activeTab === 'profile' && <Chevron className={css.chevron} size={14} />}</button></div>
+    {isAdmin && <div className={css.group}><p className={css.groupTitle}>{ar ? 'الإدارة' : 'ADMINISTRATION'}</p><button type="button" className={css.item} data-active={activeTab === 'admin'} aria-current={activeTab === 'admin' ? 'page' : undefined} onClick={() => navigate('admin')}><span className={css.itemIcon}><ShieldCheck size={19} strokeWidth={1.7} /></span><span className={css.itemLabel}>{ar ? 'لوحة الإدارة' : 'Admin panel'}</span>{activeTab === 'admin' && <Chevron className={css.chevron} size={14} />}</button></div>}
   </nav>;
   const footer = <div className={css.account}>
-    <button type="button" className={css.user} onClick={() => navigate('profile')} aria-label={ar ? 'فتح الملف الشخصي' : 'Open profile'} title={collapsed ? user.name : undefined}><Image src={user.image || '/logo.png'} alt="" width={34} height={34} onError={event => { event.currentTarget.src = '/logo.png'; }} /><span className={css.userCopy}><strong>{user.name}</strong><small><i />{ar ? 'حسابك متصل' : 'You are connected'}</small></span><Chevron className={css.chevron} size={15} /></button>
-    <button type="button" className={css.logout} onClick={onLogout} aria-label={ar ? 'تسجيل الخروج' : 'Sign out'} title={collapsed ? (ar ? 'تسجيل الخروج' : 'Sign out') : undefined}><LogOut size={17} strokeWidth={1.7} /><span>{ar ? 'تسجيل الخروج' : 'Sign out'}</span></button>
+    <button type="button" className={css.user} onClick={() => setAccountMenuOpen(open => !open)} aria-expanded={accountMenuOpen} aria-label={ar ? 'قائمة الحساب' : 'Account menu'} title={collapsed ? user.name : undefined}><Image src={user.image || '/logo.png'} alt="" width={34} height={34} onError={event => { event.currentTarget.src = '/logo.png'; }} /><span className={css.userCopy}><strong>{user.name}</strong><small>{user.role || (ar ? 'عميل' : 'Customer')}</small></span><Chevron className={css.chevron} size={15} /></button>
+    {accountMenuOpen && <div className={css.accountMenu}><button type="button" onClick={() => { navigate('profile'); setAccountMenuOpen(false); }}><UserRound size={16} />{ar ? 'الملف الشخصي' : 'Profile'}</button><button type="button" onClick={onLogout}><LogOut size={16} />{ar ? 'تسجيل الخروج' : 'Sign out'}</button></div>}
   </div>;
 
   return <>

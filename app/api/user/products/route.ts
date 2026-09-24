@@ -44,7 +44,7 @@ export async function GET(req: Request) {
           metadata: { source: 'discord_oauth' },
         }
       );
-    } else {
+    } else if (!user.isArchived) {
       await StoreDB.updateUser(user.id, { lastLogin: new Date().toISOString(), lastIp: ip, name: actor.name, image: actor.image });
     }
 
@@ -67,6 +67,10 @@ export async function GET(req: Request) {
           metadata: { source: 'temporary_ban_expiry' },
         }
       );
+    }
+
+    if (user.isBanned || user.isArchived) {
+      return NextResponse.json({ success: true, products: [], user, activity: [] });
     }
 
     const [products, activity] = await Promise.all([
