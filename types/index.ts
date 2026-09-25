@@ -1,6 +1,19 @@
 export type RoleType = 'Boss' | 'Co-Boss' | 'Admin' | 'Member' | 'Customer';
 export type ProductStatus = 'Active' | 'Inactive' | 'Suspended' | 'Revoked' | 'Expired';
 export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days' | '2 Days';
+export type KeyStatus = 'available' | 'used' | 'disabled' | 'reserved';
+export type StockPermission = 'stock.view' | 'stock.add' | 'stock.edit' | 'stock.delete' | 'stock.disable' | 'stock.export';
+
+export interface ProductCustomField {
+  id: string;
+  name: string;
+  key: string;
+  type: 'text' | 'number' | 'select' | 'textarea' | 'boolean';
+  value: any;
+  required?: boolean;
+  options?: string[];
+  order: number;
+}
 
 export interface User {
   id: string;
@@ -38,6 +51,9 @@ export interface Product {
   guideUrl?: string | null;
   downloadsCount: number;
   stockKeysCount?: number;
+  sku?: string;
+  stockType?: 'digital_keys' | 'license' | 'manual';
+  customFields?: ProductCustomField[];
   isVisible: boolean;
   isDisabled: boolean;
   isArchived: boolean;
@@ -50,19 +66,26 @@ export interface Key {
   key: string;
   productId: string;
   productName?: string;
+  status?: KeyStatus;
   isUsed: boolean;
   isDisabled: boolean;
   isArchived: boolean;
   isRevoked?: boolean;
   archivedAt?: string | null;
   revokedAt?: string | null;
+  disabledAt?: string | null;
   duration: KeyDuration;
+  orderId?: string | null;
+  customerId?: string | null;
+  customerName?: string | null;
   usedByUserId?: string | null;
   usedByUserName?: string | null;
   usedAt?: string | null;
   createdById?: string | null;
   createdByUserName?: string | null;
   createdAt: string;
+  updatedAt?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UserProduct {

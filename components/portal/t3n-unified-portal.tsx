@@ -65,6 +65,7 @@ const VoiceSupportAdmin = dynamic(() => import('./voice-support-admin').then((mo
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
+import { ProductStockModal } from '@/components/admin/stock/ProductStockModal';
 
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
@@ -450,7 +451,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   // Inventory Modal States
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
   const [inventoryProduct, setInventoryProduct] = useState<Product | null>(null);
-  const [inventoryTab, setInventoryTab] = useState<'data' | 'custom' | 'codes'>('codes');
+  const [inventoryInitialTab, setInventoryInitialTab] = useState<'keys' | 'custom' | 'details'>('keys');
   const [inventoryKeys, setInventoryKeys] = useState<KeyType[]>([]);
   const [inventoryStock, setInventoryStock] = useState({ total: 0, available: 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 });
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
@@ -1261,38 +1262,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   };
 
   // Inventory Management
-  const openInventoryModal = async (product: Product, defaultTab: 'data' | 'custom' | 'codes' = 'codes', openBulk: boolean = false) => {
+  const openInventoryModal = (product: Product, defaultTab: 'keys' | 'custom' | 'details' = 'keys') => {
     setInventoryProduct(product);
-    setEditProductData({
-      name: product.name || '',
-      description: product.description || '',
-      version: product.version || '',
-      fileSize: product.fileSize || '',
-      category: product.category || '',
-      downloadsCount: product.downloadsCount || 0,
-      image: product.image || '',
-      videoUrl: product.videoUrl || '',
-      guideUrl: product.guideUrl || '',
-      fileUrl: product.fileUrl || '',
-      cardColor: product.cardColor || 'blue',
-    });
-    setProductSaveMessage(null);
-    setKeyActionMessage(null);
-    setEditingKeyId(null);
+    setInventoryInitialTab(defaultTab);
     setInventoryModalOpen(true);
-    setInventoryTab(defaultTab);
-    setBulkAddOpen(openBulk);
-    setSingleAddOpen(false);
-    setBulkKeysText('');
-    setSingleKeyText('');
-    setBulkMessage(null);
-    if (product.id !== 'new') {
-      setInventoryStock({ total: 0, available: product.stockKeysCount || 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 });
-      await loadInventoryKeys(product.id);
-    } else {
-      setInventoryKeys([]);
-      setInventoryStock({ total: 0, available: 0, used: 0, disabled: 0, archived: 0, duplicateCodes: 0 });
-    }
   };
 
   const openAddProductModal = () => {
@@ -1316,7 +1289,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    openInventoryModal(blankProduct, 'data', false);
+    openInventoryModal(blankProduct, 'details');
   };
 
   const handleSaveProductChanges = async () => {
@@ -1539,86 +1512,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         }
       }
     );
-  };
-
-  const handleBulkAddKeys = async () => {
-    if (!bulkKeysText.trim() || !inventoryProduct || isAddingKeys) return;
-
-    const rawKeys = bulkKeysText.split(/[\n,]+/).map((key) => key.trim()).filter(Boolean);
-    if (rawKeys.length === 0) return;
-
-    setIsAddingKeys(true);
-    setBulkMessage(`جارٍ التحقق من ${rawKeys.length} مفتاح وإضافتها إلى المخزون...`);
-
-    try {
-      const res = await fetch('/api/admin/keys/stock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: rawKeys.join('\n'), duration: inventoryKeyDuration })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'تعذر إضافة المفاتيح إلى المخزون.');
-      }
-
-      const added = Number(data.count || 0);
-      const skipped = Number(data.skipped || 0);
-      setBulkMessage(added > 0
-        ? `تمت إضافة ${added} مفتاح للمخزون الحقيقي${skipped ? `، وتم تجاهل ${skipped} مفتاح مكرر.` : '.'}`
-        : `لم تتم إضافة مفاتيح جديدة${skipped ? ' لأن المفاتيح المدخلة مكررة.' : '.'}`);
-      if (added > 0) setBulkKeysText('');
-
-      await Promise.all([
-        loadInventoryKeys(inventoryProduct.id),
-        loadAdminStats(),
-        loadDbProducts(),
-        loadAllKeysList()
-      ]);
-    } catch (error: any) {
-      console.error('Failed to bulk add keys:', error);
-      const message = error?.message || 'حدث خطأ أثناء مزامنة المفاتيح مع الخادم.';
-      setBulkMessage(message);
-      showToast(message, 'error');
-    } finally {
-      setIsAddingKeys(false);
-    }
-  };
-
-  const handleAddSingleKey = async () => {
-    if (!singleKeyText.trim() || !inventoryProduct || isAddingSingleKey) return;
-    setIsAddingSingleKey(true);
-    try {
-      const res = await fetch('/api/admin/keys/stock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: inventoryProduct.id, rawKeysText: singleKeyText.trim(), duration: inventoryKeyDuration })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'تعذر إضافة المفتاح.');
-      }
-
-      if (Number(data.count || 0) > 0) {
-        setBulkMessage('تمت إضافة المفتاح إلى المخزون الحقيقي بنجاح.');
-        setSingleKeyText('');
-        setSingleAddOpen(false);
-      } else {
-        setBulkMessage('لم تتم الإضافة لأن هذا المفتاح موجود بالفعل في المخزون.');
-      }
-      await Promise.all([
-        loadInventoryKeys(inventoryProduct.id),
-        loadAdminStats(),
-        loadDbProducts(),
-        loadAllKeysList()
-      ]);
-    } catch (error: any) {
-      console.error('Failed to add single key:', error);
-      const message = error?.message || 'تعذر إضافة المفتاح. حاول مجدداً.';
-      setBulkMessage(message);
-      showToast(message, 'error');
-    } finally {
-      setIsAddingSingleKey(false);
-    }
   };
 
   const handleLogout = async () => {
@@ -3025,7 +2918,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           {/* Action Buttons Row */}
                           <div className="grid grid-cols-2 gap-3 mt-auto">
                             <button
-                              onClick={() => openInventoryModal(product, 'codes', true)}
+                              onClick={() => openInventoryModal(product, 'keys')}
                               className="py-3 px-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white dark:text-black font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5 shadow-md shadow-indigo-500/20"
                             >
                               <Key className="w-4 h-4" />
@@ -3033,7 +2926,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             </button>
 
                             <button
-                              onClick={() => openInventoryModal(product, 'data', false)}
+                              onClick={() => openInventoryModal(product, 'details')}
                               className={`py-3 px-4 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border ${styles.borderNormal} rounded-xl text-xs font-bold ${styles.textTitle} transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5`}
                             >
                               <Edit3 className={`w-4 h-4 ${styles.textMuted}`} />
@@ -3524,497 +3417,29 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           Shows: بيانات المنتج | الحقول المخصصة | الأكواد المتاحة
           Each key as a card with delete button
          ==================================================================== */}
+      {/* ====================================================================
+          PRODUCT STOCK MANAGEMENT MODAL (Enterprise Dark Premium)
+          ==================================================================== */}
       {inventoryModalOpen && inventoryProduct && (
-        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className={`${styles.bgPanel} rounded-[28px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border`} style={{ borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
-            {/* Modal Header (Premium Style) */}
-            <div className={`flex items-center justify-between px-6 py-5 ${isDark ? 'bg-black/40 border-white/10' : 'bg-slate-50 border-slate-200'} border-b shrink-0 relative overflow-hidden`}>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[50px] -z-10" />
-              <button
-                onClick={() => setInventoryModalOpen(false)}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg ${isDark ? 'bg-white/5 hover:bg-red-500/20 border-white/10 text-slate-400' : 'bg-slate-100 hover:bg-red-500/10 border-slate-200 text-slate-650'} hover:text-red-500 border transition-all cursor-pointer z-10`}
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <h2 className={`text-lg font-extrabold ${styles.textTitle} text-right flex-1 pr-3 z-10`}>
-                {inventoryProduct.id === 'new' ? (
-                  <span>إضافة منتج جديد</span>
-                ) : (
-                  <span>إدارة <span className="text-indigo-500 dark:text-primary">{inventoryProduct.name}</span></span>
-                )}
-              </h2>
-            </div>
-
-            {/* Tabs Row */}
-            <div className={`flex ${isDark ? 'bg-black/20 border-white/10' : 'bg-slate-100/50 border-slate-200'} border-b shrink-0 p-4 gap-2`}>
-              {inventoryProduct.id !== 'new' && (
-                <button
-                  onClick={() => setInventoryTab('codes')}
-                  className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'codes' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
-                >
-                  <span>الأكواد المتاحة</span>
-                  <Key className="w-4 h-4 ml-1" />
-                </button>
-              )}
-              <button
-                onClick={() => setInventoryTab('custom')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'custom' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
-              >
-                <span>الحقول المخصصة</span>
-                <Layers className="w-4 h-4 ml-1" />
-              </button>
-              <button
-                onClick={() => setInventoryTab('data')}
-                className={`flex-1 py-3 px-4 text-xs font-black flex items-center justify-center gap-2 transition-all rounded-xl cursor-pointer hover:-translate-y-0.5 ${inventoryTab === 'data' ? 'bg-indigo-600 dark:bg-primary text-white shadow-lg shadow-indigo-500/15' : `${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'} border`}`}
-              >
-                <span>بيانات المنتج</span>
-                <FileText className="w-4 h-4 ml-1" />
-              </button>
-            </div>
-
-            {/* Modal Content Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5 scrollbar-thin">
-              {/* TAB: بيانات المنتج (Editable) */}
-              {inventoryTab === 'data' && (
-                <div className="space-y-5 animate-slide-up">
-                  {productSaveMessage && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl font-bold flex items-center justify-between">
-                      <span>{productSaveMessage}</span>
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>اسم المنتج</label>
-                    <input
-                      type="text"
-                      value={editProductData.name}
-                      onChange={(e) => setEditProductData({ ...editProductData, name: e.target.value })}
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all font-bold shadow-inner`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>صورة المنتج (رابط مسار الصورة)</label>
-                    <input
-                      type="text"
-                      value={editProductData.image}
-                      onChange={(e) => setEditProductData({ ...editProductData, image: e.target.value })}
-                      placeholder="/products/fortnite-unban.png"
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>الوصف الشامل للمنتج</label>
-                    <textarea
-                      rows={3}
-                      value={editProductData.description}
-                      onChange={(e) => setEditProductData({ ...editProductData, description: e.target.value })}
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl p-4 text-xs focus:outline-none transition-all leading-relaxed shadow-inner`}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-5">
-                    <div>
-                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>الإصدار (Version)</label>
-                      <input
-                        type="text"
-                        value={editProductData.version}
-                        onChange={(e) => setEditProductData({ ...editProductData, version: e.target.value })}
-                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>حجم الملف (File Size)</label>
-                      <input
-                        type="text"
-                        value={editProductData.fileSize}
-                        onChange={(e) => setEditProductData({ ...editProductData, fileSize: e.target.value })}
-                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs focus:outline-none transition-all shadow-inner`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-5">
-                    <div>
-                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>التصنيف (Category)</label>
-                      <input
-                        type="text"
-                        value={editProductData.category}
-                        onChange={(e) => setEditProductData({ ...editProductData, category: e.target.value })}
-                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs focus:outline-none transition-all shadow-inner`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>عدد التحميلات</label>
-                      <input
-                        type="number"
-                        value={editProductData.downloadsCount}
-                        onChange={(e) => setEditProductData({ ...editProductData, downloadsCount: Number(e.target.value) })}
-                        className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className={`pt-4 border-t ${styles.borderNormal}`}>
-                    <button
-                      onClick={handleSaveProductChanges}
-                      disabled={isSavingProduct}
-                      className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
-                    >
-                      {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                      <span>{inventoryProduct.id === 'new' ? 'إضافة المنتج الجديد' : 'حفظ تغييرات المنتج'}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: الحقول المخصصة (Editable) */}
-              {inventoryTab === 'custom' && (
-                <div className="space-y-5 animate-slide-up">
-                  {productSaveMessage && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl font-bold flex items-center justify-between">
-                      <span>{productSaveMessage}</span>
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>رابط الشرح / فيديو (YouTube / Stream)</label>
-                    <input
-                      type="text"
-                      value={editProductData.videoUrl}
-                      onChange={(e) => setEditProductData({ ...editProductData, videoUrl: e.target.value })}
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
-                      placeholder="https://www.youtube.com/watch?v=..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>رابط دليل الاستخدام (Discord / Docs)</label>
-                    <input
-                      type="text"
-                      value={editProductData.guideUrl}
-                      onChange={(e) => setEditProductData({ ...editProductData, guideUrl: e.target.value })}
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
-                      placeholder="https://discord.gg/t3n"
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>رابط تحميل الملف (File Download URL)</label>
-                    <input
-                      type="text"
-                      value={editProductData.fileUrl}
-                      onChange={(e) => setEditProductData({ ...editProductData, fileUrl: e.target.value })}
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none transition-all shadow-inner`}
-                      placeholder="/uploads/spoofer.exe"
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-xs font-bold ${styles.textMuted} mb-2`}>لون البطاقة (Theme Accent)</label>
-                    <select
-                      value={editProductData.cardColor}
-                      onChange={(e) => setEditProductData({ ...editProductData, cardColor: e.target.value })}
-                      className={`w-full ${styles.bgInput} focus:border-indigo-500/40 rounded-xl px-4 py-3 text-xs focus:outline-none transition-all cursor-pointer font-bold shadow-inner`}
-                    >
-                      <option value="blue" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>أزرق سماوي (Blue Glow)</option>
-                      <option value="cyan" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>سيان فائق (Cyan Neon)</option>
-                      <option value="purple" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>بنفسجي تبيان (Purple Spirit)</option>
-                      <option value="gold" className={isDark ? 'bg-[#050507] text-white' : 'bg-white text-slate-900'}>ذهبي فاخر (Gold Edition)</option>
-                    </select>
-                  </div>
-
-                  <div className={`pt-4 border-t ${styles.borderNormal} space-y-3`}>
-                    <button
-                      onClick={handleSaveProductChanges}
-                      disabled={isSavingProduct}
-                      className="w-full py-4 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
-                    >
-                      {isSavingProduct ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                      <span>{inventoryProduct.id === 'new' ? 'إضافة المنتج الجديد' : 'حفظ تغييرات الحقول'}</span>
-                    </button>
-
-                    {inventoryProduct.id !== 'new' && (
-                      <button
-                        onClick={handleDeleteProductPermanently}
-                        className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 dark:text-rose-450 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>حذف المنتج نهائياً من النظام</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: الأكواد المتاحة (Premium T3N Style) */}
-              {inventoryTab === 'codes' && (
-                <div className="space-y-5 animate-slide-up">
-                  
-                  {keyActionMessage && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl font-bold flex items-center justify-between shadow-sm">
-                      <span>{keyActionMessage}</span>
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
-
-                  {/* Premium Info Box */}
-                  <div className={`bg-indigo-500/5 dark:bg-primary/5 border border-indigo-500/10 dark:border-primary/20 rounded-xl p-5 flex flex-col gap-3 relative overflow-hidden shadow-sm`}>
-                    <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 dark:bg-primary"></div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/25 dark:border-primary/30 flex items-center justify-center shrink-0">
-                        <Layers className="w-5 h-5 text-indigo-500 dark:text-primary" />
-                      </div>
-                      <div className="flex-1 text-right">
-                        <h4 className={`text-sm font-extrabold ${styles.textTitle} mb-1`}>إدارة المخزون الذكية</h4>
-                        <p className={`text-xs ${styles.textMuted} leading-relaxed`}>
-                          يعرض المخزون المفاتيح القابلة للتفعيل فقط. تُستبعد المفاتيح المستخدمة أو المعطلة أو المكررة تلقائياً من الرصيد المتاح.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-center">
-                        <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300">متاح للتفعيل</div>
-                        <div className="text-lg font-black text-emerald-600 dark:text-emerald-200">{inventoryStock.available}</div>
-                      </div>
-                      <div className="rounded-lg border border-slate-500/20 bg-slate-500/10 px-3 py-2 text-center">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-300">الإجمالي</div>
-                        <div className={`text-lg font-black ${styles.textTitle}`}>{inventoryStock.total}</div>
-                      </div>
-                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-center">
-                        <div className="text-[10px] font-bold text-amber-600 dark:text-amber-300">مستخدم</div>
-                        <div className="text-lg font-black text-amber-600 dark:text-amber-200">{inventoryStock.used}</div>
-                      </div>
-                      <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-center">
-                        <div className="text-[10px] font-bold text-rose-600 dark:text-rose-300">معطل / مؤرشف</div>
-                        <div className="text-lg font-black text-rose-600 dark:text-rose-200">{inventoryStock.disabled + inventoryStock.archived}</div>
-                      </div>
-                    </div>
-                    {inventoryStock.duplicateCodes > 0 && (
-                      <div className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-[11px] font-bold text-rose-600 dark:text-rose-300">
-                        تم استبعاد {inventoryStock.duplicateCodes} كود مكرر من المخزون المتاح لحماية التفعيل.
-                      </div>
-                    )}
-                    <div className="pt-1">
-                      <div className={`mb-2 text-[11px] font-black ${styles.textTitle}`}>
-                        {lang === 'ar' ? 'مدة المفاتيح عند التفعيل' : 'Key duration after activation'}
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {KEY_DURATION_OPTIONS.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setInventoryKeyDuration(option)}
-                            className={`rounded-lg border px-3 py-2 text-[11px] font-black transition-all cursor-pointer ${inventoryKeyDuration === option
-                              ? 'border-indigo-500 bg-indigo-500 text-white shadow-md shadow-indigo-500/20'
-                              : `${isDark ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}`}
-                          >
-                            {durationLabel(option, lang)}
-                          </button>
-                        ))}
-                      </div>
-                      <p className={`mt-2 text-[10px] leading-relaxed ${styles.textMuted}`}>
-                        {lang === 'ar'
-                          ? 'تُحسب نهاية الترخيص من لحظة تفعيل العميل، وليس من إضافة المفتاح للمخزون.'
-                          : 'Expiry starts when the customer activates the key, not when it is added to stock.'}
-                      </p>
-                    </div>
-                    {!bulkAddOpen && (
-                      <button 
-                        onClick={() => setBulkAddOpen(true)}
-                        className="w-full py-3 bg-indigo-500/10 hover:bg-indigo-500/20 dark:bg-primary/10 dark:hover:bg-primary/20 border border-indigo-500/20 dark:border-primary/30 text-indigo-600 dark:text-primary text-xs font-bold rounded-xl transition-all cursor-pointer mt-2"
-                      >
-                        فتح لوحة الإضافة السريعة (Batch Add)
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Bulk Add Panel */}
-                  <AnimatePresence>
-                    {bulkAddOpen && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10, height: 0 }}
-                        animate={{ opacity: 1, y: 0, height: 'auto' }}
-                        exit={{ opacity: 0, y: -10, height: 0 }}
-                        className={`${styles.bgCard} rounded-xl p-5 space-y-4 shadow-2xl relative overflow-hidden border border-indigo-500/10`}
-                      >
-                        <div className="absolute top-0 right-0 p-3">
-                          <button onClick={() => setBulkAddOpen(false)} className={`text-slate-500 hover:text-red-500 transition-colors cursor-pointer p-1`}>
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                        
-                        <div className="flex justify-between items-center pr-2">
-                          <span className="text-xs text-indigo-500 dark:text-primary font-bold tracking-widest uppercase">{lang === 'ar' ? 'مفاتيح الدفعة' : 'Batch Keys'}</span>
-                          {bulkKeysText.trim() && (
-                            <span className="text-xs font-bold bg-indigo-500/20 text-indigo-500 dark:text-primary px-3 py-1 rounded-lg">
-                              {bulkKeysText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0).length} مفاتيح
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="relative">
-                          <textarea
-                            rows={6}
-                            value={bulkKeysText}
-                            onChange={(e) => setBulkKeysText(e.target.value)}
-                            placeholder="الصق المفاتيح هنا...&#10;يمكنك الفصل بينها بمسافة أو فاصلة أو سطر جديد."
-                            className={`w-full ${styles.bgInput} rounded-xl p-4 text-sm font-mono placeholder:text-slate-550 focus:outline-none transition-all resize-y min-h-[120px] shadow-inner ${isAddingKeys ? 'border border-indigo-500 shadow-md text-indigo-500' : `border ${styles.borderNormal} focus:border-indigo-500/50 ${styles.textTitle}`}`}
-                            style={{ lineHeight: '1.8' }}
-                            dir="ltr"
-                          />
-                        </div>
-
-                        {bulkMessage && (
-                          <div className="p-3 bg-indigo-500/10 text-indigo-500 dark:text-primary text-xs rounded-xl font-bold text-center border border-indigo-500/25 shadow-sm">
-                            {bulkMessage}
-                          </div>
-                        )}
-
-                        <button
-                          onClick={handleBulkAddKeys}
-                          disabled={isAddingKeys || !bulkKeysText.trim()}
-                          className={`w-full py-4 font-bold text-sm rounded-xl transition-all cursor-pointer flex justify-center items-center gap-2 ${bulkKeysText.trim() ? 'bg-indigo-600 dark:bg-primary hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/15 hover:-translate-y-0.5' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed border'}`}
-                        >
-                          {isAddingKeys ? (
-                            <>
-                              <RefreshCw className="w-5 h-5 animate-spin" />
-                              <span>جاري المعالجة الفورية...</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="w-5 h-5" />
-                              <span>إضافة الأكواد للمخزون</span>
-                            </>
-                          )}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Keys List */}
-                  <div className="pt-2">
-                    <div className="flex items-center justify-between mb-4 px-1">
-                      <h4 className={`text-sm font-bold ${styles.textTitle}`}>المفاتيح الحالية</h4>
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full shadow-sm">
-                          {inventoryStock.available} متاح
-                        </div>
-                        <div className="text-xs font-bold text-indigo-650 dark:text-primary bg-indigo-500/10 dark:bg-primary/10 border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full shadow-sm">
-                          {inventoryStock.total} إجمالي
-                        </div>
-                      </div>
-                    </div>
-
-                    {isLoadingKeys ? (
-                      <div className={`flex flex-col items-center justify-center py-12 border ${styles.borderNormal} border-dashed rounded-xl ${isDark ? 'bg-black/20' : 'bg-slate-50'}`}>
-                        <RefreshCw className="w-6 h-6 animate-spin mb-3 text-indigo-500 dark:text-primary" />
-                        <span className="text-xs font-bold text-slate-400">جارٍ جلب المفاتيح بسرعة...</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {inventoryKeys.map((keyItem) => (
-                          <div key={keyItem.id} className={`group ${isDark ? 'bg-black/40 hover:bg-white/5 border-white/10' : 'bg-slate-50 hover:bg-slate-100 border-slate-200'} border hover:border-indigo-500/30 rounded-xl overflow-hidden flex items-center justify-between p-4 gap-4 transition-all shadow-sm`}>
-                            <div className={`flex-1 text-sm ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-black'} font-mono break-all text-left select-all transition-colors`} dir="ltr">
-                              {keyItem.key}
-                            </div>
-                            <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold ${isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
-                              {durationLabel(keyItem.duration, lang)}
-                            </span>
-                            <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold ${keyItem.isUsed ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300' : keyItem.isDisabled || keyItem.isArchived ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'}`}>
-                              {keyItem.isUsed ? 'مستخدم' : keyItem.isDisabled || keyItem.isArchived ? 'غير متاح' : 'متاح'}
-                            </span>
-                            <button
-                              onClick={() => handleDeleteKey(keyItem.id)}
-                              disabled={Boolean(deletingKeyId)}
-                              className="shrink-0 p-2.5 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-slate-500 hover:text-red-500 rounded-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                              title="حذف المفتاح"
-                            >
-                              {deletingKeyId === keyItem.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        ))}
-
-                        {inventoryStock.total === 0 && !bulkAddOpen && !singleAddOpen && (
-                          <div className={`text-center py-10 border ${styles.borderNormal} border-dashed rounded-xl ${isDark ? 'bg-black/20' : 'bg-slate-50'}`}>
-                            <Key className="w-8 h-8 text-slate-450 mx-auto mb-3 opacity-50" />
-                            <p className={`text-xs ${styles.textMuted} font-bold`}>لا توجد مفاتيح في المخزون حالياً</p>
-                          </div>
-                        )}
-
-                        {/* Single Add Key Block */}
-                        <AnimatePresence>
-                          {singleAddOpen && (
-                            <motion.div 
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className={`border ${styles.borderNormal} rounded-xl p-3 flex flex-col sm:flex-row gap-3 shadow-lg ${isDark ? 'bg-black/40' : 'bg-slate-50'}`}
-                            >
-                              <input
-                                type="text"
-                                value={singleKeyText}
-                                onChange={(e) => setSingleKeyText(e.target.value)}
-                                placeholder="أدخل المفتاح هنا..."
-                                className={`flex-1 ${styles.bgInput} rounded-lg px-4 py-3 text-sm font-mono placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 text-left transition-all shadow-inner`}
-                                dir="ltr"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={handleAddSingleKey}
-                                  disabled={!singleKeyText.trim() || isAddingSingleKey}
-                                  className="px-6 py-3 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
-                                >
-                                  {isAddingSingleKey ? 'جارٍ الإضافة...' : 'إضافة'}
-                                </button>
-                                <button
-                                  onClick={() => setSingleAddOpen(false)}
-                                  className={`px-5 py-3 ${isDark ? 'bg-white/5 hover:bg-red-500/20 border-white/10' : 'bg-slate-100 hover:bg-red-500/10 border-slate-200'} border text-slate-650 hover:text-red-500 font-bold text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap`}
-                                >
-                                  إلغاء
-                                </button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        {/* Add New Key Button (+) */}
-                        {!singleAddOpen && (
-                          <button 
-                            onClick={() => setSingleAddOpen(true)}
-                            className={`w-full py-4 flex items-center justify-center gap-2 border border-dashed rounded-xl transition-all cursor-pointer mt-3 ${isDark ? 'bg-black/20 border-white/10 hover:border-primary/50 hover:bg-primary/5 text-slate-400 hover:text-primary' : 'bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-500 hover:text-indigo-600'}`}
-                          >
-                            <span className="text-xl leading-none mb-0.5">+</span>
-                            <span className="text-xs font-bold">إضافة مفتاح فردي</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className={`p-5 border-t ${styles.borderNormal} ${isDark ? 'bg-black/40' : 'bg-slate-50'} flex flex-col sm:flex-row items-center justify-between shrink-0 gap-3`}>
-              <button
-                onClick={() => setInventoryProduct(null)}
-                className={`w-full sm:w-auto px-6 py-3 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-slate-100 hover:bg-slate-200 border-slate-250'} border ${styles.textTitle} font-bold text-sm rounded-xl transition-all cursor-pointer hover:-translate-y-0.5`}
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={handleSaveProductChanges}
-                className="w-full sm:w-auto px-6 py-3 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary dark:hover:bg-primary-hover text-white font-black text-sm rounded-xl shadow-lg shadow-indigo-500/15 transition-all cursor-pointer hover:-translate-y-0.5"
-              >
-                حفظ التغييرات
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProductStockModal
+          isOpen={inventoryModalOpen}
+          product={inventoryProduct}
+          initialTab={inventoryInitialTab}
+          lang={lang}
+          onClose={() => {
+            setInventoryModalOpen(false);
+            setInventoryProduct(null);
+          }}
+          onProductUpdated={(updated) => {
+            setProducts((current) =>
+              current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+            );
+            loadDbProducts();
+            loadAdminStats();
+          }}
+        />
       )}
+
       
       {/* ------------------------------------------------------------------------------------------------ */}
       {/* GUIDE MODAL */}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
+import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -11,6 +12,9 @@ export async function GET(_req: Request, { params }: RouteContext) {
 }
 
 export async function PUT(req: Request, { params }: RouteContext) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بتعديل المنتجات.' }, { status: 403 });
+  }
   try {
     const { id } = await params;
     const data = await req.json();
@@ -23,6 +27,9 @@ export async function PUT(req: Request, { params }: RouteContext) {
 }
 
 export async function DELETE(_req: Request, { params }: RouteContext) {
+  if (!await isAuthorizedAdmin()) {
+    return NextResponse.json({ success: false, message: 'غير مصرح لك بحذف المنتجات.' }, { status: 403 });
+  }
   try {
     const { id } = await params;
     const success = await StoreDB.deleteProduct(id);

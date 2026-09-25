@@ -1,4 +1,4 @@
-import { AuditEvent, Product, Key, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
+import { AuditEvent, Product, Key, KeyStatus, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
@@ -42,9 +42,17 @@ export type KeyStockSummary = {
   available: number;
   used: number;
   disabled: number;
+  reserved: number;
   archived: number;
   duplicateCodes: number;
 };
+
+export function resolveKeyStatus(key: Key): KeyStatus {
+  if (key.status) return key.status;
+  if (key.isUsed) return 'used';
+  if (key.isDisabled || key.isArchived) return 'disabled';
+  return 'available';
+}
 
 /**
  * المصدر الوحيد لعداد المخزون: مفتاح متاح يعني أنه غير مستخدم أو معطّل أو مؤرشف
@@ -57,22 +65,38 @@ export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
     if (normalized) codeFrequency.set(normalized, (codeFrequency.get(normalized) || 0) + 1);
   }
 
+  let total = keys.length;
+  let available = 0;
+  let used = 0;
+  let disabled = 0;
+  let reserved = 0;
+  let archived = 0;
+
+  for (const key of keys) {
+    const st = resolveKeyStatus(key);
+    if (st === 'used') used++;
+    else if (st === 'disabled') disabled++;
+    else if (st === 'reserved') reserved++;
+    else if (st === 'available') {
+      const normalized = (key.key || '').trim().toUpperCase();
+      if (normalized && !key.isArchived && codeFrequency.get(normalized) === 1) {
+        available++;
+      } else {
+        disabled++;
+      }
+    }
+    if (key.isArchived) archived++;
+  }
+
   const duplicateCodes = Array.from(codeFrequency.values()).filter((count) => count > 1).length;
-  const available = keys.filter((key) => {
-    const normalized = (key.key || '').trim().toUpperCase();
-    return Boolean(normalized)
-      && !key.isUsed
-      && !key.isDisabled
-      && !key.isArchived
-      && codeFrequency.get(normalized) === 1;
-  }).length;
 
   return {
-    total: keys.length,
+    total,
     available,
-    used: keys.filter((key) => key.isUsed).length,
-    disabled: keys.filter((key) => !key.isUsed && key.isDisabled).length,
-    archived: keys.filter((key) => !key.isUsed && !key.isDisabled && key.isArchived).length,
+    used,
+    disabled,
+    reserved,
+    archived,
     duplicateCodes,
   };
 }
@@ -459,9 +483,8 @@ async function runDbOp<T>(firebaseOp: () => Promise<T>, localOp: () => T | Promi
     return await firebaseOp();
   } catch (err: any) {
     const detail = err?.message || String(err);
-    if (!allowLocalFallback) {
-      console.error('Persistent Firestore operation failed in production:', detail);
-      throw new Error('تعذر الوصول إلى قاعدة البيانات الدائمة. لم تُنفذ العملية حفاظاً على بياناتك.');
+    if (!allowLocalFallback || detail.includes('OUT_OF_STOCK')) {
+      throw err;
     }
 
     console.warn('Firestore access error in local development; using the local development fallback:', detail);
@@ -599,11 +622,11 @@ const LocalDB = {
     let skipped = 0;
     for (const keyString of lines) {
       const normalized = keyString.toUpperCase();
-      if (activeCodes.has(normalized)) {
+      const isDuplicate = activeCodes.has(normalized);
+      if (isDuplicate) {
         skipped++;
-        continue;
       }
-      const reusableKey = reusableByCode.get(normalized);
+      const reusableKey = !isDuplicate ? reusableByCode.get(normalized) : null;
       if (reusableKey) reusableKeys.push(reusableKey);
       else acceptedCodes.push(keyString);
       activeCodes.add(normalized);
@@ -684,6 +707,279 @@ const LocalDB = {
     removableKeys.forEach((key: Key) => Object.assign(key, { isArchived: true, isDisabled: true, archivedAt }));
     saveFallbackData(d);
     return removableKeys.length;
+  },
+  getProductStockPaginated(params: {
+    productId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    sort?: 'newest' | 'oldest';
+  }): {
+    success: boolean;
+    keys: Key[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    stockSummary: KeyStockSummary;
+  } {
+    const d = getFallbackData();
+    const productKeys = d.keys.filter((k: Key) => k.productId === params.productId && !k.isArchived);
+    const stockSummary = getKeyStockSummary(productKeys);
+
+    let filtered = [...productKeys];
+
+    if (params.status && params.status !== 'all') {
+      filtered = filtered.filter((k: Key) => resolveKeyStatus(k) === params.status);
+    }
+
+    if (params.search && params.search.trim()) {
+      const q = params.search.trim().toLowerCase();
+      filtered = filtered.filter((k: Key) => {
+        const keyMatch = (k.key || '').toLowerCase().includes(q);
+        const orderMatch = (k.orderId || '').toLowerCase().includes(q);
+        const custMatch = (k.customerId || '').toLowerCase().includes(q) || (k.customerName || '').toLowerCase().includes(q) || (k.usedByUserName || '').toLowerCase().includes(q);
+        const statusMatch = resolveKeyStatus(k).toLowerCase().includes(q);
+        return keyMatch || orderMatch || custMatch || statusMatch;
+      });
+    }
+
+    const isOldest = params.sort === 'oldest';
+    filtered.sort((a: Key, b: Key) => {
+      const timeA = new Date(a.createdAt || 0).getTime();
+      const timeB = new Date(b.createdAt || 0).getTime();
+      return isOldest ? timeA - timeB : timeB - timeA;
+    });
+
+    const total = filtered.length;
+    const limitNum = Math.max(1, params.limit || 20);
+    const totalPages = Math.ceil(total / limitNum) || 1;
+    const pageNum = Math.max(1, Math.min(params.page || 1, totalPages));
+    const offset = (pageNum - 1) * limitNum;
+    const paginated = filtered.slice(offset, offset + limitNum).map((k: Key) => ({
+      ...k,
+      status: resolveKeyStatus(k)
+    }));
+
+    return {
+      success: true,
+      keys: paginated,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages,
+      stockSummary
+    };
+  },
+
+  addSingleKey(productId: string, keyString: string, createdById: string, duration?: unknown, allowDuplicates: boolean = true): { success: boolean; key?: Key; message?: string } {
+    const d = getFallbackData();
+    const product = d.products.find((p: Product) => p.id === productId);
+    if (!product) return { success: false, message: 'المنتج غير موجود.' };
+
+    const cleanKey = (keyString || '').trim();
+    if (!cleanKey) return { success: false, message: 'كود المفتاح لا يمكن أن يكون فارغاً.' };
+
+    const normalized = cleanKey.toUpperCase();
+    const existing = d.keys.find((k: Key) => (!k.isArchived || k.isUsed) && (k.key || '').trim().toUpperCase() === normalized);
+    if (existing && !allowDuplicates) {
+      return { success: false, message: 'هذا المفتاح موجود بالفعل في المخزون.' };
+    }
+
+    const licenseDuration = normalizeKeyDuration(duration);
+    const now = new Date().toISOString();
+    const newKey: Key = {
+      id: `key-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      key: cleanKey,
+      productId,
+      productName: product.name,
+      status: 'available',
+      isUsed: false,
+      isDisabled: false,
+      isArchived: false,
+      duration: licenseDuration,
+      createdById,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    d.keys.push(newKey);
+    saveFallbackData(d);
+    return { success: true, key: newKey, message: 'تمت إضافة المفتاح بنجاح.' };
+  },
+
+  bulkAddKeysStructured(productId: string, keys: string[], createdById: string, duration?: unknown, allowDuplicates: boolean = true): { success: boolean; inserted: number; duplicates: number; invalid: number; message?: string } {
+    const d = getFallbackData();
+    const product = d.products.find((p: Product) => p.id === productId);
+    if (!product) return { success: false, inserted: 0, duplicates: 0, invalid: 0, message: 'المنتج غير موجود.' };
+
+    const licenseDuration = normalizeKeyDuration(duration);
+    const existingActiveCodes = new Set(
+      d.keys
+        .filter((k: Key) => !k.isArchived || k.isUsed)
+        .map((k: Key) => (k.key || '').trim().toUpperCase())
+    );
+
+    const reusableByCode = new Map<string, Key>(
+      d.keys
+        .filter((k: Key) => k.isArchived && !k.isUsed)
+        .map((k: Key): [string, Key] => [(k.key || '').trim().toUpperCase(), k])
+    );
+
+    let inserted = 0;
+    let duplicates = 0;
+    let invalid = 0;
+    const seenInInput = new Set<string>();
+    const now = new Date().toISOString();
+
+    for (const raw of keys) {
+      const trimmed = (raw || '').trim();
+      if (!trimmed) {
+        invalid++;
+        continue;
+      }
+      const normalized = trimmed.toUpperCase();
+      const isDuplicate = seenInInput.has(normalized) || existingActiveCodes.has(normalized);
+      if (isDuplicate) {
+        duplicates++;
+        if (!allowDuplicates) {
+          continue;
+        }
+      }
+
+      seenInInput.add(normalized);
+      const reusable = !isDuplicate ? reusableByCode.get(normalized) : null;
+      if (reusable) {
+        Object.assign(reusable, {
+          productId,
+          productName: product.name,
+          duration: licenseDuration,
+          status: 'available',
+          isUsed: false,
+          isDisabled: false,
+          isArchived: false,
+          archivedAt: null,
+          createdById,
+          restoredAt: now,
+          updatedAt: now,
+        });
+      } else {
+        d.keys.push({
+          id: `key-${Date.now()}-${inserted}-${Math.random().toString(36).slice(2, 7)}`,
+          key: trimmed,
+          productId,
+          productName: product.name,
+          status: 'available',
+          isUsed: false,
+          isDisabled: false,
+          isArchived: false,
+          duration: licenseDuration,
+          createdById,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      existingActiveCodes.add(normalized);
+      inserted++;
+    }
+
+    if (inserted > 0) saveFallbackData(d);
+    return {
+      success: true,
+      inserted,
+      duplicates,
+      invalid,
+      message: inserted > 0 ? `تمت إضافة ${inserted} مفتاحاً بنجاح.` : 'لم تتم إضافة أي مفاتيح جديدة.'
+    };
+  },
+
+  setKeyStatus(keyId: string, status: KeyStatus): { success: boolean; key?: Key; message?: string } {
+    const d = getFallbackData();
+    const key = d.keys.find((k: Key) => k.id === keyId);
+    if (!key) return { success: false, message: 'المفتاح غير موجود.' };
+
+    const now = new Date().toISOString();
+    if (status === 'available') {
+      if (key.isUsed) return { success: false, message: 'لا يمكن تفعيل مفتاح مستخدم بالفعل.' };
+      key.status = 'available';
+      key.isDisabled = false;
+      key.disabledAt = null;
+    } else if (status === 'disabled') {
+      key.status = 'disabled';
+      key.isDisabled = true;
+      key.disabledAt = now;
+    } else if (status === 'reserved') {
+      if (key.isUsed) return { success: false, message: 'لا يمكن حجز مفتاح مستخدم بالفعل.' };
+      key.status = 'reserved';
+    } else if (status === 'used') {
+      key.status = 'used';
+      key.isUsed = true;
+      if (!key.usedAt) key.usedAt = now;
+    }
+    key.updatedAt = now;
+    saveFallbackData(d);
+    return { success: true, key, message: 'تم تحديث حالة المفتاح بنجاح.' };
+  },
+
+  deleteKeySafely(keyId: string): { success: boolean; wasDisabledInstead: boolean; message: string } {
+    const d = getFallbackData();
+    const key = d.keys.find((k: Key) => k.id === keyId);
+    if (!key) return { success: false, wasDisabledInstead: false, message: 'المفتاح غير موجود.' };
+
+    const now = new Date().toISOString();
+    if (key.isUsed || key.status === 'used') {
+      key.status = 'disabled';
+      key.isDisabled = true;
+      key.disabledAt = now;
+      key.updatedAt = now;
+      saveFallbackData(d);
+      return {
+        success: true,
+        wasDisabledInstead: true,
+        message: 'المفتاح مستخدم في طلب سابق، لذلك تم تعطيله وحفظه بدلاً من حذفه لضمان سلامة السجلات.'
+      };
+    }
+
+    key.isArchived = true;
+    key.isDisabled = true;
+    key.archivedAt = now;
+    key.updatedAt = now;
+    saveFallbackData(d);
+    return {
+      success: true,
+      wasDisabledInstead: false,
+      message: 'تم حذف المفتاح من المخزون بنجاح.'
+    };
+  },
+
+  assignKeyToOrder(params: { productId: string; orderId: string; customerId: string; customerName?: string }): { success: boolean; key?: Key; message?: string } {
+    const d = getFallbackData();
+    const availableKey = d.keys.find((k: Key) => 
+      k.productId === params.productId &&
+      !k.isArchived &&
+      !k.isUsed &&
+      !k.isDisabled &&
+      (k.status === 'available' || !k.status)
+    );
+
+    if (!availableKey) {
+      return { success: false, message: 'لا يوجد مخزون متاح لهذا المنتج.' };
+    }
+
+    const now = new Date().toISOString();
+    availableKey.status = 'used';
+    availableKey.isUsed = true;
+    availableKey.orderId = params.orderId;
+    availableKey.customerId = params.customerId;
+    availableKey.customerName = params.customerName || null;
+    availableKey.usedByUserId = params.customerId;
+    availableKey.usedByUserName = params.customerName || null;
+    availableKey.usedAt = now;
+    availableKey.updatedAt = now;
+
+    saveFallbackData(d);
+    return { success: true, key: availableKey, message: 'تم تخصيص المفتاح للطلب بنجاح.' };
   },
   activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): { success: true; message: string; product: Product } | { success: false; message: string; product?: undefined } {
     const d = getFallbackData();
@@ -1344,11 +1640,11 @@ export const StoreDB = {
         let skipped = 0;
         for (const keyString of lines) {
           const normalized = keyString.toUpperCase();
-          if (activeCodes.has(normalized)) {
+          const isDuplicate = activeCodes.has(normalized);
+          if (isDuplicate) {
             skipped++;
-            continue;
           }
-          const reusableKey = reusableByCode.get(normalized);
+          const reusableKey = !isDuplicate ? reusableByCode.get(normalized) : null;
           if (reusableKey) reusableKeys.push(reusableKey);
           else acceptedCodes.push(keyString);
           activeCodes.add(normalized);
@@ -1465,6 +1761,359 @@ export const StoreDB = {
       () => LocalDB.deleteAllKeysForProduct(productId)
     );
   },
+
+  async getProductStockPaginated(params: {
+    productId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    sort?: 'newest' | 'oldest';
+  }): Promise<{
+    success: boolean;
+    keys: Key[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    stockSummary: KeyStockSummary;
+  }> {
+    return runDbOp(
+      async () => {
+        const keys = await this.getKeysByProduct(params.productId);
+        const activeKeys = keys.filter(k => !k.isArchived);
+        const stockSummary = getKeyStockSummary(activeKeys);
+
+        let filtered = [...activeKeys];
+
+        if (params.status && params.status !== 'all') {
+          filtered = filtered.filter(k => resolveKeyStatus(k) === params.status);
+        }
+
+        if (params.search && params.search.trim()) {
+          const q = params.search.trim().toLowerCase();
+          filtered = filtered.filter(k => {
+            const keyMatch = (k.key || '').toLowerCase().includes(q);
+            const orderMatch = (k.orderId || '').toLowerCase().includes(q);
+            const custMatch = (k.customerId || '').toLowerCase().includes(q) || (k.customerName || '').toLowerCase().includes(q) || (k.usedByUserName || '').toLowerCase().includes(q);
+            const statusMatch = resolveKeyStatus(k).toLowerCase().includes(q);
+            return keyMatch || orderMatch || custMatch || statusMatch;
+          });
+        }
+
+        const isOldest = params.sort === 'oldest';
+        filtered.sort((a, b) => {
+          const timeA = new Date(a.createdAt || 0).getTime();
+          const timeB = new Date(b.createdAt || 0).getTime();
+          return isOldest ? timeA - timeB : timeB - timeA;
+        });
+
+        const total = filtered.length;
+        const limitNum = Math.max(1, params.limit || 20);
+        const totalPages = Math.ceil(total / limitNum) || 1;
+        const pageNum = Math.max(1, Math.min(params.page || 1, totalPages));
+        const offset = (pageNum - 1) * limitNum;
+        const paginated = filtered.slice(offset, offset + limitNum).map(k => ({
+          ...k,
+          status: resolveKeyStatus(k)
+        }));
+
+        return {
+          success: true,
+          keys: paginated,
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages,
+          stockSummary
+        };
+      },
+      () => LocalDB.getProductStockPaginated(params)
+    );
+  },
+
+  async addSingleKey(productId: string, keyString: string, createdById: string, duration?: unknown, allowDuplicates: boolean = true): Promise<{ success: boolean; key?: Key; message?: string }> {
+    return runDbOp(
+      async () => {
+        const db = getDb();
+        const product = await this.getProductById(productId);
+        if (!product) return { success: false, message: 'المنتج غير موجود.' };
+
+        const cleanKey = (keyString || '').trim();
+        if (!cleanKey) return { success: false, message: 'كود المفتاح مطلوب.' };
+
+        const allKeys = await this.getKeys();
+        const normalized = cleanKey.toUpperCase();
+        const exists = allKeys.some(k => (!k.isArchived || k.isUsed) && (k.key || '').trim().toUpperCase() === normalized);
+        if (exists && !allowDuplicates) {
+          return { success: false, message: 'هذا المفتاح موجود بالفعل في المخزون.' };
+        }
+
+        const licenseDuration = normalizeKeyDuration(duration);
+        const now = new Date().toISOString();
+        const newKey: Key = {
+          id: `key-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          key: cleanKey,
+          productId,
+          productName: product.name,
+          status: 'available',
+          isUsed: false,
+          isDisabled: false,
+          isArchived: false,
+          duration: licenseDuration,
+          createdById,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        await setDoc(doc(db, 'keys', newKey.id), newKey);
+        return { success: true, key: newKey, message: 'تمت إضافة المفتاح بنجاح.' };
+      },
+      () => LocalDB.addSingleKey(productId, keyString, createdById, duration, allowDuplicates)
+    );
+  },
+
+  async bulkAddKeysStructured(productId: string, keys: string[], createdById: string, duration?: unknown, allowDuplicates: boolean = true): Promise<{ success: boolean; inserted: number; duplicates: number; invalid: number; message?: string }> {
+    return runDbOp(
+      async () => {
+        const db = getDb();
+        const product = await this.getProductById(productId);
+        if (!product) return { success: false, inserted: 0, duplicates: 0, invalid: 0, message: 'المنتج المطلوب غير موجود.' };
+        const licenseDuration = normalizeKeyDuration(duration);
+
+        const existingKeys = await this.getKeys();
+        const activeCodes = new Set(
+          existingKeys
+            .filter((key) => !key.isArchived || key.isUsed)
+            .map((key) => key.key.trim().toUpperCase())
+        );
+        const reusableByCode = new Map<string, Key>(
+          existingKeys
+            .filter((key) => key.isArchived && !key.isUsed)
+            .map((key): [string, Key] => [key.key.trim().toUpperCase(), key])
+        );
+
+        const acceptedCodes: string[] = [];
+        const reusableKeys: Key[] = [];
+        let duplicates = 0;
+        let invalid = 0;
+        const seenInInput = new Set<string>();
+        const now = new Date().toISOString();
+
+        for (const raw of keys) {
+          const trimmed = (raw || '').trim();
+          if (!trimmed) {
+            invalid++;
+            continue;
+          }
+          const normalized = trimmed.toUpperCase();
+          const isDuplicate = seenInInput.has(normalized) || activeCodes.has(normalized);
+          if (isDuplicate) {
+            duplicates++;
+            if (!allowDuplicates) {
+              continue;
+            }
+          }
+
+          seenInInput.add(normalized);
+          const reusableKey = !isDuplicate ? reusableByCode.get(normalized) : null;
+          if (reusableKey) reusableKeys.push(reusableKey);
+          else acceptedCodes.push(trimmed);
+          activeCodes.add(normalized);
+        }
+
+        const BATCH_SIZE = 400;
+        for (let i = 0; i < acceptedCodes.length; i += BATCH_SIZE) {
+          const batch = writeBatch(db);
+          const chunk = acceptedCodes.slice(i, i + BATCH_SIZE);
+          chunk.forEach((keyString, index) => {
+            const newKey: Key = {
+              id: `key-${Date.now()}-${i + index}-${Math.random().toString(36).slice(2, 7)}`,
+              key: keyString,
+              productId,
+              productName: product.name,
+              status: 'available',
+              isUsed: false,
+              isDisabled: false,
+              isArchived: false,
+              duration: licenseDuration,
+              createdById,
+              createdAt: now,
+              updatedAt: now,
+            };
+            batch.set(doc(db, "keys", newKey.id), newKey);
+          });
+          await batch.commit();
+        }
+
+        for (let i = 0; i < reusableKeys.length; i += BATCH_SIZE) {
+          const batch = writeBatch(db);
+          reusableKeys.slice(i, i + BATCH_SIZE).forEach((key) => {
+            batch.update(doc(db, 'keys', key.id), {
+              productId,
+              productName: product.name,
+              duration: licenseDuration,
+              status: 'available',
+              isUsed: false,
+              isDisabled: false,
+              isArchived: false,
+              archivedAt: null,
+              createdById,
+              restoredAt: now,
+              updatedAt: now,
+            });
+          });
+          await batch.commit();
+        }
+
+        const inserted = acceptedCodes.length + reusableKeys.length;
+        return {
+          success: true,
+          inserted,
+          duplicates,
+          invalid,
+          message: inserted > 0 ? `تمت إضافة ${inserted} مفتاحاً بنجاح.` : 'لم تتم إضافة أي مفاتيح جديدة.'
+        };
+      },
+      () => LocalDB.bulkAddKeysStructured(productId, keys, createdById, duration, allowDuplicates)
+    );
+  },
+
+  async setKeyStatus(keyId: string, status: KeyStatus): Promise<{ success: boolean; message?: string; key?: Key }> {
+    return runDbOp(
+      async () => {
+        const keyRef = doc(getDb(), 'keys', keyId);
+        const keySnap = await getDoc(keyRef);
+        if (!keySnap.exists()) return { success: false, message: 'المفتاح غير موجود.' };
+        const currentKey = keySnap.data() as Key;
+        const now = new Date().toISOString();
+
+        let updates: Partial<Key> = { status, updatedAt: now };
+        if (status === 'available') {
+          if (currentKey.isUsed) return { success: false, message: 'لا يمكن تفعيل مفتاح مستخدم بالفعل.' };
+          updates.isDisabled = false;
+          updates.disabledAt = null;
+        } else if (status === 'disabled') {
+          updates.isDisabled = true;
+          updates.disabledAt = now;
+        } else if (status === 'reserved') {
+          if (currentKey.isUsed) return { success: false, message: 'لا يمكن حجز مفتاح مستخدم بالفعل.' };
+        } else if (status === 'used') {
+          updates.isUsed = true;
+          if (!currentKey.usedAt) updates.usedAt = now;
+        }
+
+        await updateDoc(keyRef, updates);
+        return { success: true, key: { ...currentKey, ...updates }, message: 'تم تحديث حالة المفتاح بنجاح.' };
+      },
+      () => LocalDB.setKeyStatus(keyId, status)
+    );
+  },
+
+  async deleteKeySafely(keyId: string): Promise<{ success: boolean; wasDisabledInstead: boolean; message: string }> {
+    return runDbOp(
+      async () => {
+        const keyRef = doc(getDb(), 'keys', keyId);
+        const keySnap = await getDoc(keyRef);
+        if (!keySnap.exists()) return { success: false, wasDisabledInstead: false, message: 'المفتاح غير موجود.' };
+        const currentKey = keySnap.data() as Key;
+        const now = new Date().toISOString();
+
+        if (currentKey.isUsed || currentKey.status === 'used') {
+          await updateDoc(keyRef, {
+            status: 'disabled',
+            isDisabled: true,
+            disabledAt: now,
+            updatedAt: now,
+          });
+          return {
+            success: true,
+            wasDisabledInstead: true,
+            message: 'تم تعطيل المفتاح بدلاً من حذفه للحفاظ على سجلات الطلب والعميل.'
+          };
+        }
+
+        await updateDoc(keyRef, {
+          isArchived: true,
+          isDisabled: true,
+          archivedAt: now,
+          updatedAt: now,
+        });
+        return {
+          success: true,
+          wasDisabledInstead: false,
+          message: 'تم حذف المفتاح من المخزون بنجاح.'
+        };
+      },
+      () => LocalDB.deleteKeySafely(keyId)
+    );
+  },
+
+  async assignKeyToOrder(params: { productId: string; orderId: string; customerId: string; customerName?: string; ipAddress?: string }): Promise<{ success: boolean; key?: Key; message?: string }> {
+    return runDbOp(
+      async () => {
+        const database = getDb();
+        const keysQuery = query(
+          collection(database, 'keys'),
+          where('productId', '==', params.productId),
+          where('isUsed', '==', false),
+          where('isDisabled', '==', false),
+          where('isArchived', '==', false)
+        );
+
+        let allocatedKey: Key | null = null;
+        try {
+          await runTransaction(database, async (transaction) => {
+            const snapshot = await getDocs(keysQuery);
+            let chosenRef = null;
+            let chosenData: Key | null = null;
+
+            for (const docSnap of snapshot.docs) {
+              const candidateRef = doc(database, 'keys', docSnap.id);
+              const liveSnap = await transaction.get(candidateRef);
+              if (liveSnap.exists()) {
+                const liveData = liveSnap.data() as Key;
+                if (!liveData.isUsed && !liveData.isDisabled && !liveData.isArchived) {
+                  chosenRef = candidateRef;
+                  chosenData = liveData;
+                  break;
+                }
+              }
+            }
+
+            if (!chosenRef || !chosenData) {
+              throw new Error('OUT_OF_STOCK: لا يوجد مخزون متاح لهذا المنتج.');
+            }
+
+            const now = new Date().toISOString();
+            const updatePayload = {
+              status: 'used' as KeyStatus,
+              isUsed: true,
+              orderId: params.orderId,
+              customerId: params.customerId,
+              customerName: params.customerName || null,
+              usedByUserId: params.customerId,
+              usedByUserName: params.customerName || null,
+              usedAt: now,
+              updatedAt: now,
+            };
+
+            transaction.update(chosenRef, updatePayload);
+            allocatedKey = { ...chosenData, ...updatePayload };
+          });
+        } catch (txnError: any) {
+          if (txnError?.message?.includes('OUT_OF_STOCK')) {
+            return { success: false, message: 'لا يوجد مخزون متاح لهذا المنتج.' };
+          }
+          throw txnError;
+        }
+
+        return { success: true, key: allocatedKey || undefined, message: 'تم تخصيص المفتاح بنجاح.' };
+      },
+      () => LocalDB.assignKeyToOrder(params)
+    );
+  },
+
 
   async activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): Promise<{success: boolean; message: string; product?: Product}> {
     return runDbOp(
