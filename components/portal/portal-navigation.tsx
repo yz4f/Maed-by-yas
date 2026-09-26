@@ -163,7 +163,7 @@ export function PortalNavigation({
     <>
       <Image src="/logo.png" width={42} height={42} alt="" />
       <span className={css.brandCopy}>
-        <strong translate="no">{ar ? 'عتن' : 'T3N'}</strong>
+        <strong translate="no">{ar ? 'تعن' : 'T3N'}</strong>
         <small>{ar ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</small>
       </span>
     </>
@@ -268,7 +268,7 @@ export function PortalNavigation({
             type="button"
             className={css.brand}
             onClick={() => navigate('overview')}
-            aria-label={ar ? 'عتن — الرئيسية' : 'T3N — Home'}
+            aria-label={ar ? 'تعن — الرئيسية' : 'T3N — Home'}
           >
             {brand}
           </button>
@@ -313,7 +313,7 @@ export function PortalNavigation({
           type="button"
           className={css.mobileBrand}
           onClick={() => navigate('overview')}
-          aria-label={ar ? 'عتن — الرئيسية' : 'T3N — Home'}
+          aria-label={ar ? 'تعن — الرئيسية' : 'T3N — Home'}
         >
           {brand}
         </button>
@@ -357,7 +357,7 @@ export function PortalNavigation({
                 type="button"
                 className={css.brand}
                 onClick={() => navigate('overview')}
-                aria-label={ar ? 'عتن — الرئيسية' : 'T3N — Home'}
+                aria-label={ar ? 'تعن — الرئيسية' : 'T3N — Home'}
               >
                 {brand}
               </button>

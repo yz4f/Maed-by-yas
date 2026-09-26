@@ -477,6 +477,7 @@ export interface FaqItem {
   question_en: string;
   answer_ar: string;
   answer_en: string;
+  image_url?: string;
   keywords: string[];
   is_pinned: boolean;
   is_published: boolean;

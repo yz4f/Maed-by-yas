@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 import { getClientIp, getSessionActor } from '@/lib/request-security';
+import { normalizeFaqImage } from '@/lib/faq-image';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,13 @@ export async function PATCH(
     if (body.question_en !== undefined) updates.question_en = String(body.question_en).trim();
     if (body.answer_ar !== undefined) updates.answer_ar = String(body.answer_ar).trim();
     if (body.answer_en !== undefined) updates.answer_en = String(body.answer_en).trim();
+    if (body.image_url !== undefined) {
+      try {
+        updates.image_url = normalizeFaqImage(body.image_url);
+      } catch (error) {
+        return NextResponse.json({ success: false, message: error instanceof Error ? error.message : 'صورة السؤال غير صالحة.' }, { status: 400 });
+      }
+    }
     if (body.category_id !== undefined) updates.category_id = String(body.category_id).trim();
     if (body.is_pinned !== undefined) updates.is_pinned = Boolean(body.is_pinned);
     if (body.is_published !== undefined) updates.is_published = Boolean(body.is_published);
@@ -68,7 +76,7 @@ export async function PATCH(
         description: auditDesc,
         actorName: admin?.name || 'Admin',
         actorDiscordId: admin?.discordId || null,
-        metadata: { faqId: id, updates },
+        metadata: { faqId: id, changedFields: Object.keys(updates) },
       }
     );
 
