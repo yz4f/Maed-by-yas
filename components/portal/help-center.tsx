@@ -65,6 +65,15 @@ export function HelpCenter({
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const viewedFaqsRef = useRef<Set<string>>(new Set());
 
+  useEffect(() => {
+    if (!zoomedImage) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setZoomedImage(null);
+    };
+    document.addEventListener('keydown', onEscape);
+    return () => document.removeEventListener('keydown', onEscape);
+  }, [zoomedImage]);
+
   // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -524,6 +533,10 @@ export function HelpCenter({
                       {isExpanded && (
                         <div className="border-t border-[#24343e]/70 px-4 pb-5 pt-4 sm:px-5 sm:pb-6 space-y-4 animate-in fade-in duration-200">
                           {renderAnswerContent(isAr ? faq.answer_ar : faq.answer_en)}
+                          {faq.image_url && <button type="button" onClick={() => setZoomedImage(faq.image_url || null)} aria-label={isAr ? 'تكبير صورة الشرح' : 'Enlarge guide image'} className="block w-full overflow-hidden rounded-xl border border-[#24343e] bg-[#0b121a] p-2 text-center transition hover:border-[#94e6c3]/40">
+                            <img src={faq.image_url} alt={isAr ? `صورة توضيحية: ${faq.question_ar}` : `Illustration: ${faq.question_en}`} loading="lazy" className="mx-auto max-h-[460px] w-full object-contain" />
+                            <span className="mt-2 block text-[11px] font-bold text-[#94e6c3]">{isAr ? 'اضغط لتكبير الصورة' : 'Click to enlarge image'}</span>
+                          </button>}
 
                           {/* Related items */}
                           <div className="pt-2 border-t border-[#24343e]/40 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#93a9ad]">
@@ -633,6 +646,10 @@ export function HelpCenter({
                       {isExpanded && (
                         <div className="border-t border-[#24343e]/70 px-4 pb-5 pt-4 sm:px-5 sm:pb-6 space-y-4 animate-in fade-in duration-200">
                           {renderAnswerContent(isAr ? faq.answer_ar : faq.answer_en)}
+                          {faq.image_url && <button type="button" onClick={() => setZoomedImage(faq.image_url || null)} aria-label={isAr ? 'تكبير صورة الشرح' : 'Enlarge guide image'} className="block w-full overflow-hidden rounded-xl border border-[#24343e] bg-[#0b121a] p-2 text-center transition hover:border-[#94e6c3]/40">
+                            <img src={faq.image_url} alt={isAr ? `صورة توضيحية: ${faq.question_ar}` : `Illustration: ${faq.question_en}`} loading="lazy" className="mx-auto max-h-[460px] w-full object-contain" />
+                            <span className="mt-2 block text-[11px] font-bold text-[#94e6c3]">{isAr ? 'اضغط لتكبير الصورة' : 'Click to enlarge image'}</span>
+                          </button>}
 
                           {/* Related FAQs ("قد يفيدك أيضًا") */}
                           {related.length > 0 && (
@@ -683,6 +700,7 @@ export function HelpCenter({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label={isAr ? 'صورة الشرح مكبرة' : 'Enlarged guide image'}
           className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setZoomedImage(null)}
         >
@@ -690,11 +708,12 @@ export function HelpCenter({
             <button
               type="button"
               onClick={() => setZoomedImage(null)}
+              aria-label={isAr ? 'إغلاق الصورة' : 'Close image'}
               className="absolute top-3 end-3 rounded-full bg-black/70 p-1.5 text-white hover:bg-black transition"
             >
               <X className="h-5 w-5" />
             </button>
-            <img src={zoomedImage} alt="شرح مكبر" className="object-contain max-h-[85vh] w-auto" />
+            <img src={zoomedImage} alt={isAr ? 'صورة الشرح مكبرة' : 'Enlarged guide image'} className="max-h-[85vh] w-auto object-contain" />
           </div>
         </div>
       )}

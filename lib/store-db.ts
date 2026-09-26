@@ -207,137 +207,21 @@ export const initialFaqCategories: FaqCategory[] = [
   },
 ];
 
-export const initialFaqs: FaqItem[] = [
-  {
-    id: 'faq-activate-key',
-    category_id: 'cat-keys',
-    question_ar: 'كيف أقوم بتفعيل المفتاح؟',
-    question_en: 'How do I activate my key?',
-    answer_ar: '1. توجه إلى تبويب «تفعيل مفتاح» من القائمة الجانبية.\n2. الصق المفتاح المستلم كاملاً وبدقة في خانة التفعيل.\n3. اضغط زر «تفعيل المفتاح الآن» لتأكيد العملية فورياً.\n4. بعد التفعيل سينتقل المفتاح مباشرة إلى تبويب «منتجاتي» مع إمكانية تحميل اللودر والاطلاع على الشرح.',
-    answer_en: '1. Navigate to the "Activate a key" tab from the sidebar.\n2. Paste your full product key into the activation field.\n3. Click "Activate Key Now" to immediately confirm.\n4. Once activated, the product appears under "My Products" with full download and guide access.',
-    keywords: ['تفعيل', 'مفتاح', 'تنشيط', 'activate', 'key', 'license'],
-    is_pinned: true,
-    is_published: true,
-    sort_order: 1,
-    views: 142,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-product-guide',
-    category_id: 'cat-products',
-    question_ar: 'أين أجد شرح المنتج وروابط التحميل؟',
-    question_en: 'Where can I find product guides and loader downloads?',
-    answer_ar: 'افتح صفحة «منتجاتي» من القائمة الجانبية، ثم اختر المنتج المفعّل واضغط «الشروحات والتعليمات». ستجد الفيديو التوضيحي وروابط تحميل اللودر والملفات المحدثة للتراخيص النشطة.',
-    answer_en: 'Open "My Products" from the sidebar, select your active product, and click "Guide". You will find the video tutorial and loader downloads for your active license.',
-    keywords: ['شرح', 'لودر', 'تحميل', 'فيديو', 'guide', 'download', 'loader'],
-    is_pinned: true,
-    is_published: true,
-    sort_order: 2,
-    views: 118,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-spoofer-error',
-    category_id: 'cat-troubleshoot',
-    question_ar: 'ماذا أفعل عند ظهور مشكلة Spoofer أو خطأ في التشغيل؟',
-    question_en: 'What should I do if a Spoofer or runtime error occurs?',
-    answer_ar: 'تأكد من تشغيل اللودر كمسؤول (Run as Administrator)، وتعطيل برامج مكافحة الفيروسات مؤقتاً، وتثبيت حزم Visual C++ Redistributable المرفقة بالشرح. في حال استمرار المشكلة اتبع خطوات «حلول المشاكل» الموجودة داخل بطاقة المنتج.',
-    answer_en: 'Ensure you run the loader as Administrator, temporarily disable antivirus software, and install the Visual C++ Redistributable runtime. If issues persist, check the "Issue fixes" tab on your product card.',
-    keywords: ['خطأ', 'سبوفر', 'spoofer', 'error', 'تشغيل', 'runtime'],
-    is_pinned: true,
-    is_published: true,
-    sort_order: 3,
-    views: 95,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-find-key',
-    category_id: 'cat-keys',
-    question_ar: 'أين أجد مفتاح المنتج الخاص بي؟',
-    question_en: 'Where can I find my product key?',
-    answer_ar: 'افتح «منتجاتي» وستجد شريط المفتاح ضمن بطاقة الترخيص المفعّل الخاص بك. يمكنك استخدام زر النسخ السريع لنسخه بأمان.',
-    answer_en: 'Open "My Products" and your key is displayed directly on your active license card with a one-click copy button.',
-    keywords: ['مفتاحي', 'كود', 'أين المفتاح', 'find key', 'my key'],
-    is_pinned: false,
-    is_published: true,
-    sort_order: 4,
-    views: 64,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-hwid-reset',
-    category_id: 'cat-account',
-    question_ar: 'متى يحق لي طلب رستات (HWID Reset) للمفتاح؟',
-    question_en: 'When should I request a key reset (HWID Reset)?',
-    answer_ar: 'يمكنك طلب رستات من بطاقة المنتج عند تغيير قطع في جهازك أو إعادة تهيئة النظام. يرجى كتابة سبب واضح، وسيتم مراجعة وتحديث حالة الطلب داخل حسابك مباشرة.',
-    answer_en: 'You can request a reset from your product card if you upgraded hardware or reinstalled Windows. State a clear reason, and the status will update in your account.',
-    keywords: ['رستات', 'hwid', 'reset', 'تغيير جهاز'],
-    is_pinned: false,
-    is_published: true,
-    sort_order: 5,
-    views: 82,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-discord-role',
-    category_id: 'cat-account',
-    question_ar: 'هل تُمنح رتبة المنتج في ديسكورد تلقائياً بعد التفعيل؟',
-    question_en: 'Do Discord product roles get granted automatically after activation?',
-    answer_ar: 'نعم. عند تسجيل دخولك بحساب ديسكورد وتفعيل مفتاح صالح، يمنح النظام حسابك تلقائياً رتبة العميل (Customer) بالإضافة إلى رتبة المنتج المفعل في سيرفر ديسكورد الرسمي.',
-    answer_en: 'Yes. When logging in with Discord and activating a key, the system automatically assigns the Customer role and the specific product role in our Discord server.',
-    keywords: ['ديسكورد', 'رتبة', 'discord', 'role'],
-    is_pinned: false,
-    is_published: true,
-    sort_order: 6,
-    views: 73,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-download-expired',
-    category_id: 'cat-products',
-    question_ar: 'لماذا لا أستطيع تحميل اللودر أو فتح الشرح؟',
-    question_en: 'Why cannot I download the loader or view guides?',
-    answer_ar: 'التحميل والشروحات متاحة فقط للتراخيص النشطة والصالحة. في حال انتهاء مدة المفتاح يبقى المنتج مسجلاً في سجلك لكن خيارات التحميل والتشغيل تتوقف حتى تجديد الترخيص.',
-    answer_en: 'Downloads and guides are restricted to active licenses. If your license has expired, the item remains in your history but access is locked until renewed.',
-    keywords: ['تحميل', 'منتهي', 'expired', 'download', 'غير متاح'],
-    is_pinned: false,
-    is_published: true,
-    sort_order: 7,
-    views: 51,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-  {
-    id: 'faq-key-duration',
-    category_id: 'cat-keys',
-    question_ar: 'كيف أعرف مدة اشتراكي وموعد انتهائه؟',
-    question_en: 'How do I check my license status and expiration?',
-    answer_ar: 'في صفحة «منتجاتي» تعرض كل بطاقة ترخيص شريط الحالة والوقت المتبقي بالساعات والأيام بدقة متناهية، بالإضافة إلى نوع الترخيص (يومان، أسبوع، شهر، أو دائم).',
-    answer_en: 'In "My Products", each card displays a live countdown timer showing the remaining days and hours along with license type.',
-    keywords: ['مدة', 'اشتراك', 'انتهاء', 'duration', 'expires'],
-    is_pinned: false,
-    is_published: true,
-    sort_order: 8,
-    views: 89,
-    createdAt: new Date('2026-03-01').toISOString(),
-    updatedAt: new Date().toISOString(),
-    created_by: 'system',
-  },
-];
+export const initialFaqs: FaqItem[] = [];
 
+// Older deployments may still have these sample records in Firestore or the local fallback.
+// Keep them out of customer and admin reads without deleting any real FAQ created later.
+const legacySampleFaqIds = new Set([
+  'faq-activate-key',
+  'faq-product-guide',
+  'faq-spoofer-error',
+  'faq-find-key',
+  'faq-hwid-reset',
+  'faq-discord-role',
+  'faq-download-expired',
+  'faq-key-duration',
+]);
+const isCurrentFaq = (faq: FaqItem) => !legacySampleFaqIds.has(faq.id);
 
 // The JSON fallback is strictly a local-development aid. Production must never silently
 // switch to ephemeral filesystem storage because a Railway redeploy can discard it.
@@ -1192,7 +1076,7 @@ const LocalDB = {
   getFaqCategories(onlyActive = true): FaqCategory[] {
     const d = getFallbackData();
     const categories: FaqCategory[] = d.faqCategories || initialFaqCategories;
-    const faqs: FaqItem[] = d.faqs || initialFaqs;
+    const faqs: FaqItem[] = (d.faqs || initialFaqs).filter(isCurrentFaq);
     const filtered = onlyActive ? categories.filter((c: FaqCategory) => c.is_active) : [...categories];
     return filtered
       .map((c: FaqCategory) => ({
@@ -1246,7 +1130,7 @@ const LocalDB = {
   // -------------------------
   getFaqs(options: { categoryId?: string; search?: string; onlyPublished?: boolean; isPinned?: boolean } = {}): FaqItem[] {
     const d = getFallbackData();
-    let faqs: FaqItem[] = d.faqs || [...initialFaqs];
+    let faqs: FaqItem[] = (d.faqs || [...initialFaqs]).filter(isCurrentFaq);
     const categories: FaqCategory[] = d.faqCategories || [...initialFaqCategories];
     const catMap = new Map(categories.map((c) => [c.id, c]));
 
@@ -1288,7 +1172,7 @@ const LocalDB = {
   getFaqById(id: string): FaqItem | undefined {
     const d = getFallbackData();
     const faqs: FaqItem[] = d.faqs || [...initialFaqs];
-    const faq = faqs.find((f) => f.id === id);
+    const faq = faqs.find((f) => f.id === id && isCurrentFaq(f));
     if (!faq) return undefined;
     const categories: FaqCategory[] = d.faqCategories || [...initialFaqCategories];
     const cat = categories.find((c) => c.id === faq.category_id);
@@ -1361,7 +1245,7 @@ const LocalDB = {
 
   getFaqStats(): FaqStats {
     const d = getFallbackData();
-    const faqs: FaqItem[] = d.faqs || [...initialFaqs];
+    const faqs: FaqItem[] = (d.faqs || [...initialFaqs]).filter(isCurrentFaq);
     const categories: FaqCategory[] = d.faqCategories || [...initialFaqCategories];
     const searchLogs: FaqSearchLog[] = d.faqSearchLogs || [];
 
@@ -2504,7 +2388,7 @@ export const StoreDB = {
         }
 
         const faqsSnap = await getDocs(collection(getDb(), 'faqs'));
-        const faqs = faqsSnap.docs.map((d) => d.data() as FaqItem);
+        const faqs = faqsSnap.docs.map((d) => d.data() as FaqItem).filter(isCurrentFaq);
 
         const filtered = onlyActive ? categories.filter((c) => c.is_active) : [...categories];
         return filtered
@@ -2575,7 +2459,7 @@ export const StoreDB = {
     return runDbOp(
       async () => {
         const snapshot = await getDocs(collection(getDb(), 'faqs'));
-        let faqs = snapshot.docs.map((d) => d.data() as FaqItem);
+        let faqs = snapshot.docs.map((d) => d.data() as FaqItem).filter(isCurrentFaq);
 
         if (faqs.length === 0) {
           for (const f of initialFaqs) {
@@ -2631,6 +2515,7 @@ export const StoreDB = {
         const snap = await getDoc(doc(getDb(), 'faqs', id));
         if (!snap.exists()) return undefined;
         const faq = snap.data() as FaqItem;
+        if (!isCurrentFaq(faq)) return undefined;
         const cat = await this.getFaqCategoryById(faq.category_id);
         return {
           ...faq,

@@ -3,6 +3,7 @@ import { StoreDB } from '@/lib/store-db';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 import { getClientIp, getSessionActor } from '@/lib/request-security';
 import { FaqItem } from '@/types';
+import { normalizeFaqImage } from '@/lib/faq-image';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
       question_en,
       answer_ar,
       answer_en,
+      image_url,
       keywords,
       is_pinned,
       is_published,
@@ -61,6 +63,12 @@ export async function POST(request: NextRequest) {
     if (!category_id || typeof category_id !== 'string') {
       return NextResponse.json({ success: false, message: 'يرجى تحديد التصنيف المناسب.' }, { status: 400 });
     }
+    let imageUrl: string;
+    try {
+      imageUrl = normalizeFaqImage(image_url);
+    } catch (error) {
+      return NextResponse.json({ success: false, message: error instanceof Error ? error.message : 'صورة السؤال غير صالحة.' }, { status: 400 });
+    }
 
     const newFaq: FaqItem = {
       id: `faq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -69,6 +77,7 @@ export async function POST(request: NextRequest) {
       question_en: (question_en || question_ar).trim(),
       answer_ar: answer_ar.trim(),
       answer_en: (answer_en || answer_ar).trim(),
+      image_url: imageUrl,
       keywords: Array.isArray(keywords)
         ? keywords.map((k: string) => String(k).trim()).filter(Boolean)
         : typeof keywords === 'string'

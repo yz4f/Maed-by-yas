@@ -18,6 +18,7 @@ import {
   Filter,
   FolderPlus,
   HelpCircle,
+  ImagePlus,
   Layers,
   ListOrdered,
   Loader2,
@@ -43,6 +44,36 @@ interface HelpAdminSectionProps {
 }
 
 type AdminTab = 'faqs' | 'categories' | 'stats';
+
+async function compressFaqImage(file: File): Promise<string> {
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('اختر صورة PNG أو JPG أو WebP.');
+  const source = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('تعذر قراءة الصورة.'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const element = new Image();
+    element.onerror = () => reject(new Error('ملف الصورة غير صالح.'));
+    element.onload = () => resolve(element);
+    element.src = source;
+  });
+  const canvas = document.createElement('canvas');
+  const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('تعذر تجهيز الصورة.');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  for (const quality of [0.86, 0.74, 0.62]) {
+    const result = canvas.toDataURL('image/webp', quality);
+    if (result.length <= 700_000) return result;
+  }
+  throw new Error('الصورة كبيرة بعد الضغط؛ اختر صورة أصغر أو استخدم رابط HTTPS.');
+}
 
 export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionProps) {
   const isAr = lang === 'ar';
@@ -71,6 +102,7 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
     question_en: '',
     answer_ar: '',
     answer_en: '',
+    image_url: '',
     keywords: '',
     is_pinned: false,
     is_published: true,
@@ -78,6 +110,7 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
   });
   const [editorPreviewMode, setEditorPreviewMode] = useState(false);
   const [savingFaq, setSavingFaq] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
 
   // Category Modal (Add/Edit)
   const [catModalOpen, setCatModalOpen] = useState(false);
@@ -188,6 +221,7 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
       question_en: '',
       answer_ar: '',
       answer_en: '',
+      image_url: '',
       keywords: '',
       is_pinned: false,
       is_published: true,
@@ -205,6 +239,7 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
       question_en: faq.question_en || '',
       answer_ar: faq.answer_ar,
       answer_en: faq.answer_en || '',
+      image_url: faq.image_url || '',
       keywords: Array.isArray(faq.keywords) ? faq.keywords.join(', ') : '',
       is_pinned: faq.is_pinned,
       is_published: faq.is_published,
@@ -225,6 +260,10 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
     }
     if (!faqForm.category_id) {
       onNotify(isAr ? 'يرجى اختيار التصنيف.' : 'Please select a category.', 'warning');
+      return;
+    }
+    if (!faqForm.image_url.trim()) {
+      onNotify(isAr ? 'أضف صورة توضيحية لهذا السؤال.' : 'Add an illustration for this question.', 'warning');
       return;
     }
 
@@ -261,6 +300,19 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
       onNotify(err.message || (isAr ? 'فشل حفظ السؤال.' : 'Failed to save FAQ.'), 'error');
     } finally {
       setSavingFaq(false);
+    }
+  };
+
+  const handleFaqImageFile = async (file?: File) => {
+    if (!file) return;
+    setImageBusy(true);
+    try {
+      const image_url = await compressFaqImage(file);
+      setFaqForm((current) => ({ ...current, image_url }));
+    } catch (error) {
+      onNotify(error instanceof Error ? error.message : 'تعذر تجهيز الصورة.', 'error');
+    } finally {
+      setImageBusy(false);
     }
   };
 
@@ -628,10 +680,18 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
                         paginatedFaqs.map((faq) => (
                           <tr key={faq.id} className="hover:bg-[#14222b]/60 transition">
                             <td className="py-3 px-4 max-w-xs">
-                              <div className="font-bold truncate">{faq.question_ar}</div>
-                              {faq.question_en && (
-                                <div className="text-[11px] text-[#93a9ad] truncate">{faq.question_en}</div>
-                              )}
+                              <div className="flex items-center gap-2.5">
+                                {faq.image_url && <img src={faq.image_url} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg border border-[#24343e] bg-[#0b121a] object-cover" />}
+                                <div className="min-w-0">
+                                  <div className="font-bold truncate">{faq.question_ar}</div>
+                                  {faq.question_en && (
+                                    <div className="text-[11px] text-[#93a9ad] truncate">{faq.question_en}</div>
+                                  )}
+                                  <span className={`mt-1 inline-flex items-center gap-1 text-[10px] ${faq.image_url ? 'text-[#94e6c3]' : 'text-amber-300'}`}>
+                                    <ImagePlus className="h-3 w-3" />{faq.image_url ? (isAr ? 'مع صورة' : 'Illustrated') : (isAr ? 'تحتاج صورة' : 'Needs image')}
+                                  </span>
+                                </div>
+                              </div>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap">
                               <span className="rounded-lg bg-[#0b121a] px-2.5 py-1 text-[11px] text-[#94e6c3] border border-[#24343e]">
@@ -1136,6 +1196,36 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
                 />
               </div>
 
+              {/* Illustration shown with the answer in the customer help center */}
+              <div className="space-y-2 rounded-2xl border border-[#24343e] bg-[#0b121a]/60 p-3">
+                <div className="flex items-center gap-2 font-bold text-[#eef4f2]">
+                  <ImagePlus className="h-4 w-4 text-[#94e6c3]" />
+                  {isAr ? 'صورة توضيحية للسؤال *' : 'Question illustration *'}
+                </div>
+                <p className="text-[11px] leading-5 text-[#93a9ad]">
+                  {isAr ? 'ارفع لقطة واضحة للخطوة أو المشكلة. ستظهر أسفل الإجابة للعميل.' : 'Upload a clear screenshot of the step or issue. It appears below the answer.'}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-xl border border-[#94e6c3]/30 bg-[#94e6c3]/10 px-3 text-[11px] font-bold text-[#94e6c3] hover:bg-[#94e6c3]/15">
+                    <ImagePlus className="h-4 w-4" />
+                    {imageBusy ? (isAr ? 'جاري تجهيز الصورة...' : 'Preparing image...') : (isAr ? 'رفع صورة' : 'Upload image')}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={imageBusy} onChange={(event) => { void handleFaqImageFile(event.target.files?.[0]); event.target.value = ''; }} />
+                  </label>
+                  <span className="text-[10px] text-[#93a9ad]">{isAr ? 'PNG أو JPG أو WebP' : 'PNG, JPG, or WebP'}</span>
+                </div>
+                <input
+                  type="url"
+                  value={faqForm.image_url.startsWith('data:image/') ? '' : faqForm.image_url}
+                  onChange={(event) => setFaqForm((current) => ({ ...current, image_url: event.target.value }))}
+                  placeholder="https://example.com/guide-image.png"
+                  aria-label={isAr ? 'رابط صورة السؤال' : 'Question image URL'}
+                  className="w-full rounded-xl border border-[#24343e] bg-[#101b23] px-3 py-2.5 text-xs text-[#eef4f2] outline-none focus:border-[#94e6c3]"
+                />
+                {faqForm.image_url && (
+                  <img src={faqForm.image_url} alt={isAr ? 'معاينة الصورة التوضيحية' : 'Illustration preview'} className="max-h-52 w-full rounded-xl border border-[#24343e] bg-[#101b23] object-contain" />
+                )}
+              </div>
+
               {/* Keywords */}
               <div className="space-y-1.5">
                 <label className="font-bold text-[#93a9ad]">
@@ -1190,7 +1280,7 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
               </button>
               <button
                 type="button"
-                disabled={savingFaq}
+                disabled={savingFaq || imageBusy}
                 onClick={handleSaveFaq}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#94e6c3] px-5 py-2 text-xs font-black text-[#0b121a] hover:brightness-110 transition disabled:opacity-50"
               >

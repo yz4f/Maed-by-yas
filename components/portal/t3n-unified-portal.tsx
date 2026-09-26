@@ -1888,7 +1888,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <img src="/logo.png?v=6" alt="شعار تعن" />
           </div>
           <div>
-            <div className="brand-name">{lang === 'ar' ? 'تسليم ذاتي' : 'SELF DELIVERY'}</div>
+            <div className="brand-name">{lang === 'ar' ? 'تعن' : 'T3N'}</div>
             <div className="brand-tag">{lang === 'ar' ? 'منصة التراخيص' : 'LICENSE PLATFORM'}</div>
           </div>
         </div>
@@ -2173,7 +2173,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {/* Main Content Area */}
       <main className="portal-main-content portal-scroll-region flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
-        <div className="portal-content-frame max-w-[1520px] mx-auto space-y-6">
+        <div className="portal-content-frame mx-auto flex min-h-full max-w-[1520px] flex-col gap-6">
 
         {currentUser?.warningMessage && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -3406,9 +3406,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         )}
 
         {/* SITE FOOTER */}
-        <div className="pt-12 sm:pt-16">
-          <Footer lang={lang} />
-        </div>
+        {(activeTab === 'overview' || activeTab === 'my-products') && (
+          <div className="mt-auto pt-8 sm:pt-10">
+            <Footer lang={lang} isDark={isDark} onNavigate={setActiveTab} />
+          </div>
+        )}
         </div>
       </main>
 
