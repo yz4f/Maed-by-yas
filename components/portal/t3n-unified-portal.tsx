@@ -3408,7 +3408,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* SITE FOOTER */}
         {(activeTab === 'overview' || activeTab === 'my-products') && (
           <div className="mt-auto pt-8 sm:pt-10">
-            <Footer lang={lang} isDark={isDark} onNavigate={setActiveTab} />
+            <Footer lang={lang} isDark={isDark} />
           </div>
         )}
         </div>
