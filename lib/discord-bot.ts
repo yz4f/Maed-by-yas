@@ -977,19 +977,7 @@ export async function sendDiscordAdminDirectMessage(event: {
   }
 
   const dmId = await openDiscordDm(customerDiscordId, token);
-  await postDiscordMessage(dmId, token, {
-    embeds: [{
-      color: 0x38bdf8,
-      author: { name: 'Ta3n Support', icon_url: `${websiteUrl}/logo.png` },
-      title: 'رسالة من دعم تعن',
-      description: body,
-      fields: [
-        { name: 'الخصوصية', value: 'لا ترسل مفاتيح المنتج أو كلمات المرور في Discord.', inline: false },
-      ],
-      footer: { text: 'Ta3n Support • رسالة دعم خاصة' },
-      timestamp: new Date().toISOString(),
-    }],
-  });
+  await postDiscordMessage(dmId, token, { content: body });
   await setDoc(cooldownRef, { customerDiscordId, customerName: event.customerName, body, sentAt: new Date().toISOString(), staffName: event.staffName }, { merge: true });
   return { sent: true, reason: 'sent' as const };
 }
