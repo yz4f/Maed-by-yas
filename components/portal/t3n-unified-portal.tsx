@@ -2583,14 +2583,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             {lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
                           </button>
                         </div>
-                        <button
-                          onClick={() => { setResetRequestProduct(up); setResetRequestReason(''); }}
-                          disabled={!canUseProduct}
-                          className="product-reset-button"
-                        >
-                          <span className="product-reset-button__icon"><RefreshCw size={15} /></span>
-                          <span className="min-w-0 text-start"><span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span><span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'أرسل السبب لفريق دعم تعن دون مشاركة المفتاح' : 'Send the reason to Ta3n Support without sharing the key'}</span></span>
-                        </button>
                       </div>
                     </article>}
                     </React.Fragment>
