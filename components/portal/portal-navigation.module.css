@@ -93,3 +93,33 @@
 .drawer { box-shadow: 0 26px 80px rgba(0,0,0,.4); animation: atlas-drawer-in .3s cubic-bezier(.2,.8,.2,1); }
 @keyframes atlas-drawer-in { from { opacity: 0; transform: translateX(18px) scale(.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .sidebar, .drawer, .brand img, .item, .itemIcon, .iconButton, .user, .logout { transition: none !important; animation: none !important; transform: none !important; } }
+
+/* Smooth expand / collapse behavior inspired by the supplied sidebar reference. */
+.sidebar { width: 284px; overflow: hidden; }
+.collapsed { width: 82px; }
+.brandCopy, .groupTitle, .itemLabel, .chevron, .userCopy, .logout span {
+  transition: opacity .24s ease, transform .24s cubic-bezier(.2,.8,.2,1), max-width .34s cubic-bezier(.2,.8,.2,1), margin .34s ease;
+}
+.brandCopy { max-width: 190px; overflow: hidden; }
+.itemLabel { max-width: 170px; overflow: hidden; }
+.collapsed .brandCopy, .collapsed .groupTitle, .collapsed .itemLabel, .collapsed .chevron, .collapsed .userCopy, .collapsed .logout span {
+  display: block;
+  max-width: 0;
+  margin-inline: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(9px);
+  pointer-events: none;
+}
+.collapsed .groupTitle { max-height: 0; margin-block: 0; overflow: hidden; }
+.collapsed .item { gap: 0; }
+.collapsed .itemIcon { transform: scale(1.04); }
+.collapseButton svg { transition: transform .34s cubic-bezier(.2,.8,.2,1); }
+.collapsed .collapseButton svg { transform: rotate(180deg); }
+.collapseButton { position: relative; overflow: hidden; }
+.collapseButton::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle, var(--luxe-soft), transparent 68%); opacity: 0; transition: opacity .24s ease; }
+.collapseButton:hover::after { opacity: 1; }
+.item[data-active='true']::after { content: ''; position: absolute; inset: 4px; border-radius: 10px; border: 1px solid rgba(143,231,210,.12); pointer-events: none; animation: active-pulse 2.8s ease-in-out infinite; }
+@keyframes active-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@media (max-width: 767px) { .sidebar { width: 284px; } .collapsed { width: 82px; } }
+@media (prefers-reduced-motion: reduce) { .brandCopy, .groupTitle, .itemLabel, .chevron, .userCopy, .logout span, .collapseButton svg, .item[data-active='true']::after { transition: none !important; animation: none !important; } }
