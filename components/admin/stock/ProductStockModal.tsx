@@ -107,6 +107,7 @@ export function ProductStockModal({
   const [productFormData, setProductFormData] = useState({
     name: '',
     description: '',
+    image: '',
     sku: '',
     category: '',
     version: '',
@@ -116,6 +117,8 @@ export function ProductStockModal({
     guideUrl: '',
     cardColor: 'blue' as 'blue' | 'cyan' | 'purple' | 'gold',
     isDisabled: false,
+    isVisible: true,
+    displayOrder: 0,
     downloadsCount: 0,
   });
 
@@ -147,6 +150,7 @@ export function ProductStockModal({
     setProductFormData({
       name: product.name || '',
       description: product.description || '',
+      image: product.image || '',
       sku: product.sku || product.id,
       category: product.category || '',
       version: product.version || '',
@@ -156,6 +160,8 @@ export function ProductStockModal({
       guideUrl: product.guideUrl || '',
       cardColor: product.cardColor || 'blue',
       isDisabled: Boolean(product.isDisabled),
+      isVisible: product.isVisible !== false,
+      displayOrder: Number(product.displayOrder || 0),
       downloadsCount: product.downloadsCount || 0,
     });
 
@@ -439,6 +445,7 @@ export function ProductStockModal({
       const payload: Partial<Product> = {
         name: productFormData.name.trim(),
         description: productFormData.description.trim(),
+        image: productFormData.image.trim(),
         sku: productFormData.sku.trim(),
         category: productFormData.category.trim(),
         version: productFormData.version.trim(),
@@ -448,6 +455,8 @@ export function ProductStockModal({
         guideUrl: productFormData.guideUrl.trim(),
         cardColor: productFormData.cardColor,
         isDisabled: productFormData.isDisabled,
+        isVisible: productFormData.isVisible,
+        displayOrder: productFormData.displayOrder,
         downloadsCount: productFormData.downloadsCount,
         stockType: 'digital_keys',
         customFields: customFields,
@@ -1266,6 +1275,48 @@ export function ProductStockModal({
                 </p>
               </div>
 
+              <div className="rounded-2xl border border-blue-400/15 bg-blue-400/[0.04] p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-200">{lang === 'ar' ? 'صورة المنتج' : 'Product Image'}</label>
+                    <p className="mt-1 text-[10px] leading-5 text-slate-500">{lang === 'ar' ? 'ألصق رابط الصورة أو اختر صورة من جهازك، وستظهر المعاينة فوراً.' : 'Paste an image URL or choose a file; the preview updates instantly.'}</p>
+                  </div>
+                  <div className="h-16 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                    <img src={productFormData.image || '/logo.png'} alt="" className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = '/logo.png'; }} />
+                  </div>
+                </div>
+                <input
+                  type="url"
+                  value={productFormData.image}
+                  onChange={(event) => { setProductFormData({ ...productFormData, image: event.target.value }); setHasUnsavedChanges(true); }}
+                  placeholder={lang === 'ar' ? 'https://... أو /products/image.png' : 'https://... or /products/image.png'}
+                  className="w-full rounded-xl border border-white/10 bg-[#070a12] px-3.5 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
+                />
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 text-[11px] font-bold text-slate-300 transition hover:bg-white/[0.09]">
+                  <span>{lang === 'ar' ? 'اختيار صورة من الجهاز' : 'Choose image file'}</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) {
+                        toast.error(lang === 'ar' ? 'حجم الصورة يجب ألا يتجاوز 2 ميغابايت.' : 'Image size must not exceed 2 MB.');
+                        event.target.value = '';
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setProductFormData((current) => ({ ...current, image: String(reader.result || '') }));
+                        setHasUnsavedChanges(true);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Product Name */}
                 <div className="space-y-1.5">
@@ -1325,6 +1376,29 @@ export function ProductStockModal({
                     <option value="active">{lang === 'ar' ? 'نشط في المتجر' : 'Active in Store'}</option>
                     <option value="disabled">{lang === 'ar' ? 'معطل / غير متاح' : 'Disabled / Suspended'}</option>
                   </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">{lang === 'ar' ? 'ظهور المنتج في المتجر' : 'Store Visibility'}</label>
+                  <select
+                    value={productFormData.isVisible ? 'visible' : 'hidden'}
+                    onChange={(event) => { setProductFormData({ ...productFormData, isVisible: event.target.value === 'visible' }); setHasUnsavedChanges(true); }}
+                    className="w-full rounded-xl border border-white/10 bg-[#070a12] px-3.5 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="visible">{lang === 'ar' ? 'ظاهر للعملاء' : 'Visible to customers'}</option>
+                    <option value="hidden">{lang === 'ar' ? 'مخفي من المتجر' : 'Hidden from store'}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">{lang === 'ar' ? 'ترتيب العرض' : 'Display Order'}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={productFormData.displayOrder}
+                    onChange={(event) => { setProductFormData({ ...productFormData, displayOrder: Math.max(0, Number(event.target.value) || 0) }); setHasUnsavedChanges(true); }}
+                    className="w-full rounded-xl border border-white/10 bg-[#070a12] px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500"
+                  />
                 </div>
 
                 {/* Version & File Size */}
