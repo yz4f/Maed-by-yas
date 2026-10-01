@@ -367,3 +367,24 @@
     min-height: 0;
   }
 }
+
+/* Narrow and tall product card profile. */
+.portal-shell.portal-luxe .product-license-card--premium {
+  min-height: 500px;
+}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__media {
+  min-height: 195px;
+  max-height: 215px;
+}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__body {
+  min-height: 265px;
+  padding: 15px !important;
+}
+.portal-shell.portal-luxe .product-library > article:only-of-type {
+  max-width: 470px !important;
+}
+@media (max-width: 760px) {
+  .portal-shell.portal-luxe .product-library > article:only-of-type {
+    max-width: 100% !important;
+  }
+}
