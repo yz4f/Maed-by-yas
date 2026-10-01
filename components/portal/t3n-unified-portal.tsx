@@ -2517,6 +2517,29 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="product-license-card__media-brand">{lang === 'ar' ? 'تعن · ترخيص رقمي' : 'TA3N · DIGITAL LICENSE'}</div>
                       </div>
                       <div className="product-license-card__body">
+                        <div className="product-document-card" dir="rtl">
+                          <div className="product-document-card__header">
+                            <span className="product-document-card__icon"><FileText size={15} /></span>
+                            <div className="min-w-0">
+                              <p className="product-document-card__eyebrow">{lang === 'ar' ? 'وثيقة العمل الحر' : 'FREELANCE DOCUMENT'}</p>
+                              <p className="product-document-card__title">{lang === 'ar' ? 'وثيقة تعن' : 'TA3N Document'}</p>
+                            </div>
+                          </div>
+                          <div className="product-document-card__value-row" dir="ltr">
+                            <code className="product-document-card__value">{displayKey}</code>
+                            {up.keyString && (
+                              <button
+                                type="button"
+                                onClick={() => copyKeyToClipboard(up.keyString!, up.id)}
+                                title={lang === 'ar' ? 'نسخ وثيقة تعن' : 'Copy Ta3n document'}
+                                className="product-document-card__copy"
+                              >
+                                {copiedKeyId === up.id ? <Check size={14} /> : <Copy size={14} />}
+                                <span>{copiedKeyId === up.id ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
                         <div className="product-license-card__heading">
                           <div className="min-w-0 flex-1">
                             <div className="product-license-card__title text-base leading-tight sm:text-lg">{up.product?.name || (lang === 'ar' ? 'المنتج' : 'Product')}</div>

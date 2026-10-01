@@ -388,3 +388,93 @@
     max-width: 100% !important;
   }
 }
+
+
+/* Ta3n document panel: compact, copyable, and visually anchored to the top-left. */
+.portal-shell.portal-luxe .product-document-card {
+  width: min(100%, 330px);
+  margin-inline-start: auto;
+  margin-bottom: 2px;
+  padding: 11px;
+  border: 1px solid rgba(125, 211, 252, .18);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(18, 45, 64, .82), rgba(8, 20, 32, .92));
+  box-shadow: 0 10px 24px rgba(0, 8, 20, .18), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.portal-shell.portal-luxe .product-document-card__header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+.portal-shell.portal-luxe .product-document-card__icon {
+  display: inline-flex;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(125, 211, 252, .22);
+  border-radius: 10px;
+  background: rgba(94, 205, 240, .11);
+  color: #9be7ff;
+}
+.portal-shell.portal-luxe .product-document-card__eyebrow {
+  color: rgba(166, 221, 242, .68);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+.portal-shell.portal-luxe .product-document-card__title {
+  margin-top: 2px;
+  color: #f3fbff;
+  font-size: 12px;
+  font-weight: 900;
+}
+.portal-shell.portal-luxe .product-document-card__value-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.portal-shell.portal-luxe .product-document-card__value {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  padding: 8px 9px;
+  border: 1px solid rgba(125, 211, 252, .12);
+  border-radius: 10px;
+  background: rgba(0, 7, 15, .34);
+  color: #b7efff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.portal-shell.portal-luxe .product-document-card__copy {
+  display: inline-flex;
+  min-height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid rgba(148, 230, 195, .25);
+  border-radius: 10px;
+  background: rgba(148, 230, 195, .11);
+  color: #b9f5da;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 900;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.portal-shell.portal-luxe .product-document-card__copy:hover {
+  border-color: rgba(148, 230, 195, .52);
+  background: rgba(148, 230, 195, .18);
+  transform: translateY(-1px);
+}
+@media (max-width: 520px) {
+  .portal-shell.portal-luxe .product-document-card { width: 100%; }
+  .portal-shell.portal-luxe .product-document-card__copy span { display: none; }
+}
