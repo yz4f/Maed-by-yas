@@ -374,57 +374,6 @@ export function HelpCenter({
         </div>
       </section>
 
-      {/* 2.5. Issue submission policy */}
-      <section
-        aria-labelledby="issue-submission-title"
-        className="relative overflow-hidden rounded-[22px] border border-amber-300/20 bg-[linear-gradient(135deg,rgba(44,35,21,.92),rgba(16,27,35,.96))] p-5 shadow-sm sm:p-6"
-      >
-        <div className="pointer-events-none absolute -top-16 start-0 h-44 w-44 rounded-full bg-amber-300/10 blur-3xl" />
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-300/25 bg-amber-300/10 text-amber-200">
-                <AlertTriangle className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-[10px] font-black tracking-[0.16em] text-amber-200/75">
-                  {isAr ? 'الدعم المخصص للمشاكل' : 'ISSUE-ONLY SUPPORT'}
-                </p>
-                <h2 id="issue-submission-title" className="mt-1 text-lg font-black text-[#fff8e7] sm:text-xl">
-                  {isAr ? 'تقديم مشكلة' : 'Submit an issue'}
-                </h2>
-              </div>
-            </div>
-            <p className="mt-4 max-w-3xl text-xs leading-6 text-amber-50/75 sm:text-[13px]">
-              {isAr
-                ? 'هذا الخيار مخصص فقط للإبلاغ عن مشكلة فعلية حدثت معك في الرتبة أو الحساب أو الطلب أو أي خلل داخل الموقع.'
-                : 'Use this option only to report a real issue with your role, account, order, or something that happened incorrectly on the website.'}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
-              {(isAr ? ['مشكلة في الرتبة', 'مشكلة في الحساب', 'مشكلة في الطلب', 'خلل في الموقع'] : ['Role issue', 'Account issue', 'Order issue', 'Website error']).map((item) => (
-                <span key={item} className="rounded-lg border border-amber-200/15 bg-black/15 px-2.5 py-1.5 text-amber-100/80">
-                  {item}
-                </span>
-              ))}
-            </div>
-            <p className="mt-3 text-[11px] leading-5 text-rose-100/70">
-              {isAr
-                ? 'تنبيه: لا تفتح بلاغًا لطلب شرح المنتج أو طريقة التشغيل أو مساعدة عامة. استخدم الشروحات والأسئلة الشائعة أولاً، وقد يتم إغلاق الطلبات غير المتعلقة بمشكلة مباشرة.'
-                : 'Please do not open an issue to request a product guide, setup instructions, or general help. Check the guides and FAQs first; unrelated requests may be closed.'}
-            </p>
-          </div>
-          <a
-            href="https://discord.gg/t3n"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-200/25 bg-amber-200/10 px-5 py-3 text-xs font-black text-amber-100 transition hover:-translate-y-0.5 hover:border-amber-200/45 hover:bg-amber-200/15 active:scale-95"
-          >
-            <ExternalLink className="h-4 w-4" />
-            <span>{isAr ? 'تقديم مشكلة للدعم' : 'Submit issue to support'}</span>
-          </a>
-        </div>
-      </section>
-
       {/* 3. Error State with Retry */}
       {error && (
         <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5 text-center space-y-3">
