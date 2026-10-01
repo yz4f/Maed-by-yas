@@ -389,3 +389,81 @@
   }
 }
 
+
+/* Admin dashboard finish: clear hierarchy, premium surfaces, and touch-safe controls. */
+.portal-shell.portal-luxe .admin-workspace {
+  isolation: isolate;
+}
+.portal-shell.portal-luxe .admin-hero {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 100% 0, rgba(148,230,195,.08), transparent 34%), linear-gradient(145deg, var(--luxe-panel), var(--luxe-bg)) !important;
+  box-shadow: 0 18px 42px -28px rgba(0,0,0,.5) !important;
+}
+.portal-shell.portal-luxe .admin-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--luxe-accent-line), transparent);
+}
+.portal-shell.portal-luxe .admin-hero__actions > div > span {
+  border-color: var(--luxe-accent-line) !important;
+  background: var(--luxe-soft) !important;
+  color: var(--luxe-accent) !important;
+}
+.portal-shell.portal-luxe .admin-navigation {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  box-shadow: 0 14px 30px -24px rgba(0,0,0,.7) !important;
+  backdrop-filter: blur(16px);
+}
+.portal-shell.portal-luxe .admin-navigation__item {
+  min-height: 44px;
+  font-weight: 700 !important;
+  letter-spacing: -.01em;
+}
+.portal-shell.portal-luxe .admin-navigation__item[aria-selected='true'] {
+  background: linear-gradient(135deg, rgba(148,230,195,.18), rgba(93,176,220,.08)) !important;
+}
+.portal-shell.portal-luxe .admin-section {
+  animation: admin-section-rise .28s ease both;
+}
+.portal-shell.portal-luxe .admin-section > div:first-child h3,
+.portal-shell.portal-luxe .admin-section .glass-card h3 {
+  letter-spacing: -.025em;
+}
+.portal-shell.portal-luxe .admin-product-card {
+  border-color: rgba(148,230,195,.14) !important;
+  background: linear-gradient(160deg, rgba(16,27,35,.98), rgba(9,19,28,.98)) !important;
+  box-shadow: 0 18px 38px -28px rgba(0,0,0,.8) !important;
+}
+.portal-shell.portal-luxe .admin-product-card:hover {
+  border-color: var(--luxe-accent-line) !important;
+  box-shadow: 0 22px 44px -26px rgba(75,170,153,.24) !important;
+}
+.portal-shell.portal-luxe .admin-product-card > div:nth-child(2) {
+  gap: 16px;
+}
+.portal-shell.portal-luxe .admin-product-card button {
+  min-height: 44px;
+}
+.portal-shell.portal-luxe .admin-section .glass-card table thead tr {
+  background: rgba(148,230,195,.035);
+}
+.portal-shell.portal-luxe .admin-section .glass-card table tbody tr {
+  transition: background .18s ease;
+}
+.portal-shell.portal-luxe .admin-section .glass-card table tbody tr:hover {
+  background: var(--luxe-hover) !important;
+}
+@keyframes admin-section-rise {
+  from { opacity: .6; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 767px) {
+  .portal-shell.portal-luxe .admin-navigation { top: 6px; }
+  .portal-shell.portal-luxe .admin-hero { padding: 18px !important; }
+  .portal-shell.portal-luxe .admin-hero__actions { gap: 8px; }
+}

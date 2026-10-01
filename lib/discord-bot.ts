@@ -279,6 +279,35 @@ export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ m
   return { messageId: message.id };
 }
 
+/** Sends a redacted, private audit entry for system events without a dedicated Discord card. */
+export async function sendDiscordSystemAuditLog(event: {
+  action: string;
+  details: string;
+  actorName?: string | null;
+  actorId?: string | null;
+  ipAddress?: string | null;
+  occurredAt?: string;
+}) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('Discord bot is not connected, so the system audit log was not sent.');
+  const channels = await ensurePrivateAuditChannels(token);
+  const embed = {
+    color: 0x94e6c3,
+    author: { name: 'Ta3n • Complete System Audit', icon_url: `${websiteUrl}/logo.png` },
+    title: `System event • ${event.action}`.slice(0, 256),
+    description: (event.details || 'No additional details were recorded.').slice(0, 4_000),
+    fields: [
+      { name: 'Actor', value: event.actorId ? `**${event.actorName || 'System'}**\n<@${event.actorId}>` : `**${event.actorName || 'System'}**`, inline: true },
+      { name: 'IP', value: event.ipAddress && event.ipAddress !== '127.0.0.1' ? event.ipAddress : 'Not available', inline: true },
+      { name: 'Time', value: `<t:${Math.floor(new Date(event.occurredAt || Date.now()).getTime() / 1000)}:F>`, inline: false },
+    ],
+    footer: { text: 'Ta3n • private audit • secrets and full license keys are never included' },
+    timestamp: event.occurredAt || new Date().toISOString(),
+  };
+  const response = await discordApi(`/channels/${channels.websiteEventsChannelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
+  if (!response.ok) throw new Error(`Unable to send complete system audit log to Discord (HTTP ${response.status}).`);
+}
+
 export async function sendDiscordResetAuditLog(event: {
   action: 'CREATED' | 'UPDATED' | 'REMOVED';
   reference: string;

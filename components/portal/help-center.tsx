@@ -332,6 +332,31 @@ export function HelpCenter({
         </div>
       </section>
 
+      {/* Issue-only support policy */}
+      <section className="relative overflow-hidden rounded-[22px] border border-amber-200/15 bg-[linear-gradient(135deg,rgba(48,35,20,.78),rgba(16,27,35,.96)_58%,rgba(12,24,31,.98))] p-5 shadow-[0_16px_38px_rgba(0,0,0,.18)] sm:p-6">
+        <div className="pointer-events-none absolute -top-16 end-0 h-40 w-40 rounded-full bg-amber-300/[.08] blur-3xl" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3.5 text-start">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-200/20 bg-amber-300/10 text-amber-200">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black tracking-[.14em] text-amber-200/70">{isAr ? 'الدعم المخصص للمشكلات فقط' : 'ISSUE-ONLY SUPPORT'}</p>
+              <h2 className="mt-1 text-base font-black text-[#fff8e7] sm:text-lg">{isAr ? 'تقديم مشكلة' : 'Submit an issue'}</h2>
+              <p className="mt-1.5 max-w-2xl text-xs leading-6 text-[#c8c0af]">{isAr ? 'هذا القسم مخصص لمشكلة حدثت فعلياً في المنتج أو الحساب أو الطلب أو الموقع. اذكر ما حدث بوضوح وأرفق التفاصيل اللازمة للمراجعة.' : 'Use this for a real issue with a product, account, order, or website. Explain what happened clearly and include the details needed for review.'}</p>
+            </div>
+          </div>
+          <a href="/support" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-200/25 bg-amber-300/10 px-4 py-2.5 text-xs font-black text-amber-100 transition hover:-translate-y-0.5 hover:border-amber-200/45 hover:bg-amber-300/16">
+            <span>{isAr ? 'تقديم المشكلة للدعم' : 'Submit issue to support'}</span>
+            <Arrow className="h-3.5 w-3.5" />
+          </a>
+        </div>
+        <div className="relative mt-4 grid gap-2 border-t border-amber-100/10 pt-4 text-[11px] leading-5 sm:grid-cols-2">
+          <div className="rounded-xl border border-emerald-200/10 bg-emerald-300/[.05] px-3 py-2.5 text-emerald-100/80"><strong className="text-emerald-200">{isAr ? 'مقبول:' : 'Accepted:'}</strong> {isAr ? 'تعطل المنتج، مشكلة الحساب أو المفتاح، مشكلة الطلب، أو خطأ ظهر في الموقع.' : 'Product failure, account or key issue, order problem, or an error shown by the website.'}</div>
+          <div className="rounded-xl border border-rose-200/10 bg-rose-300/[.05] px-3 py-2.5 text-rose-100/75"><strong className="text-rose-200">{isAr ? 'غير مخصص له:' : 'Not for:'}</strong> {isAr ? 'طلب شرح منتج أو خطوات موجودة في الشروحات أو مساعدة عامة لا تتعلق بعطل.' : 'Product explanations, steps already covered in guides, or general help unrelated to a fault.'}</div>
+        </div>
+      </section>
+
       {/* 3. Error State with Retry */}
       {error && (
         <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5 text-center space-y-3">

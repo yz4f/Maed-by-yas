@@ -447,6 +447,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [customerSearch, setCustomerSearch] = useState('');
   const [foundCustomer, setFoundCustomer] = useState<any>(null);
   const [adminLogs, setAdminLogs] = useState<SystemLog[]>([]);
+  const [adminLogQuery, setAdminLogQuery] = useState('');
+  const [adminLogAction, setAdminLogAction] = useState('all');
 
   // Inventory Modal States
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
@@ -677,6 +679,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
     if (adminSectionTab === 'customers') void loadAdminCustomersList();
     if (adminSectionTab === 'keys') void loadAllKeysList();
+  }, [activeTab, adminSectionTab, isAdmin]);
+
+  useEffect(() => {
+    if (activeTab !== 'admin' || !isAdmin || adminSectionTab !== 'logs') return;
+    const timer = window.setInterval(() => { void loadAdminStats(); }, 15_000);
+    return () => window.clearInterval(timer);
   }, [activeTab, adminSectionTab, isAdmin]);
 
   useEffect(() => {
@@ -2127,6 +2135,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
   }[activeTab];
+  const adminLogActions = Array.from(new Set(adminLogs.map((log) => log.action))).sort();
+  const normalizedLogQuery = adminLogQuery.trim().toLowerCase();
+  const visibleAdminLogs = adminLogs.filter((log) => {
+    const matchesAction = adminLogAction === 'all' || log.action === adminLogAction;
+    const haystack = `${log.action} ${log.details} ${log.userName || ''} ${log.ipAddress || ''}`.toLowerCase();
+    return matchesAction && (!normalizedLogQuery || haystack.includes(normalizedLogQuery));
+  });
 
   return (
     <div
@@ -2560,6 +2575,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             {lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
                           </button>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => { setResetRequestProduct(up); setResetRequestReason(''); }}
+                          disabled={!canUseProduct}
+                          className="product-reset-button"
+                        >
+                          <span className="product-reset-button__icon"><RefreshCw size={15} /></span>
+                          <span className="min-w-0 text-start">
+                            <span className="block text-[10px] font-black">{lang === 'ar' ? 'طلب رستات المفتاح' : 'Request key reset'}</span>
+                            <span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'للمشاكل الفعلية في الجهاز أو الترخيص فقط' : 'For genuine device or license issues only'}</span>
+                          </span>
+                        </button>
                       </div>
                     </article>}
                     </React.Fragment>
@@ -3180,6 +3207,30 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <span>{lang === 'ar' ? 'سجلات الأمان والنشاط المباشرة (System Audit Logs)' : 'Live security audit logs'}</span>
                 </h3>
 
+                <div className="flex flex-col gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/[.05] p-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-3 w-3"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" /></span>
+                    <div>
+                      <p className="text-xs font-black text-emerald-500">{lang === 'ar' ? 'مراقبة مباشرة مفعلة' : 'Live monitoring enabled'}</p>
+                      <p className={`mt-0.5 text-[10px] ${styles.textMuted}`}>{lang === 'ar' ? 'يتم تحديث السجلات تلقائياً وإرسال الأحداث الخاصة إلى قناة Discord السرية.' : 'Logs refresh automatically and private events are forwarded to Discord.'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] font-bold">
+                    <span className={`rounded-lg border ${styles.borderNormal} px-2.5 py-1.5 ${styles.textMuted}`}>{visibleAdminLogs.length} {lang === 'ar' ? 'ظاهر' : 'visible'}</span>
+                    <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1.5 text-emerald-500">Discord • private audit</span>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+                  <label className="relative block">
+                    <Search className={`pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 ${styles.textMuted}`} />
+                    <input value={adminLogQuery} onChange={(event) => setAdminLogQuery(event.target.value)} placeholder={lang === 'ar' ? 'ابحث في الحدث أو التفاصيل أو المستخدم أو IP...' : 'Search action, details, user, or IP...'} className={`h-11 w-full rounded-xl border ${styles.borderNormal} ${styles.bgInnerCard} ps-10 pe-3 text-xs ${styles.textTitle} outline-none focus:border-emerald-400`} />
+                  </label>
+                  <select value={adminLogAction} onChange={(event) => setAdminLogAction(event.target.value)} className={`h-11 rounded-xl border ${styles.borderNormal} ${styles.bgInnerCard} px-3 text-xs ${styles.textTitle} outline-none focus:border-emerald-400`}>
+                    <option value="all">{lang === 'ar' ? 'كل الأحداث' : 'All events'}</option>
+                    {adminLogActions.map((action) => <option key={action} value={action}>{action}</option>)}
+                  </select>
+                </div>
+
                 <div className="overflow-x-auto scrollbar-none">
                   <table className="w-full text-right text-xs">
                     <thead>
@@ -3192,7 +3243,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${styles.borderSubtle}`}>
-                      {adminLogs.map((log) => {
+                      {visibleAdminLogs.map((log) => {
                         const logUser = allCustomersList.find(c => c.id === log.userId || c.discordId === log.discordId);
                         const logAvatar = logUser?.image || 'https://cdn.discordapp.com/embed/avatars/0.png';
                         const logRole = logUser?.role || 'Guest';
@@ -3247,6 +3298,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           </tr>
                         );
                       })}
+                      {visibleAdminLogs.length === 0 && (
+                        <tr><td colSpan={5} className={`py-12 text-center text-sm ${styles.textMuted}`}>{lang === 'ar' ? 'لا توجد سجلات مطابقة للبحث الحالي.' : 'No audit events match the current filters.'}</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

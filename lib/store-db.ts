@@ -136,11 +136,11 @@ export const initialProducts: Product[] = [
   },
   {
     id: 'prod-hwid-master',
-    name: 'سبوفر تعن',
-    description: 'أداة تنظيف مخلفات الألعاب وحظر الحسابات الشاملة (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).',
+    name: 'سبوفر بيرم',
+    description: 'ترخيص مدى الحياة لمنتج سبوفر تعن (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).',
     image: '/spoofer-logo.png',
     cardColor: 'purple',
-    category: 'Utility',
+    category: 'PERM',
     displayOrder: 2,
     version: 'v4.1.0',
     fileSize: '100 MB',
@@ -297,8 +297,8 @@ function getFallbackData() {
             id: 'key-demo-2',
             key: 'KEY-T3N-SPOOF-DEMO-PERM',
             productId: 'prod-hwid-master',
-            productName: 'سبوفر تعن',
-            duration: '2 Days',
+            productName: 'سبوفر بيرم',
+            duration: 'Lifetime',
             isUsed: false,
             usedByUserId: null,
             usedByUserName: null,
@@ -2223,7 +2223,7 @@ export const StoreDB = {
     };
     log.auditEventId = auditEvent.id;
 
-    return runDbOp(
+    await runDbOp(
       async () => {
         const batch = writeBatch(getDb());
         batch.set(doc(getDb(), 'logs', log.id), log);
@@ -2232,6 +2232,25 @@ export const StoreDB = {
       },
       () => LocalDB.addLog(action, details, userId, userName, ipAddress, auditEvent)
     );
+    // Dedicated Discord cards already cover these high-volume events; all other
+    // system logs receive one private, redacted audit entry immediately.
+    const dedicatedDiscordActions = [
+      'Key Activation', 'Key Inventory Updated', 'Key Inventory Deleted',
+      'AI Conversation Reopened', 'AI Conversation Closed By Staff',
+      'AI Conversation Auto Closed', 'Reset Request Created',
+      'AI Reset APPROVED', 'AI Reset REJECTED', 'AI Reset WAITING_FOR_CUSTOMER',
+      'AI Reset CANCELLED', 'AI Reset Requests Purged',
+    ];
+    if (!dedicatedDiscordActions.some((entry) => action === entry || action.startsWith(`${entry} `))) {
+      void import('@/lib/discord-bot').then(({ sendDiscordSystemAuditLog }) => sendDiscordSystemAuditLog({
+        action,
+        details,
+        actorName: userName,
+        actorId: userId,
+        ipAddress,
+        occurredAt: now,
+      })).catch((error) => console.error('[Discord System Audit] Delivery failed:', error));
+    }
   },
 
   async getLogs(): Promise<SystemLog[]> {

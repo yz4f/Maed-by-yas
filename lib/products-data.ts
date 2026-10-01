@@ -23,9 +23,9 @@ export const initialProducts: Product[] = [
   },
   {
     id: 'prod-hwid-master',
-    name: 'سبوفر تعن',
-    description: '100% مضمون وموثوق\n\nيقوم بتغيير معلومات جهازك إلى معلومات جديدة، لإلغاء الحظر الهاردوير في أي لعبة نهائيًا.\n\nالمميزات:\n- نسبة نجاح 100%.\n- فك باند دائم.',
-    image: '/products/spoofer-ta3n.png',
+    name: 'سبوفر بيرم',
+    description: 'ترخيص مدى الحياة لمنتج سبوفر تعن.\n\nيقوم بتغيير معلومات جهازك إلى معلومات جديدة، لإلغاء الحظر الهاردوير في أي لعبة نهائيًا.\n\nالمميزات:\n- ترخيص مدى الحياة.\n- نسبة نجاح 100%.\n- فك باند دائم.',
+    image: '/spoofer-logo.png',
     cardColor: 'purple',
     category: 'PERM',
     displayOrder: 2,
