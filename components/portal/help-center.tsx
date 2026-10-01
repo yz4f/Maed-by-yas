@@ -17,7 +17,6 @@ import {
   Package,
   Pin,
   RefreshCw,
-  Search,
   Shield,
   Sparkles,
   Wrench,
@@ -327,50 +326,9 @@ export function HelpCenter({
 
           <p className="text-xs sm:text-sm leading-relaxed text-[#93a9ad] max-w-xl mx-auto">
             {isAr
-              ? 'ابحث عن إجابة سريعة، تصفح الأسئلة الشائعة أو اختر القسم المناسب لمعرفة الخطوات المطلوبة.'
-              : 'Search for an instant answer, browse common FAQs, or select a category to follow step-by-step guidance.'}
+              ? 'تصفح الأسئلة الشائعة واختر القسم المناسب لمعرفة الخطوات المطلوبة.'
+              : 'Browse the common questions and choose the right category to follow the required steps.'}
           </p>
-
-          {/* Real-time Search Box */}
-          <div className="pt-2">
-            <div className="relative mx-auto max-w-xl">
-              <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-4 text-[#93a9ad]">
-                <Search className="h-4 w-4" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isAr ? 'ابحث عن سؤالك...' : 'Search for your question...'}
-                className="w-full rounded-2xl border border-[#24343e] bg-[#0b121a] py-3.5 pe-10 ps-11 text-xs sm:text-sm text-[#eef4f2] placeholder-[#93a9ad]/60 outline-none transition-all duration-200 focus:border-[#94e6c3]/60 focus:ring-1 focus:ring-[#94e6c3]/40"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label={isAr ? 'مسح البحث' : 'Clear search'}
-                  className="absolute inset-y-0 end-0 flex items-center pe-3.5 text-[#93a9ad] hover:text-[#eef4f2] transition"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Quick search suggestions */}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-[#93a9ad]">
-              <span className="font-semibold text-[#93a9ad]/70">{isAr ? 'اقتراحات:' : 'Try:'}</span>
-              {searchSuggestions.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => setSearchQuery(suggestion)}
-                  className="rounded-lg border border-[#24343e] bg-[#0b121a]/80 px-2.5 py-1 text-[11px] text-[#93a9ad] hover:border-[#94e6c3]/40 hover:text-[#eef4f2] transition"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
