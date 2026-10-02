@@ -655,8 +655,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [resetRequestProduct, isSubmittingResetRequest]);
   const sortedUserProducts = [...userProducts].sort((a, b) => {
-    const aPriority = getLicenseTiming(a).isUsable ? 0 : 1;
-    const bPriority = getLicenseTiming(b).isUsable ? 0 : 1;
+    const aTiming = getLicenseTiming(a);
+    const bTiming = getLicenseTiming(b);
+    const aPriority = aTiming.isUsable ? 0 : aTiming.isExpired ? 2 : 1;
+    const bPriority = bTiming.isUsable ? 0 : bTiming.isExpired ? 2 : 1;
     if (aPriority !== bPriority) return aPriority - bPriority;
 
     const aActivatedAt = new Date(a.activatedAt || 0).getTime() || 0;
@@ -2507,7 +2509,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   const timing = getLicenseTiming(up);
                   const canUseProduct = timing.isUsable;
                   const previousTiming = index > 0 ? getLicenseTiming(sortedUserProducts[index - 1]) : null;
-                  const startsExpiredSection = !canUseProduct && (!previousTiming || previousTiming.isUsable);
+                  const startsExpiredSection = timing.isExpired && (!previousTiming || !previousTiming.isExpired);
                   const productImg = getProductImage(up.product);
 
                   return (
@@ -2529,8 +2531,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <div className="flex items-center gap-2.5">
                             <Clock className="h-4 w-4 text-slate-400" />
                             <div>
-                              <p className="text-sm font-extrabold text-slate-300">{lang === 'ar' ? 'التراخيص المنتهية والقديمة' : 'Expired & previous licenses'}</p>
-                              <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'احتفظنا بها لسجلّك، ويمكن تجديدها من خلال الدعم أو مفتاح جديد.' : 'Kept for your records; renew with support or a new key.'}</p>
+                              <p className="text-sm font-extrabold text-slate-300">{lang === 'ar' ? 'منتجات منتهية' : 'Expired products'}</p>
+                              <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'تظهر هنا المنتجات التي انتهت مدة استخدامها، ويمكنك تفعيل مفتاح جديد للوصول إليها.' : 'Products whose access period has ended. Activate a new key to regain access.'}</p>
                             </div>
                           </div>
                           <button
@@ -2539,7 +2541,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             aria-expanded={showExpiredLicenses}
                             className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-3 py-2 text-[11px] font-bold text-slate-300 transition hover:border-sky-300/30 hover:bg-sky-300/[0.06] hover:text-sky-100"
                           >
-                            <span>{showExpiredLicenses ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'عرض' : 'Show')}</span>
+                            <span>{showExpiredLicenses ? (lang === 'ar' ? 'إخفاء المنتجات' : 'Hide products') : (lang === 'ar' ? 'عرض المنتجات' : 'Show products')}</span>
                             <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-slate-400">{inactiveProductCount}</span>
                             <ArrowLeft className={`h-3.5 w-3.5 transition-transform ${showExpiredLicenses ? 'rotate-90' : ''}`} />
                           </button>
