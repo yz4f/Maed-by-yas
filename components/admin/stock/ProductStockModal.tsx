@@ -41,7 +41,7 @@ interface ProductStockModalProps {
 
 type ModalTab = 'keys' | 'custom' | 'details';
 
-const KEY_DURATION_OPTIONS: KeyDuration[] = ['Lifetime', '30 Days', '7 Days', '2 Days'];
+const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', '7 Days', '30 Days', 'Lifetime', '2 Days'];
 
 function maskKeyString(keyStr: string): string {
   if (!keyStr || keyStr.length <= 8) return keyStr;
@@ -87,7 +87,7 @@ export function ProductStockModal({
 
   // Add Keys (Section 1)
   const [bulkInputText, setBulkInputText] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState<KeyDuration>('Lifetime');
+  const [selectedDuration, setSelectedDuration] = useState<KeyDuration>('3 Days');
   const [allowDuplicates, setAllowDuplicates] = useState(true);
   const [isSubmittingKeys, setIsSubmittingKeys] = useState(false);
   const [addFeedback, setAddFeedback] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
@@ -597,12 +597,12 @@ export function ProductStockModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 15 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
-        className="w-full max-w-5xl h-[90vh] max-h-[880px] bg-[#090d16] border border-white/10 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden text-slate-200 relative select-none"
+        className="stock-management-modal w-full max-w-5xl h-[90vh] max-h-[880px] bg-[#090d16] border border-white/10 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden text-slate-200 relative select-none"
       >
         {/* ====================================================================
             1. FIXED HEADER & STATS SUMMARY
             ==================================================================== */}
-        <div className="shrink-0 px-6 py-4 border-b border-white/10 bg-[#0d1424]/90 backdrop-blur-md flex flex-col gap-3">
+        <div className="stock-modal-header shrink-0 px-6 py-4 border-b border-white/10 bg-[#0d1424]/90 backdrop-blur-md flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
@@ -638,7 +638,7 @@ export function ProductStockModal({
           </div>
 
           {/* Quick Stock Summary Badges */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/5 text-xs font-semibold">
+          <div className="stock-modal-summary flex flex-wrap items-center gap-2 pt-1 border-t border-white/5 text-xs font-semibold">
             <div className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 flex items-center gap-2">
               <span className="text-slate-400">{lang === 'ar' ? 'المخزون:' : 'Total:'}</span>
               <span className="font-bold text-white font-mono">{stockStats.total}</span>
@@ -665,8 +665,8 @@ export function ProductStockModal({
                 <AlertTriangle className="w-3.5 h-3.5" />
                 <span>
                   {lang === 'ar'
-                    ? `تنبيه: تم استبعاد ${stockStats.duplicateCodes} مفتاح مكرر`
-                    : `Warning: ${stockStats.duplicateCodes} duplicates isolated`}
+                    ? `الأكواد المكررة: ${stockStats.duplicateCodes} — التفعيل يختار أول غير مستخدم`
+                    : `Duplicate codes: ${stockStats.duplicateCodes} — first unused is activated`}
                 </span>
               </div>
             )}
@@ -676,7 +676,7 @@ export function ProductStockModal({
         {/* ====================================================================
             2. FIXED TABS BAR
             ==================================================================== */}
-        <div className="shrink-0 px-6 py-2 bg-[#0b0f19] border-b border-white/10 flex items-center gap-2">
+        <div className="stock-modal-tabs shrink-0 px-6 py-2 bg-[#0b0f19] border-b border-white/10 flex items-center gap-2">
           <button
             onClick={() => setActiveTab('keys')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer relative ${
@@ -728,7 +728,7 @@ export function ProductStockModal({
           {activeTab === 'keys' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               {/* SECTION 1: ADD NEW KEYS */}
-              <div className="rounded-xl border border-white/10 bg-[#0c121e]/80 p-5 space-y-4 shadow-sm">
+              <div className="stock-modal-add-panel rounded-xl border border-white/10 bg-[#0c121e]/80 p-5 space-y-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -742,17 +742,12 @@ export function ProductStockModal({
                     </p>
                   </div>
 
-                  {/* Options row: Allow Duplicates & Duration */}
+                  {/* Options row: duplicate-safe allocation & duration */}
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-300 hover:text-white transition-colors bg-[#090d16] px-3 py-1.5 rounded-lg border border-white/10">
-                      <input
-                        type="checkbox"
-                        checked={allowDuplicates}
-                        onChange={(e) => setAllowDuplicates(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-white/20 bg-black/40 text-blue-600 focus:ring-0 cursor-pointer accent-blue-600"
-                      />
-                      <span>{lang === 'ar' ? 'السماح بالأكواد المكررة' : 'Allow duplicate codes'}</span>
-                    </label>
+                    <div className="flex items-center gap-2 select-none text-xs text-emerald-200 bg-emerald-400/[.07] px-3 py-1.5 rounded-lg border border-emerald-300/15">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'ar' ? 'التكرار مسموح — أول كود غير مستخدم يُفعّل' : 'Duplicates allowed — first unused code activates'}</span>
+                    </div>
 
                     {/* Duration Selector */}
                     <div className="flex items-center gap-2">

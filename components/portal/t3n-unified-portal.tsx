@@ -463,7 +463,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [isAddingKeys, setIsAddingKeys] = useState(false);
   const [isAddingSingleKey, setIsAddingSingleKey] = useState(false);
   const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
-  const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('2 Days');
+  const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('3 Days');
 
   // Extended Inventory Editing States
   const [editProductData, setEditProductData] = useState<{

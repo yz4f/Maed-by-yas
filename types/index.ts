@@ -1,6 +1,6 @@
 export type RoleType = 'Boss' | 'Co-Boss' | 'Admin' | 'Member' | 'Customer';
 export type ProductStatus = 'Active' | 'Inactive' | 'Suspended' | 'Revoked' | 'Expired';
-export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days' | '2 Days';
+export type KeyDuration = 'Lifetime' | '30 Days' | '7 Days' | '3 Days' | '2 Days';
 export type KeyStatus = 'available' | 'used' | 'disabled' | 'reserved';
 export type StockPermission = 'stock.view' | 'stock.add' | 'stock.edit' | 'stock.delete' | 'stock.disable' | 'stock.export';
 
@@ -511,4 +511,3 @@ export interface FaqStats {
   topSearchQueries: { query: string; count: number }[];
   zeroResultQueries: { query: string; count: number }[];
 }
-

@@ -867,11 +867,11 @@ const LocalDB = {
   },
   activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): { success: true; message: string; product: Product } | { success: false; message: string; product?: undefined } {
     const d = getFallbackData();
-    const keyIdx = d.keys.findIndex((k: any) => k.key === keyString);
+    const keyIdx = d.keys.findIndex((k: any) =>
+      k.key === keyString && !k.isUsed && !k.isDisabled && !k.isArchived
+    );
     if (keyIdx === -1) return { success: false, message: 'المفتاح غير صحيح أو غير موجود' };
     const keyObj = d.keys[keyIdx];
-    if (keyObj.isUsed) return { success: false, message: 'المفتاح مستخدم مسبقاً' };
-    if (keyObj.isDisabled) return { success: false, message: 'المفتاح معطل من قبل الإدارة' };
     
     const product = d.products.find((p: any) => p.id === keyObj.productId);
     if (!product || product.isDisabled) return { success: false, message: 'المنتج المرتبط غير متاح' };
@@ -2007,14 +2007,21 @@ export const StoreDB = {
         if (keySnap.empty) {
           return { success: false, message: 'المفتاح غير صحيح أو غير موجود' };
         }
-        if (keySnap.size !== 1) {
-          return { success: false, message: 'تم اكتشاف تكرار لهذا المفتاح. تواصل مع الدعم قبل التفعيل.' };
+        const candidateDocs = [...keySnap.docs].sort((a, b) => {
+          const aTime = new Date(String(a.data()?.createdAt || 0)).getTime();
+          const bTime = new Date(String(b.data()?.createdAt || 0)).getTime();
+          return aTime - bTime;
+        });
+        const candidateRefs = candidateDocs.map((item) => item.ref);
+        const firstCandidate = candidateDocs.find((item) => {
+          const candidate = item.data() as Key;
+          return !candidate.isUsed && !candidate.isDisabled && !candidate.isArchived;
+        });
+        if (!firstCandidate) {
+          return { success: false, message: 'المفتاح مستخدم أو غير متاح حالياً' };
         }
-        
-        const keyObj = keySnap.docs[0].data() as Key;
 
-        if (keyObj.isUsed) return { success: false, message: 'المفتاح مستخدم مسبقاً' };
-        if (keyObj.isDisabled) return { success: false, message: 'المفتاح معطل من قبل الإدارة' };
+        const keyObj = firstCandidate.data() as Key;
         
         const product = await this.getProductById(keyObj.productId);
         if (!product || product.isDisabled) return { success: false, message: 'المنتج المرتبط غير متاح' };
@@ -2046,29 +2053,37 @@ export const StoreDB = {
           return { success: false, message: 'لديك هذا المنتج مفعّل بالفعل' };
         }
 
-        const usedAt = new Date().toISOString();
-        const expiresAt = computeLicenseExpiresAt(usedAt, keyObj.duration);
-        const userProduct: UserProduct = {
-          id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          userId: user.id,
-          productId: product.id,
-          keyId: keyObj.id,
-          keyString: keyObj.key,
-          status: 'Active',
-          activatedAt: usedAt,
-          expiresAt,
-          discordRoleGranted: true
-        };
-
         try {
           await runTransaction(getDb(), async (transaction) => {
-            const latestKeySnap = await transaction.get(keySnap.docs[0].ref);
-            if (!latestKeySnap.exists()) throw new Error('المفتاح غير صحيح أو غير موجود');
-            const latestKey = latestKeySnap.data() as Key;
-            if (latestKey.isUsed) throw new Error('المفتاح مستخدم مسبقاً');
-            if (latestKey.isDisabled || latestKey.isArchived) throw new Error('المفتاح غير متاح للتفعيل');
+            let chosenRef = null;
+            let chosenKey: Key | null = null;
+            for (const candidateRef of candidateRefs) {
+              const latestKeySnap = await transaction.get(candidateRef);
+              if (!latestKeySnap.exists()) continue;
+              const latestKey = latestKeySnap.data() as Key;
+              if (!latestKey.isUsed && !latestKey.isDisabled && !latestKey.isArchived) {
+                chosenRef = candidateRef;
+                chosenKey = latestKey;
+                break;
+              }
+            }
+            if (!chosenRef || !chosenKey) throw new Error('المفتاح مستخدم أو غير متاح حالياً');
 
-            transaction.update(keySnap.docs[0].ref, { isUsed: true, usedByUserId: user.id, usedAt });
+            const usedAt = new Date().toISOString();
+            const expiresAt = computeLicenseExpiresAt(usedAt, chosenKey.duration);
+            const userProduct: UserProduct = {
+              id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              userId: user.id,
+              productId: product.id,
+              keyId: chosenKey.id,
+              keyString: chosenKey.key,
+              status: 'Active',
+              activatedAt: usedAt,
+              expiresAt,
+              discordRoleGranted: true
+            };
+
+            transaction.update(chosenRef, { isUsed: true, status: 'used', usedByUserId: user.id, usedAt });
             transaction.set(doc(getDb(), "userProducts", userProduct.id), userProduct);
           });
         } catch (error: any) {

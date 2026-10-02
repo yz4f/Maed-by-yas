@@ -467,3 +467,60 @@
   .portal-shell.portal-luxe .admin-hero { padding: 18px !important; }
   .portal-shell.portal-luxe .admin-hero__actions { gap: 8px; }
 }
+
+
+/* Stock inventory redesign: isolated from the customer-facing portal and other admin panels. */
+.stock-management-modal {
+  background: radial-gradient(circle at 82% 0%, rgba(56, 189, 248, .10), transparent 34%), linear-gradient(145deg, #0b1421, #080d16 66%);
+  border-color: rgba(148, 230, 195, .16) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .58), inset 0 1px 0 rgba(255, 255, 255, .045) !important;
+}
+.stock-management-modal .stock-modal-header {
+  background: linear-gradient(180deg, rgba(18, 37, 51, .92), rgba(11, 22, 34, .86)) !important;
+  border-bottom-color: rgba(148, 230, 195, .12) !important;
+}
+.stock-management-modal .stock-modal-header h2 { letter-spacing: -.02em; }
+.stock-management-modal .stock-modal-summary > div {
+  border-radius: 999px !important;
+  min-height: 30px;
+  transition: transform .22s cubic-bezier(.22, .9, .28, 1), border-color .22s ease, background .22s ease;
+}
+.stock-management-modal .stock-modal-summary > div:hover { transform: translateY(-1px); border-color: rgba(148, 230, 195, .28) !important; }
+.stock-management-modal .stock-modal-tabs {
+  background: rgba(7, 16, 26, .74) !important;
+  padding: 9px 18px !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stock-management-modal .stock-modal-tabs::-webkit-scrollbar { display: none; }
+.stock-management-modal .stock-modal-tabs > button {
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 12px !important;
+  white-space: nowrap;
+  transition: transform .24s cubic-bezier(.22, .9, .28, 1), background .24s ease, border-color .24s ease, color .24s ease, box-shadow .24s ease;
+}
+.stock-management-modal .stock-modal-tabs > button:hover { transform: translateY(-1px); border-color: rgba(148, 230, 195, .16); }
+.stock-management-modal .stock-modal-tabs > button:active { transform: scale(.97); }
+.stock-management-modal .stock-modal-add-panel {
+  background: linear-gradient(145deg, rgba(17, 35, 48, .78), rgba(8, 17, 28, .9)) !important;
+  border-color: rgba(148, 230, 195, .14) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .15), inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+.stock-management-modal textarea:focus,
+.stock-management-modal select:focus,
+.stock-management-modal input:focus { border-color: rgba(148, 230, 195, .52) !important; box-shadow: 0 0 0 4px rgba(148, 230, 195, .08); }
+.stock-management-modal button:focus-visible,
+.stock-management-modal select:focus-visible,
+.stock-management-modal textarea:focus-visible { outline: 2px solid #94e6c3; outline-offset: 2px; }
+@media (max-width: 640px) {
+  .stock-management-modal { height: 94vh !important; border-radius: 20px !important; }
+  .stock-management-modal .stock-modal-header, .stock-management-modal .stock-modal-tabs { padding-inline: 14px !important; }
+  .stock-management-modal .stock-modal-summary { gap: 6px; }
+  .stock-management-modal .stock-modal-summary > div { padding-inline: 9px !important; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stock-management-modal *, .stock-management-modal *::before, .stock-management-modal *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+}

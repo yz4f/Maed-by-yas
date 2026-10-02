@@ -1,14 +1,14 @@
 import type { KeyDuration, UserProduct } from '@/types';
 
-export const KEY_DURATION_OPTIONS: KeyDuration[] = ['2 Days', '7 Days', '30 Days', 'Lifetime'];
+export const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', '7 Days', '30 Days', 'Lifetime', '2 Days'];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function normalizeKeyDuration(value: unknown): KeyDuration {
-  if (value === 'Lifetime' || value === '30 Days' || value === '7 Days' || value === '2 Days') {
+  if (value === 'Lifetime' || value === '30 Days' || value === '7 Days' || value === '3 Days' || value === '2 Days') {
     return value;
   }
-  return '2 Days';
+  return '3 Days';
 }
 
 export function getLicenseDurationMs(duration: KeyDuration): number | null {
@@ -19,6 +19,8 @@ export function getLicenseDurationMs(duration: KeyDuration): number | null {
       return 30 * DAY_MS;
     case '7 Days':
       return 7 * DAY_MS;
+    case '3 Days':
+      return 3 * DAY_MS;
     case '2 Days':
     default:
       return 2 * DAY_MS;
@@ -50,6 +52,8 @@ export function durationLabel(duration: unknown, lang: 'ar' | 'en' = 'ar'): stri
       return '30 يوم';
     case '7 Days':
       return '7 أيام';
+    case '3 Days':
+      return '3 أيام';
     case '2 Days':
     default:
       return 'يومان';
