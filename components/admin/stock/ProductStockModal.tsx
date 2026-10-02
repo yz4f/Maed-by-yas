@@ -742,13 +742,8 @@ export function ProductStockModal({
                     </p>
                   </div>
 
-                  {/* Options row: duplicate-safe allocation & duration */}
+                  {/* Options row: duration */}
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <div className="flex items-center gap-2 select-none text-xs text-emerald-200 bg-emerald-400/[.07] px-3 py-1.5 rounded-lg border border-emerald-300/15">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{lang === 'ar' ? 'التكرار مسموح — أول كود غير مستخدم يُفعّل' : 'Duplicates allowed — first unused code activates'}</span>
-                    </div>
-
                     {/* Duration Selector */}
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400">{lang === 'ar' ? 'المدة:' : 'Duration:'}</span>
