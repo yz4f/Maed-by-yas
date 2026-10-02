@@ -2265,7 +2265,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="portal-section-enter overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-6">
               {/* Welcome banner: the spacious anchor of the dashboard. */}
               <section className={`overview-welcome-card relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-white/[0.14] bg-[#171b22]/92 text-white' : 'border-slate-200 bg-white text-slate-950 shadow-[0_18px_38px_rgba(30,64,95,0.08)]'}`}>
@@ -2394,7 +2394,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
-          <div className="products-experience space-y-6">
+          <div className="portal-section-enter products-experience space-y-6">
             {resetCompletionNotice && <section dir={lang === 'ar' ? 'rtl' : 'ltr'} role="alert" className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_22px_48px_rgba(16,185,129,.14)] sm:p-6 ${isDark ? 'border-emerald-300/[.28] bg-[linear-gradient(135deg,rgba(6,78,59,.88),rgba(10,36,42,.94))] text-emerald-50' : 'border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5,#f0fdfa)] text-emerald-950'}`}>
               <div className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
               <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -2602,7 +2602,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
         {/* TAB 5: PROFILE */}
         {activeTab === 'profile' && (
-          <div className="space-y-8 max-w-2xl mx-auto py-6 animate-slide-up">
+          <div className="portal-section-enter space-y-8 max-w-2xl mx-auto py-6 animate-slide-up">
             <div>
               <h1 className={`text-3xl font-extrabold ${styles.textTitle} tracking-tight`}>
                 {lang === 'ar' ? 'الملف الشخصي' : 'My Profile'}
@@ -2736,7 +2736,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
-          <div className="admin-workspace space-y-5 w-full max-w-[1440px] mx-auto">
+          <div className="portal-section-enter admin-workspace space-y-5 w-full max-w-[1440px] mx-auto">
             {/* Top Admin Header */}
             <div className={`admin-hero ${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
               <div className="min-w-0">

@@ -270,7 +270,7 @@ export function HelpCenter({
   };
 
   return (
-    <div dir={isAr ? 'rtl' : 'ltr'} className="w-full space-y-8 animate-in fade-in duration-300">
+    <div dir={isAr ? 'rtl' : 'ltr'} className="portal-section-enter w-full space-y-8 animate-in fade-in duration-300">
       {/* 1. Breadcrumbs */}
       <nav
         aria-label={isAr ? 'مسار التنقل' : 'Breadcrumb'}
