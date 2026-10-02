@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     let discordRoleSync: { success: boolean; message: string; grantedRoleIds: string[]; failedRoleIds: string[] } | null = null;
     if (res.success && res.product) {
-      void sendDiscordWebsiteLog({
+      await sendDiscordWebsiteLog({
         type: 'productActivated',
         customerId: actor.discordId,
         customerName: actor.name || 'عميل',

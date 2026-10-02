@@ -55,7 +55,7 @@ export async function POST(req: Request, { params }: RouteContext) {
       }
     );
 
-    void sendDiscordWebsiteLog({
+    await sendDiscordWebsiteLog({
       type: 'keyInventoryChanged',
       customerId: actorId,
       customerName: actorName,

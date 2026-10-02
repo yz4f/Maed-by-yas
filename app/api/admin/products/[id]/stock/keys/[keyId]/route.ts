@@ -143,7 +143,7 @@ export async function DELETE(req: Request, { params }: RouteContext) {
     );
 
     if (!result.wasDisabledInstead) {
-      void sendDiscordWebsiteLog({
+      await sendDiscordWebsiteLog({
         type: 'keyInventoryChanged',
         customerId: actorId,
         customerName: actorName,

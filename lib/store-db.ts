@@ -55,8 +55,8 @@ export function resolveKeyStatus(key: Key): KeyStatus {
 }
 
 /**
- * المصدر الوحيد لعداد المخزون: مفتاح متاح يعني أنه غير مستخدم أو معطّل أو مؤرشف
- * ولا يتشارك نفس الكود مع مفتاح آخر، لأن الأكواد المكررة لا تكون آمنة للتفعيل.
+ * المصدر الوحيد لعداد المخزون: كل سجل غير مستخدم أو معطّل أو مؤرشف
+ * يُحسب كسجل متاح، حتى عندما يتكرر نص الكود عمداً.
  */
 export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
   const codeFrequency = new Map<string, number>();
@@ -77,14 +77,7 @@ export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
     if (st === 'used') used++;
     else if (st === 'disabled') disabled++;
     else if (st === 'reserved') reserved++;
-    else if (st === 'available') {
-      const normalized = (key.key || '').trim().toUpperCase();
-      if (normalized && !key.isArchived && codeFrequency.get(normalized) === 1) {
-        available++;
-      } else {
-        disabled++;
-      }
-    }
+    else if (st === 'available') available++;
     if (key.isArchived) archived++;
   }
 
@@ -2257,7 +2250,7 @@ export const StoreDB = {
       'AI Reset CANCELLED', 'AI Reset Requests Purged',
     ];
     if (!dedicatedDiscordActions.some((entry) => action === entry || action.startsWith(`${entry} `))) {
-      void import('@/lib/discord-bot').then(({ sendDiscordSystemAuditLog }) => sendDiscordSystemAuditLog({
+      await import('@/lib/discord-bot').then(({ sendDiscordSystemAuditLog }) => sendDiscordSystemAuditLog({
         action,
         details,
         actorName: userName,
