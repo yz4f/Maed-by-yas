@@ -1,4 +1,4 @@
-import { AuditEvent, Product, Key, KeyStatus, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
+import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
@@ -854,7 +854,7 @@ const LocalDB = {
     saveFallbackData(d);
     return { success: true, key: availableKey, message: 'تم تخصيص المفتاح للطلب بنجاح.' };
   },
-  activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): { success: true; message: string; product: Product } | { success: false; message: string; product?: undefined } {
+  activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): { success: true; message: string; product: Product; duration: KeyDuration } | { success: false; message: string; product?: undefined } {
     const d = getFallbackData();
     const keyIdx = d.keys.findIndex((k: any) =>
       k.key === keyString && !k.isUsed && !k.isDisabled && !k.isArchived
@@ -916,7 +916,7 @@ const LocalDB = {
     saveFallbackData(d);
 
     this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
-    return { success: true, message: 'تم التفعيل بنجاح', product };
+    return { success: true, message: 'تم التفعيل بنجاح', product, duration: keyObj.duration };
   },
   openProductGuide(userId: string, productId: string, ipAddress: string): { success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } {
     const d = getFallbackData();
@@ -2011,7 +2011,7 @@ export const StoreDB = {
   },
 
 
-  async activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): Promise<{success: boolean; message: string; product?: Product}> {
+  async activateProductWithKey(keyString: string, userDetails: { discordId: string, name: string, email?: string, image?: string }, ipAddress: string): Promise<{success: boolean; message: string; product?: Product; duration?: KeyDuration}> {
     return runDbOp(
       async () => {
         const q = query(collection(getDb(), "keys"), where("key", "==", keyString));
@@ -2103,7 +2103,7 @@ export const StoreDB = {
         }
 
         await this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
-        return { success: true, message: 'تم التفعيل بنجاح', product };
+        return { success: true, message: 'تم التفعيل بنجاح', product, duration: keyObj.duration };
       },
       () => LocalDB.activateProductWithKey(keyString, userDetails, ipAddress)
     );
