@@ -48,16 +48,13 @@ export type KeyStockSummary = {
 };
 
 export function resolveKeyStatus(key: Key): KeyStatus {
-  if (key.status) return key.status;
-  if (key.isUsed) return 'used';
   if (key.isDisabled || key.isArchived) return 'disabled';
+  if (key.status === 'activated_pending_start' || key.status === 'active' || key.status === 'expired') return key.status;
+  if (key.isUsed) return 'activated_pending_start';
   return 'available';
 }
 
-/**
- * المصدر الوحيد لعداد المخزون: كل سجل غير مستخدم أو معطّل أو مؤرشف
- * يُحسب كسجل متاح، حتى عندما يتكرر نص الكود عمداً.
- */
+/** The inventory summary is derived from the single canonical key collection. */
 export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
   const codeFrequency = new Map<string, number>();
   for (const key of keys) {
@@ -74,9 +71,8 @@ export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
 
   for (const key of keys) {
     const st = resolveKeyStatus(key);
-    if (st === 'used') used++;
+    if (st === 'activated_pending_start' || st === 'active' || st === 'expired') used++;
     else if (st === 'disabled') disabled++;
-    else if (st === 'reserved') reserved++;
     else if (st === 'available') available++;
     if (key.isArchived) archived++;
   }
@@ -94,8 +90,8 @@ export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
   };
 }
 
-// All newly redeemed product licenses are valid for exactly 48 hours from the activation transaction.
-export const PRODUCT_LICENSE_DURATION_MS = 2 * 24 * 60 * 60 * 1000;
+// Finite licenses run for exactly 72 hours from first guide open, never activation.
+export const PRODUCT_LICENSE_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
 
 export const DISCORD_ROLES = {
   BOSS: '1396965033316978839',
@@ -279,7 +275,7 @@ function getFallbackData() {
             key: 'KEY-T3N-FORT-DEMO-PERM',
             productId: 'prod-fortnite',
             productName: 'فك باند فورت نايت',
-            duration: '2 Days',
+            duration: '3 Days',
             isUsed: false,
             usedByUserId: null,
             usedByUserName: null,
@@ -650,7 +646,7 @@ const LocalDB = {
     };
   },
 
-  addSingleKey(productId: string, keyString: string, createdById: string, duration?: unknown, allowDuplicates: boolean = true): { success: boolean; key?: Key; message?: string } {
+  addSingleKey(productId: string, keyString: string, createdById: string, duration?: unknown, allowDuplicates: boolean = false): { success: boolean; key?: Key; message?: string } {
     const d = getFallbackData();
     const product = d.products.find((p: Product) => p.id === productId);
     if (!product) return { success: false, message: 'المنتج غير موجود.' };
@@ -686,7 +682,7 @@ const LocalDB = {
     return { success: true, key: newKey, message: 'تمت إضافة المفتاح بنجاح.' };
   },
 
-  bulkAddKeysStructured(productId: string, keys: string[], createdById: string, duration?: unknown, allowDuplicates: boolean = true): { success: boolean; inserted: number; duplicates: number; invalid: number; message?: string } {
+  bulkAddKeysStructured(productId: string, keys: string[], createdById: string, duration?: unknown, allowDuplicates: boolean = false): { success: boolean; inserted: number; duplicates: number; invalid: number; message?: string } {
     const d = getFallbackData();
     const product = d.products.find((p: Product) => p.id === productId);
     if (!product) return { success: false, inserted: 0, duplicates: 0, invalid: 0, message: 'المنتج غير موجود.' };
@@ -786,13 +782,13 @@ const LocalDB = {
       key.status = 'disabled';
       key.isDisabled = true;
       key.disabledAt = now;
-    } else if (status === 'reserved') {
-      if (key.isUsed) return { success: false, message: 'لا يمكن حجز مفتاح مستخدم بالفعل.' };
-      key.status = 'reserved';
-    } else if (status === 'used') {
-      key.status = 'used';
+    } else if (status === 'activated_pending_start') {
+      if (key.isUsed && key.status !== 'activated_pending_start') return { success: false, message: 'لا يمكن إعادة حالة مفتاح مستخدم بالفعل.' };
+      key.status = 'activated_pending_start';
       key.isUsed = true;
       if (!key.usedAt) key.usedAt = now;
+    } else if (status === 'active' || status === 'expired') {
+      return { success: false, message: 'يتم تحديث حالة المدة تلقائياً عند فتح الدليل أو انتهاء الصلاحية.' };
     }
     key.updatedAt = now;
     saveFallbackData(d);
@@ -805,7 +801,7 @@ const LocalDB = {
     if (!key) return { success: false, wasDisabledInstead: false, message: 'المفتاح غير موجود.' };
 
     const now = new Date().toISOString();
-    if (key.isUsed || key.status === 'used') {
+    if (key.isUsed || key.status === 'activated_pending_start') {
       key.status = 'disabled';
       key.isDisabled = true;
       key.disabledAt = now;
@@ -845,7 +841,7 @@ const LocalDB = {
     }
 
     const now = new Date().toISOString();
-    availableKey.status = 'used';
+    availableKey.status = 'activated_pending_start';
     availableKey.isUsed = true;
     availableKey.orderId = params.orderId;
     availableKey.customerId = params.customerId;
@@ -900,6 +896,7 @@ const LocalDB = {
 
     const usedAt = new Date().toISOString();
     d.keys[keyIdx].isUsed = true;
+    d.keys[keyIdx].status = 'activated_pending_start';
     d.keys[keyIdx].usedByUserId = user.id;
     d.keys[keyIdx].usedAt = usedAt;
 
@@ -911,7 +908,8 @@ const LocalDB = {
       keyString: keyObj.key,
       status: 'Active',
       activatedAt: usedAt,
-      expiresAt: computeLicenseExpiresAt(usedAt, keyObj.duration),
+      startedAt: null,
+      expiresAt: null,
       discordRoleGranted: true
     };
     d.userProducts.push(userProduct);
@@ -919,6 +917,26 @@ const LocalDB = {
 
     this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
     return { success: true, message: 'تم التفعيل بنجاح', product };
+  },
+  openProductGuide(userId: string, productId: string, ipAddress: string): { success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } {
+    const d = getFallbackData();
+    const userProduct = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId);
+    if (!userProduct) return { success: false, message: 'لا يوجد ترخيص لهذا المنتج.' };
+    const key = userProduct.keyId ? d.keys.find((item: Key) => item.id === userProduct.keyId) : null;
+    if (userProduct.startedAt) {
+      return { success: true, message: 'تم فتح الدليل مسبقاً.', startedAt: userProduct.startedAt, expiresAt: userProduct.expiresAt || null, status: key?.status || 'active' };
+    }
+    const startedAt = new Date().toISOString();
+    const expiresAt = computeLicenseExpiresAt(startedAt, key?.duration || '3 Days');
+    userProduct.startedAt = startedAt;
+    userProduct.expiresAt = expiresAt;
+    if (key) {
+      key.status = 'active';
+      key.updatedAt = startedAt;
+    }
+    saveFallbackData(d);
+    this.addLog('Key Started', `بدأت مدة المنتج ${productId} عند فتح الدليل`, userId, undefined, ipAddress);
+    return { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', startedAt, expiresAt, status: 'active' };
   },
   getUserDetails(userId: string): {user: User, products: UserProduct[]} | undefined {
     const d = getFallbackData();
@@ -970,7 +988,7 @@ const LocalDB = {
       productId,
       status: 'Active',
       activatedAt: new Date().toISOString(),
-      expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '2 Days'),
+      expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '3 Days'),
       discordRoleGranted: false
     };
     d.userProducts.push(userProduct);
@@ -1709,7 +1727,7 @@ export const StoreDB = {
     );
   },
 
-  async addSingleKey(productId: string, keyString: string, createdById: string, duration?: unknown, allowDuplicates: boolean = true): Promise<{ success: boolean; key?: Key; message?: string }> {
+  async addSingleKey(productId: string, keyString: string, createdById: string, duration?: unknown, allowDuplicates: boolean = false): Promise<{ success: boolean; key?: Key; message?: string }> {
     return runDbOp(
       async () => {
         const db = getDb();
@@ -1750,7 +1768,7 @@ export const StoreDB = {
     );
   },
 
-  async bulkAddKeysStructured(productId: string, keys: string[], createdById: string, duration?: unknown, allowDuplicates: boolean = true): Promise<{ success: boolean; inserted: number; duplicates: number; invalid: number; message?: string }> {
+  async bulkAddKeysStructured(productId: string, keys: string[], createdById: string, duration?: unknown, allowDuplicates: boolean = false): Promise<{ success: boolean; inserted: number; duplicates: number; invalid: number; message?: string }> {
     return runDbOp(
       async () => {
         const db = getDb();
@@ -1873,11 +1891,12 @@ export const StoreDB = {
         } else if (status === 'disabled') {
           updates.isDisabled = true;
           updates.disabledAt = now;
-        } else if (status === 'reserved') {
-          if (currentKey.isUsed) return { success: false, message: 'لا يمكن حجز مفتاح مستخدم بالفعل.' };
-        } else if (status === 'used') {
+        } else if (status === 'activated_pending_start') {
+          if (currentKey.isUsed && currentKey.status !== 'activated_pending_start') return { success: false, message: 'لا يمكن إعادة حالة مفتاح مستخدم بالفعل.' };
           updates.isUsed = true;
           if (!currentKey.usedAt) updates.usedAt = now;
+        } else if (status === 'active' || status === 'expired') {
+          return { success: false, message: 'يتم تحديث حالة المدة تلقائياً عند فتح الدليل أو انتهاء الصلاحية.' };
         }
 
         await updateDoc(keyRef, updates);
@@ -1896,7 +1915,7 @@ export const StoreDB = {
         const currentKey = keySnap.data() as Key;
         const now = new Date().toISOString();
 
-        if (currentKey.isUsed || currentKey.status === 'used') {
+        if (currentKey.isUsed || currentKey.status === 'activated_pending_start') {
           await updateDoc(keyRef, {
             status: 'disabled',
             isDisabled: true,
@@ -1964,7 +1983,7 @@ export const StoreDB = {
 
             const now = new Date().toISOString();
             const updatePayload = {
-              status: 'used' as KeyStatus,
+              status: 'activated_pending_start' as KeyStatus,
               isUsed: true,
               orderId: params.orderId,
               customerId: params.customerId,
@@ -2063,7 +2082,6 @@ export const StoreDB = {
             if (!chosenRef || !chosenKey) throw new Error('المفتاح مستخدم أو غير متاح حالياً');
 
             const usedAt = new Date().toISOString();
-            const expiresAt = computeLicenseExpiresAt(usedAt, chosenKey.duration);
             const userProduct: UserProduct = {
               id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
               userId: user.id,
@@ -2072,11 +2090,12 @@ export const StoreDB = {
               keyString: chosenKey.key,
               status: 'Active',
               activatedAt: usedAt,
-              expiresAt,
+              startedAt: null,
+              expiresAt: null,
               discordRoleGranted: true
             };
 
-            transaction.update(chosenRef, { isUsed: true, status: 'used', usedByUserId: user.id, usedAt });
+            transaction.update(chosenRef, { isUsed: true, status: 'activated_pending_start', usedByUserId: user.id, usedAt });
             transaction.set(doc(getDb(), "userProducts", userProduct.id), userProduct);
           });
         } catch (error: any) {
@@ -2087,6 +2106,41 @@ export const StoreDB = {
         return { success: true, message: 'تم التفعيل بنجاح', product };
       },
       () => LocalDB.activateProductWithKey(keyString, userDetails, ipAddress)
+    );
+  },
+  async openProductGuide(userId: string, productId: string, ipAddress: string): Promise<{ success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus }> {
+    return runDbOp(
+      async () => {
+        const q = query(collection(getDb(), 'userProducts'), where('userId', '==', userId), where('productId', '==', productId));
+        const snapshot = await getDocs(q);
+        const candidate = snapshot.docs.find((item) => (item.data() as UserProduct).status === 'Active');
+        if (!candidate) return { success: false, message: 'لا يوجد ترخيص لهذا المنتج.' };
+        const userProductRef = candidate.ref;
+        const keyId = (candidate.data() as UserProduct).keyId;
+        const now = new Date().toISOString();
+        let result: { success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } = { success: false, message: 'تعذر بدء المدة.' };
+        await runTransaction(getDb(), async (transaction) => {
+          const currentSnapshot = await transaction.get(userProductRef);
+          if (!currentSnapshot.exists()) return;
+          const current = currentSnapshot.data() as UserProduct;
+          if (current.startedAt) {
+            result = { success: true, message: 'تم فتح الدليل مسبقاً.', startedAt: current.startedAt, expiresAt: current.expiresAt || null, status: 'active' };
+            return;
+          }
+          const keyRef = keyId ? doc(getDb(), 'keys', keyId) : null;
+          const keySnapshot = keyRef ? await transaction.get(keyRef) : null;
+          const key = keySnapshot?.exists() ? keySnapshot.data() as Key : null;
+          const expiresAt = computeLicenseExpiresAt(now, key?.duration || '3 Days');
+          transaction.update(userProductRef, { startedAt: now, expiresAt });
+          if (keyRef) transaction.update(keyRef, { status: 'active', updatedAt: now });
+          result = { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', startedAt: now, expiresAt, status: 'active' };
+        });
+        if (result.success && result.startedAt === now) {
+          await this.addLog('Key Started', `بدأت مدة المنتج ${productId} عند فتح الدليل`, userId, undefined, ipAddress);
+        }
+        return result;
+      },
+      () => LocalDB.openProductGuide(userId, productId, ipAddress)
     );
   },
 
@@ -2174,7 +2228,7 @@ export const StoreDB = {
           productId,
           status: 'Active',
           activatedAt: new Date().toISOString(),
-          expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '2 Days'),
+          expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '3 Days'),
           discordRoleGranted: false
         };
         await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);

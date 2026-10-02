@@ -51,7 +51,7 @@ export async function POST(req: Request, { params }: RouteContext) {
     const actorId = actor?.discordId || 'admin-system';
     const actorName = actor?.name || 'Admin';
 
-    const result = await StoreDB.bulkAddKeysStructured(productId, keysList, actorId, duration, allowDuplicates !== false);
+    const result = await StoreDB.bulkAddKeysStructured(productId, keysList, actorId, duration, false);
 
     if (result.inserted > 0) {
       await StoreDB.addLog(

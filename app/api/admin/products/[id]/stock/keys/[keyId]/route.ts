@@ -28,7 +28,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     const actorName = actor?.name || 'Admin';
 
     if (status) {
-      const validStatuses: KeyStatus[] = ['available', 'disabled', 'reserved', 'used'];
+      const validStatuses: KeyStatus[] = ['available', 'disabled'];
       if (!validStatuses.includes(status)) {
         return NextResponse.json({ success: false, message: 'حالة المفتاح غير صالحة.' }, { status: 400 });
       }

@@ -41,7 +41,7 @@ interface ProductStockModalProps {
 
 type ModalTab = 'keys' | 'custom' | 'details';
 
-const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', '7 Days', '30 Days', 'Lifetime', '2 Days'];
+const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', 'Lifetime'];
 
 function maskKeyString(keyStr: string): string {
   if (!keyStr || keyStr.length <= 8) return keyStr;
@@ -88,7 +88,7 @@ export function ProductStockModal({
   // Add Keys (Section 1)
   const [bulkInputText, setBulkInputText] = useState('');
   const [selectedDuration, setSelectedDuration] = useState<KeyDuration>('3 Days');
-  const [allowDuplicates, setAllowDuplicates] = useState(true);
+  const allowDuplicates = false;
   const [isSubmittingKeys, setIsSubmittingKeys] = useState(false);
   const [addFeedback, setAddFeedback] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
@@ -272,7 +272,7 @@ export function ProductStockModal({
     const seenInInput = new Set<string>();
     const existingActiveKeys = new Set(
       keys
-        .filter((k) => k.status === 'available' || k.status === 'used' || !k.status)
+        .filter((k) => k.status === 'available' || k.status === 'activated_pending_start' || !k.status)
         .map((k) => (k.key || '').trim().toUpperCase())
     );
 
@@ -382,7 +382,7 @@ export function ProductStockModal({
   // Toggle key status (available <-> disabled)
   const handleToggleKeyStatus = async (targetKey: Key) => {
     if (!product || togglingKeyId) return;
-    if (targetKey.status === 'used' || targetKey.isUsed) {
+    if (targetKey.status === 'activated_pending_start' || targetKey.status === 'active' || targetKey.status === 'expired' || targetKey.isUsed) {
       toast.warning(lang === 'ar' ? 'لا يمكن تعديل حالة مفتاح مستخدم بالفعل.' : 'Cannot toggle status of an active used key.');
       return;
     }
@@ -881,9 +881,10 @@ export function ProductStockModal({
                       {[
                         { id: 'all', label: lang === 'ar' ? 'الكل' : 'All' },
                         { id: 'available', label: lang === 'ar' ? 'متاح' : 'Available' },
-                        { id: 'used', label: lang === 'ar' ? 'مستخدم' : 'Used' },
+                        { id: 'activated_pending_start', label: lang === 'ar' ? 'بانتظار البدء' : 'Pending start' },
+                        { id: 'active', label: lang === 'ar' ? 'نشط' : 'Active' },
+                        { id: 'expired', label: lang === 'ar' ? 'منتهي' : 'Expired' },
                         { id: 'disabled', label: lang === 'ar' ? 'معطل' : 'Disabled' },
-                        { id: 'reserved', label: lang === 'ar' ? 'محجوز' : 'Reserved' },
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -970,7 +971,7 @@ export function ProductStockModal({
                         <tbody className="divide-y divide-white/5 font-sans">
                           {keys.map((item) => {
                             const isRevealed = revealedKeyIds.has(item.id);
-                            const currentStatus: KeyStatus = item.status || (item.isUsed ? 'used' : item.isDisabled ? 'disabled' : 'available');
+                            const currentStatus: KeyStatus = item.status || (item.isUsed ? 'activated_pending_start' : item.isDisabled ? 'disabled' : 'available');
 
                             return (
                               <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
@@ -1005,10 +1006,10 @@ export function ProductStockModal({
                                       {lang === 'ar' ? 'متاح' : 'Available'}
                                     </span>
                                   )}
-                                  {currentStatus === 'used' && (
+                                  {currentStatus === 'activated_pending_start' && (
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-500/15 text-slate-400 border border-slate-500/30">
                                       <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                                      {lang === 'ar' ? 'مستخدم' : 'Used'}
+                                      {lang === 'ar' ? 'مفعّل — بانتظار البدء' : 'Activated — pending start'}
                                     </span>
                                   )}
                                   {currentStatus === 'disabled' && (
@@ -1017,10 +1018,10 @@ export function ProductStockModal({
                                       {lang === 'ar' ? 'معطل' : 'Disabled'}
                                     </span>
                                   )}
-                                  {currentStatus === 'reserved' && (
+                                  {(currentStatus === 'active' || currentStatus === 'expired') && (
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                      {lang === 'ar' ? 'محجوز' : 'Reserved'}
+                                      {currentStatus === 'active' ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'منتهي' : 'Expired')}
                                     </span>
                                   )}
                                 </td>
@@ -1051,7 +1052,7 @@ export function ProductStockModal({
                                 <td className="py-3.5 px-4 text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     {/* Enable / Disable Button */}
-                                    {currentStatus !== 'used' && (
+                                    {currentStatus !== 'activated_pending_start' && currentStatus !== 'active' && currentStatus !== 'expired' && (
                                       <button
                                         onClick={() => handleToggleKeyStatus(item)}
                                         disabled={togglingKeyId === item.id}
@@ -1538,7 +1539,7 @@ export function ProductStockModal({
                 <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 font-mono text-center text-blue-400 font-bold select-all" dir="ltr">
                   {deletingKey.key}
                 </div>
-                {deletingKey.isUsed || deletingKey.status === 'used' ? (
+                {deletingKey.isUsed || deletingKey.status === 'activated_pending_start' || deletingKey.status === 'active' || deletingKey.status === 'expired' ? (
                   <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 font-semibold text-[11px]">
                     {lang === 'ar'
                       ? 'ملاحظة هامة: هذا المفتاح مستخدم في طلب عميل، ولن يُحذف نهائياً بل سيتم تعطيله (Disabled) للحفاظ على سلامة سجلات المبيعات والعميل.'

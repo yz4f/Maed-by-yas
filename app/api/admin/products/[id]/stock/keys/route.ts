@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: RouteContext) {
     const actorId = actor?.discordId || 'admin-system';
     const actorName = actor?.name || 'Admin';
 
-    const result = await StoreDB.addSingleKey(productId, key, actorId, duration, allowDuplicates !== false);
+    const result = await StoreDB.addSingleKey(productId, key, actorId, duration, false);
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });
     }

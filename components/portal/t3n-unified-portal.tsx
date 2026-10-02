@@ -261,6 +261,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Guide Modal States
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
+  const [openingGuideProductId, setOpeningGuideProductId] = useState<string | null>(null);
   const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'format' | 'network' | 'timer' | 'spoofer' | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
   const [resetRequestReason, setResetRequestReason] = useState('');
@@ -617,21 +618,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const getLicenseTiming = (license: UserProduct) => {
     const parsedExpiry = license.expiresAt ? new Date(license.expiresAt).getTime() : Number.NaN;
     const hasValidExpiry = Number.isFinite(parsedExpiry) && parsedExpiry > 0;
-    const isLifetime = !license.expiresAt;
+    const isPendingStart = license.status === 'Active' && !license.startedAt;
+    const isLifetime = Boolean(license.startedAt) && !license.expiresAt;
     const expiresAtMs = hasValidExpiry ? parsedExpiry : 0;
     const remainingMs = hasValidExpiry ? Math.max(0, expiresAtMs - licenseClock) : 0;
     const isExpired = !isLifetime && hasValidExpiry && remainingMs === 0;
-    const isUsable = license.status === 'Active' && (isLifetime || (hasValidExpiry && remainingMs > 0));
+    const isUsable = license.status === 'Active' && (isPendingStart || isLifetime || (hasValidExpiry && remainingMs > 0));
     const totalSeconds = Math.floor(remainingMs / 1000);
     const days = Math.floor(totalSeconds / 86_400);
     const hours = Math.floor((totalSeconds % 86_400) / 3_600);
     const minutes = Math.floor((totalSeconds % 3_600) / 60);
-    const countdown = isLifetime
+    const countdown = isPendingStart
+      ? (lang === 'ar' ? 'تبدأ عند فتح دليل المنتج' : 'Starts when the guide is opened')
+      : isLifetime
       ? (lang === 'ar' ? 'مدى الحياة' : 'Lifetime')
       : lang === 'ar'
         ? `${days}ي ${hours}س ${minutes}د`
         : `${days}d ${hours}h ${minutes}m`;
-    return { expiresAtMs, remainingMs, isExpired, isUsable, countdown, isLifetime };
+    return { expiresAtMs, remainingMs, isExpired, isUsable, countdown, isLifetime, isPendingStart };
   };
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
   const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
@@ -1197,6 +1201,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر إرسال الطلب.' : 'Could not send the request.'), 'error');
     } finally {
       setIsSubmittingResetRequest(false);
+    }
+  };
+
+  const handleOpenProductGuide = async (license: UserProduct) => {
+    if (openingGuideProductId || !license.productId) return;
+    setOpeningGuideProductId(license.productId);
+    try {
+      const response = await fetch(`/api/products/${license.productId}/guide/open`, { method: 'POST', credentials: 'same-origin' });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'));
+      const updated = { ...license, startedAt: data.startedAt || license.startedAt, expiresAt: data.expiresAt ?? license.expiresAt };
+      setUserProducts((current) => current.map((item) => item.id === license.id ? updated : item));
+      setGuideModalProduct(updated);
+      setGuideView('menu');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'), 'error');
+    } finally {
+      setOpeningGuideProductId(null);
     }
   };
 
@@ -2523,11 +2545,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         <div className="product-license-card__media-overlay" />
                         <div className={`product-license-card__expiry ${timing.isExpired ? 'product-license-card__expiry--expired' : ''}`}>
                           <Clock size={12} />
-                          <span>{timing.isExpired ? (lang === 'ar' ? 'انتهت صلاحية الترخيص' : 'License expired') : `${lang === 'ar' ? 'متبقي' : 'Remaining'} · ${timing.countdown}`}</span>
+                          <span>{timing.isExpired ? (lang === 'ar' ? 'انتهت صلاحية الترخيص' : 'License expired') : timing.isPendingStart ? timing.countdown : `${lang === 'ar' ? 'متبقي' : 'Remaining'} · ${timing.countdown}`}</span>
                         </div>
                         <span className={`product-license-card__status ${canUseProduct ? 'product-license-card__status--active' : ''}`}>
                           <span className="product-license-card__status-dot" />
-                          {canUseProduct ? (lang === 'ar' ? 'مفعّل' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
+                          {timing.isPendingStart ? (lang === 'ar' ? 'مفعّل — لم تبدأ المدة' : 'Activated — pending start') : canUseProduct ? (lang === 'ar' ? 'مفعّل' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
                         </span>
                         <div className="product-license-card__media-brand">{lang === 'ar' ? 'تعن · ترخيص رقمي' : 'TA3N · DIGITAL LICENSE'}</div>
                       </div>
@@ -2567,12 +2589,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             {lang === 'ar' ? 'تحميل اللودر' : 'Download Loader'}
                           </button>
                           <button
-                            onClick={() => { setGuideModalProduct(up); setGuideView('menu'); }}
-                            disabled={!canUseProduct}
+                            onClick={() => void handleOpenProductGuide(up)}
+                            disabled={!canUseProduct || openingGuideProductId === up.productId}
                             className="product-guide-button"
                           >
                             <HelpCircle size={13} />
-                            {lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
+                            {openingGuideProductId === up.productId ? (lang === 'ar' ? 'جارٍ فتح الدليل...' : 'Opening guide...') : (lang === 'ar' ? 'دليل المنتج' : 'Product guide')}
                           </button>
                         </div>
                         <button
