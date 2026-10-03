@@ -1542,8 +1542,8 @@ export function ProductStockModal({
                 {deletingKey.isUsed || deletingKey.status === 'activated_pending_start' || deletingKey.status === 'active' || deletingKey.status === 'expired' ? (
                   <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 font-semibold text-[11px]">
                     {lang === 'ar'
-                      ? 'ملاحظة هامة: هذا المفتاح مستخدم في طلب عميل، ولن يُحذف نهائياً بل سيتم تعطيله (Disabled) للحفاظ على سلامة سجلات المبيعات والعميل.'
-                      : 'Notice: This key has been redeemed in an order. It will be set to Disabled instead of deleted to protect order audit integrity.'}
+                      ? 'سيُحذف المفتاح من المخزون فوراً. سيبقى ترخيص العميل محفوظاً بشكل مستقل حتى انتهاء مدته، ثم يظهر ضمن «منتجات منتهية». '
+                      : 'This key will be removed from inventory immediately. The customer license remains stored independently until it expires, then appears under “Expired products”.'}
                   </div>
                 ) : null}
               </div>

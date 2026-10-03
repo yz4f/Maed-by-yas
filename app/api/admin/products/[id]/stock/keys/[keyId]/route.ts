@@ -121,10 +121,8 @@ export async function DELETE(req: Request, { params }: RouteContext) {
     }
 
     const product = await StoreDB.getProductById(productId);
-    const actionTitle = result.wasDisabledInstead ? 'Stock Key Disabled' : 'Stock Key Deleted';
-    const details = result.wasDisabledInstead
-      ? `تم تعطيل مفتاح مستخدم في منتج ${product?.name || productId} بدلاً من حذفه لحماية السجلات.`
-      : `تم حذف مفتاح غير مستخدم من مخزون منتج ${product?.name || productId}.`;
+    const actionTitle = 'Stock Key Deleted';
+    const details = `تم حذف مفتاح من مخزون منتج ${product?.name || productId} فورياً؛ تبقى تراخيص العملاء المحفوظة مستقلة عن سجل المخزون.`;
 
     await StoreDB.addLog(
       actionTitle,
@@ -133,16 +131,16 @@ export async function DELETE(req: Request, { params }: RouteContext) {
       actorName,
       getClientIp(req),
       {
-        eventType: result.wasDisabledInstead ? 'stock_key_disabled_on_delete' : 'stock_key_deleted',
+        eventType: 'stock_key_deleted',
         actorDiscordId: actor?.discordId || null,
         actorName,
         productId,
         keyId,
-        metadata: { wasDisabledInstead: result.wasDisabledInstead },
+        metadata: { wasDisabledInstead: false },
       }
     );
 
-    if (!result.wasDisabledInstead) {
+    {
       await sendDiscordWebsiteLog({
         type: 'keyInventoryChanged',
         customerId: actorId,

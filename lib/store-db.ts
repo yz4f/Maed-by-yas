@@ -799,30 +799,12 @@ const LocalDB = {
     const d = getFallbackData();
     const key = d.keys.find((k: Key) => k.id === keyId);
     if (!key) return { success: false, wasDisabledInstead: false, message: 'المفتاح غير موجود.' };
-
-    const now = new Date().toISOString();
-    if (key.isUsed || key.status === 'activated_pending_start') {
-      key.status = 'disabled';
-      key.isDisabled = true;
-      key.disabledAt = now;
-      key.updatedAt = now;
-      saveFallbackData(d);
-      return {
-        success: true,
-        wasDisabledInstead: true,
-        message: 'المفتاح مستخدم في طلب سابق، لذلك تم تعطيله وحفظه بدلاً من حذفه لضمان سلامة السجلات.'
-      };
-    }
-
-    key.isArchived = true;
-    key.isDisabled = true;
-    key.archivedAt = now;
-    key.updatedAt = now;
+    d.keys = d.keys.filter((item: Key) => item.id !== keyId);
     saveFallbackData(d);
     return {
       success: true,
       wasDisabledInstead: false,
-      message: 'تم حذف المفتاح من المخزون بنجاح.'
+      message: key.isUsed ? 'تم حذف المفتاح من المخزون، وسيبقى ترخيص العميل محفوظاً حتى انتهاء مدته.' : 'تم حذف المفتاح من المخزون بنجاح.'
     };
   },
 
@@ -1913,32 +1895,11 @@ export const StoreDB = {
         const keySnap = await getDoc(keyRef);
         if (!keySnap.exists()) return { success: false, wasDisabledInstead: false, message: 'المفتاح غير موجود.' };
         const currentKey = keySnap.data() as Key;
-        const now = new Date().toISOString();
-
-        if (currentKey.isUsed || currentKey.status === 'activated_pending_start') {
-          await updateDoc(keyRef, {
-            status: 'disabled',
-            isDisabled: true,
-            disabledAt: now,
-            updatedAt: now,
-          });
-          return {
-            success: true,
-            wasDisabledInstead: true,
-            message: 'تم تعطيل المفتاح بدلاً من حذفه للحفاظ على سجلات الطلب والعميل.'
-          };
-        }
-
-        await updateDoc(keyRef, {
-          isArchived: true,
-          isDisabled: true,
-          archivedAt: now,
-          updatedAt: now,
-        });
+        await deleteDoc(keyRef);
         return {
           success: true,
           wasDisabledInstead: false,
-          message: 'تم حذف المفتاح من المخزون بنجاح.'
+          message: currentKey.isUsed ? 'تم حذف المفتاح من المخزون، وسيبقى ترخيص العميل محفوظاً حتى انتهاء مدته.' : 'تم حذف المفتاح من المخزون بنجاح.'
         };
       },
       () => LocalDB.deleteKeySafely(keyId)
