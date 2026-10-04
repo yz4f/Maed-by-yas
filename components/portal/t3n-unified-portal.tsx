@@ -60,7 +60,6 @@ import { DiscordMark as DiscordIcon } from './discord-mark';
 import { LoginPage } from './login-page';
 import { Footer } from '@/components/ui/footer';
 import { ProductNotice } from '@/components/guides/product-notice';
-const ProductGuideModal = dynamic(() => import('@/components/guides/product-guide-modal').then(module => module.ProductGuideModal), { ssr: false });
 const HelpCenter = dynamic(() => import('./help-center').then((module) => module.HelpCenter), { ssr: false });
 const HelpAdminSection = dynamic(() => import('./help-admin-section').then((module) => module.HelpAdminSection), { ssr: false });
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
@@ -70,6 +69,8 @@ const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((mo
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 import { ProductStockModal } from '@/components/admin/stock/ProductStockModal';
+
+const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
 
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
@@ -255,6 +256,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [guestModalOpen, setGuestModalOpen] = useState(false);
 
   // Guide Modal States
+  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'format' | 'network' | 'timer' | 'spoofer' | null>(null);
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
   const [openingGuideProductId, setOpeningGuideProductId] = useState<string | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
@@ -262,6 +264,173 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
   const [resetCompletionNotice, setResetCompletionNotice] = useState<{ id: string; title: string; message: string } | null>(null);
   const [isAcknowledgingResetCompletion, setIsAcknowledgingResetCompletion] = useState(false);
+  const [tutorialCountdown, setTutorialCountdown] = useState(0);
+
+  useEffect(() => {
+    if (guideView !== 'notice') return;
+
+    setTutorialCountdown(5);
+    const timer = window.setInterval(() => {
+      setTutorialCountdown((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [guideView]);
+
+  const guideText = lang === 'ar' ? {
+    modalTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
+    close: 'إغلاق نافذة الشرح',
+    tutorialTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
+    tutorialDescription: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.',
+    supportTitle: 'حلول المشاكل الشائعة',
+    supportDescription: 'شروحات مرئية داخل الموقع لأخطاء الشبكة والوقت.',
+    issuesLabel: 'مكتبة حلول المشاكل',
+    issuesTitle: 'مكتبة الشروحات المرئية',
+    issuesDescription: 'اختر الشرح المناسب من المكتبة. كل بطاقة تعرض صورة الخطأ ثم تفتح فيديو الحل المطابق لها داخل الموقع.',
+    libraryAvailable: '4 حلول متاحة',
+    videoGuide: 'شرح فيديو',
+    runtimeIssueTitle: 'خطأ تعريفات Visual C++ أو رسالة بيضاء',
+    runtimeIssueDescription: 'لرسائل VCRUNTIME140_1.dll أو MSVCP140.dll غير الموجودة عند تشغيل اللودر أو البرنامج.',
+    runtimeIssueAction: 'تحميل Visual C++ x64',
+    runtimeIssueHint: 'تنزيل رسمي من Microsoft ثم أعد تشغيل Windows قبل تجربة المنتج.',
+    commonErrorsTitle: 'حل سريع لرسائل التشغيل الشائعة',
+    commonErrorsDescription: 'إذا ظهرت شاشة تحميل بيضاء أو رسالة فقدان ملف DLL عند فتح اللودر، ابدأ بتحديث تعريفات Visual C++ الرسمية ثم أعد تشغيل Windows.',
+    commonErrorsAction: 'تحميل وتحديث Visual C++ x64',
+    commonErrorsNote: 'يشمل أخطاء VCRUNTIME140_1.dll وVCRUNTIME140.dll وMSVCP140.dll.',
+    runtimePreviewLabel: 'مثال رسالة الخطأ',
+    runtimePreviewDescription: 'إذا ظهرت نافذة مشابهة، ثبّت تعريفات Visual C++ من الزر أعلاه ثم أعد تشغيل Windows.',
+    runtimePreviewStepOne: 'نزّل التعريف الرسمي.',
+    runtimePreviewStepTwo: 'ثبّته ثم أعد التشغيل.',
+    runtimePreviewStepThree: 'شغّل اللودر من جديد.',
+    downloadWarpLabel: 'أداة اتصال اختيارية',
+    downloadWarp: 'تحميل Cloudflare WARP لنظام Windows',
+    downloadWarpAction: 'تنزيل الآن',
+    downloadWarpHint: 'قد يساعد في استعادة اتصال الشبكة قبل متابعة الشرح.',
+    networkIssueTitle: 'مشكلة الشبكة أو إيقاف الواي فاي',
+    networkIssueDescription: 'عند ظهور رسالة عدم الوصول إلى اسم المضيف أو فشل اتصال الشبكة.',
+    timeIssueTitle: 'خطأ الوقت والتحقق',
+    timeIssueDescription: 'عند ظهور تنبيه مزامنة وقت ويندوز أو فشل التحقق من التوقيع.',
+    spooferIssueTitle: 'مشكلة عدم ظهور قائمة Spoofer',
+    spooferIssueDescription: 'عندما يظهر أن WebUI يعمل لكن قائمة Spoofer لا تظهر داخل الواجهة.',
+    watchSolution: 'مشاهدة فيديو الحل',
+    solutionVideoLabel: 'فيديو الحل',
+    screenshotLabel: 'صورة الخطأ المرجعية',
+    noticeLabel: 'تنبيه قبل مشاهدة الشرح',
+    noticeHint: 'اقرأ قبل المتابعة',
+    noticeTitle: 'مهم قبل البدء',
+    introBefore: 'هنا يتم شرح ',
+    introProduct: `كامل خطوات منتج ${guideModalProduct?.product?.name || 'المنتج'}`,
+    introMiddle: '. يرجى اتباع الشرح بالكامل وبنفس الترتيب ',
+    introEmphasis: 'دون تخطي أي خطوة',
+    introAfter: '، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.',
+    importantTitle: 'تنبيه مهم',
+    importantPrimaryBefore: 'إدارة الموقع وكذلك ',
+    storeName: 'متجر تعن',
+    importantPrimaryAfter: ' لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.',
+    importantSecondaryBefore: 'في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم ',
+    importantSecondaryStrong: 'إغلاق التذكرة مباشرة',
+    supportHeading: 'الدعم الفني',
+    supportPrimaryBefore: 'دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، ',
+    supportPrimaryStrong: 'في حال كان الخطأ من طرفنا',
+    supportSecondary: 'يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.',
+    preparationTitle: 'تجهيز إلزامي قبل البدء',
+    preparationDescription: 'يلزم تجهيز فلاش USB بنسخة Windows المناسبة قبل متابعة شرح المنتج. أكمل هذه الخطوة أولاً ثم تابع الفيديو الرئيسي.',
+    windows11Label: 'تجهيز فلاش Windows 11',
+    windows10Label: 'تجهيز فلاش Windows 10',
+    watchPreparation: 'مشاهدة شرح التجهيز',
+    motherboardTitle: 'تنبيه توافق اللوحة الأم',
+    motherboardDescription: 'إذا لم تكتمل العملية بعد اتباع الدليل وتجهيز Windows، فقد يرتبط ذلك بقيود توافق في اللوحة الأم. لا يمكن للدعم تجاوز هذه القيود أو ضمان إمكانية تغيير معلومات الجهاز.',
+    formatSectionTitle: 'تجهيز فلاش Windows',
+    formatSectionDescription: 'قسم مستقل لتحضير فلاش USB بنسخة Windows المناسبة قبل متابعة دليل المنتج.',
+    formatSectionAction: 'فتح قسم تجهيز الفلاش',
+    waitingTitle: 'الخطوة الأخيرة قبل الفيديو',
+    readyTitle: 'أصبح الشرح جاهزًا للمشاهدة',
+    waitingMessage: (seconds: number) => `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${seconds} ${seconds === 1 ? 'ثانية' : 'ثوانٍ'}.`,
+    readyMessage: 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.',
+    waitingButton: (seconds: number) => `انتظر ${seconds} ثوانٍ`,
+    continueButton: 'قرأت التنبيه — متابعة',
+    back: 'العودة للقائمة السابقة',
+    unavailableTitle: 'لا يوجد فيديو شرح متاح',
+    unavailableMessage: 'لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.',
+    unavailableHelp: 'الرجاء إبلاغ الدعم الفني عبر تذكرة إذا احتجت إلى مساعدة إضافية.',
+  } : {
+    modalTitle: `${guideModalProduct?.product?.name || 'Product'} Guide`,
+    close: 'Close tutorial dialog',
+    tutorialTitle: `${guideModalProduct?.product?.name || 'Product'} Guide`,
+    tutorialDescription: 'A complete visual walkthrough for activation and setup, step by step.',
+    supportTitle: 'Common issue fixes',
+    supportDescription: 'In-site visual solutions for network and system-time errors.',
+    issuesLabel: 'TROUBLESHOOTING LIBRARY',
+    issuesTitle: 'Visual troubleshooting library',
+    issuesDescription: 'Choose the relevant guide from the library. Each card shows the error screenshot and opens its dedicated solution video inside the site.',
+    libraryAvailable: '4 fixes available',
+    videoGuide: 'Video guide',
+    runtimeIssueTitle: 'Visual C++ runtime or white error message',
+    runtimeIssueDescription: 'For missing VCRUNTIME140_1.dll or MSVCP140.dll messages when opening the loader or application.',
+    runtimeIssueAction: 'Download Visual C++ x64',
+    runtimeIssueHint: 'Official Microsoft download. Restart Windows before trying the product again.',
+    commonErrorsTitle: 'Quick fix for common launch errors',
+    commonErrorsDescription: 'If a white loading screen or a missing DLL message appears when opening the loader, update the official Visual C++ runtime and restart Windows.',
+    commonErrorsAction: 'Download & update Visual C++ x64',
+    commonErrorsNote: 'Covers VCRUNTIME140_1.dll, VCRUNTIME140.dll, and MSVCP140.dll errors.',
+    runtimePreviewLabel: 'Example error message',
+    runtimePreviewDescription: 'If you see a similar window, install the Visual C++ runtime from the button above, then restart Windows.',
+    runtimePreviewStepOne: 'Download the official runtime.',
+    runtimePreviewStepTwo: 'Install it, then restart.',
+    runtimePreviewStepThree: 'Start the loader again.',
+    downloadWarpLabel: 'OPTIONAL CONNECTION TOOL',
+    downloadWarp: 'Download Cloudflare WARP for Windows',
+    downloadWarpAction: 'Download now',
+    downloadWarpHint: 'It may help restore your network connection before continuing the guide.',
+    networkIssueTitle: 'Network or Wi-Fi connection error',
+    networkIssueDescription: 'For hostname resolution failures or a network connection error.',
+    timeIssueTitle: 'System time and verification error',
+    timeIssueDescription: 'For Windows time-sync prompts or signature verification failures.',
+    spooferIssueTitle: 'Spoofer list is not appearing',
+    spooferIssueDescription: 'When WebUI is running but the Spoofer list does not appear in the interface.',
+    watchSolution: 'Watch solution video',
+    solutionVideoLabel: 'SOLUTION VIDEO',
+    screenshotLabel: 'REFERENCE ERROR SCREENSHOT',
+    noticeLabel: 'Before you watch',
+    noticeHint: 'Please read before continuing',
+    noticeTitle: 'Important before you begin',
+    introBefore: 'This tutorial explains ',
+    introProduct: `the complete ${guideModalProduct?.product?.name || 'product'} process`,
+    introMiddle: '. Please follow every step in the exact order ',
+    introEmphasis: 'without skipping any step',
+    introAfter: ', to help ensure the process is completed correctly and avoid issues.',
+    importantTitle: 'Important notice',
+    importantPrimaryBefore: 'The website administration and ',
+    storeName: 'Ta3n Store',
+    importantPrimaryAfter: ' are not responsible for lost keys or incorrect use.',
+    importantSecondaryBefore: 'If you encounter an issue, you can contact support and open a ticket explaining the problem. However, tickets or messages asking for steps already covered in this guide will be ',
+    importantSecondaryStrong: 'closed immediately',
+    supportHeading: 'Technical support',
+    supportPrimaryBefore: 'Our support team is dedicated only to product-related problems and errors, ',
+    supportPrimaryStrong: 'when the issue is on our side',
+    supportSecondary: 'Please make sure that you have followed all steps correctly and reviewed all store policies before contacting support.',
+    preparationTitle: 'Required preparation',
+    preparationDescription: 'Prepare a USB flash drive with the appropriate Windows version before continuing with the product guide. Complete this first, then continue to the main video.',
+    windows11Label: 'Prepare a Windows 11 USB',
+    windows10Label: 'Prepare a Windows 10 USB',
+    watchPreparation: 'Watch preparation guide',
+    motherboardTitle: 'Motherboard compatibility notice',
+    motherboardDescription: 'If the process does not complete after following the guide and preparing Windows, it may relate to motherboard compatibility restrictions. Support cannot bypass these restrictions or guarantee changes to device information.',
+    formatSectionTitle: 'Prepare a Windows USB',
+    formatSectionDescription: 'A separate section for preparing a USB drive with the appropriate Windows version before the product guide.',
+    formatSectionAction: 'Open USB preparation',
+    waitingTitle: 'One final step before the video',
+    readyTitle: 'The tutorial is ready to watch',
+    waitingMessage: (seconds: number) => `Please read this notice. Continue will unlock in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
+    readyMessage: 'You have read the notice. You can now continue to the video tutorial.',
+    waitingButton: (seconds: number) => `Wait ${seconds}s`,
+    continueButton: 'I understand — continue',
+    back: 'Back to guide options',
+    unavailableTitle: 'No tutorial video is available',
+    unavailableMessage: 'The administration has not added a tutorial video for this product yet.',
+    unavailableHelp: 'Please contact technical support through a ticket if you need additional help.',
+  };
+
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
   const adminStatsRequestInFlightRef = useRef(false);
@@ -1050,6 +1219,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const updated = { ...license, startedAt: data.startedAt || license.startedAt, expiresAt: data.expiresAt ?? license.expiresAt };
       setUserProducts((current) => current.map((item) => item.id === license.id ? updated : item));
       setGuideModalProduct(updated);
+      setGuideView('menu');
     } catch (error) {
       showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'), 'error');
     } finally {
@@ -2951,7 +3121,310 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
       )}
 
-      {guideModalProduct && !getLicenseTiming(guideModalProduct).isExpired && <ProductGuideModal key={guideModalProduct.id} license={guideModalProduct} onClose={() => setGuideModalProduct(null)} />}
+      {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => { setGuideModalProduct(null); setGuideView(null); }} />
+          <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="guide-experience-modal relative w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_28px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className={`shrink-0 min-h-[112px] px-5 sm:px-7 py-5 sm:py-6 border-b border-white/10 flex items-center justify-center ${lang === 'ar' ? 'bg-gradient-to-l' : 'bg-gradient-to-r'} from-primary/10 via-slate-950/70 to-slate-950/95 relative overflow-hidden`}>
+              <div className="absolute -top-16 -left-10 w-56 h-56 bg-primary/20 rounded-full blur-[70px]" />
+              <button
+                onClick={() => { setGuideModalProduct(null); setGuideView(null); }}
+                aria-label={guideText.close}
+                className="absolute left-5 sm:left-7 top-1/2 -translate-y-1/2 z-20 w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 transition-all duration-200 hover:scale-105 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="relative z-10 min-w-0 flex items-center gap-3 px-12 text-center">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
+                <h3 className="break-words text-center text-base font-black text-white sm:text-2xl">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideView === 'format' ? guideText.formatSectionTitle : `${guideModalProduct.product?.name || guideText.modalTitle} · ${guideText.modalTitle}`}</h3>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="guide-experience-body p-4 sm:p-6 lg:p-7 overflow-y-auto scrollbar-thin bg-gradient-to-b from-slate-950/15 to-slate-950/55">
+              {guideView === 'menu' && (
+                <div className="grid auto-rows-fr grid-cols-1 gap-4 rounded-[28px] border border-white/[.10] bg-[#06101d]/92 p-3 sm:grid-cols-2 sm:gap-5 sm:p-4 lg:grid-cols-3 animate-slide-up">
+                  {/* Full Tutorial Button */}
+                  <button
+                    onClick={() => {
+                      setGuideView('notice');
+                    }}
+                    className="guide-menu-card relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-indigo-950/80 via-slate-900 to-[#070b14] border border-indigo-300/[.20] hover:border-indigo-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(37,99,235,.18)] hover:-translate-y-1"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(59,130,246,0.2)]">
+                      <Play className="w-7 h-7" fill="currentColor" />
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-extrabold text-white mb-2 text-lg">{guideText.tutorialTitle}</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed max-w-[220px]">{guideText.tutorialDescription}</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setGuideView('format')}
+                    className="guide-menu-card guide-prep-card relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-sky-950/85 via-[#0b1f31] to-[#070d18] border border-sky-300/[.22] hover:border-sky-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(14,116,144,.18)] hover:-translate-y-1"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-sky-400/[.12] border border-sky-300/[.25] flex items-center justify-center text-sky-200 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(56,189,248,.15)]">
+                      <Play className="w-7 h-7" fill="currentColor" />
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-extrabold text-white mb-2 text-lg">{guideText.formatSectionTitle}</h4>
+                      <p className="text-xs text-sky-100/65 leading-relaxed max-w-[220px]">{guideText.formatSectionDescription}</p>
+                    </div>
+                    <span className="inline-flex rounded-lg border border-sky-200/20 bg-sky-400/[.08] px-3 py-1.5 text-[10px] font-black text-sky-100">{guideText.formatSectionAction}</span>
+                  </button>
+
+                  {/* Visual issue-fix center */}
+                  <button
+                    onClick={() => setGuideView('issues')}
+                    className="guide-menu-card relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-emerald-950/[.44] via-slate-900 to-[#070b14] border border-emerald-300/[.16] hover:border-emerald-300/45 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(16,185,129,.14)] hover:-translate-y-1"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-400/10 border border-emerald-400/25 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform duration-200 shadow-[0_0_28px_rgba(16,185,129,0.13)]">
+                      <HelpCircle className="w-7 h-7" />
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-extrabold text-white mb-2 text-lg">{guideText.supportTitle}</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed max-w-[220px]">{guideText.supportDescription}</p>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {guideView === 'format' && (
+                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-5">
+                  <section className="relative overflow-hidden rounded-[26px] border border-sky-300/[.22] bg-[linear-gradient(135deg,rgba(8,47,73,.90),rgba(15,23,42,.96))] p-5 shadow-[0_22px_52px_rgba(8,47,73,.22)] sm:p-6">
+                    <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-sky-300/15 blur-[70px]" />
+                    <div className="relative flex flex-col gap-5"><div className="flex flex-col gap-3 border-b border-sky-200/[.12] pb-5 sm:flex-row sm:items-start sm:justify-between"><div className="flex gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-sky-200/20 bg-sky-400/[.12] text-sky-100"><Play className="h-5 w-5" fill="currentColor" /></span><div><p className="text-[10px] font-black tracking-[.16em] text-sky-200/80">{lang === 'ar' ? 'قسم تحضيري مستقل' : 'SEPARATE PREPARATION'}</p><h4 className="mt-1 text-xl font-black text-white">{guideText.formatSectionTitle}</h4><p className="mt-2 max-w-xl text-[12px] leading-6 text-slate-300">{guideText.preparationDescription}</p></div></div><button onClick={() => setGuideView('menu')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[.10] bg-white/[.04] px-3 text-[11px] font-black text-slate-300 transition hover:border-sky-300/35 hover:bg-sky-400/[.10] hover:text-white sm:self-auto">{lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}</button></div>
+                    <div className="grid gap-3 sm:grid-cols-2">{[{ label: guideText.windows11Label, url: 'https://youtu.be/XZ-9RbqlA2k', number: '01' }, { label: guideText.windows10Label, url: 'https://youtu.be/WaFxvUmsNWs', number: '02' }].map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer" className="group flex min-h-28 flex-col justify-between rounded-2xl border border-white/[.10] bg-slate-950/45 p-4 transition hover:-translate-y-0.5 hover:border-sky-300/45 hover:bg-sky-400/[.08]"><div className="flex items-center justify-between gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl border border-sky-200/15 bg-sky-400/[.10] text-[10px] font-black text-sky-100">{item.number}</span><span className="grid h-8 w-8 place-items-center rounded-lg bg-white/[.06] text-sky-200 transition group-hover:scale-105"><Play className="h-3.5 w-3.5" fill="currentColor" /></span></div><div><h5 className="text-sm font-black text-white">{item.label}</h5><p className="mt-1 text-[10px] text-slate-400">{guideText.watchPreparation}</p></div></a>)}</div>
+                    <div className="rounded-2xl border border-amber-300/[.16] bg-amber-300/[.06] p-3.5"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" /><p className="text-[11px] leading-6 text-amber-100/80"><strong className="font-black text-amber-100">{guideText.motherboardTitle}:</strong> {guideText.motherboardDescription}</p></div></div>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {guideView === 'issues' && (
+                <div className="animate-slide-up mx-auto w-full max-w-4xl space-y-5">
+                  <div className="flex flex-col gap-2 border-b border-white/[0.10] pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="text-start">
+                      <div className="flex flex-wrap items-center gap-2"><p className="text-[10px] font-black tracking-[0.18em] text-emerald-300/80">{guideText.issuesLabel}</p><span className="rounded-md border border-emerald-300/20 bg-emerald-400/[0.08] px-2 py-1 text-[9px] font-black text-emerald-100">{guideText.libraryAvailable}</span></div>
+                      <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">{guideText.issuesTitle}</h4>
+                      <p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-300 sm:text-[13px]">{guideText.issuesDescription}</p>
+                    </div>
+                    <button onClick={() => setGuideView('menu')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 text-[11px] font-black text-slate-300 transition-all hover:border-primary/35 hover:bg-primary/10 hover:text-white sm:self-auto">
+                      {lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}
+                    </button>
+                  </div>
+                  <section className="relative overflow-hidden rounded-[22px] border border-rose-300/[.20] bg-[linear-gradient(135deg,rgba(136,19,55,.20),rgba(15,23,42,.92)_48%,rgba(8,47,73,.48))] p-4 shadow-[0_16px_40px_rgba(0,0,0,.16)] sm:p-5">
+                    <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-rose-300/[.14] blur-3xl" />
+                    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-rose-200/[.28] bg-rose-400/[.12] text-rose-100"><AlertCircle className="h-5 w-5" /></span>
+                        <div className="min-w-0 text-start"><p className="text-[10px] font-black tracking-[.15em] text-rose-200/85">VISUAL C++ RUNTIME</p><h5 className="mt-1 text-sm font-black text-white sm:text-[15px]">{guideText.commonErrorsTitle}</h5><p className="mt-1 max-w-2xl text-[11px] leading-5 text-slate-300">{guideText.commonErrorsDescription}</p><p className="mt-2 text-[10px] font-bold text-rose-100/80">{guideText.commonErrorsNote}</p></div>
+                      </div>
+                      <a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="guide-runtime-download inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200/[.44] bg-rose-300 px-4 py-2.5 text-[11px] font-black text-rose-950 shadow-[0_10px_24px_rgba(251,113,133,.22)] transition hover:-translate-y-0.5 hover:bg-rose-200 active:scale-[.98]"><Download className="h-4 w-4" />{guideText.commonErrorsAction}</a>
+                    </div>
+                    <figure className="guide-runtime-preview relative mt-4 overflow-hidden rounded-2xl border border-rose-200/[.18] bg-slate-950/75 p-3 sm:p-4">
+                      <div className="mb-3 flex flex-col gap-1 text-start sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-black tracking-[.14em] text-rose-200">{guideText.runtimePreviewLabel}</p><p className="mt-1 text-[11px] leading-5 text-slate-300">{guideText.runtimePreviewDescription}</p></div><span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-200/[.18] bg-rose-400/[.10] px-2.5 py-1 text-[9px] font-black text-rose-100"><AlertCircle className="h-3.5 w-3.5" />MSVCP140.dll</span></div>
+                      <img src="/assets/guides/visual-cpp-runtime-error.png" alt={lang === 'ar' ? 'مثال لرسالة خطأ MSVCP140.dll وVisual C++ Runtime' : 'Example MSVCP140.dll and Visual C++ Runtime error message'} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[.12] bg-black object-contain shadow-[0_12px_26px_rgba(0,0,0,.28)] sm:max-h-[460px]" />
+                      <figcaption className="mt-3 grid gap-2 text-[10px] leading-5 text-slate-300 sm:grid-cols-3"><span><b className="text-rose-100">01.</b> {guideText.runtimePreviewStepOne}</span><span><b className="text-rose-100">02.</b> {guideText.runtimePreviewStepTwo}</span><span><b className="text-rose-100">03.</b> {guideText.runtimePreviewStepThree}</span></figcaption>
+                    </figure>
+                  </section>
+                  <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
+                    {[
+                      { view: 'network' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png', title: guideText.networkIssueTitle, description: guideText.networkIssueDescription, accent: 'sky' },
+                      { view: 'timer' as const, image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/iUIBJOOTPsAnQTJW.png', title: guideText.timeIssueTitle, description: guideText.timeIssueDescription, accent: 'violet' },
+                      { view: 'spoofer' as const, image: '/spoofer-list-fix.png', title: guideText.spooferIssueTitle, description: guideText.spooferIssueDescription, accent: 'emerald' },
+                    ].map((issue, index) => (
+                      <button key={issue.view} onClick={() => setGuideView(issue.view)} className={`group flex h-full flex-col overflow-hidden rounded-[22px] border text-start transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(0,0,0,0.26)] ${issue.accent === 'sky' ? 'border-sky-300/[0.18] bg-sky-400/[0.045] hover:border-sky-300/40' : issue.accent === 'emerald' ? 'border-emerald-300/[0.18] bg-emerald-400/[0.045] hover:border-emerald-300/40' : 'border-violet-300/[0.18] bg-violet-400/[0.045] hover:border-violet-300/40'}`}>
+                        <div className="relative aspect-[16/8.8] overflow-hidden bg-black">
+                          <img src={issue.image} alt={issue.title} loading="lazy" className="h-full w-full object-cover opacity-80 transition-transform duration-300 group-hover:scale-[1.035] group-hover:opacity-100" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent" />
+                          <span className={`absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border text-[11px] font-black ${issue.accent === 'sky' ? 'border-sky-200/30 bg-sky-400/15 text-sky-100' : issue.accent === 'emerald' ? 'border-emerald-200/30 bg-emerald-400/15 text-emerald-100' : 'border-violet-200/30 bg-violet-400/15 text-violet-100'}`}>0{index + 1}</span>
+                          <span className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-black/40 text-white backdrop-blur-sm transition-transform duration-200 group-hover:scale-110"><Play className="h-4 w-4" fill="currentColor" /></span><span className="absolute bottom-4 left-4 rounded-lg border border-white/[0.18] bg-slate-950/65 px-2 py-1 text-[9px] font-black tracking-[0.12em] text-white/90 backdrop-blur-sm">{guideText.videoGuide}</span>
+                        </div>
+                        <div className="flex flex-1 flex-col p-4 sm:p-5">
+                          <h5 className="text-[15px] font-black text-white sm:text-base">{issue.title}</h5>
+                          <p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-300 sm:text-[12px]">{issue.description}</p>
+                          <div className={`mt-auto pt-4 inline-flex items-center gap-2 text-[11px] font-black ${issue.accent === 'sky' ? 'text-sky-200' : issue.accent === 'emerald' ? 'text-emerald-200' : 'text-violet-200'}`}><Play className="h-3.5 w-3.5" fill="currentColor" />{guideText.watchSolution}</div>
+                        </div>
+                      </button>
+                    ))}
+                    <a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="group relative flex h-full min-h-[250px] flex-col overflow-hidden rounded-[22px] border border-rose-300/[0.22] bg-[linear-gradient(135deg,rgba(136,19,55,.18),rgba(15,23,42,.88)_54%,rgba(8,47,73,.50))] p-4 text-start shadow-[0_16px_36px_rgba(0,0,0,.18)] transition-all duration-200 hover:-translate-y-1 hover:border-rose-300/45 hover:shadow-[0_20px_44px_rgba(136,19,55,.22)] sm:p-5">
+                      <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-rose-300/[.13] blur-3xl" />
+                      <div className="relative flex items-start justify-between gap-4"><span className="grid h-10 w-10 place-items-center rounded-xl border border-rose-200/30 bg-rose-400/[.15] text-[11px] font-black text-rose-100">04</span><span className="grid h-11 w-11 place-items-center rounded-xl border border-rose-200/[.26] bg-slate-950/30 text-rose-100 transition-transform duration-200 group-hover:scale-110"><AlertCircle className="h-5 w-5" /></span></div>
+                      <div className="relative mt-auto pt-8"><span className="inline-flex rounded-lg border border-rose-200/[.22] bg-rose-400/[.10] px-2 py-1 text-[9px] font-black tracking-[.12em] text-rose-100">MICROSOFT VISUAL C++</span><h5 className="mt-3 text-[15px] font-black text-white sm:text-base">{guideText.runtimeIssueTitle}</h5><p className="mt-2 min-h-10 text-[11px] leading-5 text-slate-300 sm:text-[12px]">{guideText.runtimeIssueDescription}</p><p className="mt-3 border-t border-white/[.10] pt-3 text-[10px] leading-5 text-rose-100/80">{guideText.runtimeIssueHint}</p><span className="mt-4 inline-flex items-center gap-2 text-[11px] font-black text-rose-100"><Download className="h-3.5 w-3.5" />{guideText.runtimeIssueAction}</span></div>
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {(guideView === 'network' || guideView === 'timer' || guideView === 'spoofer') && (() => {
+                const isNetwork = guideView === 'network';
+                const solution = guideView === 'network' ? {
+                  title: guideText.networkIssueTitle,
+                  description: guideText.networkIssueDescription,
+                  image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png',
+                  video: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/YDCQGNGzJcLXDrXO.mp4',
+                  accent: 'sky',
+                } : guideView === 'timer' ? {
+                  title: guideText.timeIssueTitle,
+                  description: guideText.timeIssueDescription,
+                  image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/iUIBJOOTPsAnQTJW.png',
+                  video: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/dMYRLGIaslnDGgDt.mp4',
+                  accent: 'violet',
+                } : {
+                  title: guideText.spooferIssueTitle,
+                  description: guideText.spooferIssueDescription,
+                  image: '/spoofer-list-fix.png',
+                  video: '/spoofer-list-fix.mp4',
+                  accent: 'emerald',
+                };
+                return <div className="animate-slide-up mx-auto w-full max-w-4xl space-y-4">
+                  <div className="flex flex-col gap-3 border-b border-white/[0.10] pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 text-start"><p className={`text-[10px] font-black tracking-[0.18em] ${solution.accent === 'sky' ? 'text-sky-300/85' : solution.accent === 'emerald' ? 'text-emerald-300/85' : 'text-violet-300/85'}`}>{guideText.solutionVideoLabel}</p><h4 className="mt-1 truncate text-lg font-black text-white sm:text-xl">{solution.title}</h4></div>
+                    <button onClick={() => setGuideView('issues')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 text-[11px] font-black text-slate-300 transition-all hover:border-primary/35 hover:bg-primary/10 hover:text-white sm:self-auto">{lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}</button>
+                  </div>
+                  <section className={`overflow-hidden rounded-[24px] border bg-black/45 shadow-[0_20px_52px_rgba(0,0,0,0.34)] ${solution.accent === 'sky' ? 'border-sky-300/[0.18]' : solution.accent === 'emerald' ? 'border-emerald-300/[0.18]' : 'border-violet-300/[0.18]'}`}>
+                    <div className="relative aspect-video w-full bg-black"><video src={solution.video} className="absolute inset-0 h-full w-full bg-black object-contain" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline preload="metadata" autoPlay /></div>
+                    <div className="flex flex-col gap-3 border-t border-white/[0.09] p-4 sm:px-5"><div className="min-w-0 text-start"><p className="text-[12px] leading-6 text-slate-400">{solution.description}</p>{isNetwork && <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-emerald-300/[0.30] bg-[linear-gradient(135deg,rgba(16,185,129,.17),rgba(6,78,59,.28)_52%,rgba(2,44,34,.44))] p-3.5 shadow-[0_12px_30px_rgba(5,150,105,.14)] sm:flex-row sm:items-center sm:justify-between sm:p-4"><div className="min-w-0"><p className="text-[10px] font-black tracking-[0.14em] text-emerald-200/85">{guideText.downloadWarpLabel}</p><h5 className="mt-1 text-sm font-black leading-5 text-white sm:text-[15px]">{guideText.downloadWarp}</h5><p className="mt-1 text-[11px] leading-5 text-emerald-100/75">{guideText.downloadWarpHint}</p></div><a href="https://downloads.cloudflareclient.com/v1/download/windows/ga" target="_blank" rel="noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200/45 bg-emerald-400 px-4 py-2.5 text-xs font-black text-emerald-950 shadow-[0_10px_24px_rgba(16,185,129,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-300 hover:shadow-[0_14px_30px_rgba(16,185,129,.38)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2 focus:ring-offset-slate-950"><ArrowLeft className={`h-4 w-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /><span>{guideText.downloadWarpAction}</span></a></div>}</div><div className="flex shrink-0 flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-2 self-start rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${solution.accent === 'sky' ? 'border-sky-300/20 bg-sky-400/10 text-sky-100' : solution.accent === 'emerald' ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100' : 'border-violet-300/20 bg-violet-400/10 text-violet-100'}`}><Play className="h-3 w-3" fill="currentColor" />{guideText.watchSolution}</span></div></div>
+                  </section>
+                  <section className="overflow-hidden rounded-[20px] border border-white/[0.10] bg-white/[0.025] p-3 sm:p-4"><div className="mb-3 flex items-center gap-2 text-start text-[10px] font-black tracking-[0.14em] text-slate-400"><AlertTriangle className="h-3.5 w-3.5 text-amber-300" />{guideText.screenshotLabel}</div><img src={solution.image} alt={solution.title} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[0.08] bg-black object-contain" /></section>
+                </div>;
+              })()}
+
+              {guideView === 'notice' && (
+                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-4 sm:space-y-5">
+                  <section className="relative overflow-hidden rounded-[24px] border border-amber-300/[0.22] bg-[linear-gradient(135deg,rgba(251,191,36,.12),rgba(15,23,42,.92)_46%,rgba(2,6,23,.96))] p-5 shadow-[0_20px_48px_rgba(0,0,0,.24),0_0_34px_rgba(245,158,11,.08)] sm:p-6">
+                    <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-amber-300/15 blur-[76px]" />
+                    <div className="pointer-events-none absolute bottom-0 right-0 h-px w-2/3 bg-gradient-to-l from-amber-200/30 to-transparent" />
+                    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+                      <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-200/[0.30] bg-amber-300/[0.12] text-amber-200 shadow-[0_0_0_6px_rgba(251,191,36,.035),0_0_26px_rgba(251,191,36,.15)]">
+                        <AlertTriangle className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1 text-start">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black tracking-[0.14em] text-amber-200/85">
+                          <span>{guideText.noticeLabel}</span>
+                          <span className="h-1 w-1 rounded-full bg-amber-200/60" />
+                          <span className="text-amber-100/55">{guideText.noticeHint}</span>
+                        </div>
+                        <h4 className="mt-2 text-xl font-black tracking-tight text-white sm:text-[25px]">{guideText.noticeTitle}</h4>
+                        <p className="mt-3 max-w-2xl text-[13px] font-medium leading-7 text-slate-200 sm:text-sm">{guideText.introBefore}<strong className="font-extrabold text-white">{guideText.introProduct}</strong>{guideText.introMiddle}<strong className="font-extrabold text-white">{guideText.introEmphasis}</strong>{guideText.introAfter}</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-4">
+                    <section className="group rounded-[20px] border border-white/[0.10] bg-white/[0.035] p-5 transition-colors hover:border-white/[0.16]">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/[0.10] bg-white/[0.045] text-[11px] font-black text-slate-300">01</span>
+                        <div className="min-w-0">
+                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><Shield className="h-4 w-4 text-primary" />{guideText.importantTitle}</h5>
+                          <p className="mt-3 text-[13px] leading-6 text-slate-300">{guideText.importantPrimaryBefore}<strong className="font-extrabold text-white">{guideText.storeName}</strong>{guideText.importantPrimaryAfter}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t border-white/[0.08] pt-3.5 text-[12px] leading-6 text-slate-400">{guideText.importantSecondaryBefore}<strong className="font-bold text-slate-200">{guideText.importantSecondaryStrong}</strong>.</div>
+                    </section>
+                    <section className="group rounded-[20px] border border-primary/[0.20] bg-primary/[0.055] p-5 transition-colors hover:border-primary/[0.34]">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/25 bg-primary/[0.10] text-[11px] font-black text-primary">02</span>
+                        <div className="min-w-0">
+                          <h5 className="flex items-center gap-2 text-sm font-black text-white"><MessageSquare className="h-4 w-4 text-primary" />{guideText.supportHeading}</h5>
+                          <p className="mt-3 text-[13px] leading-6 text-slate-300">{guideText.supportPrimaryBefore}<strong className="font-extrabold text-white">{guideText.supportPrimaryStrong}</strong>.</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t border-primary/[0.13] pt-3.5 text-[12px] leading-6 text-slate-400">{guideText.supportSecondary}</div>
+                    </section>
+                  </div>
+
+                  <section className="rounded-[20px] border border-amber-300/[0.16] bg-amber-300/[0.055] p-4 sm:px-5">
+                    <div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-amber-300/20 bg-amber-300/[.09] text-amber-200"><AlertCircle className="h-4 w-4" /></span><div><h5 className="text-xs font-black text-amber-100">{guideText.motherboardTitle}</h5><p className="mt-1.5 text-[11px] leading-5 text-amber-100/70">{guideText.motherboardDescription}</p></div></div>
+                  </section>
+
+                  <section className="flex flex-col gap-4 rounded-[20px] border border-white/[0.10] bg-black/25 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${tutorialCountdown > 0 ? 'border-amber-300/25 bg-amber-300/[0.10] text-amber-200' : 'border-emerald-300/25 bg-emerald-300/[0.10] text-emerald-200'}`}>
+                        {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      </span>
+                      <div className="min-w-0 text-start">
+                        <p className="text-xs font-black text-slate-200">{tutorialCountdown > 0 ? guideText.waitingTitle : guideText.readyTitle}</p>
+                        <p aria-live="polite" className="mt-1 text-[11px] leading-5 text-slate-400">{tutorialCountdown > 0 ? guideText.waitingMessage(tutorialCountdown) : guideText.readyMessage}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={tutorialCountdown > 0}
+                      onClick={() => setGuideView('full')}
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary px-5 py-2.5 text-sm font-black text-white shadow-[0_10px_24px_rgba(37,99,235,.24)] transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:hover:bg-primary-hover enabled:hover:shadow-[0_14px_28px_rgba(37,99,235,.32)] enabled:active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500 sm:min-w-[196px]"
+                    >
+                      {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {tutorialCountdown > 0 ? guideText.waitingButton(tutorialCountdown) : guideText.continueButton}
+                    </button>
+                  </section>
+                </div>
+              )}
+
+              {guideView === 'full' && (
+                <div className="space-y-4 animate-slide-up">
+                  <div className={`flex items-center px-1 border-b border-white/10 pb-4 ${lang === 'ar' ? 'justify-end' : 'justify-start'}`}>
+                    <button onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
+                      {lang === 'ar' ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                      {guideText.back}
+                    </button>
+                  </div>
+                  <div className="aspect-video w-full rounded-2xl sm:rounded-3xl border border-white/10 ring-1 ring-black/40 overflow-hidden bg-[#030712] flex flex-col items-center justify-center p-0 text-center relative shadow-[0_22px_55px_rgba(0,0,0,0.5)]">
+                    {guideModalProduct.product?.videoUrl ? (
+                      guideModalProduct.product.videoUrl.includes('youtube.com') || guideModalProduct.product.videoUrl.includes('youtu.be') ? (
+                        <iframe 
+                          src={guideModalProduct.product.videoUrl
+                            .replace('watch?v=', 'embed/')
+                            .replace('youtu.be/', 'youtube.com/embed/')
+                            .replace(/[?&]t=([0-9]+)s?/, (match, p1) => {
+                              const prefix = match.startsWith('&') ? '&' : '?';
+                              return `${prefix}start=${p1}`;
+                            })
+                          } 
+                          className="absolute inset-0 w-full h-full" 
+                          allowFullScreen
+                        />
+                      ) : guideModalProduct.product.videoUrl.includes('drive.google.com') ? (
+                        <video
+                          src={DIRECT_TUTORIAL_VIDEO_URL}
+                          className="absolute inset-0 w-full h-full object-contain bg-black"
+                          controls
+                          controlsList="nodownload noremoteplayback"
+                          disablePictureInPicture
+                          playsInline
+                          preload="metadata"
+                          autoPlay
+                        />
+                      ) : (                        <video 
+                          src={guideModalProduct.product.videoUrl} 
+                          className="absolute inset-0 w-full h-full object-contain bg-black" 
+                          controls 
+                          autoPlay
+                        />
+                      )
+                    ) : (
+                      <div className="p-8">
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10 shadow-inner">
+                          <AlertCircle className="w-10 h-10 text-slate-500" />
+                        </div>
+                        <h3 className="text-white font-extrabold mb-2 text-lg">{guideText.unavailableTitle}</h3>
+                        <p className="text-sm text-slate-400 max-w-md leading-relaxed">
+                          {guideText.unavailableMessage}
+                          <br /><br />
+                          {guideText.unavailableHelp}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
       {selectedAdminCustomer && (
