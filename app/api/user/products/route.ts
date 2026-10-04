@@ -12,6 +12,7 @@ export async function GET(req: Request) {
     }
 
     const ip = getClientIp(req);
+    let isNewUser = false;
     let user = await StoreDB.getUserByDiscordId(actor.discordId);
     if (!user) {
       const createdAt = new Date().toISOString();
@@ -32,6 +33,7 @@ export async function GET(req: Request) {
       } as any;
       await StoreDB.createUser(newUser);
       user = newUser;
+      isNewUser = true;
       await StoreDB.addLog(
         'User Registered',
         `تم تسجيل دخول العميل ${newUser.name} لأول مرة بنجاح`,
@@ -73,7 +75,7 @@ export async function GET(req: Request) {
       StoreDB.getUserProducts(user.id),
       StoreDB.getAuditEvents({ userId: user.id, limit: 12 }),
     ]);
-    return NextResponse.json({ success: true, products, user, activity });
+    return NextResponse.json({ success: true, products, user, activity, isNewUser });
   } catch (error) {
     console.error('User products synchronization failed:', error);
     return NextResponse.json({ success: false, message: 'تعذر تحميل المنتجات الآن. حاول مرة أخرى.' }, { status: 500 });

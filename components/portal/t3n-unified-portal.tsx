@@ -228,6 +228,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [showExpiredLicenses, setShowExpiredLicenses] = useState(false);
+  const [newUserWelcome, setNewUserWelcome] = useState<{ name: string } | null>(null);
   const userProductsRequestInFlightRef = useRef(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
@@ -541,6 +542,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         const nextActivity = Array.isArray(data.activity) ? data.activity as AuditEvent[] : [];
         setUserProducts((current) => JSON.stringify(current) === JSON.stringify(nextProducts) ? current : nextProducts);
         setUserActivity((current) => JSON.stringify(current) === JSON.stringify(nextActivity) ? current : nextActivity);
+        if (data.isNewUser && !sessionStorage.getItem('t3n-new-user-welcome-shown')) {
+          sessionStorage.setItem('t3n-new-user-welcome-shown', '1');
+          setNewUserWelcome({ name: data.user?.name || currentUser.name });
+        }
       }
     } catch (e) {
       console.error('Failed to load user products:', e);
@@ -1678,6 +1683,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {activeTab === 'overview' && (
           <div className="portal-section-enter overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-6">
+              {newUserWelcome && (
+                <section className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-sky-300/20 bg-gradient-to-br from-sky-400/[.16] via-[#171b22]/95 to-[#171b22]/95 text-white' : 'border-sky-200 bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-slate-950 shadow-[0_18px_38px_rgba(30,120,180,0.12)]'}`}>
+                  <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-sky-300/20 blur-3xl" />
+                  <button type="button" onClick={() => setNewUserWelcome(null)} className={`absolute top-3 ${lang === 'ar' ? 'left-3' : 'right-3'} rounded-lg p-2 transition ${isDark ? 'text-slate-300 hover:bg-white/10 hover:text-white' : 'text-slate-500 hover:bg-slate-200/70 hover:text-slate-900'}`} aria-label={lang === 'ar' ? 'إغلاق رسالة الترحيب' : 'Close welcome message'}>
+                    <X className="h-4 w-4" />
+                  </button>
+                  <div className="relative flex items-start gap-3 pe-8">
+                    <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border ${isDark ? 'border-sky-200/20 bg-sky-200/10 text-sky-100' : 'border-sky-200 bg-white text-sky-700'}`}>
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-[10px] font-black uppercase tracking-[0.16em] ${isDark ? 'text-sky-200/80' : 'text-sky-700/80'}`}>{lang === 'ar' ? 'مرحباً بك في تعن' : 'Welcome to T3N'}</p>
+                      <h2 className="mt-1 text-base font-extrabold sm:text-lg">{lang === 'ar' ? `أهلاً ${newUserWelcome.name}، تم تجهيز حسابك بنجاح.` : `Welcome ${newUserWelcome.name}, your account is ready.`}</h2>
+                      <p className={`mt-1.5 text-xs leading-6 sm:text-sm ${isDark ? 'text-slate-200/75' : 'text-slate-600'}`}>{lang === 'ar' ? 'يمكنك الآن تفعيل مفتاحك، الوصول إلى منتجاتك وفتح دليل الاستخدام عند الحاجة.' : 'You can now redeem your key, access your products and open the product guide whenever you need it.'}</p>
+                    </div>
+                  </div>
+                </section>
+              )}
               {/* Welcome banner: the spacious anchor of the dashboard. */}
               <section className={`overview-welcome-card relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-white/[0.14] bg-[#171b22]/92 text-white' : 'border-slate-200 bg-white text-slate-950 shadow-[0_18px_38px_rgba(30,64,95,0.08)]'}`}>
                 <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(110deg,rgba(255,255,255,0.055),transparent_42%,rgba(88,172,234,0.10))]" />
@@ -3452,4 +3475,3 @@ function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfir
     </AnimatePresence>
   );
 }
-
