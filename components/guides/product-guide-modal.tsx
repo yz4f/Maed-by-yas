@@ -1,46 +1,90 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { AlertCircle, AlertTriangle, ArrowRight, BookOpen, Clock, Download, HelpCircle, Play, Shield, X } from 'lucide-react';
+import { BookOpen, Check, ChevronLeft, Cpu, HardDrive, Layers, Monitor, Play, Router, Shield, Wrench } from 'lucide-react';
 import type { UserProduct } from '@/types';
+import { articlesForProduct, GUIDE_STAGES, MAIN_VIDEO_FALLBACK } from '@/lib/guide-library';
+import { BeforeStart, GuideArticleView, GuideCard, GuideDialog, GuideVideo } from './guide-ui';
+import { ProductNotice } from './product-notice';
+import styles from './guides.module.css';
 
-type View = 'menu' | 'notice' | 'full' | 'format' | 'issues' | 'network' | 'timer' | 'spoofer';
-const issues = {
-  network: { title: 'مشكلة الشبكة أو إيقاف الواي فاي', description: 'عند ظهور رسالة عدم الوصول إلى اسم المضيف أو فشل اتصال الشبكة.', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/witHZYIQKdMeiaUM.png', video: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/YDCQGNGzJcLXDrXO.mp4' },
-  timer: { title: 'خطأ الوقت والتحقق', description: 'عند ظهور تنبيه مزامنة وقت ويندوز أو فشل التحقق من التوقيع.', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/iUIBJOOTPsAnQTJW.png', video: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/dMYRLGIaslnDGgDt.mp4' },
-  spoofer: { title: 'مشكلة عدم ظهور قائمة Spoofer', description: 'عندما يظهر أن WebUI يعمل لكن قائمة Spoofer لا تظهر داخل الواجهة.', image: '/spoofer-list-fix.png', video: '/spoofer-list-fix.mp4' },
-} as const;
-function embed(url: string) { try { const parsed = new URL(url); const id = parsed.hostname.includes('youtu.be') ? parsed.pathname.slice(1) : parsed.searchParams.get('v'); return id ? `https://www.youtube.com/embed/${id}` : url; } catch { return url; } }
+type Progress = { last: string; steps: string[]; articles: string[]; accepted: boolean; variants: Record<string, string> };
+const empty: Progress = { last: 'home', steps: [], articles: [], accepted: false, variants: {} };
+function loadProgress(key: string): Progress {
+  try {
+    const data = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!data || typeof data.last !== 'string') return empty;
+    return { last: data.last, steps: Array.isArray(data.steps) ? data.steps.filter((v: unknown) => typeof v === 'string').slice(0,500) : [], articles: Array.isArray(data.articles) ? data.articles.filter((v: unknown) => typeof v === 'string').slice(0,100) : [], accepted: data.accepted === true, variants: data.variants && typeof data.variants === 'object' ? Object.fromEntries(Object.entries(data.variants).filter(([, value]) => typeof value === 'string').slice(0,30)) as Record<string, string> : {} };
+  } catch { return empty; }
+}
+const categories = [
+  { id: 'prepare', title: 'قبل التشغيل' }, { id: 'run', title: 'تشغيل المنتج' }, { id: 'finish', title: 'الاتصال والخطوات النهائية' }, { id: 'issues', title: 'حلول المشاكل' },
+];
 
 export function ProductGuideModal({ license, onClose }: { license: UserProduct; onClose: () => void }) {
   const product = license.product;
-  const [view, setView] = useState<View>('menu');
-  const [countdown, setCountdown] = useState(5);
-  const [issueId, setIssueId] = useState<keyof typeof issues>('network');
-  const [videoAttempt, setVideoAttempt] = useState(0);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const issue = issues[issueId];
-  const menuCards: Array<{ title: string; text: string; target: View; icon: LucideIcon }> = [
-    { title: 'شرح المنتج', text: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.', target: 'notice', icon: Play },
-    { title: 'تجهيز فلاش Windows', text: 'قسم مستقل لتحضير USB قبل متابعة دليل المنتج.', target: 'format', icon: Play },
-    { title: 'حلول المشاكل الشائعة', text: 'شروحات مرئية داخل الموقع لأخطاء الشبكة والوقت والتشغيل.', target: 'issues', icon: HelpCircle },
-  ];
-  useEffect(() => { if (view !== 'notice') return; setCountdown(5); const timer = window.setInterval(() => setCountdown(value => Math.max(0, value - 1)), 1000); return () => window.clearInterval(timer); }, [view]);
-  useEffect(() => { setVideoAttempt(0); setVideoFailed(false); }, [issueId]);
-  const back = () => setView(view === 'issues' || view === 'format' || view === 'notice' || view === 'full' ? 'menu' : 'issues');
-  return <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" dir="rtl">
-    <button type="button" aria-label="إغلاق نافذة الشرح" className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
-    <div className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/95 text-white shadow-[0_28px_90px_rgba(0,0,0,.58)]">
-      <header className="relative flex min-h-[92px] items-center justify-center border-b border-white/10 bg-gradient-to-l from-blue-500/10 via-slate-950/80 to-slate-950/95 px-5"><button type="button" onClick={onClose} aria-label="إغلاق" className="absolute left-5 grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 hover:bg-red-500/20"><X className="h-4 w-4" /></button><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-2xl border border-blue-300/30 bg-blue-400/15 text-blue-200"><HelpCircle className="h-5 w-5" /></span><h2 className="text-xl font-black sm:text-2xl">شرح {product?.name || 'المنتج'}</h2></div></header>
-      <div className="overflow-y-auto bg-gradient-to-b from-slate-950/15 to-slate-950/55 p-4 sm:p-6">
-        {view === 'menu' && <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#06101d]/95 p-3 sm:grid-cols-3 sm:p-4">{menuCards.map(({ title, text, target, icon: Icon }) => <button type="button" key={target} onClick={() => setView(target)} className="group flex min-h-[250px] flex-col items-center justify-center gap-4 rounded-[22px] border border-white/10 bg-gradient-to-br from-slate-900 to-[#070b14] p-7 text-center transition hover:-translate-y-1 hover:border-blue-300/50"><span className="grid h-16 w-16 place-items-center rounded-2xl border border-blue-300/25 bg-blue-400/10 text-blue-200 transition group-hover:scale-110"><Icon className="h-7 w-7" /></span><span><strong className="block text-lg">{title}</strong><small className="mt-2 block leading-6 text-slate-400">{text}</small></span></button>)}</div>}
-        {view === 'format' && <section className="mx-auto max-w-3xl space-y-5"><button type="button" onClick={back} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-slate-300"><ArrowRight className="h-4 w-4" />العودة للقائمة السابقة</button><div className="rounded-[26px] border border-sky-300/20 bg-gradient-to-br from-sky-950/90 to-slate-900 p-5 sm:p-6"><div className="flex items-start gap-3"><Play className="mt-1 h-5 w-5 text-sky-200" fill="currentColor" /><div><p className="text-[10px] font-black tracking-[.16em] text-sky-200/80">قسم تحضيري مستقل</p><h3 className="mt-1 text-xl font-black">تجهيز فلاش Windows</h3><p className="mt-2 text-xs leading-6 text-slate-300">يلزم تجهيز فلاش USB بنسخة Windows المناسبة قبل متابعة شرح المنتج.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{[['تجهيز فلاش Windows 11','https://youtu.be/XZ-9RbqlA2k'],['تجهيز فلاش Windows 10','https://youtu.be/WaFxvUmsNWs']].map(([label,url]) => <a key={url} href={url} target="_blank" rel="noreferrer" className="rounded-2xl border border-white/10 bg-slate-950/45 p-4 hover:border-sky-300/45"><strong className="text-sm">{label}</strong><p className="mt-2 text-[10px] text-slate-400">مشاهدة شرح التجهيز</p></a>)}</div><div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-300/15 bg-amber-300/5 p-3.5 text-[11px] leading-6 text-amber-100/80"><AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-amber-200" />تنبيه: قد تختلف العملية حسب توافق اللوحة الأم.</div></div></section>}
-        {view === 'issues' && <section className="mx-auto max-w-4xl space-y-5"><div className="flex items-center justify-between border-b border-white/10 pb-4"><div><p className="text-[10px] font-black tracking-[.18em] text-emerald-300/80">مكتبة حلول المشاكل</p><h3 className="mt-2 text-xl font-black">الشروحات القديمة للمشاكل</h3><p className="mt-2 text-xs text-slate-300">اختر الخطأ المطابق لمشاهدة الفيديو والصورة المرجعية.</p></div><button type="button" onClick={back} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black">رجوع</button></div><div className="grid gap-4 md:grid-cols-3">{(Object.keys(issues) as Array<keyof typeof issues>).map((id, index) => <button type="button" key={id} onClick={() => { setIssueId(id); setView(id); }} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[.035] text-right hover:border-sky-300/40"><img src={issues[id].image} alt={issues[id].title} className="aspect-video w-full object-cover opacity-80" /><div className="p-4"><h4 className="text-sm font-black">0{index + 1} · {issues[id].title}</h4><p className="mt-2 text-[11px] leading-5 text-slate-400">{issues[id].description}</p></div></button>)}</div><a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-2xl border border-rose-300/20 bg-rose-400/10 p-4 text-sm font-black text-rose-100"><Download className="h-4 w-4" />تحميل Visual C++ x64</a></section>}
-        {(['network','timer','spoofer'] as View[]).includes(view) && <section className="mx-auto max-w-4xl space-y-4"><button type="button" onClick={back} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black"><ArrowRight className="h-4 w-4" />العودة للحلول</button><div className="overflow-hidden rounded-[24px] border border-white/10 bg-black/45"><div className="relative aspect-video bg-black"><video key={`${issueId}-${videoAttempt}`} src={issue.video} poster={issue.image} className="h-full w-full object-contain" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline preload="metadata" onLoadedData={() => setVideoFailed(false)} onError={() => setVideoFailed(true)} />{videoFailed && <div className="absolute inset-0 grid place-items-center bg-slate-950/90 p-6 text-center"><div><p className="text-sm font-black text-slate-200">تعذر تحميل الفيديو</p><button type="button" onClick={() => { setVideoFailed(false); setVideoAttempt(value => value + 1); }} className="mt-3 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-500">إعادة المحاولة</button></div></div>}</div><div className="border-t border-white/10 p-4"><h3 className="text-lg font-black">{issue.title}</h3><p className="mt-2 text-xs leading-6 text-slate-400">{issue.description}</p></div></div><img src={issue.image} alt={issue.title} className="max-h-[360px] w-full rounded-xl border border-white/10 bg-black object-contain" /></section>}
-        {view === 'notice' && <section className="mx-auto max-w-3xl space-y-4"><div className="rounded-[24px] border border-amber-300/20 bg-gradient-to-br from-amber-300/10 via-slate-900 to-slate-950 p-5"><div className="flex items-start gap-4"><AlertTriangle className="mt-1 h-6 w-6 shrink-0 text-amber-200" /><div><p className="text-[10px] font-black tracking-[.14em] text-amber-200/85">تنبيه قبل مشاهدة الشرح</p><h3 className="mt-2 text-xl font-black">مهم قبل البدء</h3><p className="mt-3 text-sm leading-7 text-slate-200">هنا يتم شرح كامل خطوات منتج {product?.name || 'المنتج'}. يرجى اتباع الشرح بالكامل وبنفس الترتيب دون تخطي أي خطوة.</p></div></div></div><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-[20px] border border-white/10 bg-white/[.035] p-5"><h4 className="flex items-center gap-2 font-black"><Shield className="h-4 w-4 text-blue-300" />تنبيه مهم</h4><p className="mt-3 text-xs leading-6 text-slate-300">إدارة الموقع ومتجر تعن لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.</p></div><div className="rounded-[20px] border border-blue-300/20 bg-blue-400/5 p-5"><h4 className="flex items-center gap-2 font-black"><BookOpen className="h-4 w-4 text-blue-300" />الدعم الفني</h4><p className="mt-3 text-xs leading-6 text-slate-300">الدعم مخصص للمشاكل والأخطاء المتعلقة بالمنتج بعد اتباع الخطوات كاملة.</p></div></div><div className="flex items-center justify-between gap-4 rounded-[20px] border border-white/10 bg-black/25 p-4"><div><p className="text-xs font-black">{countdown ? 'الخطوة الأخيرة قبل الفيديو' : 'أصبح الشرح جاهزًا للمشاهدة'}</p><p className="mt-1 text-[11px] text-slate-400">{countdown ? `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${countdown} ثوانٍ.` : 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.'}</p></div><button type="button" disabled={countdown > 0} onClick={() => setView('full')} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black disabled:opacity-40">{countdown ? <Clock className="h-4 w-4" /> : <Play className="h-4 w-4" fill="currentColor" />}{countdown ? `انتظر ${countdown} ثوانٍ` : 'قرأت التنبيه — متابعة'}</button></div></section>}
-        {view === 'full' && <section className="space-y-4"><button type="button" onClick={back} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black"><ArrowRight className="h-4 w-4" />العودة للقائمة السابقة</button><div className="aspect-video overflow-hidden rounded-3xl border border-white/10 bg-black">{product?.videoUrl ? (product.videoUrl.includes('youtube.com') || product.videoUrl.includes('youtu.be') ? <iframe src={embed(product.videoUrl)} title={`شرح ${product.name}`} className="h-full w-full" allowFullScreen /> : <video key={`product-${videoAttempt}`} src={product.videoUrl} poster={product.image || '/spoofer-logo.png'} className="h-full w-full object-contain" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline preload="auto" autoPlay onLoadedData={() => setVideoFailed(false)} onError={() => setVideoFailed(true)} />) : <div className="flex h-full flex-col items-center justify-center p-8 text-center"><AlertCircle className="h-10 w-10 text-slate-500" /><h3 className="mt-4 text-lg font-black">لا يوجد فيديو شرح متاح</h3><p className="mt-2 text-sm text-slate-400">لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.</p></div>}</div></section>}
+  const key = `ta3n:guide:v1:${license.userId}:${license.id}`;
+  const [progress, setProgress] = useState<Progress>(() => loadProgress(key));
+  const [storageFailed, setStorageFailed] = useState(false);
+  const [view, setView] = useState('home');
+  const [category, setCategory] = useState('prepare');
+  const articles = articlesForProduct(product);
+  const article = articles.find(item => item.id === view);
+  const stage = view === 'before' ? 0 : view === 'main' || view === 'permanent' ? 4 : article?.stage ?? -1;
+  const stageDone = GUIDE_STAGES.map((_, index) => {
+    if (index === 0) return progress.accepted;
+    if (index === 4) return progress.articles.includes('main');
+    const matching = articles.filter(item => item.stage === index);
+    return matching.length > 0 && (index === 5 ? matching.every(item => progress.articles.includes(item.id)) : matching.some(item => progress.articles.includes(item.id)));
+  });
+  const completedCount = stageDone.filter(Boolean).length;
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => { try { localStorage.setItem(key, JSON.stringify(progress)); } catch { setStorageFailed(true); } });
+    return () => cancelAnimationFrame(frame);
+  }, [key, progress]);
+  const open = (id: string) => { setView(id); if (id !== 'home') setProgress(current => ({ ...current, last: id })); };
+  const canResume = progress.last !== 'home' && (['before', 'main', 'permanent', 'issues'].includes(progress.last) || articles.some(item => item.id === progress.last));
+  const sectionCards = [
+    { id: 'main', title: 'دليل استخدام المنتج', text: 'التعليمات الأساسية والفيديو الخاص بمنتجك.', number: '01', group: 'run', icon: Play },
+    { id: 'bios', title: 'إعداد BIOS', text: 'اختر اللوحة ثم اتبع إعداداتها.', number: '02', group: 'prepare', icon: Cpu },
+    { id: 'windows', title: 'تجهيز Windows', text: 'Windows 11 وWindows 10.', number: '03', group: 'prepare', icon: Monitor },
+    { id: 'raid', title: 'RAID Reinstallation', text: 'إعادة التثبيت ومتطلبات الأقراص.', number: '04', group: 'prepare', icon: Layers },
+    { id: 'permanent', title: 'Permanent Spoof', text: 'اختر المسار المدعوم لمنتجك.', number: '05', group: 'run', icon: Shield },
+    { id: 'network', title: 'Network Unflag', text: 'إعدادات محول Ethernet.', number: '06', group: 'finish', icon: Router },
+    { id: 'vpn', title: 'استخدام VPN', text: 'إعداد الاتصال حسب دليل المصدر.', number: '07', group: 'finish', icon: Shield },
+    { id: 'disk', title: 'Disk Guide', text: 'إعداد VHD ومشاكل ظهور القرص.', number: '08', group: 'prepare', icon: HardDrive },
+    { id: 'issues', title: 'حلول المشاكل الشائعة', text: 'التشغيل والشبكة وVisual C++.', number: '09', group: 'issues', icon: Wrench },
+  ].filter(item => ['main', 'issues'].includes(item.id) || (item.id === 'permanent' ? articles.some(a => a.category === 'Permanent Spoof') : articles.some(a => a.id === item.id)));
+  const nextStage = () => {
+    if (stage === 3) { open('main'); return; }
+    if (view === 'main' && articles.some(item => item.category === 'Permanent Spoof')) { open('permanent'); return; }
+    if (view === 'network' && articles.some(item => item.id === 'vpn')) { open('vpn'); return; }
+    const next = articles.find(item => item.stage > stage && !progress.articles.includes(item.id));
+    open(next?.id || 'home');
+  };
+  return <GuideDialog title={product?.name || 'دليل المنتج'} onClose={onClose} onBack={view === 'home' ? undefined : () => open('home')} sectionKey={view}>
+    <div className={styles.stack}>
+      <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400"><span>{stage >= 0 ? `الخطوة ${stage + 1} من 7 · ${GUIDE_STAGES[stage]}` : 'اختر قسمًا للبدء'}</span><span>أكملت {completedCount} من 7 مراحل</span></div>
+        <div className={styles.progress} role="progressbar" aria-label="تقدم دليل المنتج" aria-valuenow={completedCount} aria-valuemin={0} aria-valuemax={7}><div style={{ width: `${completedCount / 7 * 100}%` }} /></div>
+        <nav aria-label="مراحل الدليل" className={styles.stageGrid}>{GUIDE_STAGES.map((label, index) => <button key={label} className={styles.stage} aria-current={stage === index ? 'step' : undefined} data-done={stageDone[index]} onClick={() => { const target = index === 0 ? 'before' : index === 4 ? 'main' : index === 6 ? 'issues' : articles.find(item => item.stage === index)?.id; if (target) open(target); }} disabled={![0,4,6].includes(index) && !articles.some(item => item.stage === index)}><span>{stageDone[index] ? <Check size={14} /> : index + 1}</span>{label}</button>)}</nav>
       </div>
+      {storageFailed && <p className={styles.warning}>المتصفح يمنع الحفظ المحلي. سيبقى التقدم محفوظًا خلال هذه الجلسة فقط.</p>}
+      {view === 'home' && <>
+        <ProductNotice product={product} placement="guide" />
+        {canResume && <div className={`${styles.panel} flex flex-wrap items-center justify-between gap-4`}><div><h3 className="font-bold">متابعة من حيث توقفت</h3><p>يُحفظ تقدم هذا الترخيص على هذا الجهاز.</p></div><button className={styles.primary} onClick={() => open(progress.last)}>متابعة الشرح<ChevronLeft size={18} /></button></div>}
+        <button className={`${styles.panel} text-start`} onClick={() => open('before')}><div className="flex items-center gap-3"><BookOpen className="text-amber-200" /><h3 className="font-bold">ابدأ هنا · المتطلبات والتنبيهات</h3>{progress.accepted && <Check className="ms-auto text-emerald-300" />}</div><p>راجع التعليمات قبل تشغيل أي شرح.</p></button>
+        <div className={styles.tabs} aria-label="أقسام الدليل">{categories.map(item => <button key={item.id} className={styles.tab} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>{item.title}</button>)}</div>
+        <div className={styles.grid}>{sectionCards.filter(item => item.group === category).map(item => <button key={item.id} className={`${styles.card} text-start`} onClick={() => open(item.id)}><div className={styles.cardTop}><span className={styles.stepNumber}>{item.number}</span><item.icon size={22} className="text-cyan-200/70" /></div><h3 className="mt-5 text-base font-bold">{item.title}</h3><p className={styles.muted}>{item.text}</p><span className="mt-5 inline-flex items-center gap-2 text-xs text-cyan-100">فتح القسم<ChevronLeft size={15} /></span></button>)}</div>
+      </>}
+      {view === 'before' && <BeforeStart product={product} onContinue={() => { setProgress(current => ({ ...current, accepted: true })); open(articles.find(item => item.stage === 1)?.id || 'main'); }} />}
+      {view === 'main' && (!progress.accepted ? <BeforeStart product={product} onContinue={() => setProgress(current => ({ ...current, accepted: true }))} /> : <div className={styles.stack}>
+        <h3 className={styles.heading}>دليل استخدام {product?.name}</h3>
+        {product?.videoUrl ? <GuideVideo url={product.videoUrl.includes('drive.google.com') ? MAIN_VIDEO_FALLBACK : product.videoUrl} title={product.name} image={product.image} product={product} skipNotice /> : <p className={styles.warning}>لم تُضف الإدارة فيديو لهذا المنتج حتى الآن. الشروحات المكتوبة متاحة من الأقسام الأخرى.</p>}
+        <section className={styles.panel}><h4>خطوات المتابعة</h4><ol className="mt-3 list-inside list-decimal space-y-2 text-sm leading-7 text-slate-300"><li>راجع المتطلبات والتنبيهات الخاصة بمنتجك.</li><li>أكمل الأقسام المناسبة لجهازك حسب شرح المنتج.</li><li>تابع الفيديو بالترتيب، ثم افتح قسم المشكلة المطابقة إن ظهر خطأ.</li></ol></section>
+        <button className={styles.primary} onClick={() => { setProgress(current => ({ ...current, articles: [...new Set([...current.articles, 'main'])] })); nextStage(); }}><Check size={18} />أكملت شرح المنتج — التالي</button>
+      </div>)}
+      {(view === 'permanent' || view === 'issues') && <><div><h3 className={styles.heading}>{view === 'permanent' ? 'Permanent Spoof' : 'مركز حلول ومساعدة'}</h3><p className={styles.muted}>{view === 'permanent' ? 'اختر مسارًا واحدًا مطابقًا لمنتجك ولوحتك. خطوات ASUS مستقلة عن المسار العادي.' : 'اختر الرسالة المطابقة لما يظهر على جهازك.'}</p></div><div className={styles.grid}>{articles.filter(item => view === 'permanent' ? item.category === 'Permanent Spoof' : item.stage === 6).map((item, index) => <GuideCard key={item.id} article={item} number={index + 1} onOpen={() => open(item.id)} />)}</div></>}
+      {article && <GuideArticleView key={article.id} article={article} product={product} savedVariant={progress.variants[article.id]} onVariant={id => setProgress(current => ({ ...current, variants: { ...current.variants, [article.id]: id } }))} completed={progress.steps} onStep={id => setProgress(current => ({ ...current, steps: [...new Set([...current.steps, id])] }))} onComplete={() => { setProgress(current => ({ ...current, articles: [...new Set([...current.articles, article.id])] })); nextStage(); }} />}
     </div>
-  </div>;
+  </GuideDialog>;
 }
