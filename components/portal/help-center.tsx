@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import { Search } from 'lucide-react';
+import { GUIDE_ARTICLES, GUIDE_CATEGORIES, matchesGuide, type GuideArticle } from '@/lib/guide-library';
+import { GuideArticleView, GuideCard, GuideDialog } from '@/components/guides/guide-ui';
+import { ProductNotice } from '@/components/guides/product-notice';
+import guideStyles from '@/components/guides/guides.module.css';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -23,11 +27,12 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import type { FaqCategory, FaqItem } from '@/types';
+import type { FaqCategory, FaqItem, Product } from '@/types';
 
 interface HelpCenterProps {
   lang: 'ar' | 'en';
   isDark: boolean;
+  products?: Product[];
   onNavigateTab?: (tab: string) => void;
   initialCategoryId?: string | null;
 }
@@ -48,6 +53,7 @@ export function HelpCenter({
   isDark,
   onNavigateTab,
   initialCategoryId,
+  products = [],
 }: HelpCenterProps) {
   const isAr = lang === 'ar';
   const Arrow = isAr ? ArrowLeft : ArrowRight;
@@ -58,6 +64,8 @@ export function HelpCenter({
   const [error, setError] = useState<string | null>(null);
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(initialCategoryId || null);
+  const [guideCategory, setGuideCategory] = useState('all');
+  const [article, setArticle] = useState<GuideArticle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
@@ -108,8 +116,8 @@ export function HelpCenter({
       console.error('HelpCenter loading error:', err);
       setError(
         isAr
-          ? 'تعذر تحميل مركز المساعدة حالياً. حاول مرة أخرى.'
-          : 'Unable to load the Help Center right now. Please try again.'
+          ? 'تعذر تحميل الأسئلة الشائعة حالياً. حاول مرة أخرى.'
+          : 'Unable to load the Frequently asked questions right now. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -139,7 +147,7 @@ export function HelpCenter({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: debouncedQuery,
-        resultsCount: count,
+        resultsCount: count + GUIDE_ARTICLES.filter(item => matchesGuide(item, debouncedQuery)).length,
         lang,
       }),
     }).catch(() => {});
@@ -147,6 +155,7 @@ export function HelpCenter({
 
   // Filtered FAQs
   const filteredFaqs = useMemo(() => {
+    if (guideCategory !== 'all' && guideCategory !== 'admin') return [];
     let result = faqs;
 
     if (selectedCategoryId) {
@@ -170,7 +179,7 @@ export function HelpCenter({
     }
 
     return result;
-  }, [faqs, selectedCategoryId, debouncedQuery]);
+  }, [faqs, selectedCategoryId, debouncedQuery, guideCategory]);
 
   // Pinned FAQs (if not searching and no specific category or category pinned)
   const pinnedFaqs = useMemo(() => {
@@ -205,6 +214,8 @@ export function HelpCenter({
   const activeCategory = useMemo(() => {
     return categories.find((c) => c.id === selectedCategoryId);
   }, [categories, selectedCategoryId]);
+
+  const filteredArticles = GUIDE_ARTICLES.filter(item => (guideCategory === 'all' || item.category === guideCategory) && matchesGuide(item, searchQuery));
 
   // Search quick suggestions
   const searchSuggestions = isAr
@@ -296,7 +307,7 @@ export function HelpCenter({
           }}
           className={selectedCategoryId ? 'hover:text-[#94e6c3] transition' : 'text-[#eef4f2] font-semibold'}
         >
-          {isAr ? 'مركز المساعدة' : 'Help Center'}
+          {isAr ? 'الأسئلة الشائعة' : 'Frequently asked questions'}
         </button>
         {activeCategory && (
           <>
@@ -317,7 +328,7 @@ export function HelpCenter({
         <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#94e6c3]/25 bg-[#94e6c3]/10 px-3.5 py-1 text-[11px] font-bold text-[#94e6c3]">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>{isAr ? 'مركز المساعدة' : 'Help Center'}</span>
+            <span>{isAr ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#eef4f2]">
@@ -331,6 +342,20 @@ export function HelpCenter({
           </p>
         </div>
       </section>
+
+      <div dir="rtl" className={`${guideStyles.hub} ${guideStyles.stack} mb-8`}>
+        {products.some(product => !product.notice || (product.notice.enabled && product.notice.placements.includes('beforePurchase'))) && <details className={guideStyles.panel}><summary className="cursor-pointer text-sm font-bold">متطلبات وتنبيهات المنتجات قبل الشراء</summary><div className="mt-4 grid gap-4">{products.filter(product => !product.notice || (product.notice.enabled && product.notice.placements.includes('beforePurchase'))).map(product => <section key={product.id}><h3 className="mb-2 text-sm font-bold">{product.name}</h3><ProductNotice product={product} placement="beforePurchase" /></section>)}</div></details>}
+        <label className={guideStyles.search}>
+          <Search size={20} className="shrink-0 text-cyan-200" /><span className="sr-only">ابحث عن مشكلتك</span>
+          <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="ابحث عن مشكلتك... BIOS، Visual C++، Windows" />
+          {searchQuery && <button type="button" aria-label="مسح البحث" onClick={() => setSearchQuery('')}><X size={18} /></button>}
+        </label>
+        <nav className={guideStyles.tabs} aria-label="تصنيفات المساعدة">{[{ id: 'all', label: 'الكل' }, ...GUIDE_CATEGORIES.map(item => ({ id: item, label: item })), { id: 'admin', label: 'أسئلة الإدارة' }].map(item => <button key={item.id} className={guideStyles.tab} aria-pressed={guideCategory === item.id} onClick={() => setGuideCategory(item.id)}>{item.label}</button>)}</nav>
+        <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">مكتبة الشروحات والحلول</h2><span role="status" className="text-xs text-slate-400">{filteredArticles.length + filteredFaqs.length} نتيجة</span></div>
+        {filteredArticles.length > 0 && <div className={guideStyles.grid}>{filteredArticles.map(item => <GuideCard key={item.id} article={item} number={GUIDE_ARTICLES.indexOf(item) + 1} onOpen={() => setArticle(item)} />)}</div>}
+        {!loading && !error && filteredArticles.length === 0 && filteredFaqs.length === 0 && <div className={guideStyles.empty}><p>لا توجد نتيجة مطابقة لبحثك.</p><button className={guideStyles.smallButton} onClick={() => { setSearchQuery(''); setGuideCategory('all'); }}>عرض جميع الشروحات والأسئلة</button></div>}
+      </div>
+      {article && <GuideDialog title={article.title} onClose={() => setArticle(null)} onBack={() => setArticle(null)}><GuideArticleView key={article.id} article={article} /></GuideDialog>}
 
       {/* Issue-only support policy */}
       <section className="relative overflow-hidden rounded-[22px] border border-amber-200/15 bg-[linear-gradient(135deg,rgba(48,35,20,.78),rgba(16,27,35,.96)_58%,rgba(12,24,31,.98))] p-5 shadow-[0_16px_38px_rgba(0,0,0,.18)] sm:p-6">
@@ -401,7 +426,7 @@ export function HelpCenter({
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && (guideCategory === 'all' || guideCategory === 'admin') && (
         <>
           {/* 5. Categories Grid */}
           <div>

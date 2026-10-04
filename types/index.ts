@@ -49,6 +49,8 @@ export interface Product {
   fileUrl: string;
   videoUrl?: string | null;
   guideUrl?: string | null;
+  guideSections?: string[];
+  notice?: ProductNoticeConfig;
   downloadsCount: number;
   stockKeysCount?: number;
   sku?: string;
@@ -59,6 +61,15 @@ export interface Product {
   isArchived: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export type NoticePlacement = 'beforePurchase' | 'afterPurchase' | 'guide' | 'video';
+export interface ProductNoticeConfig {
+  enabled: boolean;
+  title: string;
+  text: string;
+  type: 'Information' | 'Warning' | 'Important' | 'Error';
+  placements: NoticePlacement[];
 }
 
 export interface Key {

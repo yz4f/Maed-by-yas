@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getKeyStockSummary, StoreDB } from '@/lib/store-db';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
+import { ZodError } from 'zod';
 
 export async function GET() {
   if (!await isAuthorizedAdmin()) {
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
     const result = await StoreDB.createProduct(data);
     return NextResponse.json(result);
   } catch (err: any) {
+    if (err instanceof ZodError) return NextResponse.json({ success: false, message: 'إعدادات الدليل أو التنبيه غير صالحة.' }, { status: 400 });
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }
@@ -44,6 +46,7 @@ export async function PUT(req: Request) {
     const result = await StoreDB.updateProduct(id, updates);
     return NextResponse.json(result);
   } catch (err: any) {
+    if (err instanceof ZodError) return NextResponse.json({ success: false, message: 'إعدادات الدليل أو التنبيه غير صالحة.' }, { status: 400 });
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }

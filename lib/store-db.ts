@@ -1,6 +1,7 @@
 import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { validateProductGuideFields } from '@/lib/product-guide-settings';
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
 
 
@@ -1328,6 +1329,7 @@ export const StoreDB = {
   },
 
   async createProduct(product: Product): Promise<{success: boolean; message?: string; product?: Product}> {
+    product = validateProductGuideFields(product);
     return runDbOp(
       async () => {
         await setDoc(doc(getDb(), "products", product.id), product);
@@ -1341,6 +1343,7 @@ export const StoreDB = {
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<{success: boolean; message?: string; product?: Product}> {
+    updates = validateProductGuideFields(updates);
     return runDbOp(
       async () => {
         const docRef = doc(getDb(), "products", id);

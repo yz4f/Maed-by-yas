@@ -5,6 +5,7 @@ import { Product } from '@/types';
 import { Download, ExternalLink, Sparkles, Key, ShieldCheck, Box } from 'lucide-react';
 import { CategoryBadge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { ProductNotice } from '@/components/guides/product-notice';
 
 interface ProductsGridProps {
   products: Product[];
@@ -79,6 +80,8 @@ export function ProductsGrid({ products }: ProductsGridProps) {
                     {product.description}
                   </p>
                 </div>
+
+                <div className="mt-4"><ProductNotice product={product} placement="beforePurchase" /></div>
 
                 {/* Stats & Actions */}
                 <div className="mt-6 pt-4 border-t border-slate-800/80 flex flex-col gap-3">

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
+import { ZodError } from 'zod';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -21,6 +22,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
     const product = await StoreDB.updateProduct(id, data);
     return NextResponse.json({ success: true, product });
   } catch (error) {
+    if (error instanceof ZodError) return NextResponse.json({ success: false, message: 'إعدادات الدليل أو التنبيه غير صالحة.' }, { status: 400 });
     console.error('Product update failed:', error);
     return NextResponse.json({ success: false, message: 'تعذر تحديث المنتج. حاول مرة أخرى.' }, { status: 500 });
   }

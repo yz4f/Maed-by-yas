@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { Product, Key, KeyStatus, KeyDuration, ProductCustomField } from '@/types';
 import { toast } from '@/lib/toast';
+import { ProductGuideSettings, DEFAULT_NOTICE } from '@/components/guides/product-guide-settings';
+import { DEFAULT_GUIDE_SECTIONS } from '@/lib/guide-library';
 
 interface ProductStockModalProps {
   isOpen: boolean;
@@ -122,6 +124,8 @@ export function ProductStockModal({
     downloadsCount: 0,
   });
 
+  const [guideSettings, setGuideSettings] = useState<Pick<Product, 'notice' | 'guideSections'>>({ notice: DEFAULT_NOTICE, guideSections: DEFAULT_GUIDE_SECTIONS });
+
   // Custom Fields State
   const [customFields, setCustomFields] = useState<ProductCustomField[]>([]);
   const [newFieldModalOpen, setNewFieldModalOpen] = useState(false);
@@ -147,6 +151,7 @@ export function ProductStockModal({
   useEffect(() => {
     if (!product) return;
 
+    setGuideSettings({ notice: product.notice || DEFAULT_NOTICE, guideSections: product.guideSections || DEFAULT_GUIDE_SECTIONS });
     setProductFormData({
       name: product.name || '',
       description: product.description || '',
@@ -459,6 +464,7 @@ export function ProductStockModal({
         displayOrder: productFormData.displayOrder,
         downloadsCount: productFormData.downloadsCount,
         stockType: 'digital_keys',
+        ...guideSettings,
         customFields: customFields,
       };
 
@@ -1449,6 +1455,8 @@ export function ProductStockModal({
                   </div>
                 </div>
               </div>
+
+              <ProductGuideSettings value={guideSettings} onChange={value => { setGuideSettings(value); setHasUnsavedChanges(true); }} />
 
               {/* Description */}
               <div className="space-y-1.5">
