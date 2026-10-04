@@ -145,7 +145,7 @@ export function PortalNavigation({
     {
       title: ar ? 'الدعم' : 'SUPPORT',
       items: [
-        { tab: 'tickets', label: ar ? 'مركز المساعدة' : 'Help center', icon: Headphones },
+        { tab: 'tickets', label: ar ? 'الأسئلة الشائعة' : 'FAQs', icon: Headphones },
       ],
     },
     {

@@ -1541,7 +1541,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     overview: lang === 'ar' ? 'الرئيسية' : 'Overview',
     'my-products': lang === 'ar' ? 'منتجاتي' : 'My Products',
     redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
-    tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help Center',
+    tickets: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions',
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
   }[activeTab];
@@ -1792,7 +1792,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <HelpCircle className="w-[19px] h-[19px]" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'مركز المساعدة' : 'Help Center'}</span>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</span>
                       <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الشروحات وطلبات Reset والدعم الخارجي في مكان واحد' : 'Guides, reset requests, and external support in one place'}</span>
                     </div>
                   </div>
@@ -2229,7 +2229,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
                 { id: 'sitePresence', label: lang === 'ar' ? 'نشاط الموقع' : 'Site Presence', icon: UserCheck },
-                { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help Center', icon: HelpCircle },
+                { id: 'help', label: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions', icon: HelpCircle },
                 { id: 'voiceSessions', label: lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Sessions', icon: Mic2 },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },

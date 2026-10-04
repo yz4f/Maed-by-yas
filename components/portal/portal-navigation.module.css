@@ -1,4 +1,4 @@
-.sidebar, .drawer { display: flex; flex-direction: column; background: var(--luxe-panel); color: var(--luxe-ink); border-inline-end: 1px solid var(--luxe-line); font-family: 'TA3N Portal', sans-serif; }
+.sidebar, .drawer { display: flex; flex-direction: column; background: var(--luxe-panel); color: var(--luxe-ink); border-inline-end: 1px solid var(--luxe-line); font-family: var(--font-alexandria), sans-serif; }
 .sidebar { width: 266px; flex-shrink: 0; height: 100%; position: relative; z-index: 20; transition: width .2s; }
 .brandRow { display: flex; align-items: center; min-height: 106px; padding: 18px 16px 18px 20px; border-bottom: 1px solid var(--luxe-line); }
 .brand { display: flex; min-width: 0; flex: 1; align-items: center; gap: 12px; padding: 8px 2px; text-align: start; }

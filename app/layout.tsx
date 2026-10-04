@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 
 const alexandria = localFont({
-  src: '../public/fonts/alexandria-variable.ttf',
+  src: '../public/fonts/alexandria-variable.woff2',
   variable: '--font-alexandria',
   weight: '100 900',
   display: 'swap',

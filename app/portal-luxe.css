@@ -171,7 +171,7 @@
     radial-gradient(ellipse 46% 45% at 88% 102%, rgba(23, 103, 121, .11), transparent 72%),
     var(--luxe-bg) !important;
   color: var(--luxe-ink);
-  font-family: 'TA3N Portal', sans-serif;
+  font-family: var(--font-alexandria), sans-serif;
   letter-spacing: -.01em;
 }
 .portal-shell.portal-luxe.portal-shell--light {
