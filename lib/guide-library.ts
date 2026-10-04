@@ -15,7 +15,7 @@ const BASE = 'https://spiritxx.gitbook.io/eon/';
 const FILES = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/';
 const PERMANENT_IMAGE = 'https://3845978534-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FUSC6VrOP0gtVeq3Dc1gX%2Fuploads%2F4a9fbfPCtIWvMcv9rRZV%2Fspoof.png?alt=media&token=cfc99705-d4e5-443f-8d5f-ecd7953fad6f';
 export const MAIN_VIDEO_FALLBACK = FILES + 'mHiKjOdRBJBDsCnu.mp4';
-export const DEFAULT_GUIDE_SECTIONS = ['bios', 'windows', 'raid', 'normal', 'network', 'vpn', 'disk', 'runtime', 'connection', 'clock', 'menu'];
+export const DEFAULT_GUIDE_SECTIONS = ['bios', 'windows', 'raid', 'normal', 'asus', 'network', 'vpn', 'disk', 'runtime', 'connection', 'clock', 'menu'];
 // Concise Arabic summaries of the seven requested pages. Technical option names retain their original spelling.
 // BIOS intentionally contains no ASUS instructions; ASUS Permanent Spoof is an independent opt-in article.
 export const GUIDE_ARTICLES: GuideArticle[] = [
