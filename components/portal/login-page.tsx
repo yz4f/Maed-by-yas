@@ -120,7 +120,7 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
           <p>{ar ? 'اربط حساب Discord الخاص بك للوصول إلى حسابك وإدارة تراخيصك.' : 'Connect your Discord account to access and manage your licenses.'}</p>
           <button type="button" className={styles.primary} disabled={busy} aria-busy={busy} onClick={connect}>
             {busy ? <LoaderCircle size={21} className={styles.spinner} /> : <DiscordMark width={21} height={21} />}
-            <span aria-live="polite">{busy ? (ar ? 'جارٍ الاتصال بديسكورد...' : 'Connecting to Discord…') : (ar ? 'المتابعة عبر Discord' : 'Continue with Discord')}</span>
+            <span aria-live="polite">{busy ? (ar ? 'جارٍ الاتصال بديسكورد...' : 'Connecting to Discord…') : (ar ? 'تسجيل دخول' : 'Continue with Discord')}</span>
           </button>
           <div className={styles.divider}><span>{ar ? 'أو' : 'or'}</span></div>
           <p className={styles.storePrompt}>{ar ? 'ليس لديك مفتاح حتى الآن؟' : 'Don’t have a license yet?'}</p>
