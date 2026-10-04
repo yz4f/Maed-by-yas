@@ -3342,11 +3342,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       {guideText.back}
                     </button>
                   </div>
-                  <div className="aspect-video w-full rounded-2xl sm:rounded-3xl border border-white/10 ring-1 ring-black/40 overflow-hidden bg-[#030712] flex flex-col items-center justify-center p-0 text-center relative shadow-[0_22px_55px_rgba(0,0,0,0.5)]">
+                  <div className="w-full overflow-hidden rounded-2xl border border-white/10 bg-[#030712]">
                     {guideModalProduct.product?.videoUrl ? (
-                      <GuideVideo url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl} title={guideText.modalTitle} />
+                      <GuideVideo url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl} title={guideText.modalTitle} image={guideModalProduct.product.image} />
                     ) : (
-                      <div className="p-8">
+                      <div className="flex aspect-video flex-col items-center justify-center p-8 text-center">
                         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10 shadow-inner">
                           <AlertCircle className="w-10 h-10 text-slate-500" />
                         </div>
