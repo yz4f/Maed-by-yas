@@ -12,6 +12,7 @@ const alexandria = localFont({
 import './globals.css';
 import './portal-luxe.css';
 import { Providers } from './providers';
+import { CopyProtection } from '@/components/security/copy-protection';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://t3nn.wtf'),
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ar" dir="rtl" className={`dark ${alexandria.variable}`}>
       <body className="min-h-screen bg-[#08090d] text-slate-100 flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
         <Providers>
+          <CopyProtection />
           <main className="flex-1">{children}</main>
         </Providers>
       </body>
