@@ -141,8 +141,8 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
 ];
 
 export function articlesForProduct(product?: Product) {
-  const ids = product?.guideSections ?? DEFAULT_GUIDE_SECTIONS;
-  return GUIDE_ARTICLES.filter(article => ids.includes(article.id));
+  const ids = new Set([...DEFAULT_GUIDE_SECTIONS, ...(product?.guideSections || [])]);
+  return GUIDE_ARTICLES.filter(article => ids.has(article.id));
 }
 export function guideStepEntries(article: GuideArticle, variantId: string) {
   const variant = article.variants?.find(item => item.id === variantId);
