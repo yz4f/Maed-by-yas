@@ -8,9 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Headphones,
+  LifeBuoy,
   KeyRound,
-  LayoutGrid,
+  House,
   LogOut,
   Menu,
   Moon,
@@ -137,26 +137,25 @@ export function PortalNavigation({
     {
       title: ar ? 'عام' : 'GENERAL',
       items: [
-        { tab: 'overview', label: ar ? 'الرئيسية' : 'Overview', icon: LayoutGrid },
+        { tab: 'overview', label: ar ? 'الرئيسية' : 'Overview', icon: House },
         { tab: 'my-products', label: ar ? 'منتجاتي' : 'My products', icon: Package, count: productCount },
         { tab: 'redeem', label: ar ? 'تفعيل مفتاح' : 'Activate a key', icon: KeyRound },
       ],
     },
     {
-      title: ar ? 'الدعم' : 'SUPPORT',
+      title: ar ? 'المساعدة' : 'HELP',
       items: [
-        { tab: 'tickets', label: ar ? 'الأسئلة الشائعة' : 'FAQs', icon: Headphones },
+        { tab: 'tickets', label: ar ? 'مركز المساعدة' : 'Help center', icon: LifeBuoy },
       ],
     },
     {
       title: ar ? 'الحساب' : 'ACCOUNT',
       items: [
         { tab: 'profile', label: ar ? 'الملف الشخصي' : 'Profile', icon: UserRound },
-        ...(isAdmin
-          ? [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Admin Control', icon: ShieldCheck }]
-          : []),
+
       ],
     },
+    ...(isAdmin ? [{ title: ar ? 'الإدارة' : 'ADMIN', items: [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Administration', icon: ShieldCheck }] }] : []),
   ];
 
   const brand = (

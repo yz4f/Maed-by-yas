@@ -1,5 +1,7 @@
 'use client';
 
+import { GuideVideo, ImageLightbox } from '@/components/guides/guide-ui';
+
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ActivationSuccessState } from '@/components/portal/ActivationSuccessState';
@@ -256,7 +258,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [guestModalOpen, setGuestModalOpen] = useState(false);
 
   // Guide Modal States
-  const [guideView, setGuideView] = useState<'menu' | 'notice' | 'full' | 'issues' | 'format' | 'network' | 'timer' | 'spoofer' | null>(null);
+  const [guideView, setGuideView] = useState<'menu' | 'full' | 'issues' | 'format' | 'network' | 'timer' | 'spoofer' | null>(null);
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
   const [openingGuideProductId, setOpeningGuideProductId] = useState<string | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
@@ -264,18 +266,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
   const [resetCompletionNotice, setResetCompletionNotice] = useState<{ id: string; title: string; message: string } | null>(null);
   const [isAcknowledgingResetCompletion, setIsAcknowledgingResetCompletion] = useState(false);
-  const [tutorialCountdown, setTutorialCountdown] = useState(0);
 
-  useEffect(() => {
-    if (guideView !== 'notice') return;
-
-    setTutorialCountdown(5);
-    const timer = window.setInterval(() => {
-      setTutorialCountdown((seconds) => Math.max(0, seconds - 1));
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [guideView]);
 
   const guideText = lang === 'ar' ? {
     modalTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
@@ -1716,7 +1707,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     overview: lang === 'ar' ? 'الرئيسية' : 'Overview',
     'my-products': lang === 'ar' ? 'منتجاتي' : 'My Products',
     redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
-    tickets: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions',
+    tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help center',
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
   }[activeTab];
@@ -1724,7 +1715,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const normalizedLogQuery = adminLogQuery.trim().toLowerCase();
   const visibleAdminLogs = adminLogs.filter((log) => {
     const matchesAction = adminLogAction === 'all' || log.action === adminLogAction;
-    const haystack = `${log.action} ${log.details} ${log.userName || ''} ${log.ipAddress || ''}`.toLowerCase();
+    const haystack = `${lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action} ${log.details} ${log.userName || ''} ${log.ipAddress || ''}`.toLowerCase();
     return matchesAction && (!normalizedLogQuery || haystack.includes(normalizedLogQuery));
   });
 
@@ -1985,7 +1976,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <HelpCircle className="w-[19px] h-[19px]" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</span>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'مركز المساعدة' : 'Help center'}</span>
                       <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الشروحات وطلبات Reset والدعم الخارجي في مكان واحد' : 'Guides, reset requests, and external support in one place'}</span>
                     </div>
                   </div>
@@ -2366,7 +2357,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
                     {adminSectionTab === 'voiceSessions' && (lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Support Sessions')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
-                    {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests')}
+                    {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات الريست' : 'Reset requests')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
                     {adminSectionTab === 'logs' && (lang === 'ar' ? 'سجلات النظام' : 'System Logs')}
                   </span>
@@ -2420,14 +2411,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {[
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
-                { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
-                { id: 'sitePresence', label: lang === 'ar' ? 'نشاط الموقع' : 'Site Presence', icon: UserCheck },
-                { id: 'help', label: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions', icon: HelpCircle },
-                { id: 'voiceSessions', label: lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Sessions', icon: Mic2 },
+                { id: 'customers', label: lang === 'ar' ? 'العملاء' : 'Customers', icon: Users },
+                { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
+                { id: 'voiceSessions', label: lang === 'ar' ? 'الدعم الصوتي' : 'Voice support', icon: Mic2 },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
-                { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },
-                { id: 'keys', label: lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search', icon: Key },
-                { id: 'logs', label: lang === 'ar' ? 'سجلات النظام' : 'System Logs', icon: FileText },
+                { id: 'resetRequests', label: lang === 'ar' ? 'طلبات الريست' : 'Reset requests', icon: RefreshCw },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 const isActive = adminSectionTab === tab.id;
@@ -2448,6 +2436,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </button>
                 );
               })}
+              <details className="relative"><summary className="cursor-pointer rounded-xl px-3 py-2 text-sm">{lang==='ar'?'المزيد':'More'}</summary><div className="absolute end-0 top-full z-30 mt-2 grid min-w-44 gap-1 rounded-xl border border-white/15 bg-[#101e29] p-2 shadow-lg">{[{id:'sitePresence',ar:'نشاط الموقع',en:'Site activity'},{id:'keys',ar:'بحث المفاتيح',en:'Key search'},{id:'logs',ar:'سجل النظام',en:'System log'}].map(item=><button key={item.id} aria-pressed={adminSectionTab===item.id} onClick={event=>{setAdminSectionTab(item.id as any);event.currentTarget.closest('details')?.removeAttribute('open')}} className="rounded-lg px-3 py-2 text-start text-xs text-slate-200 hover:bg-white/10">{lang==='ar'?item.ar:item.en}</button>)}</div></details>
             </div>
 
             {/* ==================== SUB-TAB 1: PRODUCTS & INVENTORY ==================== */}
@@ -2870,7 +2859,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <tr key={log.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/5 transition-colors duration-200`}>
                             <td className="py-4 font-extrabold pr-2">
                               <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide ${actionBadgeClass}`}>
-                                {log.action}
+                                {lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action}
                               </span>
                             </td>
                             <td className="py-4 font-medium text-slate-350 max-w-xs truncate" title={log.details}>
@@ -2918,7 +2907,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="space-y-6">
                 {/* Primary Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2931,7 +2920,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2944,7 +2933,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2957,7 +2946,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2991,7 +2980,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <UserCheck className="w-4 h-4 text-indigo-500 dark:text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-bold ${styles.textTitle} truncate`}>{log.action}</div>
+                            <div className={`text-sm font-bold ${styles.textTitle} truncate`}>{lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action}</div>
                             <div className={`text-xs ${styles.textMuted} truncate mt-0.5`}>{log.details}</div>
                           </div>
                           <div className={`text-[10px] ${styles.textMuted} font-mono shrink-0 bg-black/5 dark:bg-black/40 px-2 py-1 rounded-md`}>
@@ -3137,18 +3126,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </button>
               <div className="relative z-10 min-w-0 flex items-center gap-3 px-12 text-center">
                 <span className="grid h-10 w-10 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_22px_rgba(59,130,246,0.24)]"><HelpCircle className="w-5 h-5" /></span>
-                <h3 className="break-words text-center text-base font-black text-white sm:text-2xl">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideView === 'format' ? guideText.formatSectionTitle : `${guideModalProduct.product?.name || guideText.modalTitle} · ${guideText.modalTitle}`}</h3>
+                <h3 className="break-words text-center text-base font-black text-white sm:text-2xl">{guideView === 'spoofer' ? guideText.spooferIssueTitle : guideView === 'format' ? guideText.formatSectionTitle : guideText.modalTitle}</h3>
               </div>
             </div>
 
             {/* Modal Body */}
             <div className="guide-experience-body p-4 sm:p-6 lg:p-7 overflow-y-auto scrollbar-thin bg-gradient-to-b from-slate-950/15 to-slate-950/55">
+              {(['format', 'full', 'issues'] as string[]).includes(guideView) && <nav className="guide-step-nav" aria-label={lang === 'ar' ? 'أقسام دليل المنتج' : 'Product guide sections'}>
+                {([{id:'format', label:guideText.formatSectionTitle}, {id:'full', label:guideText.modalTitle}, {id:'issues', label:lang==='ar'?'المشاكل والحلول':'Issues and solutions'}] as const).map((step,index)=><button key={step.id} onClick={()=>setGuideView(step.id)} aria-current={guideView===step.id?'step':undefined}><span>{String(index+1).padStart(2,'0')}</span> {step.label}</button>)}
+              </nav>}
               {guideView === 'menu' && (
                 <div className="grid auto-rows-fr grid-cols-1 gap-4 rounded-[28px] border border-white/[.10] bg-[#06101d]/92 p-3 sm:grid-cols-2 sm:gap-5 sm:p-4 lg:grid-cols-3 animate-slide-up">
                   {/* Full Tutorial Button */}
                   <button
                     onClick={() => {
-                      setGuideView('notice');
+                      setGuideView('full');
                     }}
                     className="guide-menu-card relative h-full min-h-[274px] overflow-hidden flex flex-col items-center justify-center gap-4 p-7 sm:p-8 rounded-[22px] bg-gradient-to-br from-indigo-950/80 via-slate-900 to-[#070b14] border border-indigo-300/[.20] hover:border-indigo-300/55 transition-all duration-200 group cursor-pointer shadow-[0_14px_34px_rgba(0,0,0,.24)] hover:shadow-[0_22px_46px_rgba(37,99,235,.18)] hover:-translate-y-1"
                   >
@@ -3226,7 +3218,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                     <figure className="guide-runtime-preview relative mt-4 overflow-hidden rounded-2xl border border-rose-200/[.18] bg-slate-950/75 p-3 sm:p-4">
                       <div className="mb-3 flex flex-col gap-1 text-start sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-black tracking-[.14em] text-rose-200">{guideText.runtimePreviewLabel}</p><p className="mt-1 text-[11px] leading-5 text-slate-300">{guideText.runtimePreviewDescription}</p></div><span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-200/[.18] bg-rose-400/[.10] px-2.5 py-1 text-[9px] font-black text-rose-100"><AlertCircle className="h-3.5 w-3.5" />MSVCP140.dll</span></div>
-                      <img src="/assets/guides/visual-cpp-runtime-error.png" alt={lang === 'ar' ? 'مثال لرسالة خطأ MSVCP140.dll وVisual C++ Runtime' : 'Example MSVCP140.dll and Visual C++ Runtime error message'} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[.12] bg-black object-contain shadow-[0_12px_26px_rgba(0,0,0,.28)] sm:max-h-[460px]" />
+                      <ImageLightbox src="/assets/guides/visual-cpp-runtime-error.png" alt={lang === 'ar' ? 'مثال لرسالة خطأ MSVCP140.dll وVisual C++ Runtime' : 'Example MSVCP140.dll and Visual C++ Runtime error message'} />
                       <figcaption className="mt-3 grid gap-2 text-[10px] leading-5 text-slate-300 sm:grid-cols-3"><span><b className="text-rose-100">01.</b> {guideText.runtimePreviewStepOne}</span><span><b className="text-rose-100">02.</b> {guideText.runtimePreviewStepTwo}</span><span><b className="text-rose-100">03.</b> {guideText.runtimePreviewStepThree}</span></figcaption>
                     </figure>
                   </section>
@@ -3286,15 +3278,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <button onClick={() => setGuideView('issues')} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 text-[11px] font-black text-slate-300 transition-all hover:border-primary/35 hover:bg-primary/10 hover:text-white sm:self-auto">{lang === 'ar' ? <ArrowRight className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5" />}{guideText.back}</button>
                   </div>
                   <section className={`overflow-hidden rounded-[24px] border bg-black/45 shadow-[0_20px_52px_rgba(0,0,0,0.34)] ${solution.accent === 'sky' ? 'border-sky-300/[0.18]' : solution.accent === 'emerald' ? 'border-emerald-300/[0.18]' : 'border-violet-300/[0.18]'}`}>
-                    <div className="relative aspect-video w-full bg-black"><video src={solution.video} className="absolute inset-0 h-full w-full bg-black object-contain" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline preload="metadata" autoPlay /></div>
+                    <GuideVideo url={solution.video} title={solution.title} image={solution.image} />
                     <div className="flex flex-col gap-3 border-t border-white/[0.09] p-4 sm:px-5"><div className="min-w-0 text-start"><p className="text-[12px] leading-6 text-slate-400">{solution.description}</p>{isNetwork && <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-emerald-300/[0.30] bg-[linear-gradient(135deg,rgba(16,185,129,.17),rgba(6,78,59,.28)_52%,rgba(2,44,34,.44))] p-3.5 shadow-[0_12px_30px_rgba(5,150,105,.14)] sm:flex-row sm:items-center sm:justify-between sm:p-4"><div className="min-w-0"><p className="text-[10px] font-black tracking-[0.14em] text-emerald-200/85">{guideText.downloadWarpLabel}</p><h5 className="mt-1 text-sm font-black leading-5 text-white sm:text-[15px]">{guideText.downloadWarp}</h5><p className="mt-1 text-[11px] leading-5 text-emerald-100/75">{guideText.downloadWarpHint}</p></div><a href="https://downloads.cloudflareclient.com/v1/download/windows/ga" target="_blank" rel="noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200/45 bg-emerald-400 px-4 py-2.5 text-xs font-black text-emerald-950 shadow-[0_10px_24px_rgba(16,185,129,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-300 hover:shadow-[0_14px_30px_rgba(16,185,129,.38)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2 focus:ring-offset-slate-950"><ArrowLeft className={`h-4 w-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /><span>{guideText.downloadWarpAction}</span></a></div>}</div><div className="flex shrink-0 flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-2 self-start rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${solution.accent === 'sky' ? 'border-sky-300/20 bg-sky-400/10 text-sky-100' : solution.accent === 'emerald' ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100' : 'border-violet-300/20 bg-violet-400/10 text-violet-100'}`}><Play className="h-3 w-3" fill="currentColor" />{guideText.watchSolution}</span></div></div>
                   </section>
-                  <section className="overflow-hidden rounded-[20px] border border-white/[0.10] bg-white/[0.025] p-3 sm:p-4"><div className="mb-3 flex items-center gap-2 text-start text-[10px] font-black tracking-[0.14em] text-slate-400"><AlertTriangle className="h-3.5 w-3.5 text-amber-300" />{guideText.screenshotLabel}</div><img src={solution.image} alt={solution.title} loading="lazy" className="max-h-[360px] w-full rounded-xl border border-white/[0.08] bg-black object-contain" /></section>
+                  <section className="overflow-hidden rounded-[20px] border border-white/[0.10] bg-white/[0.025] p-3 sm:p-4"><div className="mb-3 flex items-center gap-2 text-start text-[10px] font-black tracking-[0.14em] text-slate-400"><AlertTriangle className="h-3.5 w-3.5 text-amber-300" />{guideText.screenshotLabel}</div><ImageLightbox src={solution.image} alt={solution.title} /></section>
                 </div>;
               })()}
 
-              {guideView === 'notice' && (
-                <div className="animate-slide-up mx-auto w-full max-w-3xl space-y-4 sm:space-y-5">
+              {guideView === 'full' && (
+                <div className="space-y-4 animate-slide-up">
+                  <aside className="guide-compact-notice"><strong>{guideText.noticeTitle}</strong><p>{guideText.introBefore}{guideText.introProduct}{guideText.introMiddle}{guideText.introEmphasis}{guideText.introAfter}</p></aside>
+                  <details><summary className="cursor-pointer py-2 text-sm text-slate-300">{lang === 'ar' ? 'تفاصيل التنبيهات والدعم' : 'Notice and support details'}</summary><div className="space-y-3">
                   <section className="relative overflow-hidden rounded-[24px] border border-amber-300/[0.22] bg-[linear-gradient(135deg,rgba(251,191,36,.12),rgba(15,23,42,.92)_46%,rgba(2,6,23,.96))] p-5 shadow-[0_20px_48px_rgba(0,0,0,.24),0_0_34px_rgba(245,158,11,.08)] sm:p-6">
                     <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-amber-300/15 blur-[76px]" />
                     <div className="pointer-events-none absolute bottom-0 right-0 h-px w-2/3 bg-gradient-to-l from-amber-200/30 to-transparent" />
@@ -3341,31 +3335,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     <div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-amber-300/20 bg-amber-300/[.09] text-amber-200"><AlertCircle className="h-4 w-4" /></span><div><h5 className="text-xs font-black text-amber-100">{guideText.motherboardTitle}</h5><p className="mt-1.5 text-[11px] leading-5 text-amber-100/70">{guideText.motherboardDescription}</p></div></div>
                   </section>
 
-                  <section className="flex flex-col gap-4 rounded-[20px] border border-white/[0.10] bg-black/25 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-5">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${tutorialCountdown > 0 ? 'border-amber-300/25 bg-amber-300/[0.10] text-amber-200' : 'border-emerald-300/25 bg-emerald-300/[0.10] text-emerald-200'}`}>
-                        {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                      </span>
-                      <div className="min-w-0 text-start">
-                        <p className="text-xs font-black text-slate-200">{tutorialCountdown > 0 ? guideText.waitingTitle : guideText.readyTitle}</p>
-                        <p aria-live="polite" className="mt-1 text-[11px] leading-5 text-slate-400">{tutorialCountdown > 0 ? guideText.waitingMessage(tutorialCountdown) : guideText.readyMessage}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={tutorialCountdown > 0}
-                      onClick={() => setGuideView('full')}
-                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary px-5 py-2.5 text-sm font-black text-white shadow-[0_10px_24px_rgba(37,99,235,.24)] transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:hover:bg-primary-hover enabled:hover:shadow-[0_14px_28px_rgba(37,99,235,.32)] enabled:active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500 sm:min-w-[196px]"
-                    >
-                      {tutorialCountdown > 0 ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                      {tutorialCountdown > 0 ? guideText.waitingButton(tutorialCountdown) : guideText.continueButton}
-                    </button>
-                  </section>
-                </div>
-              )}
-
-              {guideView === 'full' && (
-                <div className="space-y-4 animate-slide-up">
+</div></details>
                   <div className={`flex items-center px-1 border-b border-white/10 pb-4 ${lang === 'ar' ? 'justify-end' : 'justify-start'}`}>
                     <button onClick={() => setGuideView('menu')} className="text-xs text-primary hover:text-white flex items-center gap-1.5 cursor-pointer font-bold bg-primary/10 hover:bg-primary px-3.5 py-2 rounded-xl transition-all duration-200 border border-primary/20 hover:scale-105">
                       {lang === 'ar' ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
@@ -3374,37 +3344,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
                   <div className="aspect-video w-full rounded-2xl sm:rounded-3xl border border-white/10 ring-1 ring-black/40 overflow-hidden bg-[#030712] flex flex-col items-center justify-center p-0 text-center relative shadow-[0_22px_55px_rgba(0,0,0,0.5)]">
                     {guideModalProduct.product?.videoUrl ? (
-                      guideModalProduct.product.videoUrl.includes('youtube.com') || guideModalProduct.product.videoUrl.includes('youtu.be') ? (
-                        <iframe 
-                          src={guideModalProduct.product.videoUrl
-                            .replace('watch?v=', 'embed/')
-                            .replace('youtu.be/', 'youtube.com/embed/')
-                            .replace(/[?&]t=([0-9]+)s?/, (match, p1) => {
-                              const prefix = match.startsWith('&') ? '&' : '?';
-                              return `${prefix}start=${p1}`;
-                            })
-                          } 
-                          className="absolute inset-0 w-full h-full" 
-                          allowFullScreen
-                        />
-                      ) : guideModalProduct.product.videoUrl.includes('drive.google.com') ? (
-                        <video
-                          src={DIRECT_TUTORIAL_VIDEO_URL}
-                          className="absolute inset-0 w-full h-full object-contain bg-black"
-                          controls
-                          controlsList="nodownload noremoteplayback"
-                          disablePictureInPicture
-                          playsInline
-                          preload="metadata"
-                          autoPlay
-                        />
-                      ) : (                        <video 
-                          src={guideModalProduct.product.videoUrl} 
-                          className="absolute inset-0 w-full h-full object-contain bg-black" 
-                          controls 
-                          autoPlay
-                        />
-                      )
+                      <GuideVideo url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl} title={guideText.modalTitle} />
                     ) : (
                       <div className="p-8">
                         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10 shadow-inner">
@@ -3421,6 +3361,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </div>
                 </div>
               )}
+              {(['format','full','issues'] as string[]).includes(guideView) && <div className="guide-step-nav guide-step-nav-bottom"><button disabled={guideView==='format'} onClick={()=>setGuideView(guideView==='issues'?'full':'format')}>{lang==='ar'?'السابق':'Previous'}</button><button disabled={guideView==='issues'} onClick={()=>setGuideView(guideView==='format'?'full':'issues')}>{lang==='ar'?'التالي':'Next'}</button></div>}
             </div>
           </div>
         </div>
@@ -3838,7 +3779,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               )}
               <button type="submit" disabled={isRedeeming || !!activationSuccess || !keyInput.trim()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-black text-slate-950 shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50">
                 {isRedeeming ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Redeeming...') : 'Redeem Key'}
+                {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Redeeming...') : (lang === 'ar' ? 'تفعيل المفتاح' : 'Redeem Key')}
               </button>
             </form></>}
           </div>

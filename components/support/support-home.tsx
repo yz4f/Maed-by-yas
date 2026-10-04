@@ -40,7 +40,8 @@ export function SupportHome() {
 
   const openSession = () => {
     if (!conversation?.supportSessionId) return;
-    router.push(`/support/session/${encodeURIComponent(conversation.supportSessionId)}`);
+    const guide = new URLSearchParams(window.location.search).get('guide')?.trim().slice(0,300);
+    router.push(`/support/session/${encodeURIComponent(conversation.supportSessionId)}${guide ? `?guide=${encodeURIComponent(guide)}` : ''}`);
   };
 
   return <main dir="rtl" className="min-h-screen bg-[#07111d] px-4 py-6 text-slate-100 sm:px-6 sm:py-10">
