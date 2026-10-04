@@ -18,11 +18,14 @@
   letter-spacing: 0;
 }
 .page[data-theme='light'] { --ink: #102b43; --muted: #536c83; --line: rgba(35, 75, 112, .17); --panel: rgba(255,255,255,.9); --control: rgba(255,255,255,.65); --aqua: #1463a4; background: #eef5fb; }
-.ambient { position: absolute; z-index: -1; inset: 0; pointer-events: none; background: linear-gradient(125deg, rgba(2,10,24,.24), rgba(4,29,66,.16) 49%, rgba(2,12,28,.28)), url('/images/t3n-login-azure-clean.png') center / cover no-repeat, #061524; }
-.page[data-theme='light'] .ambient { background: linear-gradient(125deg, rgba(240,250,255,.14), rgba(197,234,252,.09) 49%, rgba(239,250,255,.18)), url('/images/t3n-login-azure-clean.png') center / cover no-repeat, #d9edf9; }
+.ambient { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; background: linear-gradient(125deg, rgba(2,10,24,.34), rgba(4,29,66,.2) 49%, rgba(2,12,28,.38)), #061524; }
+.ambient::before { content: ''; position: absolute; z-index: 0; inset: -6%; background: url('/images/t3n-login-azure-clean.png') center / cover no-repeat; opacity: .29; filter: blur(2px); transform: scale(1.08); transform-origin: center; }
+.ambient::after { content: ''; position: absolute; z-index: 1; inset: 0; background: radial-gradient(ellipse 42% 55% at 50% 48%, rgba(52, 160, 224, .12), transparent 75%), linear-gradient(125deg, rgba(2,10,24,.12), transparent 48%, rgba(2,12,28,.2)); opacity: .7; }
+.page[data-theme='light'] .ambient { background: linear-gradient(125deg, rgba(240,250,255,.2), rgba(197,234,252,.12) 49%, rgba(239,250,255,.24)), #d9edf9; }
+.page[data-theme='light'] .ambient::before { opacity: .24; }
 .page[data-theme='dark'] .hero, .page[data-theme='dark'] .footer { --muted: #d0e2f2; --aqua: #c5edff; }
 .page[data-theme='dark'] .hero h1 span { background-image: linear-gradient(110deg, #b7d9ff, #b5f1fa); }
-.header { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid transparent; transition: border-color .2s, background-color .2s; }
+.header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid transparent; transition: border-color .2s, background-color .2s; }
 .scrolled { background: var(--panel); border-color: var(--line); backdrop-filter: blur(18px); }
 .headerInner { max-width: 1280px; height: 78px; margin-inline: auto; padding-inline: 32px; display: flex; align-items: center; gap: 24px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
@@ -39,8 +42,8 @@
 .languageOptions { position: absolute; inset-inline-end: 0; top: calc(100% + 9px); width: 155px; padding: 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(18px); box-shadow: 0 12px 32px #0002; animation: enter .18s ease both; }
 .languageOptions button { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 9px 12px; border-radius: 9px; color: var(--ink); font-size: 13px; cursor: pointer; }
 .languageOptions button:hover, .languageOptions button[aria-pressed='true'] { background: rgba(56,189,248,.09); color: var(--aqua); }
-.content { flex: 1; width: 100%; max-width: 1200px; margin-inline: auto; padding: 60px 72px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; align-items: center; gap: 68px; }
-.hero { min-width: 0; animation: enter .6s ease both; }
+.content { position: relative; z-index: 5; flex: 1; width: 100%; max-width: 1200px; margin-inline: auto; padding: 60px 72px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; align-items: center; gap: 68px; }
+.hero { position: relative; z-index: 5; min-width: 0; animation: enter .6s ease both; }
 .badge { display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(56,189,248,.13); border-radius: 30px; padding: 6px 13px; background: rgba(56,189,248,.06); color: var(--aqua); font-size: 12px; font-weight: 500; margin-bottom: 24px; }
 .badge i { width: 6px; height: 6px; border-radius: 50%; background: #67e8f9; animation: pulse 3s ease-in-out infinite; }
 .hero h1 { font-size: clamp(40px, 2.9vw, 52px); line-height: 1.5; font-weight: 700; margin: 0; text-wrap: balance; }
@@ -54,7 +57,7 @@
 .stats > div:last-child { padding-inline-end: 0; animation-delay: .24s; }
 .stats dd { font-size: 27px; font-weight: 700; line-height: 1.5; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .stats dt { font-size: 11px; color: var(--muted); white-space: nowrap; }
-.card { width: 100%; max-width: 420px; padding: 30px 28px 24px; border: 1px solid var(--line); border-radius: 26px; background: var(--panel); backdrop-filter: blur(18px); box-shadow: 0 24px 70px -30px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255,255,255,.03); text-align: center; animation: cardEnter .65s ease both; }
+.card { position: relative; z-index: 6; width: 100%; max-width: 420px; padding: 30px 28px 24px; border: 1px solid var(--line); border-radius: 26px; background: var(--panel); backdrop-filter: blur(18px); box-shadow: 0 24px 70px -30px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255,255,255,.03); text-align: center; animation: cardEnter .65s ease both; }
 .discordIcon { display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 20px; border-radius: 18px; color: var(--aqua); background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.2); box-shadow: 0 0 28px rgba(56,189,248,.045); }
 .card h2 { font-size: 25px; font-weight: 700; margin: 0 0 12px; line-height: 1.5; }
 .card > p { font-size: 14px; color: var(--muted); line-height: 1.95; margin: 0; }
@@ -68,7 +71,7 @@
 .card .storePrompt { font-size: 12px; }
 .store { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; margin-top: 6px; color: var(--aqua); font-size: 13px; font-weight: 600; border-radius: 12px; text-decoration: none; transition: background-color .2s, color .2s; }
 .store:hover { background: rgba(56,189,248,.07); }
-.footer { position: relative; width: calc(100% - 64px); max-width: 1216px; margin-inline: auto; padding: 23px 16px; border-top: 1px solid var(--line); text-align: center; color: var(--muted); font-size: 11px; }
+.footer { position: relative; z-index: 5; width: calc(100% - 64px); max-width: 1216px; margin-inline: auto; padding: 23px 16px; border-top: 1px solid var(--line); text-align: center; color: var(--muted); font-size: 11px; }
 .page :is(button, a):focus-visible { outline: 2px solid var(--aqua); outline-offset: 4px; }
 .spinner { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
