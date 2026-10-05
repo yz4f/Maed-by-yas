@@ -45,12 +45,9 @@
 @media(max-width:640px){.singleResult .card{display:flex;min-height:0}.singleResult .cardPreview{height:150px}.filterBar{padding:6px}.filterMenu{grid-template-columns:1fr;width:min(300px,calc(100vw - 36px))}.overlay{padding:10px}.dialog{max-height:calc(100dvh - 20px)}.header{padding:13px}.scroll{padding:15px}}
 @media(prefers-reduced-motion:reduce){.dialog{animation:none}.card:hover{transform:none}}
 
-.articleLayout,.faqDetail{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:22px;align-items:start}
-.articleMedia,.faqVisual{display:grid;gap:12px;min-width:0;position:sticky;top:0}
-.articleMedia .imageButton,.faqVisual .imageButton{max-width:none}
+.articleLayout{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:22px;align-items:start}
+.articleMedia{display:grid;gap:12px;min-width:0;position:sticky;top:0}
+.articleMedia .imageButton{max-width:none}
 .articleMedia .videoBlock{width:100%}
-.articlePlaceholder,.faqVisualFallback{min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:1px solid #ffffff19;border-radius:15px;background:radial-gradient(circle at 50% 35%,#23505a55,transparent 70%),#0d1e2a;color:#9bd8d5;font-weight:700}
-.faqExplanation{min-width:0;line-height:1.95;color:#d7e4ed;overflow-wrap:anywhere}
-.faqCardTitle{font-size:16px;line-height:1.7;font-weight:650;min-height:2.8em}
-.helpFooter{padding:15px 0 2px;border-top:1px solid #ffffff16;color:#8daab7;text-align:center;font-size:11px}
-@media(max-width:700px){.articleLayout,.faqDetail{grid-template-columns:minmax(0,1fr)}.articleMedia,.faqVisual{position:static}.articlePlaceholder,.faqVisualFallback{min-height:150px}}
+.articlePlaceholder{min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:1px solid #ffffff19;border-radius:15px;background:radial-gradient(circle at 50% 35%,#23505a55,transparent 70%),#0d1e2a;color:#9bd8d5;font-weight:700}
+@media(max-width:700px){.articleLayout{grid-template-columns:minmax(0,1fr)}.articleMedia{position:static}.articlePlaceholder{min-height:150px}}

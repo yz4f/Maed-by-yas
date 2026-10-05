@@ -92,21 +92,11 @@ export function HelpCenter({lang, products=[], onNavigateTab, initialCategoryId}
       <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-semibold">{ar?'أسئلة الحساب والمنتجات':'Account and product questions'}</h3><label className="text-xs text-slate-400">{ar?'الترتيب: ':'Sort: '}<select className="rounded-lg border border-white/15 bg-[#101e29] p-2 text-slate-200" value={sort} onChange={e=>setSort(e.target.value)}><option value="order">{ar?'ترتيب الإدارة':'Default'}</option><option value="views">{ar?'الأكثر مشاهدة':'Most viewed'}</option><option value="latest">{ar?'آخر الإضافات':'Latest'}</option></select></label></div>
       {loading&&<p role="status" className={css.muted}>جارٍ تحميل الأسئلة…</p>}
       {error&&<div className={css.warning}>تعذر تحميل الأسئلة.<button className={css.smallButton} onClick={()=>{setLoading(true);setRetry(v=>v+1)}}>إعادة المحاولة</button></div>}
-      {filteredFaqs.length>0&&<div className={css.grid}>{filteredFaqs.map(faq=><article key={faq.id} className={css.card}>
-        <div className={css.cardPreview}>{faq.image_url?<img className={css.cardImage} src={faq.image_url} alt="" loading="lazy"/>:<BookOpen size={34} aria-hidden="true"/>}</div>
-        <p className={css.eyebrow}>{faq.category_name_ar||'أسئلة شائعة'}</p>
-        <h4 className={css.faqCardTitle}>{ar?faq.question_ar:faq.question_en||faq.question_ar}</h4>
-        <button className={`${css.smallButton} mt-auto self-start`} onClick={()=>toggleFaq(faq.id)}><BookOpen size={16}/>{ar?'فتح الشرح':'Open guide'}</button>
-      </article>)}</div>}
+      {filteredFaqs.map(faq=><article key={faq.id} className={css.faq}><button aria-expanded={openFaq===faq.id} aria-controls={`faq-answer-${faq.id}`} onClick={()=>toggleFaq(faq.id)}><span>{ar?faq.question_ar:faq.question_en||faq.question_ar}</span><ChevronDown size={17} className={openFaq===faq.id?'rotate-180':''}/></button>{openFaq===faq.id&&<div id={`faq-answer-${faq.id}`} className={css.faqBody}><FaqAnswer text={ar?faq.answer_ar:faq.answer_en||faq.answer_ar}/>{faq.image_url&&<ImageLightbox src={faq.image_url} alt={ar?faq.question_ar:faq.question_en||faq.question_ar}/>}<a className={`${css.smallButton} mt-4`} href={`/support?guide=${encodeURIComponent((faq.category_name_ar||'الإدارة')+' — '+faq.question_ar)}`}>فتح تذكرة دعم</a></div>}</article>)}
     </>}
     {!loading&&!error&&!filteredArticles.length&&!filteredFaqs.length&&<div className={css.empty}>لا توجد نتائج مطابقة.<button className={`${css.smallButton} mt-3`} onClick={()=>{setQuery('');select('all')}}>عرض الكل</button></div>}
     {products.length>0&&<details className={css.panel}><summary className="cursor-pointer text-sm font-medium">متطلبات وتنبيهات المنتجات قبل الشراء</summary><div className="mt-4 grid gap-3">{products.map(product=><section key={product.id}><h3 className="mb-2 text-sm font-medium">{product.name}</h3><ProductNotice product={product} placement="beforePurchase"/></section>)}</div></details>}
     <div className={`${css.panel} flex flex-wrap items-center justify-between gap-3`}><span className="inline-flex items-center gap-2 text-sm"><LifeBuoy size={18}/>هل تحتاج مساعدة إضافية؟</span><a className={css.smallButton} href="/support">فتح تذكرة دعم</a></div>
     {article&&<GuideDialog title={article.title} onClose={()=>setArticle(null)}><GuideArticleView key={article.id} article={article}/></GuideDialog>}
-    {openFaq&&faqs.find(faq=>faq.id===openFaq)&&(()=>{const faq=faqs.find(item=>item.id===openFaq)!;return <GuideDialog title={ar?faq.question_ar:faq.question_en||faq.question_ar} onClose={()=>setOpenFaq(null)}><div className={css.faqDetail}>
-      <div className={css.faqVisual}>{faq.image_url?<ImageLightbox src={faq.image_url} alt={ar?faq.question_ar:faq.question_en||faq.question_ar}/>:<div className={css.faqVisualFallback}><BookOpen size={50}/><span>T3N</span></div>}</div>
-      <div className={css.faqExplanation}><p className={css.eyebrow}>{faq.category_name_ar||'الأسئلة الشائعة'}</p><FaqAnswer text={ar?faq.answer_ar:faq.answer_en||faq.answer_ar}/><a className={`${css.smallButton} mt-4`} href={`/support?guide=${encodeURIComponent((faq.category_name_ar||'الإدارة')+' — '+faq.question_ar)}`}>فتح تذكرة دعم</a></div>
-    </div></GuideDialog>})()}
-    <footer className={css.helpFooter}>© {new Date().getFullYear()} T3N · جميع الحقوق محفوظة</footer>
   </section>;
 }
