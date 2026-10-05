@@ -3030,7 +3030,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   'Use a new or unbanned account for 3 days, then check the ban status.',
                 ]).map((step, index) => <li key={step}><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><p>{step}</p></li>)}
               </ol>
-              <a className="product-guide-wrp__download" href="https://1111-releases.cloudflareclient.com/win/latest" target="_blank" rel="noopener noreferrer"><Download size={17} />{lang === 'ar' ? 'تحميل WRP' : 'Download WRP'}</a>
+              <a className="product-guide-wrp__download" href="https://downloads.cloudflareclient.com/v1/download/windows/ga" target="_blank" rel="noopener noreferrer"><Download size={17} />{lang === 'ar' ? 'تحميل WRP' : 'Download WRP'}</a>
             </section>
           ) : null}
         </GuideDialog>
