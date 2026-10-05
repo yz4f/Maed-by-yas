@@ -480,7 +480,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     return { expiresAtMs, remainingMs, isExpired, isUsable, countdown, isLifetime, isPendingStart };
   };
   const activeProductCount = userProducts.filter((product) => getLicenseTiming(product).isUsable).length;
-  const inactiveProductCount = userProducts.filter((product) => !getLicenseTiming(product).isUsable).length;
   const availableProductCount = userProducts.filter((product) => !product.product?.isDisabled && !product.product?.isArchived && !getLicenseTiming(product).isExpired).length;
 
   useEffect(() => {
@@ -505,6 +504,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     const bActivatedAt = new Date(b.activatedAt || 0).getTime() || 0;
     return bActivatedAt - aActivatedAt;
   });
+  const activeLicenses = sortedUserProducts.filter((product) => getLicenseTiming(product).isUsable);
+  const inactiveLicenses = sortedUserProducts.filter((product) => !getLicenseTiming(product).isUsable);
+  const groupedUserProducts = [...activeLicenses, ...inactiveLicenses];
   const memberSince = React.useMemo(() => {
     if (!currentUser?.createdAt) return '—';
     const joined = new Date(currentUser.createdAt);
@@ -1868,7 +1870,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
-          <div className="portal-section-enter products-experience space-y-6">
+          <div className="portal-section-enter products-experience space-y-7">
             {resetCompletionNotice && <section dir={lang === 'ar' ? 'rtl' : 'ltr'} role="alert" className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_22px_48px_rgba(16,185,129,.14)] sm:p-6 ${isDark ? 'border-emerald-300/[.28] bg-[linear-gradient(135deg,rgba(6,78,59,.88),rgba(10,36,42,.94))] text-emerald-50' : 'border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5,#f0fdfa)] text-emerald-950'}`}>
               <div className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
               <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -1945,45 +1947,43 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             ) : (
               <div className="product-library mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
-                {sortedUserProducts.map((up, index) => {
+                <div className={`col-span-full flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 sm:px-5 ${isDark ? 'border-emerald-300/20 bg-emerald-300/[0.06]' : 'border-emerald-200 bg-emerald-50'}`}>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <CheckCircle2 className={`mt-0.5 h-5 w-5 shrink-0 ${isDark ? 'text-emerald-200' : 'text-emerald-700'}`} />
+                    <div className="min-w-0">
+                      <h3 className={`text-sm font-extrabold sm:text-base ${isDark ? 'text-white' : 'text-slate-950'}`}>{lang === 'ar' ? 'المنتجات الفعّالة' : 'Active products'}</h3>
+                      <p className={`mt-1 text-[11px] leading-5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lang === 'ar' ? 'تراخيصك المتاحة للاستخدام والتحميل.' : 'Licenses ready to use and download.'}</p>
+                    </div>
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ${isDark ? 'border-emerald-200/20 bg-emerald-300/10 text-emerald-100' : 'border-emerald-200 bg-white text-emerald-800'}`}>{activeLicenses.length}</span>
+                </div>
+                {activeLicenses.length === 0 && <p className={`col-span-full rounded-2xl border px-5 py-6 text-center text-sm ${isDark ? 'border-white/10 bg-white/[0.03] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>{lang === 'ar' ? 'لا توجد منتجات فعّالة حاليًا.' : 'No active products right now.'}</p>}
+                {groupedUserProducts.map((up, index) => {
                   const displayKey = up.keyString || (lang === 'ar' ? 'من تعن' : 'From TA3N');
                   const timing = getLicenseTiming(up);
                   const canUseProduct = timing.isUsable;
-                  const previousTiming = index > 0 ? getLicenseTiming(sortedUserProducts[index - 1]) : null;
-                  const startsExpiredSection = timing.isExpired && (!previousTiming || !previousTiming.isExpired);
+                  const startsInactiveSection = index === activeLicenses.length;
                   const productImg = getProductImage(up.product);
 
                   return (
                     <React.Fragment key={up.id}>
-                      {index === 0 && canUseProduct && (
-                        <div className="md:col-span-2 flex items-center justify-between gap-3 rounded-2xl border border-sky-300/15 bg-sky-300/[0.05] px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <CheckCircle2 className="h-4 w-4 text-sky-200" />
-                            <div>
-                              <p className="text-sm font-extrabold text-white">{lang === 'ar' ? 'التراخيص النشطة' : 'Active licenses'}</p>
-                              <p className="mt-0.5 text-[11px] text-sky-100/65">{lang === 'ar' ? 'منتجاتك المتاحة للتحميل والمشاهدة الآن.' : 'Products ready to download and view now.'}</p>
-                            </div>
-                          </div>
-                          <span className="rounded-full border border-sky-200/20 bg-sky-200/[0.08] px-2.5 py-1 text-[11px] font-bold text-sky-100">{activeProductCount}</span>
-                        </div>
-                      )}
-                      {startsExpiredSection && (
-                        <div className="md:col-span-2 mt-2 flex items-center justify-between gap-3 border-t border-white/[0.08] pt-7">
-                          <div className="flex items-center gap-2.5">
-                            <Clock className="h-4 w-4 text-slate-400" />
-                            <div>
-                              <p className="text-sm font-extrabold text-slate-300">{lang === 'ar' ? 'منتجات منتهية' : 'Expired products'}</p>
-                              <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'تظهر هنا المنتجات التي انتهت مدة استخدامها، ويمكنك تفعيل مفتاح جديد للوصول إليها.' : 'Products whose access period has ended. Activate a new key to regain access.'}</p>
+                      {startsInactiveSection && (
+                        <div className="col-span-full mt-6 flex flex-col gap-3 border-t border-white/[0.12] pt-6 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <Clock className={`mt-0.5 h-5 w-5 shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-600'}`} />
+                            <div className="min-w-0">
+                              <h3 className={`text-sm font-extrabold sm:text-base ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{lang === 'ar' ? 'المنتجات المنتهية' : 'Expired products'}</h3>
+                              <p className={`mt-1 text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{lang === 'ar' ? 'التراخيص المنتهية أو غير الفعّالة محفوظة هنا.' : 'Expired or inactive licenses are kept here.'}</p>
                             </div>
                           </div>
                           <button
                             type="button"
                             onClick={() => setShowExpiredLicenses((current) => !current)}
                             aria-expanded={showExpiredLicenses}
-                            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-3 py-2 text-[11px] font-bold text-slate-300 transition hover:border-sky-300/30 hover:bg-sky-300/[0.06] hover:text-sky-100"
+                            className={`inline-flex min-h-10 w-fit items-center gap-2 rounded-xl border px-3 py-2 text-[11px] font-bold transition ${isDark ? 'border-white/10 bg-white/[0.04] text-slate-200 hover:border-sky-300/30 hover:bg-sky-300/[0.07]' : 'border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50'}`}
                           >
                             <span>{showExpiredLicenses ? (lang === 'ar' ? 'إخفاء المنتجات' : 'Hide products') : (lang === 'ar' ? 'عرض المنتجات' : 'Show products')}</span>
-                            <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-slate-400">{inactiveProductCount}</span>
+                            <span className="rounded-md bg-slate-400/10 px-2 py-0.5 text-[10px]">{inactiveLicenses.length}</span>
                             <ArrowLeft className={`h-3.5 w-3.5 transition-transform ${showExpiredLicenses ? 'rotate-90' : ''}`} />
                           </button>
                         </div>
@@ -2001,7 +2001,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         </div>
                         <span className={`product-license-card__status ${canUseProduct ? 'product-license-card__status--active' : ''}`}>
                           <span className="product-license-card__status-dot" />
-                          {timing.isPendingStart ? (lang === 'ar' ? 'مفعّل — لم تبدأ المدة' : 'Activated — pending start') : canUseProduct ? (lang === 'ar' ? 'مفعّل' : 'Active') : (lang === 'ar' ? 'منتهٍ' : 'Expired')}
+                          {timing.isPendingStart ? (lang === 'ar' ? 'مفعّل — لم تبدأ المدة' : 'Activated — pending start') : canUseProduct ? (lang === 'ar' ? 'مفعّل' : 'Active') : timing.isExpired ? (lang === 'ar' ? 'منتهٍ' : 'Expired') : (lang === 'ar' ? 'غير فعّال' : 'Inactive')}
                         </span>
                         <div className="product-license-card__media-brand">{lang === 'ar' ? 'تعن · ترخيص رقمي' : 'TA3N · DIGITAL LICENSE'}</div>
                       </div>
@@ -2068,6 +2068,18 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </React.Fragment>
                   );
                 })}
+                {inactiveLicenses.length === 0 && (
+                  <div className={`col-span-full mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-6 ${isDark ? 'border-white/[0.12]' : 'border-slate-200'}`}>
+                    <div className="flex items-center gap-3">
+                      <Clock className={`h-5 w-5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`} />
+                      <div>
+                        <h3 className={`text-sm font-extrabold sm:text-base ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{lang === 'ar' ? 'المنتجات المنتهية' : 'Expired products'}</h3>
+                        <p className={`mt-1 text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{lang === 'ar' ? 'لا توجد تراخيص منتهية حاليًا.' : 'No expired licenses right now.'}</p>
+                      </div>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${isDark ? 'border-white/10 text-slate-300' : 'border-slate-200 text-slate-600'}`}>0</span>
+                  </div>
+                )}
               </div>
             )}
 
