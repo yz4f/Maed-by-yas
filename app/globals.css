@@ -6,6 +6,7 @@
   body {
     @apply antialiased selection:bg-sky-200 selection:text-slate-950 font-sans;
     background: #050b16;
+    font-family: var(--font-alexandria), Arial, sans-serif;
   }
 }
 

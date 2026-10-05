@@ -70,3 +70,9 @@
 
 /* Compact navigation, without persistent glow or decorative motion. */
 .sidebar{width:244px}.collapsed{width:76px}.brandRow{min-height:82px;padding:14px}.brandCopy strong{font-size:24px}.nav{padding:10px}.group+.group{margin-top:18px}.item,.drawer .item{min-height:44px;margin-block:2px;border-radius:10px}.itemLabel{font-size:13px;font-weight:500}.item[data-active='true']{background:rgba(40,200,190,.08);border-color:rgba(90,230,220,.35);box-shadow:none}.item[data-active='true']::before{box-shadow:none;width:2px;top:12px;bottom:12px}.itemIcon{width:20px}.item:focus-visible{outline:2px solid var(--luxe-accent);outline-offset:1px}.item:focus:not(:focus-visible){outline:none}.user{padding:8px}.brandCopy small{font-size:9px}.collapsed .item{min-height:44px}.logout{min-height:38px}.drawer{width:min(280px,calc(100vw - 40px))}
+
+/* Keep navigation light, with space between compact choices. */
+.nav{padding:14px 12px}.group+.group{margin-top:22px}.groupTitle{margin-bottom:11px}
+.item,.drawer .item{min-height:41px;margin-block:5px;padding:7px 11px}
+.itemLabel{font-size:12px;font-weight:500}.itemIcon{width:19px}
+.collapsed .item{min-height:42px}

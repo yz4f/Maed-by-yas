@@ -83,3 +83,8 @@
 @media (max-width: 760px) { .headerInner { padding-inline: 20px; height: 74px; } .brand small { display: none; } .brand > span { font-size: 23px; } .brand { gap: 9px; } .content { grid-template-columns: minmax(0,1fr); padding: 42px 20px 44px; gap: 34px; max-width: 560px; } .hero { text-align: center; } .hero h1 { font-size: 32px; line-height: 1.55; } .description { margin: 16px auto 0; font-size: 14px; max-width: 380px; } .badge { margin-bottom: 17px; } .stats { margin: 25px auto 0; max-width: 330px; } .stats > div { align-items: center; padding-inline: 12px; } .stats > div:first-child { padding-inline-start: 12px; } .stats > div:last-child { padding-inline-end: 12px; } .stats dd { font-size: 23px; } .stats dt { font-size: 10px; } .card { margin-inline: auto; padding: 26px 24px 22px; } .footer { width: calc(100% - 40px); padding-block: 20px; } }
 @media (max-width: 370px) { .headerInner { padding-inline: 16px; gap: 10px; } .tools { gap: 6px; } .control { padding-inline: 10px; } .theme { padding: 0; } .hero h1 { font-size: 30px; } .card { padding-inline: 20px; } .primary { font-size: 14px; } }
 @media (prefers-reduced-motion: reduce) { .page *, .page *::before, .page *::after { animation: none !important; transition: none !important; } }
+
+.hero h1{font-size:clamp(34px,2.7vw,46px);line-height:1.45}
+.card h2{font-size:22px}.description{font-size:15px}
+@media(max-width:960px){.hero h1{font-size:34px}}
+@media(max-width:760px){.hero h1{font-size:30px}.description{font-size:14px}}

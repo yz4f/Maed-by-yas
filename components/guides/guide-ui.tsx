@@ -90,7 +90,7 @@ export function videoEmbed(url: string): { kind: 'iframe' | 'video'; src: string
   } catch { return null; }
 }
 
-export function GuideVideo({ url, title, image, product, skipNotice = false }: { url: string; title: string; image?: string; product?: Product; skipNotice?: boolean }) {
+export function GuideVideo({ url, title, image, product, skipNotice = false, hideCaption = false }: { url: string; title: string; image?: string; product?: Product; skipNotice?: boolean; hideCaption?: boolean }) {
   const [mode, setMode] = useState<'poster' | 'play'>('poster');
   const [failed, setFailed] = useState(false);
   const media = videoEmbed(url);
@@ -104,7 +104,7 @@ export function GuideVideo({ url, title, image, product, skipNotice = false }: {
       {media.kind === 'iframe' ? <iframe title={title} src={media.src} allow="fullscreen; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /> : <video src={media.src} controls playsInline preload="metadata" onError={() => setFailed(true)} />}
     </div>}
     {failed && <p className={styles.warning}>تعذّر تحميل الفيديو. أعد المحاولة أو تواصل مع الدعم.</p>}
-    <div className="px-4 py-3 text-xs text-slate-400">{title} · يمكنك قراءة الخطوات المكتوبة أدناه.</div>
+    {!hideCaption && <div className="px-4 py-3 text-xs text-slate-400">{title} · يمكنك قراءة الخطوات المكتوبة أدناه.</div>}
   </section>;
 }
 
