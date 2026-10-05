@@ -1,6 +1,7 @@
 'use client';
 
-import { GuideDialog, GuideVideo } from '@/components/guides/guide-ui';
+import { GuideArticleView, GuideCard, GuideDialog, GuideVideo } from '@/components/guides/guide-ui';
+import { articlesForProduct } from '@/lib/guide-library';
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
@@ -259,8 +260,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [guestModalOpen, setGuestModalOpen] = useState(false);
 
   // Guide Modal States
-  const [guideView, setGuideView] = useState<'notice' | 'video' | null>(null);
+  const [guideView, setGuideView] = useState<'notice' | 'video' | 'format' | 'issues' | null>(null);
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
+  const [guideFlashVersion, setGuideFlashVersion] = useState<'win11' | 'win10' | null>(null);
+  const [guideIssueId, setGuideIssueId] = useState<string | null>(null);
   const [openingGuideProductId, setOpeningGuideProductId] = useState<string | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
   const [resetRequestReason, setResetRequestReason] = useState('');
@@ -272,6 +275,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const guideTitle = lang === 'ar'
     ? `شرح ${guideModalProduct?.product?.name || 'المنتج'}`
     : `${guideModalProduct?.product?.name || 'Product'} guide`;
+  const guideIssues = articlesForProduct(guideModalProduct?.product).filter(article => article.stage === 6);
+  const selectedGuideIssue = guideIssues.find(article => article.id === guideIssueId);
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
   const adminStatsRequestInFlightRef = useRef(false);
@@ -1061,6 +1066,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       setUserProducts((current) => current.map((item) => item.id === license.id ? updated : item));
       setGuideModalProduct(updated);
       setGuideView('notice');
+      setGuideFlashVersion(null);
+      setGuideIssueId(null);
     } catch (error) {
       showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'), 'error');
     } finally {
@@ -2962,10 +2969,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <GuideDialog
-          title={guideTitle}
+          title={selectedGuideIssue?.title || guideTitle}
           eyebrow={lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
           onClose={() => { setGuideModalProduct(null); setGuideView(null); }}
         >
+          <nav className="product-guide-tabs" aria-label={lang === 'ar' ? 'أقسام دليل المنتج' : 'Product guide sections'}>
+            <button type="button" aria-current={guideView === 'notice' || guideView === 'video' ? 'page' : undefined} onClick={() => { setGuideView('notice'); setGuideIssueId(null); }}><Play size={16} />{lang === 'ar' ? 'شرح المنتج' : 'Product video'}</button>
+            <button type="button" aria-current={guideView === 'format' ? 'page' : undefined} onClick={() => { setGuideView('format'); setGuideIssueId(null); }}><Laptop size={16} />{lang === 'ar' ? 'فورمات الفلاشة' : 'Prepare USB'}</button>
+            <button type="button" aria-current={guideView === 'issues' ? 'page' : undefined} onClick={() => setGuideView('issues')}><HelpCircle size={16} />{lang === 'ar' ? 'حل المشاكل' : 'Troubleshooting'}</button>
+          </nav>
           {guideView === 'notice' ? (
             <div className="product-guide-intro">
               <div className="product-guide-intro__icon"><Info size={24} aria-hidden="true" /></div>
@@ -2979,7 +2991,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 <p role="status" className="product-guide-intro__unavailable">{lang === 'ar' ? 'لم تتم إضافة فيديو شرح لهذا المنتج بعد.' : 'A guide video has not been added for this product yet.'}</p>
               )}
             </div>
-          ) : guideModalProduct.product?.videoUrl ? (
+          ) : guideView === 'video' && guideModalProduct.product?.videoUrl ? (
             <div className="product-guide-video">
               <GuideVideo
                 url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl}
@@ -2988,6 +3000,19 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 hideCaption
               />
             </div>
+          ) : guideView === 'format' ? (
+            <section className="product-guide-section">
+              <div className="product-guide-section__heading"><h3>{lang === 'ar' ? 'تجهيز فلاش Windows' : 'Prepare a Windows USB'}</h3><p>{lang === 'ar' ? 'اختر نسخة Windows المناسبة، ثم شاهد شرح تجهيز الفلاشة.' : 'Choose your Windows version, then watch the USB preparation guide.'}</p></div>
+              <div className="product-guide-format-options">
+                {([{ id: 'win11', label: 'Windows 11' }, { id: 'win10', label: 'Windows 10' }] as const).map(item => (
+                  <button key={item.id} type="button" aria-pressed={guideFlashVersion === item.id} onClick={() => setGuideFlashVersion(item.id)}><Laptop size={19} /><span>{item.label}</span><Play size={15} /></button>
+                ))}
+              </div>
+              {guideFlashVersion && <GuideVideo key={guideFlashVersion} url={guideFlashVersion === 'win11' ? 'https://youtu.be/XZ-9RbqlA2k' : 'https://youtu.be/WaFxvUmsNWs'} title={guideFlashVersion === 'win11' ? 'تجهيز فلاش Windows 11' : 'تجهيز فلاش Windows 10'} hideCaption />}
+            </section>
+          ) : guideView === 'issues' ? (
+            selectedGuideIssue ? <div className="product-guide-section"><button type="button" className="product-guide-back" onClick={() => setGuideIssueId(null)}><ArrowRight size={16} />{lang === 'ar' ? 'العودة إلى حلول المشاكل' : 'Back to solutions'}</button><GuideArticleView key={selectedGuideIssue.id} article={selectedGuideIssue} product={guideModalProduct.product} /></div>
+              : <section className="product-guide-section"><div className="product-guide-section__heading"><h3>{lang === 'ar' ? 'حل المشاكل' : 'Troubleshooting'}</h3><p>{lang === 'ar' ? 'اختر المشكلة المطابقة لما يظهر على جهازك.' : 'Choose the issue that matches what you see on your device.'}</p></div><div className="product-guide-issues">{guideIssues.map((article, index) => <GuideCard key={article.id} article={article} number={index + 1} onOpen={() => setGuideIssueId(article.id)} />)}</div></section>
           ) : null}
         </GuideDialog>
       )}
