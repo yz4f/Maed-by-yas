@@ -11,7 +11,6 @@ const alexandria = localFont({
 });
 import './globals.css';
 import './portal-luxe.css';
-import './redeem-modal.css';
 import { Providers } from './providers';
 import { CopyProtection } from '@/components/security/copy-protection';
 

@@ -20,7 +20,7 @@ const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
 const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
 const DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID = 'resetFeatureAnnouncement';
 const DISCORD_SUPPORT_LINK_CONFIG_ID = 'supportLinkAnnouncement';
-const DISCORD_SUPPORT_LINK_URL = `${websiteUrl}/?tab=tickets`;
+const DISCORD_SUPPORT_LINK_URL = 'https://t3nn.wtf/support';
 const DISCORD_SUPPORT_LINK_IMAGE_URL = `${websiteUrl}/assets/discord/support-center.png`;
 const DISCORD_SUPPORT_LINK_PAYLOAD_VERSION = 'support-link-image-v1';
 const DISCORD_UPDATES_CHANNEL_ID = '1540878976166400060';
@@ -996,7 +996,7 @@ export async function sendDiscordCustomerReplyReminder(event: {
   if (previousAt && Date.now() - previousAt < 10 * 60 * 1000) return { sent: false, reason: 'cooldown' as const };
 
   const dmId = await openDiscordDm(event.customerDiscordId, token);
-  const sessionUrl = event.supportSessionId ? `${websiteUrl}/support/session/${encodeURIComponent(event.supportSessionId)}` : `${websiteUrl}/?tab=tickets`;
+  const sessionUrl = event.supportSessionId ? `${websiteUrl}/support/session/${encodeURIComponent(event.supportSessionId)}` : `${websiteUrl}/support`;
   await postDiscordMessage(dmId, token, {
     embeds: [{
       color: 0x5865f2,
