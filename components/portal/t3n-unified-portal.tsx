@@ -260,7 +260,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [guestModalOpen, setGuestModalOpen] = useState(false);
 
   // Guide Modal States
-  const [guideView, setGuideView] = useState<'notice' | 'video' | 'format' | 'issues' | null>(null);
+  const [guideView, setGuideView] = useState<'notice' | 'video' | 'format' | 'issues' | 'wrp' | null>(null);
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
   const [guideFlashVersion, setGuideFlashVersion] = useState<'win11' | 'win10' | null>(null);
   const [guideIssueId, setGuideIssueId] = useState<string | null>(null);
@@ -2977,6 +2977,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <button type="button" aria-current={guideView === 'notice' || guideView === 'video' ? 'page' : undefined} onClick={() => { setGuideView('notice'); setGuideIssueId(null); }}><Play size={16} />{lang === 'ar' ? 'شرح المنتج' : 'Product video'}</button>
             <button type="button" aria-current={guideView === 'format' ? 'page' : undefined} onClick={() => { setGuideView('format'); setGuideIssueId(null); }}><Laptop size={16} />{lang === 'ar' ? 'فورمات الفلاشة' : 'Prepare USB'}</button>
             <button type="button" aria-current={guideView === 'issues' ? 'page' : undefined} onClick={() => setGuideView('issues')}><HelpCircle size={16} />{lang === 'ar' ? 'حل المشاكل' : 'Troubleshooting'}</button>
+            <button type="button" aria-current={guideView === 'wrp' ? 'page' : undefined} onClick={() => { setGuideView('wrp'); setGuideIssueId(null); }}><Download size={16} />WRP</button>
           </nav>
           {guideView === 'notice' ? (
             <div className="product-guide-intro">
@@ -3013,6 +3014,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           ) : guideView === 'issues' ? (
             selectedGuideIssue ? <div className="product-guide-section"><button type="button" className="product-guide-back" onClick={() => setGuideIssueId(null)}><ArrowRight size={16} />{lang === 'ar' ? 'العودة إلى حلول المشاكل' : 'Back to solutions'}</button><GuideArticleView key={selectedGuideIssue.id} article={selectedGuideIssue} product={guideModalProduct.product} /></div>
               : <section className="product-guide-section"><div className="product-guide-section__heading"><h3>{lang === 'ar' ? 'حل المشاكل' : 'Troubleshooting'}</h3><p>{lang === 'ar' ? 'اختر المشكلة المطابقة لما يظهر على جهازك.' : 'Choose the issue that matches what you see on your device.'}</p></div><div className="product-guide-issues">{guideIssues.map((article, index) => <GuideCard key={article.id} article={article} number={index + 1} onOpen={() => setGuideIssueId(article.id)} />)}</div></section>
+          ) : guideView === 'wrp' ? (
+            <section className="product-guide-section product-guide-wrp">
+              <div className="product-guide-section__heading"><h3>WRP</h3><p>{lang === 'ar' ? 'إذا أكملت جميع خطوات الدليل وما زال الطرد أو الحظر قائمًا، اتبع هذه الخطوات بالترتيب.' : 'If you completed every guide step and are still kicked or banned, follow these steps in order.'}</p></div>
+              <ol className="product-guide-wrp__steps">
+                {(lang === 'ar' ? [
+                  'حمّل WRP من الرابط أدناه، واتركه متوقفًا في هذه المرحلة.',
+                  'أعد تنفيذ جميع خطوات دليل المنتج من البداية.',
+                  'شغّل WRP قبل دخول اللعبة مباشرة.',
+                  'ادخل بحساب جديد أو غير محظور والعب به لمدة 3 أيام، ثم تحقّق من حالة الحظر.',
+                ] : [
+                  'Download WRP below, but leave it off for now.',
+                  'Repeat every step in the product guide from the beginning.',
+                  'Turn on WRP just before entering the game.',
+                  'Use a new or unbanned account for 3 days, then check the ban status.',
+                ]).map((step, index) => <li key={step}><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><p>{step}</p></li>)}
+              </ol>
+              <a className="product-guide-wrp__download" href="https://1111-releases.cloudflareclient.com/win/latest" target="_blank" rel="noopener noreferrer"><Download size={17} />{lang === 'ar' ? 'تحميل WRP' : 'Download WRP'}</a>
+            </section>
           ) : null}
         </GuideDialog>
       )}

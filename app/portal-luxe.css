@@ -576,3 +576,13 @@
 .product-guide-back{display:inline-flex;align-items:center;gap:7px;justify-self:start;min-height:36px;padding:7px 12px;border:1px solid #ffffff20;border-radius:9px;color:#c3e4e7;font-size:12px}
 @media(max-width:640px){.product-guide-tabs button{flex:0 0 auto;padding:8px 11px;font-size:11px}.product-guide-format-options,.product-guide-issues{grid-template-columns:1fr}.product-guide-section__heading h3{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.product-guide-tabs button,.product-guide-format-options button{transition:none}}
+
+.product-guide-wrp__steps{display:grid;gap:9px;margin:0;padding:0;list-style:none;counter-reset:none}
+.product-guide-wrp__steps li{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border:1px solid #ffffff1b;border-radius:11px;background:#ffffff06}
+.product-guide-wrp__steps li span{flex:none;display:grid;place-items:center;width:27px;height:27px;border:1px solid #91d9dc3d;border-radius:8px;background:#91d9dc12;color:#a6e6e5;font-size:11px;font-weight:700}
+.product-guide-wrp__steps li p{margin:2px 0 0;color:#d7e6e9;font-size:12px;line-height:1.8}
+.product-guide-wrp__download{display:inline-flex;align-items:center;justify-content:center;gap:9px;justify-self:start;min-height:42px;padding:9px 17px;border:1px solid #a6e4de77;border-radius:10px;background:#24787a;color:#fff;font-size:12px;font-weight:650;transition:background .18s,transform .18s}
+.product-guide-wrp__download:hover{background:#196569;transform:translateY(-1px)}
+.product-guide-wrp__download:focus-visible{outline:2px solid #a8eee5;outline-offset:3px}
+@media(max-width:640px){.product-guide-wrp__download{justify-self:stretch}}
+@media(prefers-reduced-motion:reduce){.product-guide-wrp__download{transition:none}.product-guide-wrp__download:hover{transform:none}}
