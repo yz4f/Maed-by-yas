@@ -624,11 +624,6 @@ export function ProductStockModal({
                     {productFormData.sku || 'SKU-DIGITAL'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-normal truncate">
-                  {lang === 'ar'
-                    ? 'التحكم الشامل في المفاتيح الرقمية، الحقول المخصصة، والتزامن مع الطلبات الحقيقية.'
-                    : 'Manage digital product keys, custom properties, and real-time order stock.'}
-                </p>
               </div>
             </div>
 
@@ -741,11 +736,6 @@ export function ProductStockModal({
                       <Sparkles className="w-4 h-4 text-blue-400" />
                       <span>{lang === 'ar' ? 'إضافة الأكواد للمخزون' : 'Add Keys to Stock'}</span>
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {lang === 'ar'
-                        ? 'أدخل أو الصق كود مفرد أو مجموعة أكواد (كود في كل سطر أو مفصولة بفواصل).'
-                        : 'Enter single or multiple keys (one per line or comma-separated).'}
-                    </p>
                   </div>
 
                   {/* Options row: duration */}
@@ -1140,11 +1130,6 @@ export function ProductStockModal({
                     <Layers className="w-4 h-4 text-blue-400" />
                     <span>{lang === 'ar' ? 'الحقول والخصائص المخصصة' : 'Custom Product Fields'}</span>
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {lang === 'ar'
-                      ? 'تعديل أو إنشاء حقول بيانات إضافية للمنتج دون التأثير على التراخيص القديمة.'
-                      : 'Create or adjust custom attributes safely without breaking customer licenses.'}
-                  </p>
                 </div>
 
                 <button
@@ -1265,11 +1250,6 @@ export function ProductStockModal({
                   <FileText className="w-4 h-4 text-blue-400" />
                   <span>{lang === 'ar' ? 'بيانات المنتج الأساسية' : 'Core Product Details'}</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {lang === 'ar'
-                    ? 'المعلومات الهامة فقط المرتبطة بنوع المخزون والـ SKU وحالة العرض.'
-                    : 'Vital properties relating to digital keys stock and catalog state.'}
-                </p>
               </div>
 
               <div className="rounded-2xl border border-blue-400/15 bg-blue-400/[0.04] p-4 space-y-3">

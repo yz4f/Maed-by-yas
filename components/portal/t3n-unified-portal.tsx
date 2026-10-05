@@ -3017,6 +3017,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           ) : guideView === 'wrp' ? (
             <section className="product-guide-section product-guide-wrp">
               <div className="product-guide-section__heading"><h3>WRP</h3><p>{lang === 'ar' ? 'إذا أكملت جميع خطوات الدليل وما زال الطرد أو الحظر قائمًا، اتبع هذه الخطوات بالترتيب.' : 'If you completed every guide step and are still kicked or banned, follow these steps in order.'}</p></div>
+              <GuideVideo url="/guides/wrp-guide.mp4" title="WRP" image="/guides/wrp-guide-thumb.jpg" hideCaption />
               <ol className="product-guide-wrp__steps">
                 {(lang === 'ar' ? [
                   'حمّل WRP من الرابط أدناه، واتركه متوقفًا في هذه المرحلة.',
