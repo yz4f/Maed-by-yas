@@ -3,6 +3,7 @@ import type { Product } from '@/types';
 import { GUIDE_ARTICLES } from '@/lib/guide-library';
 
 const guideSettingsSchema = z.object({
+  guideImage: z.string().trim().max(400_000).refine(value => !value || value.startsWith('/') || /^https:\/\//i.test(value) || /^data:image\/(?:jpeg|png|webp);base64,/i.test(value), 'Invalid guide image').optional().nullable(),
   notice: z.object({
     enabled: z.boolean(), title: z.string().trim().max(160), text: z.string().trim().max(3000),
     type: z.enum(['Information', 'Warning', 'Important', 'Error']),

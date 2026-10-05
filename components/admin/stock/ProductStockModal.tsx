@@ -32,6 +32,39 @@ import { toast } from '@/lib/toast';
 import { ProductGuideSettings, DEFAULT_NOTICE } from '@/components/guides/product-guide-settings';
 import { DEFAULT_GUIDE_SECTIONS } from '@/lib/guide-library';
 
+async function prepareGuideCover(file: File): Promise<string> {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('اختر صورة JPG أو PNG أو WebP.');
+  if (file.size > 8 * 1024 * 1024) throw new Error('حجم الصورة الأصلية يجب ألا يتجاوز 8 ميغابايت.');
+  const source = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('تعذرت قراءة الصورة.'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const element = new Image();
+    element.onerror = () => reject(new Error('ملف الصورة غير صالح.'));
+    element.onload = () => resolve(element);
+    element.src = source;
+  });
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('تعذر تجهيز الصورة.');
+  for (const width of [1200, 960, 720]) {
+    const scale = Math.min(1, width / Math.max(image.width, image.height));
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    context.fillStyle = '#091526';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.82, 0.68, 0.54]) {
+      const result = canvas.toDataURL('image/jpeg', quality);
+      if (result.length <= 300_000) return result;
+    }
+  }
+  throw new Error('الصورة كبيرة بعد الضغط؛ اختر صورة أبسط أو استخدم رابط HTTPS.');
+}
+
 interface ProductStockModalProps {
   isOpen: boolean;
   product: Product | null;
@@ -110,6 +143,7 @@ export function ProductStockModal({
     name: '',
     description: '',
     image: '',
+    guideImage: '',
     sku: '',
     category: '',
     version: '',
@@ -156,6 +190,7 @@ export function ProductStockModal({
       name: product.name || '',
       description: product.description || '',
       image: product.image || '',
+      guideImage: product.guideImage || '',
       sku: product.sku || product.id,
       category: product.category || '',
       version: product.version || '',
@@ -451,6 +486,7 @@ export function ProductStockModal({
         name: productFormData.name.trim(),
         description: productFormData.description.trim(),
         image: productFormData.image.trim(),
+        guideImage: productFormData.guideImage.trim(),
         sku: productFormData.sku.trim(),
         category: productFormData.category.trim(),
         version: productFormData.version.trim(),
@@ -1437,6 +1473,61 @@ export function ProductStockModal({
               </div>
 
               <ProductGuideSettings value={guideSettings} onChange={value => { setGuideSettings(value); setHasUnsavedChanges(true); }} />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="space-y-1.5">
+                  <span className="text-xs font-semibold text-slate-300">{lang === 'ar' ? 'رابط فيديو دليل المنتج' : 'Product guide video URL'}</span>
+                  <input type="url" value={productFormData.videoUrl} onChange={event => { setProductFormData(current => ({ ...current, videoUrl: event.target.value })); setHasUnsavedChanges(true); }} placeholder="https://…" className="w-full rounded-xl border border-white/10 bg-[#070a12] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" dir="ltr" />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-xs font-semibold text-slate-300">{lang === 'ar' ? 'رابط تحميل المنتج' : 'Product download URL'}</span>
+                  <input type="url" value={productFormData.fileUrl} onChange={event => { setProductFormData(current => ({ ...current, fileUrl: event.target.value })); setHasUnsavedChanges(true); }} placeholder="https://…" className="w-full rounded-xl border border-white/10 bg-[#070a12] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" dir="ltr" />
+                </label>
+              </div>
+
+              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.04] p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white">{lang === 'ar' ? 'غلاف فيديو دليل المنتج' : 'Product guide video cover'}</h3>
+                    <p className="mt-1 text-[11px] text-slate-400">{lang === 'ar' ? 'صورة مستقلة تظهر قبل تشغيل فيديو الشرح لدى جميع الأعضاء.' : 'A separate image shown before members play the guide video.'}</p>
+                  </div>
+                  <div className="h-16 w-28 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                    <img src={productFormData.guideImage || productFormData.image || '/logo.png'} alt="" className="h-full w-full object-cover" onError={event => { event.currentTarget.src = '/logo.png'; }} />
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={productFormData.guideImage.startsWith('data:') ? '' : productFormData.guideImage}
+                  onChange={event => { setProductFormData(current => ({ ...current, guideImage: event.target.value })); setHasUnsavedChanges(true); }}
+                  placeholder={lang === 'ar' ? 'رابط HTTPS أو مسار صورة، أو ارفع صورة من جهازك' : 'HTTPS URL or image path, or upload from your device'}
+                  aria-label={lang === 'ar' ? 'رابط غلاف فيديو الدليل' : 'Guide video cover URL'}
+                  className="w-full rounded-xl border border-white/10 bg-[#070a12] px-3.5 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-400"
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex cursor-pointer items-center rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3.5 py-2.5 text-[11px] font-bold text-cyan-200 transition hover:bg-cyan-400/20">
+                    {lang === 'ar' ? 'رفع صورة الغلاف' : 'Upload cover image'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={async event => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const guideImage = await prepareGuideCover(file);
+                          setProductFormData(current => ({ ...current, guideImage }));
+                          setHasUnsavedChanges(true);
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : 'تعذر تجهيز الصورة.');
+                        } finally {
+                          event.target.value = '';
+                        }
+                      }}
+                    />
+                  </label>
+                  {productFormData.guideImage && <button type="button" onClick={() => { setProductFormData(current => ({ ...current, guideImage: '' })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 px-3.5 py-2.5 text-[11px] text-slate-300 hover:bg-white/10">{lang === 'ar' ? 'إزالة الغلاف' : 'Remove cover'}</button>}
+                </div>
+              </div>
 
               {/* Description */}
               <div className="space-y-1.5">

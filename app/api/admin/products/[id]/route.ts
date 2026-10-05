@@ -19,8 +19,8 @@ export async function PUT(req: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
     const data = await req.json();
-    const product = await StoreDB.updateProduct(id, data);
-    return NextResponse.json({ success: true, product });
+    const result = await StoreDB.updateProduct(id, data);
+    return NextResponse.json(result, { status: result.success ? 200 : 404 });
   } catch (error) {
     if (error instanceof ZodError) return NextResponse.json({ success: false, message: 'إعدادات الدليل أو التنبيه غير صالحة.' }, { status: 400 });
     console.error('Product update failed:', error);

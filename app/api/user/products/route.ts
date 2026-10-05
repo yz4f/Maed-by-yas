@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
+    const isBackgroundSync = new URL(req.url).searchParams.get('sync') === '1';
     const actor = await getSessionActor();
     if (!actor) {
       return NextResponse.json({ success: false, message: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
           metadata: { source: 'discord_oauth' },
         }
       );
-    } else {
+    } else if (!isBackgroundSync) {
       await StoreDB.updateUser(user.id, { lastLogin: new Date().toISOString(), lastIp: ip, name: actor.name, image: actor.image });
     }
 
@@ -71,11 +72,12 @@ export async function GET(req: Request) {
       );
     }
 
-    const [products, activity] = await Promise.all([
+    const [products, activity, catalog] = await Promise.all([
       StoreDB.getUserProducts(user.id),
-      StoreDB.getAuditEvents({ userId: user.id, limit: 12 }),
+      isBackgroundSync ? Promise.resolve(undefined) : StoreDB.getAuditEvents({ userId: user.id, limit: 12 }),
+      StoreDB.getProducts(),
     ]);
-    return NextResponse.json({ success: true, products, user, activity, isNewUser });
+    return NextResponse.json({ success: true, products, user, activity, catalog, isNewUser }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('User products synchronization failed:', error);
     return NextResponse.json({ success: false, message: 'تعذر تحميل المنتجات الآن. حاول مرة أخرى.' }, { status: 500 });

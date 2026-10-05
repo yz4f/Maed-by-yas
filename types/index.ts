@@ -48,6 +48,7 @@ export interface Product {
   fileSize: string;
   fileUrl: string;
   videoUrl?: string | null;
+  guideImage?: string | null;
   guideUrl?: string | null;
   guideSections?: string[];
   notice?: ProductNoticeConfig;

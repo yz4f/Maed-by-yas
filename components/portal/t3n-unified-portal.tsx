@@ -519,6 +519,21 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }, [currentUser?.id]);
 
   useEffect(() => {
+    if (!currentUser?.id) return;
+    const syncVisiblePage = () => {
+      if (document.visibilityState === 'visible') void loadUserProducts(true);
+    };
+    const interval = window.setInterval(syncVisiblePage, 20_000);
+    window.addEventListener('focus', syncVisiblePage);
+    document.addEventListener('visibilitychange', syncVisiblePage);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', syncVisiblePage);
+      document.removeEventListener('visibilitychange', syncVisiblePage);
+    };
+  }, [currentUser?.id, activeTab, isAdmin]);
+
+  useEffect(() => {
     if (activeTab !== 'admin' || !isAdmin) return;
     if (adminSectionTab === 'overview' || adminSectionTab === 'logs') void loadAdminStats();
     if (adminSectionTab === 'products') {
@@ -545,18 +560,25 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }).catch(() => undefined);
   }, [activeTab, currentUser?.id]);
 
-  const loadUserProducts = async (): Promise<void> => {
+  const loadUserProducts = async (silent = false): Promise<void> => {
     if (!currentUser || userProductsRequestInFlightRef.current) return;
     userProductsRequestInFlightRef.current = true;
-    setIsLoadingProducts(true);
+    if (!silent) setIsLoadingProducts(true);
     try {
-      const res = await fetch('/api/user/products', { credentials: 'same-origin' });
+      const res = await fetch(silent ? '/api/user/products?sync=1' : '/api/user/products', { credentials: 'same-origin', cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         const nextProducts = Array.isArray(data.products) ? data.products as UserProduct[] : [];
-        const nextActivity = Array.isArray(data.activity) ? data.activity as AuditEvent[] : [];
         setUserProducts((current) => JSON.stringify(current) === JSON.stringify(nextProducts) ? current : nextProducts);
-        setUserActivity((current) => JSON.stringify(current) === JSON.stringify(nextActivity) ? current : nextActivity);
+        if (Array.isArray(data.activity)) {
+          const nextActivity = data.activity as AuditEvent[];
+          setUserActivity((current) => JSON.stringify(current) === JSON.stringify(nextActivity) ? current : nextActivity);
+        }
+        if (Array.isArray(data.catalog) && !(isAdmin && activeTab === 'admin')) {
+          const nextCatalog = data.catalog as Product[];
+          setProducts((current) => JSON.stringify(current) === JSON.stringify(nextCatalog) ? current : nextCatalog);
+        }
+        setGuideModalProduct(current => current ? nextProducts.find(item => item.id === current.id) || current : null);
         if (data.isNewUser && !sessionStorage.getItem('t3n-new-user-welcome-shown')) {
           sessionStorage.setItem('t3n-new-user-welcome-shown', '1');
           setNewUserWelcome({ name: data.user?.name || currentUser.name });
@@ -566,7 +588,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       console.error('Failed to load user products:', e);
     } finally {
       userProductsRequestInFlightRef.current = false;
-      setIsLoadingProducts(false);
+      if (!silent) setIsLoadingProducts(false);
     }
   };
 
@@ -2931,8 +2953,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             setInventoryProduct(null);
           }}
           onProductUpdated={(updated) => {
+            if (inventoryProduct?.id === 'new') setInventoryProduct(updated);
             setProducts((current) =>
-              current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+              current.some((p) => p.id === updated.id)
+                ? current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+                : [...current, updated]
             );
             loadDbProducts();
             loadAdminStats();
@@ -2997,7 +3022,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <GuideVideo
                 url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl}
                 title={guideTitle}
-                image={guideModalProduct.product.image}
+                image={guideModalProduct.product.guideImage || guideModalProduct.product.image}
                 hideCaption
               />
             </div>

@@ -54,14 +54,27 @@ export function HelpCenter({lang, products=[], onNavigateTab, initialCategoryId}
   const resultHeading=useRef<HTMLHeadingElement>(null);
   useEffect(()=>{
     const controller=new AbortController();
-    Promise.all([fetch('/api/help/faqs',{cache:'no-store',signal:controller.signal}),fetch('/api/help/categories',{cache:'no-store',signal:controller.signal})])
-      .then(async([faqResponse,categoryResponse])=>{
-        const [faqData,categoryData]=await Promise.all([faqResponse.json(),categoryResponse.json()]);
-        if(!faqResponse.ok||!faqData.success||!Array.isArray(faqData.faqs))throw new Error('FAQ request failed');
-        if(controller.signal.aborted)return;
-        setFaqs(faqData.faqs);setCategories(Array.isArray(categoryData.categories)?categoryData.categories:[]);setError(false);
-      }).catch(()=>{if(!controller.signal.aborted)setError(true)}).finally(()=>{if(!controller.signal.aborted)setLoading(false)});
-    return()=>controller.abort();
+    let requestInFlight=false;
+    const refresh=(foreground:boolean)=>{
+      if(requestInFlight||controller.signal.aborted)return;
+      requestInFlight=true;
+      void Promise.all([fetch('/api/help/faqs',{cache:'no-store',signal:controller.signal}),fetch('/api/help/categories',{cache:'no-store',signal:controller.signal})])
+        .then(async([faqResponse,categoryResponse])=>{
+          const [faqData,categoryData]=await Promise.all([faqResponse.json(),categoryResponse.json()]);
+          if(!faqResponse.ok||!faqData.success||!Array.isArray(faqData.faqs))throw new Error('FAQ request failed');
+          if(controller.signal.aborted)return;
+          setFaqs(faqData.faqs);setCategories(Array.isArray(categoryData.categories)?categoryData.categories:[]);setError(false);
+        }).catch(()=>{if(foreground&&!controller.signal.aborted)setError(true)}).finally(()=>{
+          requestInFlight=false;
+          if(foreground&&!controller.signal.aborted)setLoading(false);
+        });
+    };
+    const refreshVisible=()=>{if(document.visibilityState==='visible')refresh(false)};
+    refresh(true);
+    const interval=window.setInterval(refreshVisible,20_000);
+    window.addEventListener('focus',refreshVisible);
+    document.addEventListener('visibilitychange',refreshVisible);
+    return()=>{controller.abort();window.clearInterval(interval);window.removeEventListener('focus',refreshVisible);document.removeEventListener('visibilitychange',refreshVisible)};
   },[retry]);
   const filteredArticles=useMemo(()=>articles.filter(item=>(category==='all'||item.category===category)&&matchesGuide(item,query)),[category,query]);
   const filteredFaqs=useMemo(()=>faqs.filter(f=>{
