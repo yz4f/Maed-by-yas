@@ -1,7 +1,5 @@
 'use client';
 
-import { GuideDialog, GuideVideo } from '@/components/guides/guide-ui';
-
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ActivationSuccessState } from '@/components/portal/ActivationSuccessState';
@@ -52,6 +50,7 @@ import {
   Megaphone,
   Mic2,
   Send,
+  Trophy,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
@@ -62,17 +61,17 @@ import { DiscordMark as DiscordIcon } from './discord-mark';
 import { LoginPage } from './login-page';
 import { Footer } from '@/components/ui/footer';
 import { ProductNotice } from '@/components/guides/product-notice';
+const ProductGuideModal = dynamic(() => import('@/components/guides/product-guide-modal').then(module => module.ProductGuideModal), { ssr: false });
 const HelpCenter = dynamic(() => import('./help-center').then((module) => module.HelpCenter), { ssr: false });
 const HelpAdminSection = dynamic(() => import('./help-admin-section').then((module) => module.HelpAdminSection), { ssr: false });
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const VoiceSupportAdmin = dynamic(() => import('./voice-support-admin').then((module) => module.VoiceSupportAdmin), { ssr: false });
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
+const WinGameAdmin = dynamic(() => import('@/components/game/win-game-admin').then((module) => module.WinGameAdmin), { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 import { ProductStockModal } from '@/components/admin/stock/ProductStockModal';
-
-const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
 
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
@@ -125,6 +124,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       return '/fortnite-unban-logo.png';
     }
     if (name.includes('سبوفر') || name.includes('spoofer')) {
+      return '/spoofer-logo.png';
+    }
+    return '/logo.png';
+  };
+
+  const getProductFallbackImage = (product?: Partial<Product> | null): string => {
+    const name = (product?.name || '').toLowerCase();
+    if (name.includes('فورت') || name.includes('fortnite') || name.includes('فك باند')) {
+      return '/fortnite-unban-logo.png';
+    }
+    if (name.includes('سبوفر') || name.includes('spoofer') || product?.category?.toLowerCase() === 'utility') {
       return '/spoofer-logo.png';
     }
     return '/logo.png';
@@ -230,7 +240,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [showExpiredLicenses, setShowExpiredLicenses] = useState(false);
   const [newUserWelcome, setNewUserWelcome] = useState<{ name: string } | null>(null);
   const userProductsRequestInFlightRef = useRef(false);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
@@ -248,7 +257,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [keyInput, setKeyInput] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemMessage, setRedeemMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [activationSuccess, setActivationSuccess] = useState<{ duration: '3 Days' | 'Lifetime'; productName?: string; closing?: boolean } | null>(null);
+  const [activationSuccess, setActivationSuccess] = useState<{ duration: 'Lifetime'; productName?: string; closing?: boolean } | null>(null);
 
   // Copy Key Feedback State
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
@@ -258,7 +267,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [guestModalOpen, setGuestModalOpen] = useState(false);
 
   // Guide Modal States
-  const [guideView, setGuideView] = useState<'full' | null>(null);
   const [guideModalProduct, setGuideModalProduct] = useState<UserProduct | null>(null);
   const [openingGuideProductId, setOpeningGuideProductId] = useState<string | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
@@ -266,162 +274,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
   const [resetCompletionNotice, setResetCompletionNotice] = useState<{ id: string; title: string; message: string } | null>(null);
   const [isAcknowledgingResetCompletion, setIsAcknowledgingResetCompletion] = useState(false);
-
-
-  const guideText = lang === 'ar' ? {
-    modalTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
-    close: 'إغلاق نافذة الشرح',
-    tutorialTitle: `شرح ${guideModalProduct?.product?.name || 'المنتج'}`,
-    tutorialDescription: 'شرح مرئي كامل يوضح طريقة التفعيل والتشغيل خطوة بخطوة.',
-    supportTitle: 'حلول المشاكل الشائعة',
-    supportDescription: 'شروحات مرئية داخل الموقع لأخطاء الشبكة والوقت.',
-    issuesLabel: 'مكتبة حلول المشاكل',
-    issuesTitle: 'مكتبة الشروحات المرئية',
-    issuesDescription: 'اختر الشرح المناسب من المكتبة. كل بطاقة تعرض صورة الخطأ ثم تفتح فيديو الحل المطابق لها داخل الموقع.',
-    libraryAvailable: '4 حلول متاحة',
-    videoGuide: 'شرح فيديو',
-    runtimeIssueTitle: 'خطأ تعريفات Visual C++ أو رسالة بيضاء',
-    runtimeIssueDescription: 'لرسائل VCRUNTIME140_1.dll أو MSVCP140.dll غير الموجودة عند تشغيل اللودر أو البرنامج.',
-    runtimeIssueAction: 'تحميل Visual C++ x64',
-    runtimeIssueHint: 'تنزيل رسمي من Microsoft ثم أعد تشغيل Windows قبل تجربة المنتج.',
-    commonErrorsTitle: 'حل سريع لرسائل التشغيل الشائعة',
-    commonErrorsDescription: 'إذا ظهرت شاشة تحميل بيضاء أو رسالة فقدان ملف DLL عند فتح اللودر، ابدأ بتحديث تعريفات Visual C++ الرسمية ثم أعد تشغيل Windows.',
-    commonErrorsAction: 'تحميل وتحديث Visual C++ x64',
-    commonErrorsNote: 'يشمل أخطاء VCRUNTIME140_1.dll وVCRUNTIME140.dll وMSVCP140.dll.',
-    runtimePreviewLabel: 'مثال رسالة الخطأ',
-    runtimePreviewDescription: 'إذا ظهرت نافذة مشابهة، ثبّت تعريفات Visual C++ من الزر أعلاه ثم أعد تشغيل Windows.',
-    runtimePreviewStepOne: 'نزّل التعريف الرسمي.',
-    runtimePreviewStepTwo: 'ثبّته ثم أعد التشغيل.',
-    runtimePreviewStepThree: 'شغّل اللودر من جديد.',
-    downloadWarpLabel: 'أداة اتصال اختيارية',
-    downloadWarp: 'تحميل Cloudflare WARP لنظام Windows',
-    downloadWarpAction: 'تنزيل الآن',
-    downloadWarpHint: 'قد يساعد في استعادة اتصال الشبكة قبل متابعة الشرح.',
-    networkIssueTitle: 'مشكلة الشبكة أو إيقاف الواي فاي',
-    networkIssueDescription: 'عند ظهور رسالة عدم الوصول إلى اسم المضيف أو فشل اتصال الشبكة.',
-    timeIssueTitle: 'خطأ الوقت والتحقق',
-    timeIssueDescription: 'عند ظهور تنبيه مزامنة وقت ويندوز أو فشل التحقق من التوقيع.',
-    spooferIssueTitle: 'مشكلة عدم ظهور قائمة Spoofer',
-    spooferIssueDescription: 'عندما يظهر أن WebUI يعمل لكن قائمة Spoofer لا تظهر داخل الواجهة.',
-    watchSolution: 'مشاهدة فيديو الحل',
-    solutionVideoLabel: 'فيديو الحل',
-    screenshotLabel: 'صورة الخطأ المرجعية',
-    noticeLabel: 'تنبيه قبل مشاهدة الشرح',
-    noticeHint: 'اقرأ قبل المتابعة',
-    noticeTitle: 'مهم قبل البدء',
-    introBefore: 'هنا يتم شرح ',
-    introProduct: `كامل خطوات منتج ${guideModalProduct?.product?.name || 'المنتج'}`,
-    introMiddle: '. يرجى اتباع الشرح بالكامل وبنفس الترتيب ',
-    introEmphasis: 'دون تخطي أي خطوة',
-    introAfter: '، لضمان تنفيذ العملية بالشكل الصحيح وتجنب أي مشاكل.',
-    importantTitle: 'تنبيه مهم',
-    importantPrimaryBefore: 'إدارة الموقع وكذلك ',
-    storeName: 'متجر تعن',
-    importantPrimaryAfter: ' لا تتحمل مسؤولية فقدان المفتاح أو استخدامه بشكل خاطئ.',
-    importantSecondaryBefore: 'في حال واجهتك مشكلة، يمكنك التواصل مع الدعم وفتح تذكرة لشرح المشكلة. أما في حال فتح تذكرة أو التواصل مع الإدارة فقط لطلب شرح الخطوات الموجودة في هذا الشرح، فسيتم ',
-    importantSecondaryStrong: 'إغلاق التذكرة مباشرة',
-    supportHeading: 'الدعم الفني',
-    supportPrimaryBefore: 'دعمنا مخصص فقط للمشاكل والأخطاء المتعلقة بالمنتج، ',
-    supportPrimaryStrong: 'في حال كان الخطأ من طرفنا',
-    supportSecondary: 'يرجى التأكد من اتباع جميع الخطوات بشكل صحيح قبل طلب الدعم، ومراجعة جميع سياسات المتجر قبل البدء.',
-    preparationTitle: 'تجهيز إلزامي قبل البدء',
-    preparationDescription: 'يلزم تجهيز فلاش USB بنسخة Windows المناسبة قبل متابعة شرح المنتج. أكمل هذه الخطوة أولاً ثم تابع الفيديو الرئيسي.',
-    windows11Label: 'تجهيز فلاش Windows 11',
-    windows10Label: 'تجهيز فلاش Windows 10',
-    watchPreparation: 'مشاهدة شرح التجهيز',
-    motherboardTitle: 'تنبيه توافق اللوحة الأم',
-    motherboardDescription: 'إذا لم تكتمل العملية بعد اتباع الدليل وتجهيز Windows، فقد يرتبط ذلك بقيود توافق في اللوحة الأم. لا يمكن للدعم تجاوز هذه القيود أو ضمان إمكانية تغيير معلومات الجهاز.',
-    formatSectionTitle: 'تجهيز فلاش Windows',
-    formatSectionDescription: 'قسم مستقل لتحضير فلاش USB بنسخة Windows المناسبة قبل متابعة دليل المنتج.',
-    formatSectionAction: 'فتح قسم تجهيز الفلاش',
-    waitingTitle: 'الخطوة الأخيرة قبل الفيديو',
-    readyTitle: 'أصبح الشرح جاهزًا للمشاهدة',
-    waitingMessage: (seconds: number) => `يرجى قراءة التنبيه. سيتاح زر المتابعة بعد ${seconds} ${seconds === 1 ? 'ثانية' : 'ثوانٍ'}.`,
-    readyMessage: 'تمت قراءة التنبيه. يمكنك الآن متابعة شرح الفيديو.',
-    waitingButton: (seconds: number) => `انتظر ${seconds} ثوانٍ`,
-    continueButton: 'قرأت التنبيه — متابعة',
-    back: 'العودة للقائمة السابقة',
-    unavailableTitle: 'لا يوجد فيديو شرح متاح',
-    unavailableMessage: 'لم تقم الإدارة بإضافة رابط فيديو شرح لهذا المنتج حتى الآن.',
-    unavailableHelp: 'الرجاء إبلاغ الدعم الفني عبر تذكرة إذا احتجت إلى مساعدة إضافية.',
-  } : {
-    modalTitle: `${guideModalProduct?.product?.name || 'Product'} Guide`,
-    close: 'Close tutorial dialog',
-    tutorialTitle: `${guideModalProduct?.product?.name || 'Product'} Guide`,
-    tutorialDescription: 'A complete visual walkthrough for activation and setup, step by step.',
-    supportTitle: 'Common issue fixes',
-    supportDescription: 'In-site visual solutions for network and system-time errors.',
-    issuesLabel: 'TROUBLESHOOTING LIBRARY',
-    issuesTitle: 'Visual troubleshooting library',
-    issuesDescription: 'Choose the relevant guide from the library. Each card shows the error screenshot and opens its dedicated solution video inside the site.',
-    libraryAvailable: '4 fixes available',
-    videoGuide: 'Video guide',
-    runtimeIssueTitle: 'Visual C++ runtime or white error message',
-    runtimeIssueDescription: 'For missing VCRUNTIME140_1.dll or MSVCP140.dll messages when opening the loader or application.',
-    runtimeIssueAction: 'Download Visual C++ x64',
-    runtimeIssueHint: 'Official Microsoft download. Restart Windows before trying the product again.',
-    commonErrorsTitle: 'Quick fix for common launch errors',
-    commonErrorsDescription: 'If a white loading screen or a missing DLL message appears when opening the loader, update the official Visual C++ runtime and restart Windows.',
-    commonErrorsAction: 'Download & update Visual C++ x64',
-    commonErrorsNote: 'Covers VCRUNTIME140_1.dll, VCRUNTIME140.dll, and MSVCP140.dll errors.',
-    runtimePreviewLabel: 'Example error message',
-    runtimePreviewDescription: 'If you see a similar window, install the Visual C++ runtime from the button above, then restart Windows.',
-    runtimePreviewStepOne: 'Download the official runtime.',
-    runtimePreviewStepTwo: 'Install it, then restart.',
-    runtimePreviewStepThree: 'Start the loader again.',
-    downloadWarpLabel: 'OPTIONAL CONNECTION TOOL',
-    downloadWarp: 'Download Cloudflare WARP for Windows',
-    downloadWarpAction: 'Download now',
-    downloadWarpHint: 'It may help restore your network connection before continuing the guide.',
-    networkIssueTitle: 'Network or Wi-Fi connection error',
-    networkIssueDescription: 'For hostname resolution failures or a network connection error.',
-    timeIssueTitle: 'System time and verification error',
-    timeIssueDescription: 'For Windows time-sync prompts or signature verification failures.',
-    spooferIssueTitle: 'Spoofer list is not appearing',
-    spooferIssueDescription: 'When WebUI is running but the Spoofer list does not appear in the interface.',
-    watchSolution: 'Watch solution video',
-    solutionVideoLabel: 'SOLUTION VIDEO',
-    screenshotLabel: 'REFERENCE ERROR SCREENSHOT',
-    noticeLabel: 'Before you watch',
-    noticeHint: 'Please read before continuing',
-    noticeTitle: 'Important before you begin',
-    introBefore: 'This tutorial explains ',
-    introProduct: `the complete ${guideModalProduct?.product?.name || 'product'} process`,
-    introMiddle: '. Please follow every step in the exact order ',
-    introEmphasis: 'without skipping any step',
-    introAfter: ', to help ensure the process is completed correctly and avoid issues.',
-    importantTitle: 'Important notice',
-    importantPrimaryBefore: 'The website administration and ',
-    storeName: 'Ta3n Store',
-    importantPrimaryAfter: ' are not responsible for lost keys or incorrect use.',
-    importantSecondaryBefore: 'If you encounter an issue, you can contact support and open a ticket explaining the problem. However, tickets or messages asking for steps already covered in this guide will be ',
-    importantSecondaryStrong: 'closed immediately',
-    supportHeading: 'Technical support',
-    supportPrimaryBefore: 'Our support team is dedicated only to product-related problems and errors, ',
-    supportPrimaryStrong: 'when the issue is on our side',
-    supportSecondary: 'Please make sure that you have followed all steps correctly and reviewed all store policies before contacting support.',
-    preparationTitle: 'Required preparation',
-    preparationDescription: 'Prepare a USB flash drive with the appropriate Windows version before continuing with the product guide. Complete this first, then continue to the main video.',
-    windows11Label: 'Prepare a Windows 11 USB',
-    windows10Label: 'Prepare a Windows 10 USB',
-    watchPreparation: 'Watch preparation guide',
-    motherboardTitle: 'Motherboard compatibility notice',
-    motherboardDescription: 'If the process does not complete after following the guide and preparing Windows, it may relate to motherboard compatibility restrictions. Support cannot bypass these restrictions or guarantee changes to device information.',
-    formatSectionTitle: 'Prepare a Windows USB',
-    formatSectionDescription: 'A separate section for preparing a USB drive with the appropriate Windows version before the product guide.',
-    formatSectionAction: 'Open USB preparation',
-    waitingTitle: 'One final step before the video',
-    readyTitle: 'The tutorial is ready to watch',
-    waitingMessage: (seconds: number) => `Please read this notice. Continue will unlock in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
-    readyMessage: 'You have read the notice. You can now continue to the video tutorial.',
-    waitingButton: (seconds: number) => `Wait ${seconds}s`,
-    continueButton: 'I understand — continue',
-    back: 'Back to guide options',
-    unavailableTitle: 'No tutorial video is available',
-    unavailableMessage: 'The administration has not added a tutorial video for this product yet.',
-    unavailableHelp: 'Please contact technical support through a ticket if you need additional help.',
-  };
-
   // Admin Panel States
   const [adminStats, setAdminStats] = useState<any>(null);
   const adminStatsRequestInFlightRef = useRef(false);
@@ -451,7 +303,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [isAddingKeys, setIsAddingKeys] = useState(false);
   const [isAddingSingleKey, setIsAddingSingleKey] = useState(false);
   const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
-  const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('3 Days');
+  const [inventoryKeyDuration, setInventoryKeyDuration] = useState<KeyDuration>('Lifetime');
 
   // Extended Inventory Editing States
   const [editProductData, setEditProductData] = useState<{
@@ -548,7 +400,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs' | 'game'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -1138,7 +990,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const data = await res.json();
 
       if (data.success) {
-        setActivationSuccess({ duration: data.duration === 'Lifetime' ? 'Lifetime' : '3 Days', productName: data.product?.name });
+        setActivationSuccess({ duration: 'Lifetime', productName: data.product?.name });
         setRedeemMessage(null);
         setKeyInput('');
 
@@ -1210,7 +1062,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       const updated = { ...license, startedAt: data.startedAt || license.startedAt, expiresAt: data.expiresAt ?? license.expiresAt };
       setUserProducts((current) => current.map((item) => item.id === license.id ? updated : item));
       setGuideModalProduct(updated);
-      setGuideView('full');
     } catch (error) {
       showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'), 'error');
     } finally {
@@ -1707,7 +1558,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     overview: lang === 'ar' ? 'الرئيسية' : 'Overview',
     'my-products': lang === 'ar' ? 'منتجاتي' : 'My Products',
     redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
-    tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help center',
+    tickets: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions',
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
   }[activeTab];
@@ -1715,7 +1566,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const normalizedLogQuery = adminLogQuery.trim().toLowerCase();
   const visibleAdminLogs = adminLogs.filter((log) => {
     const matchesAction = adminLogAction === 'all' || log.action === adminLogAction;
-    const haystack = `${lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action} ${log.details} ${log.userName || ''} ${log.ipAddress || ''}`.toLowerCase();
+    const haystack = `${log.action} ${log.details} ${log.userName || ''} ${log.ipAddress || ''}`.toLowerCase();
     return matchesAction && (!normalizedLogQuery || haystack.includes(normalizedLogQuery));
   });
 
@@ -1976,7 +1827,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       <HelpCircle className="w-[19px] h-[19px]" />
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'مركز المساعدة' : 'Help center'}</span>
+                      <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions'}</span>
                       <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الشروحات وطلبات Reset والدعم الخارجي في مكان واحد' : 'Guides, reset requests, and external support in one place'}</span>
                     </div>
                   </div>
@@ -2076,12 +1927,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
                   return (
                     <React.Fragment key={up.id}>
-                      {index === 0 && canUseProduct && (
+                      {index === 0 && activeProductCount > 0 && (
                         <div className="md:col-span-2 flex items-center justify-between gap-3 rounded-2xl border border-sky-300/15 bg-sky-300/[0.05] px-4 py-3">
                           <div className="flex items-center gap-2.5">
                             <CheckCircle2 className="h-4 w-4 text-sky-200" />
                             <div>
-                              <p className="text-sm font-extrabold text-white">{lang === 'ar' ? 'التراخيص النشطة' : 'Active licenses'}</p>
+                              <p className="text-sm font-extrabold text-white">{lang === 'ar' ? 'المنتجات النشطة' : 'Active products'}</p>
                               <p className="mt-0.5 text-[11px] text-sky-100/65">{lang === 'ar' ? 'منتجاتك المتاحة للتحميل والمشاهدة الآن.' : 'Products ready to download and view now.'}</p>
                             </div>
                           </div>
@@ -2097,24 +1948,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                               <p className="mt-0.5 text-[11px] text-slate-500">{lang === 'ar' ? 'تظهر هنا المنتجات التي انتهت مدة استخدامها، ويمكنك تفعيل مفتاح جديد للوصول إليها.' : 'Products whose access period has ended. Activate a new key to regain access.'}</p>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setShowExpiredLicenses((current) => !current)}
-                            aria-expanded={showExpiredLicenses}
-                            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-3 py-2 text-[11px] font-bold text-slate-300 transition hover:border-sky-300/30 hover:bg-sky-300/[0.06] hover:text-sky-100"
-                          >
-                            <span>{showExpiredLicenses ? (lang === 'ar' ? 'إخفاء المنتجات' : 'Hide products') : (lang === 'ar' ? 'عرض المنتجات' : 'Show products')}</span>
-                            <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-slate-400">{inactiveProductCount}</span>
-                            <ArrowLeft className={`h-3.5 w-3.5 transition-transform ${showExpiredLicenses ? 'rotate-90' : ''}`} />
-                          </button>
+                          <span className="rounded-full border border-white/[0.1] bg-white/[0.03] px-3 py-1.5 text-[11px] font-bold text-slate-400">{inactiveProductCount}</span>
                         </div>
                       )}
-                    {(canUseProduct || showExpiredLicenses) && <article
+                    {(canUseProduct || timing.isExpired) && <article
                       className={`product-license-card product-license-card--premium group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
                       <div className="product-license-card__media" aria-hidden="true">
-                        <img className="product-license-card__image" src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                        <img className="product-license-card__image" src={productImg} data-fallback-src={getProductFallbackImage(up.product)} alt="" loading="lazy" decoding="async" onError={(event) => { const image = event.currentTarget; const fallback = image.dataset.fallbackSrc || '/logo.png'; if (image.dataset.fallbackApplied === 'true') return; image.dataset.fallbackApplied = 'true'; image.src = fallback; }} />
                         <div className="product-license-card__media-overlay" />
                         <div className={`product-license-card__expiry ${timing.isExpired ? 'product-license-card__expiry--expired' : ''}`}>
                           <Clock size={12} />
@@ -2349,6 +2191,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'resetRequests' && <RefreshCw className="w-6 h-6 text-amber-500 dark:text-amber-300" />}
                     {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-indigo-600 dark:text-primary" />}
                     {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
+                    {adminSectionTab === 'game' && <Trophy className="w-6 h-6 text-amber-500 dark:text-amber-300" />}
                   </div>
                   <span>
                     {adminSectionTab === 'overview' && (lang === 'ar' ? 'نظرة عامة وإحصائيات' : 'Overview & Stats')}
@@ -2357,9 +2200,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
                     {adminSectionTab === 'voiceSessions' && (lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Support Sessions')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
-                    {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات الريست' : 'Reset requests')}
+                    {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
                     {adminSectionTab === 'logs' && (lang === 'ar' ? 'سجلات النظام' : 'System Logs')}
+                    {adminSectionTab === 'game' && (lang === 'ar' ? 'لعبة الفوز' : 'Win Game')}
                   </span>
                 </h1>
                 <p className={`text-xs ${styles.textMuted} mt-2`}>
@@ -2372,6 +2216,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات العملاء لإعادة ضبط الترخيص، مع السبب والمفتاح ووقت الطلب.' : 'Customer license reset requests with their reason, key, and request time.')}
                   {adminSectionTab === 'keys' && (lang === 'ar' ? 'تتبع سريع للمفاتيح المباعة والمتاحة في النظام.' : 'Quick tracking of sold and available license keys in the system.')}
                   {adminSectionTab === 'logs' && (lang === 'ar' ? 'مراقبة حية لجميع حركات دخول وخروج واستخدام الموقع.' : 'Live auditing of all logins, transactions, and site usage.')}
+                  {adminSectionTab === 'game' && (lang === 'ar' ? 'إدارة الجولات، حدود المحاولات، التحقق وتسليم الجوائز.' : 'Manage rounds, attempt limits, verification, and prize delivery.')}
                 </p>
               </div>
 
@@ -2411,11 +2256,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               {[
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
-                { id: 'customers', label: lang === 'ar' ? 'العملاء' : 'Customers', icon: Users },
-                { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
-                { id: 'voiceSessions', label: lang === 'ar' ? 'الدعم الصوتي' : 'Voice support', icon: Mic2 },
+                { id: 'customers', label: lang === 'ar' ? 'إدارة العملاء' : 'Customers', icon: Users },
+                { id: 'sitePresence', label: lang === 'ar' ? 'نشاط الموقع' : 'Site Presence', icon: UserCheck },
+                { id: 'help', label: lang === 'ar' ? 'الأسئلة الشائعة' : 'Frequently asked questions', icon: HelpCircle },
+                { id: 'voiceSessions', label: lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Sessions', icon: Mic2 },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
-                { id: 'resetRequests', label: lang === 'ar' ? 'طلبات الريست' : 'Reset requests', icon: RefreshCw },
+                { id: 'resetRequests', label: lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key Reset Requests', icon: RefreshCw },
+                { id: 'keys', label: lang === 'ar' ? 'البحث عن المفاتيح' : 'Keys Search', icon: Key },
+                { id: 'logs', label: lang === 'ar' ? 'سجلات النظام' : 'System Logs', icon: FileText },
+                { id: 'game', label: lang === 'ar' ? 'لعبة الفوز' : 'Win Game', icon: Trophy },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 const isActive = adminSectionTab === tab.id;
@@ -2436,7 +2285,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </button>
                 );
               })}
-              <details className="relative"><summary className="cursor-pointer rounded-xl px-3 py-2 text-sm">{lang==='ar'?'المزيد':'More'}</summary><div className="absolute end-0 top-full z-30 mt-2 grid min-w-44 gap-1 rounded-xl border border-white/15 bg-[#101e29] p-2 shadow-lg">{[{id:'sitePresence',ar:'نشاط الموقع',en:'Site activity'},{id:'keys',ar:'بحث المفاتيح',en:'Key search'},{id:'logs',ar:'سجل النظام',en:'System log'}].map(item=><button key={item.id} aria-pressed={adminSectionTab===item.id} onClick={event=>{setAdminSectionTab(item.id as any);event.currentTarget.closest('details')?.removeAttribute('open')}} className="rounded-lg px-3 py-2 text-start text-xs text-slate-200 hover:bg-white/10">{lang==='ar'?item.ar:item.en}</button>)}</div></details>
             </div>
 
             {/* ==================== SUB-TAB 1: PRODUCTS & INVENTORY ==================== */}
@@ -2656,6 +2504,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <SitePresenceAdmin lang={lang} isDark={isDark} />
             )}
 
+            {adminSectionTab === 'game' && (
+              <WinGameAdmin isDark={isDark} />
+            )}
+
             {adminSectionTab === 'voiceSessions' && (
               <VoiceSupportAdmin customers={allCustomersList.map((customer: any) => ({ discordId: customer.discordId || customer.id, name: customer.name || 'عميل', image: customer.image || null, email: customer.email || null })).filter((customer: any) => Boolean(customer.discordId))} />
             )}
@@ -2859,7 +2711,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                           <tr key={log.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/5 transition-colors duration-200`}>
                             <td className="py-4 font-extrabold pr-2">
                               <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide ${actionBadgeClass}`}>
-                                {lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action}
+                                {log.action}
                               </span>
                             </td>
                             <td className="py-4 font-medium text-slate-350 max-w-xs truncate" title={log.details}>
@@ -2907,7 +2759,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="space-y-6">
                 {/* Primary Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2920,7 +2772,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2933,7 +2785,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2946,7 +2798,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
 
-                  <div className="admin-stat-card glass-card rounded-[20px] p-6 relative overflow-hidden group transition-colors duration-200">
+                  <div className="glass-card rounded-[20px] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start justify-between relative z-10">
                       <div>
@@ -2980,7 +2832,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <UserCheck className="w-4 h-4 text-indigo-500 dark:text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-bold ${styles.textTitle} truncate`}>{lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action}</div>
+                            <div className={`text-sm font-bold ${styles.textTitle} truncate`}>{log.action}</div>
                             <div className={`text-xs ${styles.textMuted} truncate mt-0.5`}>{log.details}</div>
                           </div>
                           <div className={`text-[10px] ${styles.textMuted} font-mono shrink-0 bg-black/5 dark:bg-black/40 px-2 py-1 rounded-md`}>
@@ -3110,26 +2962,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
       )}
 
-      {guideModalProduct && guideView === 'full' && !getLicenseTiming(guideModalProduct).isExpired && (
-        <GuideDialog
-          title={guideText.modalTitle}
-          eyebrow={lang === 'ar' ? 'دليل المنتج' : 'Product guide'}
-          onClose={() => { setGuideModalProduct(null); setGuideView(null); }}
-        >
-          <div className="product-guide-view">
-            <ProductNotice product={guideModalProduct.product} placement="guide" lang={lang} />
-            {guideModalProduct.product?.videoUrl ? (
-              <GuideVideo
-                url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl}
-                title={guideText.modalTitle}
-                image={guideModalProduct.product.image}
-              />
-            ) : (
-              <p className="product-guide-empty">{guideText.unavailableMessage}</p>
-            )}
-          </div>
-        </GuideDialog>
-      )}
+      {guideModalProduct && !getLicenseTiming(guideModalProduct).isExpired && <ProductGuideModal key={guideModalProduct.id} license={guideModalProduct} onClose={() => setGuideModalProduct(null)} />}
 
       {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
       {selectedAdminCustomer && (
@@ -3510,24 +3343,27 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </div>
       )}
       {guestModalOpen && (
-        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-[#02070e]/72 p-4 backdrop-blur-sm" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-          <div className={`relative w-full max-w-sm overflow-hidden rounded-2xl border p-5 shadow-2xl ${isDark ? 'border-white/[0.14] bg-[#0d1724]/95 text-white' : 'border-slate-200 bg-white text-slate-950'}`}>
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/80 to-transparent" />
-            <button onClick={() => !isRedeeming && !activationSuccess && setGuestModalOpen(false)} disabled={isRedeeming || !!activationSuccess} className={`absolute top-3 ${lang === 'ar' ? 'left-3' : 'right-3'} rounded-lg p-2 ${isDark ? 'text-slate-400 hover:bg-white/[0.07] hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950'} disabled:cursor-not-allowed disabled:opacity-40`} aria-label={lang === 'ar' ? 'إغلاق' : 'Close'}>
+        <div className={`redeem-modal-backdrop fixed inset-0 z-[9000] flex items-center justify-center p-4 ${isDark ? 'redeem-modal-backdrop--dark' : 'redeem-modal-backdrop--light'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <div className={`redeem-modal relative w-full max-w-[430px] overflow-hidden rounded-[28px] border p-6 shadow-2xl sm:p-7 ${isDark ? 'redeem-modal--dark text-white' : 'redeem-modal--light text-slate-950'}`}>
+            <div className="redeem-modal__glow redeem-modal__glow--one" />
+            <div className="redeem-modal__glow redeem-modal__glow--two" />
+            <div className="redeem-modal__line" />
+            <button onClick={() => !isRedeeming && !activationSuccess && setGuestModalOpen(false)} disabled={isRedeeming || !!activationSuccess} className={`redeem-modal__close absolute top-5 ${lang === 'ar' ? 'left-5' : 'right-5'} rounded-xl p-2.5 disabled:cursor-not-allowed disabled:opacity-40`} aria-label={lang === 'ar' ? 'إغلاق' : 'Close'}>
               <X className="h-4 w-4" />
             </button>
             {activationSuccess ? <ActivationSuccessState lang={lang} duration={activationSuccess.duration} productName={activationSuccess.productName} closing={activationSuccess.closing} /> : <>
-            <div className={`mb-5 flex items-center gap-3 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-200/25 bg-sky-300/[0.10] text-sky-100">
+            <div className={`redeem-modal__header mb-7 flex items-center gap-3.5 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+              <div className="redeem-modal__icon flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl">
                 <Key className="h-5 w-5" />
               </div>
               <div>
-                <p className={`text-[10px] font-black tracking-[0.14em] ${isDark ? 'text-sky-200/75' : 'text-sky-700/75'}`}>{lang === 'ar' ? 'تفعيل الترخيص' : 'LICENSE ACTIVATION'}</p>
-                <h3 className="mt-0.5 text-base font-black">{lang === 'ar' ? 'استرداد مفتاح' : 'Redeem Key'}</h3>
+                <p className="redeem-modal__eyebrow text-[10px] font-black tracking-[0.18em]">{lang === 'ar' ? 'تفعيل الترخيص' : 'LICENSE ACTIVATION'}</p>
+                <h3 className="mt-1 text-xl font-black tracking-tight">{lang === 'ar' ? 'استرداد مفتاح' : 'Redeem Key'}</h3>
+                <p className="redeem-modal__subtitle mt-1 text-[10px] font-medium">{lang === 'ar' ? 'أدخل مفتاحك لفتح المنتج فورًا' : 'Enter your key to unlock the product instantly'}</p>
               </div>
             </div>
-            <form onSubmit={handleRedeemKey} className="space-y-3">
-              <label className={`block text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</label>
+            <form onSubmit={handleRedeemKey} className="redeem-modal__form space-y-4">
+              <label className="redeem-modal__label block text-[11px] font-black">{lang === 'ar' ? 'مفتاح الترخيص' : 'License Key'}</label>
               <input
                 autoFocus
                 type="text"
@@ -3536,14 +3372,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 onChange={(event) => setKeyInput(event.target.value)}
                 disabled={isRedeeming}
                 placeholder="KEY-XXXXXX-XXXXXX"
-                className={`w-full rounded-xl border px-4 py-3 text-center text-xs font-bold tracking-wider outline-none transition-colors ${isDark ? 'border-white/[0.12] bg-black/30 text-white placeholder:text-slate-600 focus:border-sky-300/65' : 'border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400 focus:border-sky-500/60'} font-mono`}
+                className="redeem-modal__input w-full rounded-2xl border px-4 py-4 text-center text-xs font-bold tracking-[0.16em] outline-none transition-all font-mono"
               />
               {redeemMessage && redeemMessage.type === 'error' && (
                 <p className="flex items-center gap-2 rounded-xl border border-rose-400/25 bg-rose-400/[0.10] px-3 py-2.5 text-xs font-semibold text-rose-300 animate-in fade-in slide-in-from-top-1 duration-200"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-rose-300/50 text-[11px] font-black">!</span><span>{redeemMessage.text}</span></p>
               )}
-              <button type="submit" disabled={isRedeeming || !!activationSuccess || !keyInput.trim()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-black text-slate-950 shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50">
+              <button type="submit" disabled={isRedeeming || !!activationSuccess || !keyInput.trim()} className="redeem-modal__submit inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-xs font-black shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50">
                 {isRedeeming ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Redeeming...') : (lang === 'ar' ? 'تفعيل المفتاح' : 'Redeem Key')}
+                {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Redeeming...') : 'Redeem Key'}
               </button>
             </form></>}
           </div>

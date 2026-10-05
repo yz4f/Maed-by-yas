@@ -20,6 +20,15 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      {
+        source: '/support',
+        destination: '/?tab=tickets',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

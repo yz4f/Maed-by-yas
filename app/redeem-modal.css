@@ -1,0 +1,42 @@
+/* Premium, intentionally limited palette for the license activation modal. */
+.redeem-modal-backdrop {
+  background: rgba(2, 8, 15, .76);
+  backdrop-filter: blur(18px) saturate(.9);
+  -webkit-backdrop-filter: blur(18px) saturate(.9);
+}
+.redeem-modal-backdrop--light { background: rgba(12, 25, 30, .34); }
+.redeem-modal {
+  isolation: isolate;
+  border-color: rgba(148, 230, 195, .22);
+  background: #0d1b24;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, .46), 0 0 0 1px rgba(255,255,255,.025) inset;
+}
+.redeem-modal--light { border-color: rgba(38, 115, 83, .18); background: #f8fbf9; box-shadow: 0 28px 70px rgba(12, 45, 35, .22); }
+.redeem-modal__line { position: absolute; inset: 0 12% auto; z-index: -1; height: 1px; background: linear-gradient(90deg, transparent, #94e6c3, transparent); opacity: .75; }
+.redeem-modal__glow { position: absolute; z-index: -1; pointer-events: none; border-radius: 999px; filter: blur(44px); opacity: .12; }
+.redeem-modal__glow--one { width: 180px; height: 180px; top: -100px; inset-inline-start: -60px; background: #94e6c3; }
+.redeem-modal__glow--two { width: 150px; height: 150px; bottom: -100px; inset-inline-end: -50px; background: #5cb9c7; opacity: .08; }
+.redeem-modal__close { color: #81999d; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
+.redeem-modal__close:hover { color: #eef4f2; border-color: rgba(148,230,195,.28); background: rgba(148,230,195,.08); transform: rotate(4deg); }
+.redeem-modal--light .redeem-modal__close { color: #607874; border-color: rgba(38,115,83,.12); background: rgba(38,115,83,.035); }
+.redeem-modal__icon { color: #94e6c3; border: 1px solid rgba(148,230,195,.25); background: rgba(148,230,195,.08); box-shadow: 0 10px 26px rgba(65, 166, 137, .08); }
+.redeem-modal__eyebrow { color: #94e6c3; }
+.redeem-modal__subtitle { color: #81999d; }
+.redeem-modal__label { color: #c9d9d7; }
+.redeem-modal--light .redeem-modal__eyebrow, .redeem-modal--light .redeem-modal__icon { color: #267353; }
+.redeem-modal--light .redeem-modal__subtitle { color: #607874; }
+.redeem-modal--light .redeem-modal__label { color: #365952; }
+.redeem-modal__input { border-color: rgba(148,230,195,.16); background: #08151d; color: #f2f8f5; box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 10px 24px rgba(0,0,0,.10); }
+.redeem-modal__input::placeholder { color: #526d73; letter-spacing: .08em; }
+.redeem-modal__input:hover { border-color: rgba(148,230,195,.28); }
+.redeem-modal__input:focus { border-color: #94e6c3; box-shadow: 0 0 0 4px rgba(148,230,195,.10), inset 0 1px 0 rgba(255,255,255,.04); }
+.redeem-modal--light .redeem-modal__input { border-color: rgba(38,115,83,.16); background: #fff; color: #182f2e; box-shadow: 0 8px 22px rgba(12,45,35,.06); }
+.redeem-modal__submit { background: #94e6c3; color: #092019; box-shadow: 0 14px 26px rgba(65,166,137,.16); }
+.redeem-modal__submit:hover { background: #b2f0d5; box-shadow: 0 18px 32px rgba(65,166,137,.22); }
+.redeem-modal__submit:disabled { background: #627579; color: #d7e3df; box-shadow: none; }
+.redeem-modal--light .redeem-modal__submit { background: #267353; color: #fff; }
+.redeem-modal--light .redeem-modal__submit:hover { background: #1e6045; }
+@media (max-width: 480px) {
+  .redeem-modal { border-radius: 24px; padding: 22px; }
+  .redeem-modal__input { padding-block: 15px; }
+}
