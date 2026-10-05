@@ -25,3 +25,32 @@
 
 @media(max-width:600px){.categoryGrid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.imageButton img{max-height:240px}}
 .imageButton{aspect-ratio:16/9}.imageButton img{height:calc(100% - 28px)}
+
+/* Guide library: one clear category rail and previews for existing media. */
+.filterBar{position:relative;z-index:3;border:1px solid #ffffff14;border-radius:14px;background:#0d1c28;padding:8px;min-width:0}
+.filterRail{display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:thin;padding:3px;min-width:0}
+.filterRail .tab{min-height:38px;border-radius:9px;padding:7px 13px}
+.filterRail .tab[aria-pressed=true],.filterMenu .tab[aria-pressed=true]{border-color:#81d9d099;background:#62cfc719;color:#dbfafa}
+.filterMenu{position:absolute;inset-inline-end:8px;top:calc(100% + 7px);z-index:10;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:min(480px,calc(100vw - 48px));max-height:min(52dvh,340px);overflow-y:auto;border:1px solid #93dcd349;border-radius:13px;background:#122531;padding:10px;box-shadow:0 18px 32px #0008}
+.filterMenu .tab{white-space:normal;text-align:start;justify-content:start}
+.cardPreview{position:relative;display:grid;place-items:center;width:100%;height:144px;overflow:hidden;border:1px solid #ffffff10;border-radius:12px;background:#08141f;margin-top:8px}
+.cardPreview .cardImage{width:100%;height:100%;margin:0;aspect-ratio:auto;border-radius:0;object-fit:contain}
+.cardPlay{position:absolute;left:50%;top:50%;display:grid;place-items:center;width:45px;height:45px;border:1px solid #b9e6ec80;border-radius:50%;background:#102e41e8;color:#e6fbfd;transform:translate(-50%,-50%);box-shadow:0 6px 20px #0009}
+.singleResult .card{display:grid;grid-template-columns:minmax(170px,35%) minmax(0,1fr);grid-template-rows:auto auto 1fr auto;column-gap:20px;max-width:900px;min-height:195px}
+.singleResult .cardPreview{grid-column:1;grid-row:1 / span 4;height:100%;min-height:160px;margin:0}
+.singleResult .cardTop,.singleResult .card h3,.singleResult .card p,.singleResult .card button{grid-column:2}
+.singleResult .card h3{margin-top:4px}
+.singleResult .card button{justify-self:start}
+.overlay{backdrop-filter:blur(3px)}.dialog{width:min(940px,100%);border-radius:18px;box-shadow:0 22px 62px #0008;animation-duration:.16s}.header{background:#10222f}.icon{border-color:#8bd9d033;background:#8bd9d010;color:#9ce4de}.iconButton{border-radius:10px;background:#ffffff07}.iconButton:hover{color:#d6f4f2;background:#82d5cd14;border-color:#8bd9d066}
+@media(max-width:640px){.singleResult .card{display:flex;min-height:0}.singleResult .cardPreview{height:150px}.filterBar{padding:6px}.filterMenu{grid-template-columns:1fr;width:min(300px,calc(100vw - 36px))}.overlay{padding:10px}.dialog{max-height:calc(100dvh - 20px)}.header{padding:13px}.scroll{padding:15px}}
+@media(prefers-reduced-motion:reduce){.dialog{animation:none}.card:hover{transform:none}}
+
+.articleLayout,.faqDetail{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:22px;align-items:start}
+.articleMedia,.faqVisual{display:grid;gap:12px;min-width:0;position:sticky;top:0}
+.articleMedia .imageButton,.faqVisual .imageButton{max-width:none}
+.articleMedia .videoBlock{width:100%}
+.articlePlaceholder,.faqVisualFallback{min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:1px solid #ffffff19;border-radius:15px;background:radial-gradient(circle at 50% 35%,#23505a55,transparent 70%),#0d1e2a;color:#9bd8d5;font-weight:700}
+.faqExplanation{min-width:0;line-height:1.95;color:#d7e4ed;overflow-wrap:anywhere}
+.faqCardTitle{font-size:16px;line-height:1.7;font-weight:650;min-height:2.8em}
+.helpFooter{padding:15px 0 2px;border-top:1px solid #ffffff16;color:#8daab7;text-align:center;font-size:11px}
+@media(max-width:700px){.articleLayout,.faqDetail{grid-template-columns:minmax(0,1fr)}.articleMedia,.faqVisual{position:static}.articlePlaceholder,.faqVisualFallback{min-height:150px}}

@@ -93,7 +93,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     ],
   },
   {
-    id: 'vpn', title: 'استخدام VPN', description: 'إعدادات الاتصال الواردة في دليل Eon.', category: 'VPN', stage: 5,
+    id: 'vpn', title: 'استخدام VPN', description: 'إعدادات الاتصال الواردة في دليل T3N.', category: 'VPN', stage: 5,
     source: BASE + 'setup-spoofing/step-8-usage-of-vpn',
     warning: 'هذه توصيات المصدر لمنتجه؛ لا تمثل ضمانًا لمنع الحظر. يذكر أن NordVPN وProtonVPN غير مناسبين لهذا المسار.',
     steps: [

@@ -530,3 +530,34 @@
 @media(prefers-reduced-motion:reduce){.portal-luxe *, .guide-experience-modal *{animation:none!important;transition:none!important}}
 
 .portal-luxe .admin-stat-card{height:112px;min-height:112px!important;padding:18px!important}.portal-luxe .admin-stat-card .text-3xl{font-size:25px!important;line-height:1.2;font-weight:700!important}.portal-luxe .admin-stat-card .absolute{display:none}.portal-luxe .admin-stat-card .w-6.h-6{width:20px;height:20px}.portal-luxe .admin-stat-card .group-hover\:scale-110{transform:none!important}.guide-step-nav-bottom{justify-content:space-between;margin:14px 0 0}.guide-step-nav-bottom button:disabled{opacity:.38;cursor:not-allowed}.guide-experience-modal .guide-compact-notice p{margin:4px 0 0}.guide-experience-modal details>div>section{box-shadow:none!important;border-radius:14px!important}.portal-luxe .admin-navigation details[open]>div{max-height:55vh;overflow-y:auto}
+
+/* Product library and the standalone product guide. */
+.portal-shell.portal-luxe .product-library{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr))!important;gap:16px!important;max-width:1280px}
+.portal-shell.portal-luxe .product-library>div{grid-column:1/-1}
+.portal-shell.portal-luxe .product-library>article:only-of-type{grid-column:1/-1;max-width:600px!important;width:100%;justify-self:center}
+.portal-shell.portal-luxe .product-license-card--premium{min-height:0!important;border-radius:17px!important;box-shadow:none!important;transition:border-color .18s ease,transform .18s ease!important}
+.portal-shell.portal-luxe .product-license-card--premium:hover{transform:translateY(-2px);box-shadow:none!important}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__media{height:auto!important;aspect-ratio:16/8.7;min-height:170px;max-height:235px;border-radius:0}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__image{object-fit:contain!important;object-position:center;padding:12px}
+.portal-luxe .product-license-card__media-overlay{background:linear-gradient(180deg,transparent 55%,rgba(5,17,25,.68))!important}
+.portal-luxe .product-license-card__media-brand{display:none}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__body{min-height:0!important;gap:10px!important;padding:17px!important}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__heading{min-height:0}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__key{min-height:0;padding:10px!important;border-radius:11px!important}
+.portal-luxe .product-license-card__key code{font-size:10px;line-height:1.5}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__actions{gap:8px!important}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__actions :is(button,a){min-height:42px!important;border-radius:10px!important;font-size:12px!important;transform:none!important}
+.portal-shell.portal-luxe .product-license-card--premium .product-license-card__actions :is(button,a):hover{transform:translateY(-1px)!important}
+.portal-shell.portal-luxe .product-license-card--premium .product-reset-button{min-height:43px;border:1px solid rgba(139,214,205,.2)!important;background:rgba(85,171,172,.065)!important;color:#bedddd!important;border-radius:10px!important;box-shadow:none!important}
+.portal-shell.portal-luxe .product-license-card--premium .product-reset-button__icon{border-color:rgba(139,214,205,.2)!important;background:rgba(85,171,172,.1)!important;color:#a9e1d8!important}
+.portal-shell.portal-luxe.portal-shell--light .product-reset-button{color:#285e61!important;background:#ebf6f5!important}
+.product-guide-view{display:grid;gap:14px;max-width:820px;margin-inline:auto}
+.product-guide-view>section{width:100%}
+.product-guide-empty{display:grid;place-items:center;min-height:180px;border:1px solid #ffffff16;border-radius:14px;background:#0c1b28;padding:20px;text-align:center;color:#afc5cc;font-size:14px}
+.product-notice{--notice-accent:#8edbd2;display:block;border:1px solid color-mix(in srgb,var(--notice-accent) 30%,transparent);border-radius:13px;background:color-mix(in srgb,var(--notice-accent) 8%,#0b1b28);color:var(--notice-accent);padding:13px 15px}
+.product-notice[data-tone=information]{--notice-accent:#9bd0f0}.product-notice[data-tone=important]{--notice-accent:#c5b7ef}.product-notice[data-tone=error]{--notice-accent:#efa8b7}
+.product-notice h3{font-size:13px;font-weight:600;line-height:1.5}.product-notice p{margin-top:3px;color:#c5d4dc;font-size:12px;font-weight:400;line-height:1.7}
+.product-notice .product-notice__custom{margin-top:9px;padding-top:9px;border-top:1px solid color-mix(in srgb,var(--notice-accent) 20%,transparent)}
+.portal-shell--light .product-notice{background:color-mix(in srgb,var(--notice-accent) 10%,white);color:#275d67}.portal-shell--light .product-notice p{color:#465963}
+@media(max-width:640px){.portal-shell.portal-luxe .product-library{grid-template-columns:1fr!important;gap:14px!important}.portal-shell.portal-luxe .product-license-card--premium .product-license-card__media{max-height:none;min-height:160px}.portal-shell.portal-luxe .product-license-card--premium .product-license-card__body{padding:14px!important}.product-guide-view{gap:12px}}
+@media(prefers-reduced-motion:reduce){.portal-shell.portal-luxe .product-license-card--premium{transition:none!important}.portal-shell.portal-luxe .product-license-card--premium:hover{transform:none}}

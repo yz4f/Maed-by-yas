@@ -13,7 +13,7 @@ function BidiText({ text }: { text: string }) {
   return <>{text.split(/([A-Za-z][A-Za-z0-9_+./:#-]*(?:[ >]+[A-Za-z0-9_+./:#-]+)*)/g).map((part, index) => /^[A-Za-z]/.test(part) ? <bdi key={index} dir="ltr">{part}</bdi> : part)}</>;
 }
 
-export function GuideDialog({ title, onClose, onBack, children, sectionKey }: { title: string; onClose: () => void; onBack?: () => void; children: ReactNode; sectionKey?: string }) {
+export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyebrow = 'مركز المساعدة' }: { title: string; onClose: () => void; onBack?: () => void; children: ReactNode; sectionKey?: string; eyebrow?: string }) {
   const dialog = useRef<HTMLDivElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -42,7 +42,7 @@ export function GuideDialog({ title, onClose, onBack, children, sectionKey }: { 
     <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} dir="rtl" className={styles.dialog}>
       <header className={styles.header}>
         <span className={styles.icon}><CircleHelp size={23} /></span>
-        <div className="min-w-0 flex-1"><p className={styles.eyebrow}>مركز المساعدة</p><h2 id={titleId} className="mt-1 break-words text-lg font-bold sm:text-xl">{title}</h2></div>
+        <div className="min-w-0 flex-1"><p className={styles.eyebrow}>{eyebrow}</p><h2 id={titleId} className="mt-1 break-words text-lg font-bold sm:text-xl">{title}</h2></div>
         {onBack && <button className={styles.iconButton} onClick={onBack} aria-label="الرجوع"><ArrowRight size={20} /></button>}
         <button className={styles.iconButton} onClick={onClose} aria-label="إغلاق الدليل"><X size={20} /></button>
       </header>
@@ -110,18 +110,20 @@ export function GuideVideo({ url, title, image, product, skipNotice = false }: {
 
 export function GuideArticleView({ article, product, savedVariant, onVariant }: { article: GuideArticle; completed?: string[]; onStep?: (id: string) => void; onComplete?: () => void; product?: Product; savedVariant?: string; onVariant?: (id: string) => void }) {
   const [variant, setVariant] = useState(article.variants?.some(item => item.id === savedVariant) ? savedVariant! : article.variants?.[0]?.id || '');
-  const [currentStep, setCurrentStep] = useState(0);
   const chosen = article.variants?.find(item => item.id === variant);
   const steps = guideStepEntries(article, variant);
   const video = chosen?.video || article.video;
-  const go = (index: number) => { setCurrentStep(index); document.getElementById(`guide-step-${article.id}-${index}`)?.scrollIntoView({ block: 'nearest' }); };
   return <article className={styles.stack}>
     <div><p className={styles.eyebrow}>{article.category}</p><p className={styles.muted}>{article.description}</p></div>
     {article.warning && <aside className={styles.warning}><Info size={18} className="shrink-0" /><p>{article.warning}</p></aside>}
-    {article.variants && <div><h4 className="mb-3 text-sm font-medium">اختر المسار المناسب</h4><div className={styles.tabs}>{article.variants.map(item => <button key={item.id} className={styles.tab} aria-pressed={variant === item.id} onClick={() => { setVariant(item.id); setCurrentStep(0); onVariant?.(item.id); }}><bdi>{item.label}</bdi></button>)}</div></div>}
-    {video && <GuideVideo key={video} url={video} title={chosen?.label || article.title} image={article.image} product={product} />}
-    {!video && article.image && <ImageLightbox src={article.image} alt={article.title} />}
-    <nav className={styles.tabs} aria-label="خطوات الشرح">{steps.map((step,index) => <button key={step.id} className={styles.tab} aria-current={currentStep === index ? 'step' : undefined} onClick={() => go(index)}><bdi>{String(index+1).padStart(2,'0')}</bdi> {step.title}</button>)}</nav>
+    {article.variants && <div><h4 className="mb-3 text-sm font-medium">اختر المسار المناسب</h4><div className={styles.tabs}>{article.variants.map(item => <button key={item.id} className={styles.tab} aria-pressed={variant === item.id} onClick={() => { setVariant(item.id); onVariant?.(item.id); }}><bdi>{item.label}</bdi></button>)}</div></div>}
+    <div className={styles.articleLayout}>
+    <div className={styles.articleMedia}>
+      {article.image && <ImageLightbox src={article.image} alt={article.title} />}
+      {video && <GuideVideo key={video} url={video} title={chosen?.label || article.title} product={product} />}
+      {!article.image && !video && steps.find(step => step.image) && <ImageLightbox src={steps.find(step => step.image)!.image!} alt={article.title} />}
+      {!article.image && !video && !steps.some(step => step.image) && <div className={styles.articlePlaceholder}><BookOpen size={44} /><span>T3N</span></div>}
+    </div>
     <div className={styles.stack}>{steps.map((step, index) => <section key={step.id} id={`guide-step-${article.id}-${index}`} tabIndex={-1} aria-label={`الخطوة ${index + 1}: ${step.title}`} className={styles.step}>
       <span className={styles.stepNumber}>{String(index + 1).padStart(2, '0')}</span>
       <div className="min-w-0 flex-1"><h4 className="font-semibold"><bdi>{step.title}</bdi></h4>
@@ -132,7 +134,7 @@ export function GuideArticleView({ article, product, savedVariant, onVariant }: 
         {step.image && <ImageLightbox src={step.image} alt={step.title} />}
       </div>
     </section>)}</div>
-    <nav className="flex justify-between gap-3" aria-label="التنقل بين الخطوات"><button className={styles.smallButton} disabled={currentStep === 0} onClick={() => go(currentStep-1)}>السابق</button><button className={styles.smallButton} disabled={currentStep >= steps.length-1} onClick={() => go(currentStep+1)}>التالي</button></nav>
+    </div>
     {article.links?.map(link => <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className={styles.smallButton}><Download size={16} />{link.label}</a>)}
     <div className={styles.panel}><h4 className="text-sm font-semibold">هل ما زالت المشكلة موجودة؟</h4><a className={`${styles.smallButton} mt-3`} href={`/support?guide=${encodeURIComponent(article.category + ' — ' + article.title)}`}>فتح تذكرة دعم<ChevronLeft size={16} /></a></div>
     {article.source && <details className={styles.muted}><summary className="cursor-pointer">مرجع الشرح</summary><a className={styles.source} href={article.source} target="_blank" rel="noreferrer"><ExternalLink size={14} />المصدر الأصلي</a></details>}
@@ -140,9 +142,12 @@ export function GuideArticleView({ article, product, savedVariant, onVariant }: 
 }
 
 export function GuideCard({ article, number, onOpen }: { article: GuideArticle; number: number; onOpen: () => void }) {
+  const previewVideo = article.video || article.variants?.find(item => item.video)?.video;
+  const preview = previewVideo ? videoEmbed(previewVideo) : null;
+  const previewImage = article.image || article.steps.find(step => step.image)?.image || preview?.thumbnail;
   return <article className={styles.card}>
     <div className={styles.cardTop}><span className={styles.stepNumber}>{String(number).padStart(2, '0')}</span><span className={styles.eyebrow}>{article.category}</span></div>
-    {article.image && <img className={styles.cardImage} src={article.image} alt={article.title} loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />}
+    <div className={styles.cardPreview}>{previewImage ? <img className={styles.cardImage} src={previewImage} alt="" loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} /> : <BookOpen size={28} className="text-cyan-200/45" />}{previewVideo && <span className={styles.cardPlay} aria-label="يتضمن فيديو"><Play size={19} fill="currentColor" /></span>}</div>
     <h3 className="mt-3 text-[17px] font-semibold leading-7">{article.title}</h3><p className={`${styles.muted} line-clamp-2`}>{article.description}</p>
     <button className={`${styles.smallButton} mt-auto self-start`} onClick={onOpen}><BookOpen size={16} />فتح الشرح</button>
   </article>;
