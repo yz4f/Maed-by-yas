@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, BookOpen, Check, ChevronLeft, CircleHelp, Download, ExternalLink, Info, Play, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, CircleHelp, Download, ExternalLink, Info, Play, X } from 'lucide-react';
 import type { Product } from '@/types';
 import type { GuideArticle } from '@/lib/guide-library';
 import { guideStepEntries } from '@/lib/guide-library';
@@ -136,7 +136,6 @@ export function GuideArticleView({ article, product, savedVariant, onVariant }: 
     </section>)}</div>
     </div>
     {article.links?.map(link => <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className={styles.smallButton}><Download size={16} />{link.label}</a>)}
-    <div className={styles.panel}><h4 className="text-sm font-semibold">هل ما زالت المشكلة موجودة؟</h4><a className={`${styles.smallButton} mt-3`} href={`/support?guide=${encodeURIComponent(article.category + ' — ' + article.title)}`}>فتح تذكرة دعم<ChevronLeft size={16} /></a></div>
     {article.source && <details className={styles.muted}><summary className="cursor-pointer">مرجع الشرح</summary><a className={styles.source} href={article.source} target="_blank" rel="noreferrer"><ExternalLink size={14} />المصدر الأصلي</a></details>}
   </article>;
 }
