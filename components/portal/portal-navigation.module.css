@@ -1,5 +1,5 @@
 .sidebar, .drawer { display: flex; flex-direction: column; background: var(--luxe-panel); color: var(--luxe-ink); border-inline-end: 1px solid var(--luxe-line); font-family: 'Vazirmatn Variable', Arial, sans-serif; }
-.sidebar { width: 266px; flex-shrink: 0; height: 100%; position: relative; z-index: 20; transition: width 240ms ease-in-out; }
+.sidebar { width: 244px; flex-shrink: 0; height: 100%; position: relative; z-index: 20; }
 .sidebar[data-animate='false'] { transition: none; }
 .brandRow { display: flex; align-items: center; min-height: 106px; padding: 18px 16px 18px 20px; border-bottom: 1px solid var(--luxe-line); }
 .brand { display: flex; min-width: 0; flex: 1; align-items: center; gap: 12px; padding: 8px 2px; text-align: start; }
@@ -9,6 +9,7 @@
 .brandCopy small { display: block; font-size: 10px; font-weight: 500; letter-spacing: .1px; margin-top: 5px; color: var(--luxe-muted); white-space: nowrap; }
 .collapseButton { flex: 0 0 auto; width: 36px; height: 36px; color: var(--luxe-muted); border-color: transparent; }
 .collapseButton:hover { color: var(--luxe-accent); border-color: var(--luxe-accent-line); }
+.toggleIcon { display: grid; place-items: center; }
 .nav { min-height: 0; flex: 1; overflow-y: auto; padding: 12px; scrollbar-width: thin; }
 .group + .group { margin-top: 23px; }
 .groupTitle { padding: 0 13px; margin-bottom: 9px; color: var(--luxe-muted); font-size: 10px; font-weight: 500; }

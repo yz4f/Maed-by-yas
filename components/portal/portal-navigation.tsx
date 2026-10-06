@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   ArrowUpLeft,
   ArrowUpRight,
@@ -69,12 +70,26 @@ export function PortalNavigation({
   const [preferenceLoaded, setPreferenceLoaded] = useState(false);
   const [animateCollapse, setAnimateCollapse] = useState(false);
   const [tooltip, setTooltip] = useState<{ label: string; top: number } | null>(null);
+  const reducedMotion = useReducedMotion();
   const sidebarRef = useRef<HTMLElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const Arrow = ar ? ArrowUpLeft : ArrowUpRight;
   const Chevron = ar ? ChevronLeft : ChevronRight;
+  const shouldAnimate = animateCollapse && !reducedMotion;
+  const layoutTransition = shouldAnimate
+    ? { type: 'spring' as const, stiffness: 360, damping: 36, mass: 0.9 }
+    : { duration: 0 };
+  const labelMotion = (compact: boolean, order: number) => ({
+    initial: false as const,
+    animate: compact ? { opacity: 0, x: ar ? -8 : 8 } : { opacity: 1, x: 0 },
+    transition: shouldAnimate
+      ? compact
+        ? { duration: 0.12 }
+        : { duration: 0.24, delay: 0.07 + order * 0.035 }
+      : { duration: 0 },
+  });
 
   useEffect(() => {
     try {
@@ -205,8 +220,8 @@ export function PortalNavigation({
     <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'} onScroll={() => setTooltip(null)}>
       {groups.map((group, index) => (
         <div className={css.group} key={group.title}>
-          <p className={css.groupTitle}>{group.title}</p>
-          {group.items.map(({ tab, label, icon: Icon, count }) => (
+          <motion.p className={css.groupTitle} {...labelMotion(compact, index * 2)}>{group.title}</motion.p>
+          {group.items.map(({ tab, label, icon: Icon, count }, itemIndex) => (
             <button
               type="button"
               key={tab}
@@ -223,7 +238,7 @@ export function PortalNavigation({
               <span className={css.itemIcon}>
                 <Icon size={19} strokeWidth={1.7} />
               </span>
-              <span className={css.itemLabel}>{label}</span>
+              <motion.span className={css.itemLabel} {...labelMotion(compact, index * 2 + itemIndex + 1)}>{label}</motion.span>
               {count !== undefined ? (
                 <span className={css.badge}>{count}</span>
               ) : (
@@ -245,7 +260,7 @@ export function PortalNavigation({
               aria-label={ar ? 'مجتمع ديسكورد' : 'Discord community'}
             >
               <span className={css.itemIcon}><DiscordMark width={18} height={18} /></span>
-              <span className={css.itemLabel}>{ar ? 'مجتمع ديسكورد' : 'Discord community'}</span>
+              <motion.span className={css.itemLabel} {...labelMotion(compact, index * 2 + 2)}>{ar ? 'مجتمع ديسكورد' : 'Discord community'}</motion.span>
               <Arrow className={css.chevron} size={13} />
             </a>
           )}
@@ -302,16 +317,21 @@ export function PortalNavigation({
 
   return (
     <>
-      <aside
+      <motion.aside
         ref={sidebarRef}
         className={`${css.sidebar} ${collapsed ? css.collapsed : ''}`}
         data-animate={animateCollapse}
         aria-label={ar ? 'التنقّل' : 'Navigation'}
+        initial={false}
+        animate={{ width: collapsed ? 76 : 244 }}
+        transition={layoutTransition}
       >
-        <div className={css.brandRow}>
-          <button
+        <motion.div className={css.brandRow} layout transition={layoutTransition}>
+          <motion.button
             type="button"
             className={css.brand}
+            layout
+            transition={layoutTransition}
             onClick={() => navigate('overview')}
             aria-label={ar ? 'تعن — الرئيسية' : 'T3N — Home'}
             onMouseEnter={(event) => collapsed && showTooltip(ar ? 'الرئيسية' : 'Overview', event.currentTarget)}
@@ -320,10 +340,12 @@ export function PortalNavigation({
             onBlur={() => setTooltip(null)}
           >
             {brand}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             className={`${css.collapseButton} ${css.iconButton}`}
+            layout
+            transition={layoutTransition}
             onClick={toggleCollapsed}
             title={
               collapsed
@@ -337,9 +359,20 @@ export function PortalNavigation({
             }
             aria-pressed={collapsed}
           >
-            {collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
-          </button>
-        </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={collapsed ? 'expand' : 'collapse'}
+                className={css.toggleIcon}
+                initial={shouldAnimate ? { opacity: 0, rotate: -35, scale: 0.75 } : false}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={shouldAnimate ? { opacity: 0, rotate: 35, scale: 0.75 } : undefined}
+                transition={{ duration: shouldAnimate ? 0.14 : 0 }}
+              >
+                {collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
+              </motion.span>
+            </AnimatePresence>
+          </motion.button>
+        </motion.div>
         {navigation(collapsed)}
         {footer(collapsed)}
         {collapsed && tooltip && (
@@ -347,7 +380,7 @@ export function PortalNavigation({
             {tooltip.label}
           </span>
         )}
-      </aside>
+      </motion.aside>
 
       {/* Mobile Top Bar */}
       <div className={css.mobileBar}>
