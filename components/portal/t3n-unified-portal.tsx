@@ -1841,8 +1841,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
                 </a>
 
-                <button
-                  onClick={() => setActiveTab('my-products')}
+                <a
+                  href="https://t3nnn.com/ar"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`w-full min-h-[76px] px-5 py-3.5 border-t flex items-center justify-between gap-4 text-start transition-all duration-200 group ${isDark ? 'border-white/[0.08] hover:bg-white/[0.035]' : 'border-neutral-200 hover:bg-neutral-50'}`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
@@ -1855,7 +1857,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
-                </button>
+                </a>
 
                 <button
                   onClick={() => setActiveTab('tickets')}
