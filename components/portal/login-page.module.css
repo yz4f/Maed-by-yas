@@ -75,9 +75,10 @@
 .footer { position: relative; z-index: 5; width: calc(100% - 64px); max-width: 1216px; margin-inline: auto; padding: 15px 16px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 .footerInner { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; column-gap: clamp(22px, 4vw, 58px); row-gap: 12px; }
 .footerInner > p { margin: 0; white-space: nowrap; }
-.certificate { display: inline-flex; align-items: center; gap: 11px; min-height: 52px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--control); color: var(--ink); text-align: start; cursor: pointer; transition: border-color .2s, background-color .2s; }
-.certificate:hover { border-color: rgba(125,211,252,.42); background: rgba(56,189,248,.1); }
-.certificate img { display: block; width: 67px; height: 34px; object-fit: contain; flex-shrink: 0; padding: 4px; border-radius: 7px; background: #fff; }
+.certificate { display: inline-flex; align-items: center; gap: 11px; min-height: 52px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 14px; background: transparent; color: var(--ink); text-align: start; cursor: pointer; transition: border-color .2s; }
+.certificate:hover { border-color: rgba(125,211,252,.42); }
+.certificate img { display: block; width: 67px; height: 34px; object-fit: contain; flex-shrink: 0; background: transparent; filter: invert(1) hue-rotate(180deg); }
+.page[data-theme='light'] .certificate img { filter: none; }
 .certificateText { display: flex; flex-direction: column; gap: 1px; line-height: 1.35; }
 .certificateText > span { font-size: 13px; font-weight: 700; }
 .certificateText bdi { color: var(--aqua); font-family: var(--font-alexandria), sans-serif; font-size: 11px; font-weight: 600; letter-spacing: .025em; direction: ltr; }
