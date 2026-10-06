@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   ArrowUpLeft,
@@ -35,8 +35,6 @@ interface PortalNavigationProps {
   isDark: boolean;
   isAdmin: boolean;
   productCount: number;
-  collapsed: boolean;
-  onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileChange: (open: boolean) => void;
   onToggleTheme: () => void;
@@ -59,8 +57,6 @@ export function PortalNavigation({
   isDark,
   isAdmin,
   productCount,
-  collapsed,
-  onToggleCollapsed,
   mobileOpen,
   onMobileChange,
   onToggleTheme,
@@ -69,11 +65,47 @@ export function PortalNavigation({
   user,
 }: PortalNavigationProps) {
   const ar = lang === 'ar';
+  const [collapsed, setCollapsed] = useState(false);
+  const [preferenceLoaded, setPreferenceLoaded] = useState(false);
+  const [animateCollapse, setAnimateCollapse] = useState(false);
+  const [tooltip, setTooltip] = useState<{ label: string; top: number } | null>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const Arrow = ar ? ArrowUpLeft : ArrowUpRight;
   const Chevron = ar ? ChevronLeft : ChevronRight;
+
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem('self-delivery.sidebar-collapsed') === 'true');
+    } catch {
+      // Keep the default width when storage is unavailable.
+    }
+    setPreferenceLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!preferenceLoaded) return;
+    try {
+      window.localStorage.setItem('self-delivery.sidebar-collapsed', String(collapsed));
+    } catch {
+      // The sidebar still works when storage is unavailable.
+    }
+  }, [collapsed, preferenceLoaded]);
+
+  const showTooltip = (label: string, target: HTMLElement) => {
+    if (!collapsed || !sidebarRef.current) return;
+    const sidebarTop = sidebarRef.current.getBoundingClientRect().top;
+    const item = target.getBoundingClientRect();
+    setTooltip({ label, top: item.top - sidebarTop + item.height / 2 });
+  };
+
+  const toggleCollapsed = () => {
+    setTooltip(null);
+    setAnimateCollapse(true);
+    setCollapsed((current) => !current);
+  };
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -129,6 +161,7 @@ export function PortalNavigation({
   }, [mobileOpen, onMobileChange]);
 
   const navigate = (tab: PortalTab) => {
+    setTooltip(null);
     onNavigate(tab);
     onMobileChange(false);
   };
@@ -169,7 +202,7 @@ export function PortalNavigation({
   );
 
   const navigation = (compact: boolean) => (
-    <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'}>
+    <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'} onScroll={() => setTooltip(null)}>
       {groups.map((group, index) => (
         <div className={css.group} key={group.title}>
           <p className={css.groupTitle}>{group.title}</p>
@@ -181,7 +214,10 @@ export function PortalNavigation({
               data-active={activeTab === tab}
               aria-current={activeTab === tab ? 'page' : undefined}
               aria-label={label}
-              title={compact ? label : undefined}
+              onMouseEnter={(event) => compact && showTooltip(label, event.currentTarget)}
+              onMouseLeave={() => setTooltip(null)}
+              onFocus={(event) => compact && showTooltip(label, event.currentTarget)}
+              onBlur={() => setTooltip(null)}
               onClick={() => navigate(tab)}
             >
               <span className={css.itemIcon}>
@@ -201,7 +237,11 @@ export function PortalNavigation({
               href="https://discord.gg/t3n"
               target="_blank"
               rel="noopener noreferrer"
-              title={compact ? (ar ? 'مجتمع ديسكورد' : 'Discord community') : undefined}
+              onClick={() => onMobileChange(false)}
+              onMouseEnter={(event) => compact && showTooltip(ar ? 'مجتمع ديسكورد' : 'Discord community', event.currentTarget)}
+              onMouseLeave={() => setTooltip(null)}
+              onFocus={(event) => compact && showTooltip(ar ? 'مجتمع ديسكورد' : 'Discord community', event.currentTarget)}
+              onBlur={() => setTooltip(null)}
               aria-label={ar ? 'مجتمع ديسكورد' : 'Discord community'}
             >
               <span className={css.itemIcon}><DiscordMark width={18} height={18} /></span>
@@ -214,14 +254,17 @@ export function PortalNavigation({
     </nav>
   );
 
-  const footer = (
+  const footer = (compact: boolean) => (
     <div className={css.account}>
       <button
         type="button"
         className={css.user}
         onClick={() => navigate('profile')}
         aria-label={ar ? 'فتح الملف الشخصي' : 'Open profile'}
-        title={collapsed ? user.name : undefined}
+        onMouseEnter={(event) => compact && showTooltip(user.name, event.currentTarget)}
+        onMouseLeave={() => setTooltip(null)}
+        onFocus={(event) => compact && showTooltip(user.name, event.currentTarget)}
+        onBlur={() => setTooltip(null)}
       >
         <Image
           src={user.image || '/logo-256.png'}
@@ -246,7 +289,10 @@ export function PortalNavigation({
         className={css.logout}
         onClick={onLogout}
         aria-label={ar ? 'تسجيل الخروج' : 'Sign out'}
-        title={collapsed ? (ar ? 'تسجيل الخروج' : 'Sign out') : undefined}
+        onMouseEnter={(event) => compact && showTooltip(ar ? 'تسجيل الخروج' : 'Sign out', event.currentTarget)}
+        onMouseLeave={() => setTooltip(null)}
+        onFocus={(event) => compact && showTooltip(ar ? 'تسجيل الخروج' : 'Sign out', event.currentTarget)}
+        onBlur={() => setTooltip(null)}
       >
         <LogOut size={17} strokeWidth={1.7} />
         <span>{ar ? 'تسجيل الخروج' : 'Sign out'}</span>
@@ -257,7 +303,9 @@ export function PortalNavigation({
   return (
     <>
       <aside
+        ref={sidebarRef}
         className={`${css.sidebar} ${collapsed ? css.collapsed : ''}`}
+        data-animate={animateCollapse}
         aria-label={ar ? 'التنقّل' : 'Navigation'}
       >
         <div className={css.brandRow}>
@@ -266,13 +314,17 @@ export function PortalNavigation({
             className={css.brand}
             onClick={() => navigate('overview')}
             aria-label={ar ? 'تعن — الرئيسية' : 'T3N — Home'}
+            onMouseEnter={(event) => collapsed && showTooltip(ar ? 'الرئيسية' : 'Overview', event.currentTarget)}
+            onMouseLeave={() => setTooltip(null)}
+            onFocus={(event) => collapsed && showTooltip(ar ? 'الرئيسية' : 'Overview', event.currentTarget)}
+            onBlur={() => setTooltip(null)}
           >
             {brand}
           </button>
           <button
             type="button"
             className={`${css.collapseButton} ${css.iconButton}`}
-            onClick={onToggleCollapsed}
+            onClick={toggleCollapsed}
             title={
               collapsed
                 ? (ar ? 'إظهار القائمة' : 'Expand navigation')
@@ -289,7 +341,12 @@ export function PortalNavigation({
           </button>
         </div>
         {navigation(collapsed)}
-        {footer}
+        {footer(collapsed)}
+        {collapsed && tooltip && (
+          <span className={css.tooltip} role="tooltip" style={{ top: tooltip.top }}>
+            {tooltip.label}
+          </span>
+        )}
       </aside>
 
       {/* Mobile Top Bar */}
@@ -338,14 +395,14 @@ export function PortalNavigation({
       </div>
 
       {/* Mobile Navigation Drawer */}
-      {mobileOpen && (
-        <div className={css.mobileOverlay} onClick={() => onMobileChange(false)}>
+        <div className={css.mobileOverlay} data-open={mobileOpen} aria-hidden={!mobileOpen} onClick={() => onMobileChange(false)}>
           <aside
             ref={drawerRef}
             id="portal-navigation-drawer"
             className={css.drawer}
             role="dialog"
-            aria-modal="true"
+            aria-modal={mobileOpen}
+            inert={!mobileOpen}
             aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'}
             onClick={(event) => event.stopPropagation()}
           >
@@ -369,10 +426,9 @@ export function PortalNavigation({
               </button>
             </div>
             {navigation(false)}
-            {footer}
+            {footer(false)}
           </aside>
         </div>
-      )}
     </>
   );
 }

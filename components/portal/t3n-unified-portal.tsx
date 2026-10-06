@@ -168,17 +168,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('self-delivery.theme');
     const savedLanguage = window.localStorage.getItem('self-delivery.language');
-    const savedSidebar = window.localStorage.getItem('self-delivery.sidebar-collapsed');
     if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
     if (savedLanguage === 'ar' || savedLanguage === 'en') setLang(savedLanguage);
-    if (savedSidebar === 'true' || savedSidebar === 'false') setSidebarCollapsed(savedSidebar === 'true');
     const tabParam = new URLSearchParams(window.location.search).get('tab');
     if (tabParam === 'tickets' || tabParam === 'overview' || tabParam === 'my-products' || tabParam === 'redeem' || tabParam === 'profile' || tabParam === 'admin') {
       setActiveTab(tabParam as PortalTab);
@@ -195,10 +192,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     window.localStorage.setItem('self-delivery.language', lang);
   }, [lang]);
-
-  useEffect(() => {
-    window.localStorage.setItem('self-delivery.sidebar-collapsed', String(sidebarCollapsed));
-  }, [sidebarCollapsed]);
 
   // Demo Local Authentication for instant local testing
   const [demoUser, setDemoUser] = useState<UserType | null>(null);
@@ -1642,8 +1635,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         isDark={isDark}
         isAdmin={isAdmin}
         productCount={activeProductCount}
-        collapsed={sidebarCollapsed}
-        onToggleCollapsed={() => setSidebarCollapsed((current) => !current)}
         mobileOpen={mobileMenuOpen}
         onMobileChange={setMobileMenuOpen}
         onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
@@ -1653,7 +1644,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       />
 
       {/* Main Content Area */}
-      <main className="portal-main-content portal-scroll-region flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
+      <main className="portal-main-content portal-scroll-region min-w-0 flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
         <div className="portal-content-frame mx-auto flex min-h-full max-w-[1520px] flex-col gap-6">
 
         {currentUser?.warningMessage && (
