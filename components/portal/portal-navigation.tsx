@@ -1,17 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import {
   ArrowUpLeft,
   ArrowUpRight,
-  Check,
   ChevronLeft,
   ChevronRight,
   Globe,
   LifeBuoy,
   KeyRound,
-  Link2,
   House,
   LogOut,
   Menu,
@@ -71,7 +69,6 @@ export function PortalNavigation({
   user,
 }: PortalNavigationProps) {
   const ar = lang === 'ar';
-  const [copiedSiteLink, setCopiedSiteLink] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -134,20 +131,6 @@ export function PortalNavigation({
   const navigate = (tab: PortalTab) => {
     onNavigate(tab);
     onMobileChange(false);
-  };
-
-  const copySiteLink = async () => {
-    if (copiedSiteLink) return;
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/`);
-      setCopiedSiteLink(true);
-      window.setTimeout(() => setCopiedSiteLink(false), 2000);
-      void fetch('/api/site-events/copy-link', { method: 'POST' }).catch((error) => {
-        console.error('تعذر تسجيل نسخ رابط الموقع:', error);
-      });
-    } catch (error) {
-      console.error('تعذر نسخ رابط الموقع:', error);
-    }
   };
 
   const groups: { title: string; items: NavigationItem[] }[] = [
@@ -213,31 +196,18 @@ export function PortalNavigation({
             </button>
           ))}
           {index === 1 && (
-            <>
-              <a
-                className={css.item}
-                href="https://discord.gg/t3n"
-                target="_blank"
-                rel="noopener noreferrer"
-                title={compact ? (ar ? 'مجتمع ديسكورد' : 'Discord community') : undefined}
-                aria-label={ar ? 'مجتمع ديسكورد' : 'Discord community'}
-              >
-                <span className={css.itemIcon}><DiscordMark width={18} height={18} /></span>
-                <span className={css.itemLabel}>{ar ? 'مجتمع ديسكورد' : 'Discord community'}</span>
-                <Arrow className={css.chevron} size={13} />
-              </a>
-              <button
-                type="button"
-                className={css.item}
-                onClick={() => void copySiteLink()}
-                disabled={copiedSiteLink}
-                title={compact ? (ar ? 'نسخ رابط الموقع' : 'Copy website link') : undefined}
-                aria-label={ar ? 'نسخ رابط الموقع' : 'Copy website link'}
-              >
-                <span className={css.itemIcon}>{copiedSiteLink ? <Check size={18} /> : <Link2 size={18} />}</span>
-                <span className={css.itemLabel}>{copiedSiteLink ? (ar ? 'تم نسخ الرابط' : 'Link copied') : (ar ? 'نسخ رابط الموقع' : 'Copy website link')}</span>
-              </button>
-            </>
+            <a
+              className={css.item}
+              href="https://discord.gg/t3n"
+              target="_blank"
+              rel="noopener noreferrer"
+              title={compact ? (ar ? 'مجتمع ديسكورد' : 'Discord community') : undefined}
+              aria-label={ar ? 'مجتمع ديسكورد' : 'Discord community'}
+            >
+              <span className={css.itemIcon}><DiscordMark width={18} height={18} /></span>
+              <span className={css.itemLabel}>{ar ? 'مجتمع ديسكورد' : 'Discord community'}</span>
+              <Arrow className={css.chevron} size={13} />
+            </a>
           )}
         </div>
       ))}

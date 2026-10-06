@@ -84,7 +84,6 @@ type WebsiteLogEvent =
   | { type: 'conversationOpened'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'login'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'logout'; customerId: string; customerName: string; customerImage?: string | null }
-  | { type: 'websiteLinkCopied'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'productActivated'; customerId: string; customerName: string; customerImage?: string | null; productName: string }
   | { type: 'keyInventoryChanged'; customerId: string; customerName: string; customerImage?: string | null; productName: string; action: 'added' | 'restored' | 'deleted' | 'updated'; keyCount: number };
 
@@ -256,8 +255,6 @@ export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ m
     ? { channelId: CUSTOMER_LOGIN_CHANNEL_ID, color: 0x22c55e, title: 'تسجيل دخول عميل', description: 'دخل العميل إلى موقع تعن عبر حساب ديسكورد.', label: 'الحالة', value: 'متصل' }
     : event.type === 'logout'
       ? { channelId: CUSTOMER_LOGOUT_CHANNEL_ID, color: 0x64748b, title: 'تسجيل خروج عميل', description: 'غادر العميل موقع تعن وسجّل الخروج.', label: 'الحالة', value: 'غير متصل' }
-      : event.type === 'websiteLinkCopied'
-        ? { channelId: CUSTOMER_EVENTS_CHANNEL_ID, color: 0x38bdf8, title: 'نسخ رابط الموقع', description: 'نسخ العميل رابط موقع تعن من القائمة.', label: 'الرابط', value: websiteUrl }
       : event.type === 'conversationOpened'
         ? { channelId: CUSTOMER_EVENTS_CHANNEL_ID, color: 0x22d3ee, title: 'فتح محادثة دعم', description: 'بدأ العميل محادثة جديدة مع مساعد تعن من الموقع.', label: 'الحالة', value: 'محادثة جديدة' }
         : event.type === 'keyInventoryChanged'
