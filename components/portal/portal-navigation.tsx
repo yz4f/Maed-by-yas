@@ -160,7 +160,7 @@ export function PortalNavigation({
 
   const brand = (
     <>
-      <Image src="/logo.png" width={42} height={42} alt="" />
+      <Image src="/logo-256.png" width={42} height={42} alt="" />
       <span className={css.brandCopy}>
         <strong translate="no">{ar ? 'تعن' : 'T3N'}</strong>
         <small>{ar ? 'بوابة المنتجات والدعم' : 'Products & Support Portal'}</small>
@@ -226,12 +226,12 @@ export function PortalNavigation({
         title={collapsed ? user.name : undefined}
       >
         <Image
-          src={user.image || '/logo.png'}
+          src={user.image || '/logo-256.png'}
           alt=""
           width={34}
           height={34}
           onError={(event) => {
-            event.currentTarget.src = '/logo.png';
+            event.currentTarget.src = '/logo-256.png';
           }}
         />
         <span className={css.userCopy}>

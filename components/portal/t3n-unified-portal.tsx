@@ -70,9 +70,10 @@ const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((modu
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const VoiceSupportAdmin = dynamic(() => import('./voice-support-admin').then((module) => module.VoiceSupportAdmin), { ssr: false });
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
+const loadProductStockModal = () => import('@/components/admin/stock/ProductStockModal').then((module) => module.ProductStockModal);
+const ProductStockModal = dynamic(loadProductStockModal, { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
-import { ProductStockModal } from '@/components/admin/stock/ProductStockModal';
 
 const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
 
@@ -540,6 +541,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     if (activeTab !== 'admin' || !isAdmin) return;
     if (adminSectionTab === 'overview' || adminSectionTab === 'logs') void loadAdminStats();
     if (adminSectionTab === 'products') {
+      void loadProductStockModal();
       void loadDbProducts();
       void loadAdminStats();
     }

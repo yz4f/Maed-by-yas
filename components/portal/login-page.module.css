@@ -19,7 +19,7 @@
 }
 .page[data-theme='light'] { --ink: #102b43; --muted: #536c83; --line: rgba(35, 75, 112, .17); --panel: rgba(255,255,255,.9); --control: rgba(255,255,255,.65); --aqua: #1463a4; background: #eef5fb; }
 .ambient { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; background: linear-gradient(125deg, rgba(2,10,24,.34), rgba(4,29,66,.2) 49%, rgba(2,12,28,.38)), #061524; }
-.ambient::before { content: ''; position: absolute; z-index: 0; inset: -6%; background: url('/images/t3n-login-azure-clean.png') center / cover no-repeat; opacity: .29; filter: blur(2px); transform: scale(1.08); transform-origin: center; }
+.ambient::before { content: ''; position: absolute; z-index: 0; inset: -6%; background: url('/images/t3n-login-azure-clean.webp') center / cover no-repeat; opacity: .29; filter: blur(2px); transform: scale(1.08); transform-origin: center; }
 .ambient::after { content: ''; position: absolute; z-index: 1; inset: 0; background: radial-gradient(ellipse 42% 55% at 50% 48%, rgba(52, 160, 224, .12), transparent 75%), linear-gradient(125deg, rgba(2,10,24,.12), transparent 48%, rgba(2,12,28,.2)); opacity: .7; }
 .page[data-theme='light'] .ambient { background: linear-gradient(125deg, rgba(240,250,255,.2), rgba(197,234,252,.12) 49%, rgba(239,250,255,.24)), #d9edf9; }
 .page[data-theme='light'] .ambient::before { opacity: .24; }

@@ -81,7 +81,7 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
           <Link href="/" className={styles.brand} aria-label={ar ? 'تعن — الرئيسية' : 'T3N — Home'}>
             {/* Fixed dimensions reserve space before the small brand image loads. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" width={42} height={42} alt="" />
+            <img src="/logo-256.png" width={42} height={42} alt="" />
             <span>{ar ? 'تعن' : 'T3N'}<small>{ar ? 'منتجاتك، في مكان واحد' : 'Your products, together'}</small></span>
           </Link>
           <div className={styles.tools}>

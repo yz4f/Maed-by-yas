@@ -2,7 +2,7 @@ import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, Do
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
+import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
 
 
 // Safe dynamic imports for Server-side filesystem operations
@@ -212,6 +212,36 @@ const legacySampleFaqIds = new Set([
   'faq-key-duration',
 ]);
 const isCurrentFaq = (faq: FaqItem) => !legacySampleFaqIds.has(faq.id);
+
+// FAQ lists and category counts are requested together by the help center. Share only
+// the in-flight Firestore read, so edits remain visible on the next request.
+let faqReadInFlight: Promise<{ categories: FaqCategory[]; faqs: FaqItem[] }> | null = null;
+function readFaqCollections(): Promise<{ categories: FaqCategory[]; faqs: FaqItem[] }> {
+  if (faqReadInFlight) return faqReadInFlight;
+  const read = (async () => {
+    const [categorySnapshot, faqSnapshot] = await Promise.all([
+      getDocs(collection(getDb(), 'faq_categories')),
+      getDocs(collection(getDb(), 'faqs')),
+    ]);
+    let categories = categorySnapshot.docs.map((item) => item.data() as FaqCategory);
+    let faqs = faqSnapshot.docs.map((item) => item.data() as FaqItem).filter(isCurrentFaq);
+    if (categories.length === 0) {
+      await Promise.all(initialFaqCategories.map((category) => setDoc(doc(getDb(), 'faq_categories', category.id), category)));
+      categories = [...initialFaqCategories];
+    }
+    if (faqs.length === 0) {
+      await Promise.all(initialFaqs.map((faq) => setDoc(doc(getDb(), 'faqs', faq.id), faq)));
+      faqs = [...initialFaqs];
+    }
+    return { categories, faqs };
+  })();
+  faqReadInFlight = read;
+  void read.then(
+    () => { if (faqReadInFlight === read) faqReadInFlight = null; },
+    () => { if (faqReadInFlight === read) faqReadInFlight = null; },
+  );
+  return read;
+}
 
 // The JSON fallback is strictly a local-development aid. Production must never silently
 // switch to ephemeral filesystem storage because a Railway redeploy can discard it.
@@ -2303,11 +2333,17 @@ export const StoreDB = {
 
     return runDbOp(
       async () => {
-        const [auditSnapshot, logSnapshot] = await Promise.all([
-          getDocs(collection(getDb(), 'auditEvents')),
-          getDocs(collection(getDb(), 'logs')),
+        const auditCollection = collection(getDb(), 'auditEvents');
+        const logCollection = collection(getDb(), 'logs');
+        const auditQueries = options.userId
+          ? [query(auditCollection, where('actorUserId', '==', options.userId)), query(auditCollection, where('targetUserId', '==', options.userId))]
+          : [auditCollection];
+        const [auditSnapshots, logSnapshot] = await Promise.all([
+          Promise.all(auditQueries.map((auditQuery) => getDocs(auditQuery))),
+          getDocs(options.userId ? query(logCollection, where('userId', '==', options.userId)) : logCollection),
         ]);
-        const storedEvents = auditSnapshot.docs.map((entry) => entry.data() as AuditEvent);
+        const storedEvents = [...new Map(auditSnapshots.flatMap((snapshot) => snapshot.docs)
+          .map((entry) => [entry.id, entry.data() as AuditEvent])).values()];
         const legacyEvents: AuditEvent[] = logSnapshot.docs
           .map((entry) => entry.data() as SystemLog)
           .filter((log) => !log.auditEventId)
@@ -2367,10 +2403,13 @@ export const StoreDB = {
   async getStats(): Promise<SystemStats> {
     return runDbOp(
       async () => {
-        const usersSnap = await getDocs(collection(getDb(), "users"));
-        const productsSnap = await getDocs(collection(getDb(), "products"));
-        const keysSnap = await getDocs(collection(getDb(), "keys"));
-        const downloadsSnap = await getDocs(collection(getDb(), "downloads"));
+        const [usersSnap, productsSnap, keysSnap, downloadsCountSnap, logsSnap] = await Promise.all([
+          getDocs(collection(getDb(), 'users')),
+          getDocs(collection(getDb(), 'products')),
+          getDocs(collection(getDb(), 'keys')),
+          getCountFromServer(collection(getDb(), 'downloads')),
+          getDocs(query(collection(getDb(), 'logs'), orderBy('createdAt', 'desc'), limit(50))),
+        ]);
         
         const users = usersSnap.docs.map(d => d.data() as User);
         const keys = keysSnap.docs.map(d => d.data() as Key);
@@ -2379,7 +2418,7 @@ export const StoreDB = {
         let totalUsers = users.length;
         let totalProducts = products.length;
         let totalKeys = keys.length;
-        let totalDownloads = downloadsSnap.size;
+        let totalDownloads = downloadsCountSnap.data().count;
         
         let activeProducts = products.filter(p => !p.isDisabled && !p.isArchived).length;
         let inactiveProducts = totalProducts - activeProducts;
@@ -2388,8 +2427,14 @@ export const StoreDB = {
         const usedKeys = globalStock.used;
         const unusedKeys = globalStock.available;
 
+        const keysByProduct = new Map<string, Key[]>();
+        for (const key of keys) {
+          const group = keysByProduct.get(key.productId) || [];
+          group.push(key);
+          keysByProduct.set(key.productId, group);
+        }
         const productStockList = products.map(p => {
-          const productStock = getKeyStockSummary(keys.filter(k => k.productId === p.id));
+          const productStock = getKeyStockSummary(keysByProduct.get(p.id) || []);
           return {
             productId: p.id,
             productName: p.name,
@@ -2397,8 +2442,7 @@ export const StoreDB = {
           };
         });
 
-        const logs = await this.getLogs();
-        const recentLogs = logs.slice(0, 50);
+        const recentLogs = logsSnap.docs.map((item) => item.data() as SystemLog);
 
         return {
           totalUsers,
@@ -2423,24 +2467,17 @@ export const StoreDB = {
   async getFaqCategories(onlyActive = true): Promise<FaqCategory[]> {
     return runDbOp(
       async () => {
-        const catSnap = await getDocs(collection(getDb(), 'faq_categories'));
-        let categories = catSnap.docs.map((d) => d.data() as FaqCategory);
-
-        if (categories.length === 0) {
-          for (const cat of initialFaqCategories) {
-            await setDoc(doc(getDb(), 'faq_categories', cat.id), cat);
-          }
-          categories = [...initialFaqCategories];
+        const { categories, faqs } = await readFaqCollections();
+        const faqCounts = new Map<string, number>();
+        for (const faq of faqs) {
+          if (faq.is_published) faqCounts.set(faq.category_id, (faqCounts.get(faq.category_id) || 0) + 1);
         }
-
-        const faqsSnap = await getDocs(collection(getDb(), 'faqs'));
-        const faqs = faqsSnap.docs.map((d) => d.data() as FaqItem).filter(isCurrentFaq);
 
         const filtered = onlyActive ? categories.filter((c) => c.is_active) : [...categories];
         return filtered
           .map((c) => ({
             ...c,
-            faqCount: faqs.filter((f) => f.category_id === c.id && f.is_published).length,
+            faqCount: faqCounts.get(c.id) || 0,
           }))
           .sort((a, b) => a.sort_order - b.sort_order);
       },
@@ -2504,17 +2541,9 @@ export const StoreDB = {
   async getFaqs(options: { categoryId?: string; search?: string; onlyPublished?: boolean; isPinned?: boolean } = {}): Promise<FaqItem[]> {
     return runDbOp(
       async () => {
-        const snapshot = await getDocs(collection(getDb(), 'faqs'));
-        let faqs = snapshot.docs.map((d) => d.data() as FaqItem).filter(isCurrentFaq);
-
-        if (faqs.length === 0) {
-          for (const f of initialFaqs) {
-            await setDoc(doc(getDb(), 'faqs', f.id), f);
-          }
-          faqs = [...initialFaqs];
-        }
-
-        const categories = await this.getFaqCategories(false);
+        const data = await readFaqCollections();
+        let faqs = [...data.faqs];
+        const categories = data.categories;
         const catMap = new Map(categories.map((c) => [c.id, c]));
 
         if (options.onlyPublished !== false) {

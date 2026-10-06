@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     'domain-verification': 'f561f73af26edd3abc46b363f2da1f68f1f5613ba654adf17486a60520e3373b',
   },
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: '/logo-256.png',
+    shortcut: '/logo-256.png',
+    apple: '/logo-256.png',
   },
   openGraph: {
     type: 'website',

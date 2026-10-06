@@ -9,8 +9,14 @@ export async function GET() {
   }
   try {
     const [products, keys] = await Promise.all([StoreDB.getProducts(), StoreDB.getKeys()]);
+    const keysByProduct = new Map<string, typeof keys>();
+    for (const key of keys) {
+      const group = keysByProduct.get(key.productId) || [];
+      group.push(key);
+      keysByProduct.set(key.productId, group);
+    }
     const productsWithStock = products.map((product) => {
-      const stock = getKeyStockSummary(keys.filter((key) => key.productId === product.id));
+      const stock = getKeyStockSummary(keysByProduct.get(product.id) || []);
       return { ...product, stockKeysCount: stock.available, stockSummary: stock };
     });
     return NextResponse.json({ success: true, products: productsWithStock });
