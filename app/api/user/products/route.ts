@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { getClientIp, getSessionActor } from '@/lib/request-security';
+import { createHash } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,12 +73,18 @@ export async function GET(req: Request) {
       );
     }
 
+    const catalogPromise = StoreDB.getProducts();
     const [products, activity, catalog] = await Promise.all([
-      StoreDB.getUserProducts(user.id),
+      StoreDB.getUserProducts(user.id, catalogPromise),
       isBackgroundSync ? Promise.resolve(undefined) : StoreDB.getAuditEvents({ userId: user.id, limit: 12 }),
-      StoreDB.getProducts(),
+      catalogPromise,
     ]);
-    return NextResponse.json({ success: true, products, user, activity, catalog, isNewUser }, { headers: { 'Cache-Control': 'private, no-store' } });
+    const revision = createHash('sha256').update(JSON.stringify({ products, catalog })).digest('hex');
+    const headers = { 'Cache-Control': 'private, no-store' };
+    if (isBackgroundSync && req.headers.get('X-Sync-Revision') === revision) {
+      return NextResponse.json({ success: true, unchanged: true, revision }, { headers });
+    }
+    return NextResponse.json({ success: true, products, user, activity, catalog, isNewUser, revision }, { headers });
   } catch (error) {
     console.error('User products synchronization failed:', error);
     return NextResponse.json({ success: false, message: 'تعذر تحميل المنتجات الآن. حاول مرة أخرى.' }, { status: 500 });

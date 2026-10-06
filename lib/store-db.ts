@@ -2124,18 +2124,19 @@ export const StoreDB = {
     );
   },
 
-  async getUserProducts(userId: string): Promise<UserProduct[]> {
+  async getUserProducts(userId: string, catalogPromise?: Promise<Product[]>): Promise<UserProduct[]> {
     return runDbOp(
       async () => {
         const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId));
-        const snapshot = await getDocs(q);
+        const [snapshot, catalog] = await Promise.all([getDocs(q), catalogPromise || Promise.resolve(undefined)]);
+        const productsById = catalog ? new Map(catalog.map((product) => [product.id, product])) : null;
         const result = await Promise.all(snapshot.docs.map(async (d) => {
           const up = { ...(d.data() as UserProduct) };
           const [keyResult, product] = await Promise.all([
             up.keyId && !up.keyString
               ? getDoc(doc(getDb(), "keys", up.keyId)).catch((error) => { console.error("Failed to fetch key for user product:", error); return null; })
               : Promise.resolve(null),
-            this.getProductById(up.productId),
+            productsById ? Promise.resolve(productsById.get(up.productId)) : this.getProductById(up.productId),
           ]);
           if (keyResult?.exists()) up.keyString = (keyResult.data() as Key).key;
           if (!product) return null;

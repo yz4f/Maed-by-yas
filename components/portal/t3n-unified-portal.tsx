@@ -235,6 +235,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [showExpiredLicenses, setShowExpiredLicenses] = useState(false);
   const [newUserWelcome, setNewUserWelcome] = useState<{ name: string } | null>(null);
   const userProductsRequestInFlightRef = useRef(false);
+  const userProductsRevisionRef = useRef('');
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
   useEffect(() => {
@@ -567,9 +568,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     userProductsRequestInFlightRef.current = true;
     if (!silent) setIsLoadingProducts(true);
     try {
-      const res = await fetch(silent ? '/api/user/products?sync=1' : '/api/user/products', { credentials: 'same-origin', cache: 'no-store' });
+      const res = await fetch(silent ? '/api/user/products?sync=1' : '/api/user/products', {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: silent && userProductsRevisionRef.current ? { 'X-Sync-Revision': userProductsRevisionRef.current } : undefined,
+      });
       if (res.ok) {
         const data = await res.json();
+        if (data.unchanged) return;
+        if (typeof data.revision === 'string') userProductsRevisionRef.current = data.revision;
         const nextProducts = Array.isArray(data.products) ? data.products as UserProduct[] : [];
         setUserProducts((current) => JSON.stringify(current) === JSON.stringify(nextProducts) ? current : nextProducts);
         if (Array.isArray(data.activity)) {

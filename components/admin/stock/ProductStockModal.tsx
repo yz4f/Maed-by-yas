@@ -1618,13 +1618,6 @@ export function ProductStockModal({
                 <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 font-mono text-center text-blue-400 font-bold select-all" dir="ltr">
                   {deletingKey.key}
                 </div>
-                {deletingKey.isUsed || deletingKey.status === 'activated_pending_start' || deletingKey.status === 'active' || deletingKey.status === 'expired' ? (
-                  <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 font-semibold text-[11px]">
-                    {lang === 'ar'
-                      ? 'سيُحذف المفتاح من المخزون فوراً. سيبقى ترخيص العميل محفوظاً بشكل مستقل حتى انتهاء مدته، ثم يظهر ضمن «منتجات منتهية». '
-                      : 'This key will be removed from inventory immediately. The customer license remains stored independently until it expires, then appears under “Expired products”.'}
-                  </div>
-                ) : null}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">

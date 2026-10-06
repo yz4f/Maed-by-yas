@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { hasStockPermission } from '@/lib/admin-auth';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
@@ -140,7 +140,7 @@ export async function DELETE(req: Request, { params }: RouteContext) {
       }
     );
 
-    {
+    after(async () => {
       await sendDiscordWebsiteLog({
         type: 'keyInventoryChanged',
         customerId: actorId,
@@ -150,7 +150,7 @@ export async function DELETE(req: Request, { params }: RouteContext) {
         action: 'deleted',
         keyCount: 1,
       }).catch((err) => console.error('[Discord Log] Key delete log failed:', err));
-    }
+    });
 
     return NextResponse.json({
       success: true,
