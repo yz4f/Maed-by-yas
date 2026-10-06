@@ -28,9 +28,10 @@ const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
 const DISCORD_RESET_AUDIT_CATEGORY_NAME = '🔐・reset-logs';
 const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-requests-log';
 const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・support-closures';
-const DISCORD_LOGIN_AUDIT_CHANNEL_NAME = '🔐・login-log';
-const DISCORD_LOGOUT_AUDIT_CHANNEL_NAME = '🚪・logout-log';
 const DISCORD_WEBSITE_EVENTS_CHANNEL_NAME = '🖥️・website-events';
+const CUSTOMER_LOGIN_CHANNEL_ID = '1541944037119103169';
+const CUSTOMER_LOGOUT_CHANNEL_ID = '1541944040163909633';
+const CUSTOMER_EVENTS_CHANNEL_ID = '1541944042492002324';
 
 type DiscordPrivateAuditChannels = {
   categoryId?: string | null;
@@ -83,6 +84,7 @@ type WebsiteLogEvent =
   | { type: 'conversationOpened'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'login'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'logout'; customerId: string; customerName: string; customerImage?: string | null }
+  | { type: 'websiteLinkCopied'; customerId: string; customerName: string; customerImage?: string | null }
   | { type: 'productActivated'; customerId: string; customerName: string; customerImage?: string | null; productName: string }
   | { type: 'keyInventoryChanged'; customerId: string; customerName: string; customerImage?: string | null; productName: string; action: 'added' | 'restored' | 'deleted' | 'updated'; keyCount: number };
 
@@ -218,8 +220,9 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
     resetCategoryId: resetCategory.id,
     resetAuditChannelId: await createOrRenameLogChannel(storedChannels?.resetAuditChannelId, DISCORD_RESET_AUDIT_CHANNEL_NAME, resetCategory.id),
     conversationClosedAuditChannelId: await createOrRenameLogChannel(storedChannels?.conversationClosedAuditChannelId, DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME, category.id),
-    loginAuditChannelId: await createOrRenameLogChannel(storedChannels?.loginAuditChannelId, DISCORD_LOGIN_AUDIT_CHANNEL_NAME, category.id),
-    logoutAuditChannelId: await createOrRenameLogChannel(storedChannels?.logoutAuditChannelId, DISCORD_LOGOUT_AUDIT_CHANNEL_NAME, category.id),
+    // These rooms are selected by the site owner. Never rename or move them.
+    loginAuditChannelId: CUSTOMER_LOGIN_CHANNEL_ID,
+    logoutAuditChannelId: CUSTOMER_LOGOUT_CHANNEL_ID,
     websiteEventsChannelId: await createOrRenameLogChannel(storedChannels?.websiteEventsChannelId, DISCORD_WEBSITE_EVENTS_CHANNEL_NAME, category.id),
   };
   await setDoc(configRef, { ...privateAuditChannelCache, updatedAt: new Date().toISOString() }, { merge: true });
@@ -246,37 +249,81 @@ async function registerCommands(applicationId: string, token: string) {
 export async function sendDiscordWebsiteLog(event: WebsiteLogEvent): Promise<{ messageId: string }> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('Discord bot is not connected, so the website log was not sent.');
-  const channels = await ensurePrivateAuditChannels(token);
+  const adminEventsChannelId = event.type === 'keyInventoryChanged'
+    ? (await ensurePrivateAuditChannels(token)).websiteEventsChannelId
+    : null;
   const config = event.type === 'login'
-    ? { channelId: channels.loginAuditChannelId, color: 0x6366f1, title: 'Website Sign-in', description: 'A customer signed in to the Ta3n platform using their linked Discord account.', label: 'Status', value: 'Signed in' }
+    ? { channelId: CUSTOMER_LOGIN_CHANNEL_ID, color: 0x22c55e, title: 'تسجيل دخول عميل', description: 'دخل العميل إلى موقع تعن عبر حساب ديسكورد.', label: 'الحالة', value: 'متصل' }
     : event.type === 'logout'
-      ? { channelId: channels.logoutAuditChannelId, color: 0x64748b, title: 'Website Sign-out', description: 'A customer signed out of the Ta3n platform.', label: 'Status', value: 'Signed out' }
+      ? { channelId: CUSTOMER_LOGOUT_CHANNEL_ID, color: 0x64748b, title: 'تسجيل خروج عميل', description: 'غادر العميل موقع تعن وسجّل الخروج.', label: 'الحالة', value: 'غير متصل' }
+      : event.type === 'websiteLinkCopied'
+        ? { channelId: CUSTOMER_EVENTS_CHANNEL_ID, color: 0x38bdf8, title: 'نسخ رابط الموقع', description: 'نسخ العميل رابط موقع تعن من القائمة.', label: 'الرابط', value: websiteUrl }
       : event.type === 'conversationOpened'
-        ? { channelId: channels.websiteEventsChannelId, color: 0x22d3ee, title: 'Support Conversation Opened', description: 'A customer opened a new Ta3n Assistant conversation from the website.', label: 'Event', value: 'Conversation opened' }
+        ? { channelId: CUSTOMER_EVENTS_CHANNEL_ID, color: 0x22d3ee, title: 'فتح محادثة دعم', description: 'بدأ العميل محادثة جديدة مع مساعد تعن من الموقع.', label: 'الحالة', value: 'محادثة جديدة' }
         : event.type === 'keyInventoryChanged'
-          ? { channelId: channels.websiteEventsChannelId, color: event.action === 'deleted' ? 0xf97316 : event.action === 'updated' ? 0x38bdf8 : 0x22c55e, title: event.action === 'deleted' ? 'License Key Removed' : event.action === 'restored' ? 'License Key Restored' : event.action === 'updated' ? 'License Key Updated' : 'License Keys Added', description: 'An administrator changed the product key inventory from the Ta3n platform.', label: 'Product', value: `${event.productName} · ${event.keyCount} key(s)` }
-          : { channelId: channels.websiteEventsChannelId, color: 0x22c55e, title: 'Product Activated', description: 'A product was activated successfully from the Ta3n platform.', label: 'Product', value: event.productName };
+          ? { channelId: adminEventsChannelId!, color: event.action === 'deleted' ? 0xf97316 : event.action === 'updated' ? 0x38bdf8 : 0x22c55e, title: event.action === 'deleted' ? 'حذف مفتاح ترخيص' : event.action === 'restored' ? 'استعادة مفتاح ترخيص' : event.action === 'updated' ? 'تعديل مفتاح ترخيص' : 'إضافة مفاتيح ترخيص', description: 'حدّثت الإدارة مخزون مفاتيح المنتج من الموقع.', label: 'المنتج', value: `${event.productName} · ${event.keyCount} مفتاح` }
+          : { channelId: CUSTOMER_EVENTS_CHANNEL_ID, color: 0x22c55e, title: 'تفعيل منتج', description: 'فعّل العميل المنتج بنجاح من موقع تعن.', label: 'المنتج', value: event.productName };
 
   const embed = {
     color: config.color,
-    author: { name: 'Ta3n • Website Audit', icon_url: `${websiteUrl}/logo.png` },
+    author: { name: 'تعن • سجل الموقع', icon_url: `${websiteUrl}/logo-256.png` },
     title: config.title,
     description: config.description,
     thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
     fields: [
-      { name: 'Account', value: `**${event.customerName || 'Customer'}**\n<@${event.customerId}>`, inline: true },
+      { name: 'العميل', value: `**${event.customerName || 'عميل'}**\n<@${event.customerId}>`, inline: true },
       { name: config.label, value: config.value, inline: true },
-      { name: 'Time', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
+      { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false },
     ],
-    footer: { text: `Ta3n • ${event.customerId}` },
+    footer: { text: `تعن • ${event.customerId}` },
     timestamp: new Date().toISOString(),
   };
 
-  const response = await discordApi(`/channels/${config.channelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
+  const response = await discordApi(`/channels/${config.channelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } }) });
   if (!response.ok) throw new Error(`Unable to send website audit log to Discord (HTTP ${response.status}).`);
   const message = await response.json() as { id?: string };
   if (!message.id) throw new Error('Discord did not return a website audit log message ID.');
   return { messageId: message.id };
+}
+
+async function verifyCustomerAuditRooms(token: string) {
+  const rooms = [
+    ['تسجيل دخول العملاء', CUSTOMER_LOGIN_CHANNEL_ID],
+    ['تسجيل خروج العملاء', CUSTOMER_LOGOUT_CHANNEL_ID],
+    ['أحداث الموقع', CUSTOMER_EVENTS_CHANNEL_ID],
+  ] as const;
+  const results = await Promise.all(rooms.map(async ([name, id]) => {
+    const response = await discordApi(`/channels/${id}`, token);
+    if (!response.ok) throw new Error(`تعذر الوصول إلى روم ${name} (HTTP ${response.status}).`);
+    const channel = await response.json() as { guild_id?: string; type?: number };
+    if (channel.guild_id !== guildId || ![0, 5].includes(channel.type ?? -1)) {
+      throw new Error(`روم ${name} ليس رومًا نصيًا في سيرفر تعن.`);
+    }
+    return name;
+  }));
+  console.info(`[Discord Audit] تم التحقق من رومات ${results.join('، ')}.`);
+}
+
+const arabicAuditTitles: Record<string, string> = {
+  'User Registered': 'تسجيل عميل جديد',
+  'User Unbanned Automatically': 'انتهاء حظر عميل',
+  'Key Creation': 'إنشاء مفاتيح ترخيص',
+  'Key Started': 'بدء مدة المنتج',
+  'HWID Reset': 'إعادة تعيين ربط الجهاز',
+  'Voice Support Session Created': 'إنشاء جلسة دعم صوتي',
+  'AI Knowledge Updated': 'تحديث معلومات المساعد',
+  'AI Conversation Support Wait Elapsed': 'استئناف محادثة العميل',
+  'AI Conversation Claimed': 'استلام محادثة العميل',
+  'AI Conversation Returned': 'إعادة محادثة العميل للمساعد',
+  'AI Staff Reply': 'رد فريق الدعم على العميل',
+};
+const customerAuditActions = new Set(['User Registered', 'User Unbanned Automatically', 'Key Started', 'HWID Reset']);
+
+function arabicAuditTitle(action: string) {
+  if (arabicAuditTitles[action]) return arabicAuditTitles[action];
+  if (action.startsWith('Voice Support ')) return 'تحديث جلسة الدعم الصوتي';
+  if (action.startsWith('AI Reset ')) return 'تحديث طلب إعادة تعيين المفتاح';
+  return 'نشاط في الموقع';
 }
 
 /** Sends a redacted, private audit entry for system events without a dedicated Discord card. */
@@ -290,21 +337,27 @@ export async function sendDiscordSystemAuditLog(event: {
 }) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('Discord bot is not connected, so the system audit log was not sent.');
-  const channels = await ensurePrivateAuditChannels(token);
+  const isCustomerEvent = customerAuditActions.has(event.action);
+  const channelId = isCustomerEvent
+    ? CUSTOMER_EVENTS_CHANNEL_ID
+    : (await ensurePrivateAuditChannels(token)).websiteEventsChannelId;
+  const actorReference = event.actorId
+    ? /^\d{17,20}$/.test(event.actorId) ? `<@${event.actorId}>` : `\`${event.actorId}\``
+    : null;
   const embed = {
     color: 0x94e6c3,
-    author: { name: 'Ta3n • Complete System Audit', icon_url: `${websiteUrl}/logo.png` },
-    title: `System event • ${event.action}`.slice(0, 256),
-    description: (event.details || 'No additional details were recorded.').slice(0, 4_000),
+    author: { name: 'تعن • أحداث الموقع', icon_url: `${websiteUrl}/logo-256.png` },
+    title: arabicAuditTitle(event.action),
+    description: (event.details || 'لا توجد تفاصيل إضافية.').slice(0, 4_000),
     fields: [
-      { name: 'Actor', value: event.actorId ? `**${event.actorName || 'System'}**\n<@${event.actorId}>` : `**${event.actorName || 'System'}**`, inline: true },
-      { name: 'IP', value: event.ipAddress && event.ipAddress !== '127.0.0.1' ? event.ipAddress : 'Not available', inline: true },
-      { name: 'Time', value: `<t:${Math.floor(new Date(event.occurredAt || Date.now()).getTime() / 1000)}:F>`, inline: false },
+      { name: 'المنفذ', value: actorReference ? `**${event.actorName || 'النظام'}**\n${actorReference}` : `**${event.actorName || 'النظام'}**`, inline: true },
+      ...(!isCustomerEvent ? [{ name: 'عنوان الاتصال', value: event.ipAddress && event.ipAddress !== '127.0.0.1' ? event.ipAddress : 'غير متوفر', inline: true }] : []),
+      { name: 'الوقت', value: `<t:${Math.floor(new Date(event.occurredAt || Date.now()).getTime() / 1000)}:F>`, inline: false },
     ],
-    footer: { text: 'Ta3n • private audit • secrets and full license keys are never included' },
+    footer: { text: 'تعن • سجل خاص • لا تُعرض المفاتيح كاملة' },
     timestamp: event.occurredAt || new Date().toISOString(),
   };
-  const response = await discordApi(`/channels/${channels.websiteEventsChannelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed] }) });
+  const response = await discordApi(`/channels/${channelId}/messages`, token, { method: 'POST', body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } }) });
   if (!response.ok) throw new Error(`Unable to send complete system audit log to Discord (HTTP ${response.status}).`);
 }
 
@@ -1403,6 +1456,7 @@ export async function startDiscordBot() {
   } catch (error) {
     console.error('[Discord Audit] Private reset channel permissions, private audit setup, or reset panel publish failed:', error);
   }
+  await verifyCustomerAuditRooms(token).catch((error) => console.error('[Discord Audit] Customer audit rooms are unavailable:', error));
   supportMaintenanceTimer = setInterval(() => {
     if (supportMaintenanceRunning) return;
     supportMaintenanceRunning = true;

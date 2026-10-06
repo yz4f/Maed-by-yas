@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
     const actor = await getTicketActor();
     if (!actor) throw new Error('يجب تسجيل الدخول أولاً.');
     const presence = await recordSiteLogout({ discordId: actor.id, name: actor.name, image: actor.image, role: actor.role });
-    void sendDiscordWebsiteLog({ type: 'logout', customerId: actor.id, customerName: actor.name, customerImage: actor.image }).catch((error) => console.error('[Website Presence] Logout log failed:', error));
+    await sendDiscordWebsiteLog({ type: 'logout', customerId: actor.id, customerName: actor.name, customerImage: actor.image }).catch((error) => console.error('[Website Presence] Logout log failed:', error));
     return NextResponse.json({ success: true, presence });
   } catch (error) {
     return failed(error);
