@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Award } from 'lucide-react';
+import { FREELANCE_DOCUMENT_NUMBER } from '@/lib/site-identity';
 
 interface FooterProps {
   lang?: 'ar' | 'en';
@@ -37,7 +38,7 @@ export function Footer({ lang = 'ar', isDark = true }: FooterProps) {
         <div title={isAr ? 'وثيقة العمل الحر' : 'Freelance certificate'} className={`inline-flex w-fit items-center gap-2 rounded-lg border px-2.5 py-1.5 ${isDark ? 'border-emerald-300/20 bg-emerald-300/[.06] text-emerald-200' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
           <Award className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="font-semibold">{isAr ? 'وثيقة العمل الحر' : 'Freelance certificate'}</span>
-          <bdi className="font-mono text-[11px] font-bold tracking-wide">FL-485778088</bdi>
+          <bdi className="font-mono text-[11px] font-bold tracking-wide">{FREELANCE_DOCUMENT_NUMBER}</bdi>
         </div>
         <p className={`text-[11px] font-medium ${muted}`}>
           {isAr ? `جميع الحقوق محفوظة © ${currentYear} تعن` : `© ${currentYear} T3N. All rights reserved.`}

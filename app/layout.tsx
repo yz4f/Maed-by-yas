@@ -20,6 +20,15 @@ const arabic = localFont({
   display: 'swap',
   preload: false,
 });
+const saudi = localFont({
+  src: [
+    { path: '../public/fonts/saudi-web-regular.woff2', weight: '400', style: 'normal' },
+    { path: '../public/fonts/saudi-web-bold.woff2', weight: '700', style: 'normal' },
+  ],
+  variable: '--font-saudi',
+  display: 'swap',
+  preload: false,
+});
 import './globals.css';
 import './portal-luxe.css';
 import { Providers } from './providers';
@@ -64,7 +73,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" className={`dark ${arabic.variable} ${alexandria.variable}`}>
+    <html lang="ar" dir="rtl" className={`dark ${saudi.variable} ${arabic.variable} ${alexandria.variable}`}>
       <body className="min-h-screen bg-[#08090d] text-slate-100 flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
         <Providers>
           <CopyProtection />

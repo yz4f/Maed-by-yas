@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { ArrowUpLeft, Check, ChevronDown, Globe2, LoaderCircle, Moon, Sun } from 'lucide-react';
-import { DiscordMark } from './discord-mark';
+import { ArrowUpLeft, Check, ChevronDown, Copy, Globe2, LoaderCircle, Moon, Sun } from 'lucide-react';
+import { FREELANCE_DOCUMENT_NUMBER } from '@/lib/site-identity';
 import { toast } from '@/lib/toast';
 import styles from './login-page.module.css';
 
@@ -21,6 +21,7 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
   const pending = useRef(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [certificateCopied, setCertificateCopied] = useState(false);
   const languageControl = useRef<HTMLDivElement>(null);
   const languageButton = useRef<HTMLButtonElement>(null);
 
@@ -73,6 +74,16 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
     }
   }
 
+  async function copyCertificate() {
+    try {
+      await navigator.clipboard.writeText(FREELANCE_DOCUMENT_NUMBER);
+      setCertificateCopied(true);
+      window.setTimeout(() => setCertificateCopied(false), 2000);
+    } catch {
+      toast.error(ar ? 'تعذر نسخ رقم الوثيقة.' : 'Could not copy the certificate number.');
+    }
+  }
+
   return (
     <div className={styles.page} data-theme={isDark ? 'dark' : 'light'} dir={ar ? 'rtl' : 'ltr'} lang={lang}>
       <div className={styles.ambient} aria-hidden="true" />
@@ -115,19 +126,36 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
         </section>
 
         <section className={styles.card} aria-labelledby="login-card-title">
-          <div className={styles.discordIcon}><DiscordMark width={30} height={30} /></div>
+          <div className={styles.cardLogo}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-256.png" width={54} height={54} alt="" />
+          </div>
           <h2 id="login-card-title">{ar ? 'تسجيل الدخول' : 'Welcome back'}</h2>
           <p>{ar ? 'اربط حساب Discord الخاص بك للوصول إلى حسابك وإدارة تراخيصك.' : 'Connect your Discord account to access and manage your licenses.'}</p>
           <button type="button" className={styles.primary} disabled={busy} aria-busy={busy} onClick={connect}>
-            {busy ? <LoaderCircle size={21} className={styles.spinner} /> : <DiscordMark width={21} height={21} />}
-            <span aria-live="polite">{busy ? (ar ? 'جارٍ الاتصال بديسكورد...' : 'Connecting to Discord…') : (ar ? 'تسجيل دخول' : 'Continue with Discord')}</span>
+            {busy && <LoaderCircle size={19} className={styles.spinner} />}
+            <span aria-live="polite">{busy ? (ar ? 'جارٍ تسجيل الدخول...' : 'Signing in…') : (ar ? 'تسجيل دخول' : 'Sign in')}</span>
           </button>
           <div className={styles.divider}><span>{ar ? 'أو' : 'or'}</span></div>
           <p className={styles.storePrompt}>{ar ? 'ليس لديك مفتاح حتى الآن؟' : 'Don’t have a license yet?'}</p>
           <a className={styles.store} href="https://t3nnn.com/" target="_blank" rel="noopener noreferrer">{ar ? 'زيارة المتجر' : 'Visit the store'}<ArrowUpLeft size={17} /></a>
         </section>
       </div>
-      <footer className={styles.footer}>{ar ? 'جميع الحقوق محفوظة' : 'All rights reserved'} <span dir="ltr">© 2026</span> {ar ? 'تعن' : 'T3N'}</footer>
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <p>{ar ? 'جميع الحقوق محفوظة' : 'All rights reserved'} <span dir="ltr">© {new Date().getFullYear()}</span> {ar ? 'تعن' : 'T3N'}</p>
+          <button type="button" className={styles.certificate} onClick={copyCertificate} aria-label={ar ? `نسخ رقم وثيقة العمل الحر ${FREELANCE_DOCUMENT_NUMBER}` : `Copy freelance certificate number ${FREELANCE_DOCUMENT_NUMBER}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/freelance-mark.png" width={72} height={32} alt="" />
+            <span className={styles.certificateText}>
+              <span>{ar ? 'وثيقة العمل الحر' : 'Freelance certificate'}</span>
+              <bdi>{FREELANCE_DOCUMENT_NUMBER}</bdi>
+            </span>
+            {certificateCopied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+          </button>
+          <span className={styles.copyStatus} role="status">{certificateCopied ? (ar ? 'تم نسخ الرقم' : 'Number copied') : ''}</span>
+        </div>
+      </footer>
     </div>
   );
 }

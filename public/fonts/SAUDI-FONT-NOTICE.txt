@@ -1,0 +1,7 @@
+Saudi Web typeface (Regular and Bold)
+Copyright: Saudi Ministry of Culture (وزارة الثقافة)
+Official source and end-user license:
+https://engage.moc.gov.sa/e/fonts/saudi-font/?lang=ar
+
+The font files remain the property of their rights holder and are used here
+for website typography under the terms published at the source above.
