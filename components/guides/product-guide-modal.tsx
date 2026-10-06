@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BookOpen, Check, ChevronLeft, Cpu, HardDrive, Layers, Monitor, Play, Router, Shield, Wrench } from 'lucide-react';
+import { BookOpen, Check, ChevronLeft, Cpu, HardDrive, Layers, Monitor, Play, Router, Shield, Star, Wrench } from 'lucide-react';
 import type { UserProduct } from '@/types';
 import { articlesForProduct, GUIDE_STAGES, MAIN_VIDEO_FALLBACK } from '@/lib/guide-library';
 import { BeforeStart, GuideArticleView, GuideCard, GuideDialog, GuideVideo } from './guide-ui';
@@ -70,6 +70,10 @@ export function ProductGuideModal({ license, onClose }: { license: UserProduct; 
       </div>
       {storageFailed && <p className={styles.warning}>المتصفح يمنع الحفظ المحلي. سيبقى التقدم محفوظًا خلال هذه الجلسة فقط.</p>}
       {view === 'home' && <>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-200/15 bg-cyan-200/[.04] px-3.5 py-3 text-xs text-slate-300">
+          <span>😊 لا تنسَ تقييم المنتج، رأيك يهمنا.</span>
+          <a href="https://t3nnn.com/ar/account/orders" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-cyan-200/25 px-2.5 py-1.5 font-semibold text-cyan-100 transition-colors hover:bg-cyan-200/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"><Star size={14} aria-hidden="true" />تقييم المنتج</a>
+        </div>
         <ProductNotice product={product} placement="guide" />
         {canResume && <div className={`${styles.panel} flex flex-wrap items-center justify-between gap-4`}><div><h3 className="font-bold">متابعة من حيث توقفت</h3><p>يُحفظ تقدم هذا الترخيص على هذا الجهاز.</p></div><button className={styles.primary} onClick={() => open(progress.last)}>متابعة الشرح<ChevronLeft size={18} /></button></div>}
         <button className={`${styles.panel} text-start`} onClick={() => open('before')}><div className="flex items-center gap-3"><BookOpen className="text-amber-200" /><h3 className="font-bold">ابدأ هنا · المتطلبات والتنبيهات</h3>{progress.accepted && <Check className="ms-auto text-emerald-300" />}</div><p>راجع التعليمات قبل تشغيل أي شرح.</p></button>
