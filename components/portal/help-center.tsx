@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, BookOpen, ChevronDown, Cpu, HardDrive, KeyRound, Layers, LifeBuoy, Monitor, Network, Search, ShieldCheck, Wrench, X } from 'lucide-react';
+import { AlertTriangle, BookOpen, ChevronDown, Cpu, KeyRound, Monitor, Network, Search, ShieldCheck, Wrench, X } from 'lucide-react';
 import { GUIDE_ARTICLES, matchesGuide, normalizeGuideSearch, type GuideArticle } from '@/lib/guide-library';
 import { GuideArticleView, GuideCard, GuideDialog, ImageLightbox } from '@/components/guides/guide-ui';
 import { ProductNotice } from '@/components/guides/product-notice';
@@ -12,18 +12,16 @@ interface HelpCenterProps { lang: 'ar' | 'en'; isDark: boolean; products?: Produ
 const sections = [
   { id:'Windows', label:'Windows', text:'التثبيت وتجهيز النظام', icon:Monitor },
   { id:'BIOS', label:'BIOS', text:'إعدادات اللوحة الأم', icon:Cpu },
-  { id:'RAID', label:'RAID', text:'إعداد وتجهيز RAID', icon:Layers },
   { id:'Network', label:'Network', text:'الشبكة والاتصال', icon:Network },
   { id:'VPN', label:'VPN', text:'إعداد الاتصال', icon:ShieldCheck },
-  { id:'Disk', label:'Disk', text:'الأقراص والتقسيمات', icon:HardDrive },
   { id:'Visual C++', label:'Visual C++', text:'المكتبات المطلوبة', icon:Wrench },
   { id:'تشغيل البرنامج', label:'تشغيل البرنامج', text:'التشغيل والقائمة', icon:BookOpen },
   { id:'Permanent Spoof', label:'Permanent Spoof', text:'إعدادات Permanent', icon:ShieldCheck },
   { id:'أخطاء البرنامج', label:'أخطاء البرنامج', text:'حلول الأخطاء الشائعة', icon:Wrench },
   { id:'admin', label:'الإدارة', text:'الحساب والمفاتيح', icon:KeyRound },
 ];
-const rank = ['windows','bios','network','vpn','disk','raid','menu','normal','asus','runtime','connection','clock'];
-const articles = [...GUIDE_ARTICLES].sort((a,b) => rank.indexOf(a.id)-rank.indexOf(b.id));
+const rank = ['windows','bios','network','vpn','menu','normal','asus','runtime','connection','clock'];
+const articles = GUIDE_ARTICLES.filter(item => item.id !== 'disk' && item.id !== 'raid').sort((a,b) => rank.indexOf(a.id)-rank.indexOf(b.id));
 
 function FaqAnswer({ text }: { text: string }) {
   return <div className="space-y-2.5">{text.split('\n').map((line, index) => {
@@ -92,10 +90,10 @@ export function HelpCenter({lang, products=[], onNavigateTab, initialCategoryId}
     setOpenFaq(current=>current===id?null:id);
     if(!viewed.current.has(id)){viewed.current.add(id);void fetch(`/api/help/faqs/${encodeURIComponent(id)}/view`,{method:'POST'}).catch(()=>{})}
   };
-  const chips=[{id:'all',label:ar?'الكل':'All'},...sections.slice(0,4),sections[7],sections[8]];
+  const chips=[{id:'all',label:ar?'الكل':'All'},...sections.slice(0,4),...sections.filter(item=>item.id==='Permanent Spoof'||item.id==='أخطاء البرنامج')];
   return <section dir={ar?'rtl':'ltr'} className={`${css.hub} ${css.stack}`}>
     <header className={css.helpHeader}><div><h2>{ar?'مركز المساعدة':'Help center'}</h2><p>{ar?'ابحث عن المشكلة أو اختر القسم المناسب.':'Search for an issue or choose a category.'}</p></div>{onNavigateTab&&<button className={css.smallButton} onClick={()=>onNavigateTab('my-products')}><BookOpen size={17}/>{ar?'دليل منتجك في «منتجاتي»':'Find your product guide in My products'}</button>}</header>
-    <label className={css.search} style={{marginTop:0}}><Search size={19}/><span className="sr-only">{ar?'ابحث عن مشكلتك':'Search help'}</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={ar?'ابحث عن مشكلتك... Windows، BIOS، RAID، Network':'Search... Windows, BIOS, RAID, Network'}/>{query&&<button aria-label={ar?'مسح البحث':'Clear search'} onClick={()=>setQuery('')}><X size={18}/></button>}</label>
+    <label className={css.search} style={{marginTop:0}}><Search size={19}/><span className="sr-only">{ar?'ابحث عن مشكلتك':'Search help'}</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={ar?'ابحث عن مشكلتك... Windows، BIOS، Network':'Search... Windows, BIOS, Network'}/>{query&&<button aria-label={ar?'مسح البحث':'Clear search'} onClick={()=>setQuery('')}><X size={18}/></button>}</label>
     <div className={css.filterBar}><nav className={css.filterRail} aria-label="تصنيفات مركز المساعدة">{chips.map(item=><button key={item.id} className={css.tab} aria-pressed={category===item.id} onClick={()=>select(item.id)}>{item.label}</button>)}<button className={css.tab} aria-expanded={more} aria-controls="help-more-categories" aria-pressed={more || !chips.some(item=>item.id===category)} onClick={()=>setMore(!more)}>المزيد<ChevronDown size={14}/></button></nav>
     {more&&<div id="help-more-categories" className={css.filterMenu}>{sections.filter(s=>!chips.some(c=>c.id===s.id)).map(item=><button key={item.id} className={css.tab} aria-pressed={category===item.id} onClick={()=>select(item.id)}>{item.label}</button>)}{categories.map(item=><button key={item.id} className={css.tab} aria-pressed={category===`admin:${item.id}`} onClick={()=>select(`admin:${item.id}`)}>{ar?item.name_ar:item.name_en}</button>)}</div>}</div>
     {!query&&category==='all'&&<details open className={css.stack}><summary className="mb-3 cursor-pointer text-sm font-semibold">الأقسام</summary><div className={css.categoryGrid}>{sections.map(item=><button key={item.id} className={css.categoryCard} onClick={()=>{select(item.id);resultHeading.current?.scrollIntoView({block:'start'})}}><item.icon size={19} strokeWidth={1.7}/><div><strong>{item.label}</strong><p>{item.text}</p><small>{item.id==='admin'?faqs.length:articles.filter(a=>a.category===item.id).length} {item.id==='admin'?'أسئلة':'شروحات'}</small></div></button>)}</div></details>}
@@ -109,7 +107,6 @@ export function HelpCenter({lang, products=[], onNavigateTab, initialCategoryId}
     </>}
     {!loading&&!error&&!filteredArticles.length&&!filteredFaqs.length&&<div className={css.empty}>لا توجد نتائج مطابقة.<button className={`${css.smallButton} mt-3`} onClick={()=>{setQuery('');select('all')}}>عرض الكل</button></div>}
     {products.length>0&&<details className={css.panel}><summary className="cursor-pointer text-sm font-medium">متطلبات وتنبيهات المنتجات قبل الشراء</summary><div className="mt-4 grid gap-3">{products.map(product=><section key={product.id}><h3 className="mb-2 text-sm font-medium">{product.name}</h3><ProductNotice product={product} placement="beforePurchase"/></section>)}</div></details>}
-    <div className={`${css.panel} flex flex-wrap items-center justify-between gap-3`}><span className="inline-flex items-center gap-2 text-sm"><LifeBuoy size={18}/>هل تحتاج مساعدة إضافية؟</span><a className={css.smallButton} href="/support">فتح تذكرة دعم</a></div>
     {article&&<GuideDialog title={article.title} onClose={()=>setArticle(null)}><GuideArticleView key={article.id} article={article}/></GuideDialog>}
   </section>;
 }
