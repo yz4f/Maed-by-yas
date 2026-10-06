@@ -1,34 +1,5 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
-
-const alexandria = localFont({
-  src: '../public/fonts/alexandria-variable.woff2',
-  variable: '--font-alexandria',
-  weight: '100 900',
-  display: 'swap',
-  preload: true,
-  fallback: ['Arial', 'sans-serif'],
-});
-const arabic = localFont({
-  src: [
-    { path: '../public/fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2', weight: '500', style: 'normal' },
-    { path: '../public/fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2', weight: '600', style: 'normal' },
-    { path: '../public/fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-arabic',
-  display: 'swap',
-  preload: false,
-});
-const saudi = localFont({
-  src: [
-    { path: '../public/fonts/saudi-web-regular.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/saudi-web-bold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-saudi',
-  display: 'swap',
-  preload: false,
-});
+import '@fontsource-variable/vazirmatn';
 import './globals.css';
 import './portal-luxe.css';
 import { Providers } from './providers';
@@ -73,7 +44,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" className={`dark ${saudi.variable} ${arabic.variable} ${alexandria.variable}`}>
+    <html lang="ar" dir="rtl" className="dark">
       <body className="min-h-screen bg-[#08090d] text-slate-100 flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
         <Providers>
           <CopyProtection />
