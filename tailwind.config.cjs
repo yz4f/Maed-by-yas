@@ -8,7 +8,7 @@ module.exports = {
   ],
   theme: {
     extend: {
-      fontFamily: { sans: ['var(--font-alexandria)', 'Arial', 'sans-serif'] },
+      fontFamily: { sans: ['var(--font-arabic)', 'var(--font-alexandria)', 'Arial', 'sans-serif'] },
       colors: {
         brand: {
           dark: '#050505', // True black background
