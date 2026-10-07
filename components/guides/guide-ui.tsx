@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, BookOpen, Check, CircleHelp, Download, ExternalLink, Info, Play, X } from 'lucide-react';
 import type { Product } from '@/types';
 import type { GuideArticle } from '@/lib/guide-library';
@@ -18,6 +19,17 @@ export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyeb
   const scroll = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const closeRef = useRef(onClose);
+  const closingRef = useRef(false);
+  const requestCloseRef = useRef<() => void>(() => {});
+  const [closing, setClosing] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const requestClose = () => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    if (reduceMotion) closeRef.current();
+    else setClosing(true);
+  };
+  requestCloseRef.current = requestClose;
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
   useEffect(() => { scroll.current?.scrollTo({ top: 0 }); }, [sectionKey]);
   useEffect(() => {
@@ -27,7 +39,7 @@ export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyeb
     dialog.current?.focus();
     const keydown = (event: KeyboardEvent) => {
       if (!dialog.current?.contains(document.activeElement)) return;
-      if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
+      if (event.key === 'Escape') { event.preventDefault(); requestCloseRef.current(); }
       if (event.key !== 'Tab') return;
       const nodes = Array.from(dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select, textarea, video[controls], iframe, [tabindex="0"]') || []).filter(node => node.getClientRects().length);
       const first = nodes[0]; const last = nodes[nodes.length - 1];
@@ -38,17 +50,21 @@ export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyeb
     document.addEventListener('keydown', keydown);
     return () => { document.removeEventListener('keydown', keydown); document.body.style.overflow = overflow; previous?.focus(); };
   }, []);
-  return createPortal(<div className={styles.overlay} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} dir="rtl" className={styles.dialog}>
+  return createPortal(<motion.div className={styles.overlay} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: closing ? 0 : 1 }} transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }} onClick={event => { if (event.target === event.currentTarget) requestClose(); }}>
+    <motion.div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} dir="rtl" className={styles.dialog}
+      initial={reduceMotion ? false : 'initial'} animate={closing ? 'closed' : 'open'}
+      variants={{ initial: { opacity: 0, y: 6, scale: 0.98 }, open: { opacity: 1, y: 0, scale: 1 }, closed: { opacity: 0, y: 6, scale: 0.98 } }}
+      transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+      onAnimationComplete={definition => { if (definition === 'closed') closeRef.current(); }}>
       <header className={styles.header}>
         <span className={styles.icon}><CircleHelp size={23} /></span>
         <div className="min-w-0 flex-1"><p className={styles.eyebrow}>{eyebrow}</p><h2 id={titleId} className="mt-1 break-words text-lg font-bold sm:text-xl">{title}</h2></div>
         {onBack && <button className={styles.iconButton} onClick={onBack} aria-label="الرجوع"><ArrowRight size={20} /></button>}
-        <button className={styles.iconButton} onClick={onClose} aria-label="إغلاق الدليل"><X size={20} /></button>
+        <button className={styles.iconButton} onClick={requestClose} aria-label="إغلاق الدليل"><X size={20} /></button>
       </header>
       <div ref={scroll} className={styles.scroll}>{children}</div>
-    </div>
-  </div>, document.body);
+    </motion.div>
+  </motion.div>, document.body);
 }
 
 export function BeforeStart({ product }: { product?: Product; onContinue?: () => void }) {

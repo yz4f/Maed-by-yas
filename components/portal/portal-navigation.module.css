@@ -107,8 +107,8 @@
 :global([dir='ltr']) .sidebar .item,
 :global([dir='ltr']) .mobileOverlay[data-open='true'] .drawer .item { animation-name: sidebarItemEnterLtr; }
 .itemIcon { position: relative; z-index: 1; transition: transform .15s ease-out; }
-.item:hover .itemIcon { transform: translateX(-2px); }
-:global([dir='ltr']) .item:hover .itemIcon { transform: translateX(2px); }
+.item:hover .itemIcon, .item:focus-visible .itemIcon { transform: translateX(-2px); }
+:global([dir='ltr']) .item:hover .itemIcon, :global([dir='ltr']) .item:focus-visible .itemIcon { transform: translateX(2px); }
 .itemLabel, .badge, .chevron { z-index: 1; }
 .itemLabel, .chevron { position: relative; }
 .item[data-active='true'] { background: transparent; border-color: transparent; }

@@ -54,7 +54,7 @@ import {
   Megaphone,
   Send,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
@@ -83,6 +83,7 @@ interface T3NUnifiedPortalProps {
 
 export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const { data: session, status } = useSession();
+  const prefersReducedMotion = useReducedMotion();
   const sessionUserId = (session?.user as any)?.discordId as string | undefined;
 
   useEffect(() => {
@@ -1456,9 +1457,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         <ToastContainer />
         <LoginPage lang={lang} isDark={isDark} onLanguageChange={setLang} onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')} />
         {/* Guest Key Redemption Modal */}
+        <AnimatePresence>
         {guestModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="glass-card border border-brand-border rounded-2xl p-6 max-w-md w-full relative shadow-2xl">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }} className="glass-card border border-brand-border rounded-2xl p-6 max-w-md w-full relative shadow-2xl">
               <button
                 onClick={() => !isRedeeming && !activationSuccess && setGuestModalOpen(false)}
                 disabled={isRedeeming || !!activationSuccess}
@@ -1507,9 +1509,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   <span>تفعيل المفتاح الآن</span>
                 </button>
               </form></>}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </>
     );
   }
@@ -1662,8 +1665,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         )}
 
+        <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          className="flex min-w-0 flex-1 flex-col gap-6"
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -6, transition: { duration: 0.12, ease: 'easeOut' } }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
+        >
         {/* Structured portal header */}
-        <header className={`portal-page-header flex items-center justify-between gap-4 animate-fade-in ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
+        <header className={`portal-page-header flex items-center justify-between gap-4 ${isDark ? 'border-sky-100/[0.12]' : 'border-slate-900/[0.10]'}`}>
           <div className="portal-page-header__copy min-w-0">
             <nav aria-label={lang === 'ar' ? 'مسار التنقل' : 'Breadcrumb'} className={`portal-breadcrumbs ${isDark ? 'text-sky-200/65' : 'text-sky-700/70'}`}>
               <button type="button" onClick={() => setActiveTab('overview')}>{lang === 'ar' ? 'بوابة تعن الرئيسية' : 'Ta3n Portal'}</button>
@@ -1711,7 +1723,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="portal-section-enter overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-6">
               {newUserWelcome && (
                 <section className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-sky-300/20 bg-gradient-to-br from-sky-400/[.16] via-[#171b22]/95 to-[#171b22]/95 text-white' : 'border-sky-200 bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-slate-950 shadow-[0_18px_38px_rgba(30,120,180,0.12)]'}`}>
@@ -1860,7 +1872,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
-          <div className="portal-section-enter products-experience space-y-7">
+          <div className="products-experience space-y-7">
             {resetCompletionNotice && <section dir={lang === 'ar' ? 'rtl' : 'ltr'} role="alert" className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_22px_48px_rgba(16,185,129,.14)] sm:p-6 ${isDark ? 'border-emerald-300/[.28] bg-[linear-gradient(135deg,rgba(6,78,59,.88),rgba(10,36,42,.94))] text-emerald-50' : 'border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5,#f0fdfa)] text-emerald-950'}`}>
               <div className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
               <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -2080,7 +2092,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 3: REDEEM KEY (Integrated into My Products) */}
         {/* TAB 5: PROFILE */}
         {activeTab === 'profile' && (
-          <div className="portal-section-enter space-y-8 max-w-2xl mx-auto py-6 animate-slide-up">
+          <div className="space-y-8 max-w-2xl mx-auto py-6">
             <div>
               <h1 className={`text-3xl font-extrabold ${styles.textTitle} tracking-tight`}>
                 {lang === 'ar' ? 'الملف الشخصي' : 'My Profile'}
@@ -2197,7 +2209,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
-          <div className="portal-section-enter admin-workspace space-y-5 w-full max-w-[1440px] mx-auto">
+          <div className="admin-workspace space-y-5 w-full max-w-[1440px] mx-auto">
             {/* Top Admin Header */}
             <div className={`admin-hero ${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
               <div className="min-w-0">
@@ -2909,6 +2921,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             <Footer lang={lang} isDark={isDark} onNavigate={setActiveTab} />
           </div>
         )}
+        </motion.div>
+        </AnimatePresence>
         </div>
       </main>
 
@@ -2920,6 +2934,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* ====================================================================
           PRODUCT STOCK MANAGEMENT MODAL (Enterprise Dark Premium)
           ==================================================================== */}
+      <AnimatePresence>
       {inventoryModalOpen && inventoryProduct && (
         <ProductStockModal
           isOpen={inventoryModalOpen}
@@ -2942,15 +2957,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           }}
         />
       )}
+      </AnimatePresence>
 
       
       {/* ------------------------------------------------------------------------------------------------ */}
       {/* GUIDE MODAL */}
       {/* ------------------------------------------------------------------------------------------------ */}
+      <AnimatePresence>
       {resetRequestProduct && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
           <button className="absolute inset-0 bg-[#020712]/[.82] backdrop-blur-[7px]" aria-label={lang === 'ar' ? 'إغلاق' : 'Close'} onClick={() => { if (!isSubmittingResetRequest) { setResetRequestProduct(null); setResetRequestReason(''); } }} />
-          <div className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-amber-200/[.18] bg-[linear-gradient(145deg,#101a2a_0%,#09111f_62%,#070d18_100%)] shadow-[0_30px_100px_rgba(0,0,0,.62)]">
+          <motion.div initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }} className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-amber-200/[.18] bg-[linear-gradient(145deg,#101a2a_0%,#09111f_62%,#070d18_100%)] shadow-[0_30px_100px_rgba(0,0,0,.62)]">
             <div className="pointer-events-none absolute -top-20 -right-16 h-44 w-44 rounded-full bg-amber-300/[.12] blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-cyan-400/[.08] blur-3xl" />
             <div className={`relative flex items-start justify-between gap-4 border-b border-white/[.07] px-5 py-5 sm:px-6 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
@@ -2966,9 +2983,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <div className="flex items-start gap-2 rounded-xl border border-cyan-200/[.09] bg-cyan-300/[.045] px-3 py-2.5 text-[10px] leading-5 text-slate-400"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_9px_rgba(103,232,249,.85)]" />{lang === 'ar' ? 'سيظهر الطلب للإدارة مع المفتاح وبيانات الحساب للمراجعة فقط.' : 'Staff will see this request with the key and account details for review only.'}</div>
             </div>
             <div className="relative flex flex-col-reverse gap-2 border-t border-white/[.07] bg-black/[.12] px-5 py-4 sm:flex-row sm:px-6"><button onClick={() => { if (!isSubmittingResetRequest) { setResetRequestProduct(null); setResetRequestReason(''); } }} disabled={isSubmittingResetRequest} className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-white/[.09] text-[11px] font-black text-slate-300 transition hover:bg-white/[.06] disabled:opacity-45">{lang === 'ar' ? 'إلغاء' : 'Cancel'}</button><button disabled={isSubmittingResetRequest || resetRequestReason.trim().length < 3} onClick={() => void submitResetRequest()} className="inline-flex h-11 flex-[1.45] items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#fcd34d,#f59e0b)] text-[11px] font-black text-slate-950 shadow-[0_12px_28px_rgba(245,158,11,.20)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 active:translate-y-0 active:scale-[.985]">{isSubmittingResetRequest ? <RefreshCw size={15} className="animate-spin" /> : <RefreshCw size={15} />}{isSubmittingResetRequest ? (lang === 'ar' ? 'جارٍ إرسال الطلب...' : 'Sending request...') : (lang === 'ar' ? 'إرسال طلب الرستات' : 'Send reset request')}</button></div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {guideModalProduct && guideView && !getLicenseTiming(guideModalProduct).isExpired && (
         <GuideDialog
@@ -3040,9 +3058,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </GuideDialog>
       )}
       {/* CUSTOMER MANAGEMENT MODAL (ADMIN ONLY) */}
+      <AnimatePresence>
       {selectedAdminCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-          <div className="bg-[#0b0c0e]/95 border border-white/[0.08] rounded-[28px] p-6 md:p-8 max-w-4xl w-full relative shadow-2xl max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <motion.div initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }} className="bg-[#0b0c0e]/95 border border-white/[0.08] rounded-[28px] p-6 md:p-8 max-w-4xl w-full relative shadow-2xl max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
             
             {/* Close Button */}
             <button
@@ -3414,12 +3433,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
 
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
+      <AnimatePresence>
       {guestModalOpen && (
-        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-[#02070e]/72 p-4 backdrop-blur-sm" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-          <div className={`relative w-full max-w-sm overflow-hidden rounded-2xl border p-5 shadow-2xl ${isDark ? 'border-white/[0.14] bg-[#0d1724]/95 text-white' : 'border-slate-200 bg-white text-slate-950'}`}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-[9000] flex items-center justify-center bg-[#02070e]/72 p-4 backdrop-blur-sm" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <motion.div initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }} className={`relative w-full max-w-sm overflow-hidden rounded-2xl border p-5 shadow-2xl ${isDark ? 'border-white/[0.14] bg-[#0d1724]/95 text-white' : 'border-slate-200 bg-white text-slate-950'}`}>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/80 to-transparent" />
             <button onClick={() => !isRedeeming && !activationSuccess && setGuestModalOpen(false)} disabled={isRedeeming || !!activationSuccess} className={`absolute top-3 ${lang === 'ar' ? 'left-3' : 'right-3'} rounded-lg p-2 ${isDark ? 'text-slate-400 hover:bg-white/[0.07] hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950'} disabled:cursor-not-allowed disabled:opacity-40`} aria-label={lang === 'ar' ? 'إغلاق' : 'Close'}>
               <X className="h-4 w-4" />
@@ -3454,13 +3475,15 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 {isRedeeming ? (lang === 'ar' ? 'جارِ التفعيل...' : 'Redeeming...') : (lang === 'ar' ? 'تفعيل المفتاح' : 'Redeem Key')}
               </button>
             </form></>}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Central Toast Container Component (Top Right) */}
       <ToastContainer />
 
+      <AnimatePresence>
       {confirmModal?.isOpen && (
         <PremiumConfirmationModal
           modal={confirmModal}
@@ -3470,6 +3493,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           onConfirm={submitConfirm}
         />
       )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -3483,6 +3507,7 @@ function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfir
   onConfirm: () => void;
 }) {
   const isRtl = lang === 'ar';
+  const reducedMotion = useReducedMotion();
   const primaryRef = useRef<HTMLButtonElement>(null);
   const title = modal.title || (isRtl ? 'تأكيد الإجراء' : 'Confirm action');
   const destructive = /حذف|Delete|إلغاء|Revoke|حظر|Ban/i.test(title);
@@ -3499,22 +3524,21 @@ function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfir
   }, [onDismiss, submitting]);
 
   return (
-    <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={reducedMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
+        transition={{ duration: reducedMotion ? 0 : 0.18, ease: 'easeOut' }}
         onMouseDown={(event) => { if (event.currentTarget === event.target && !submitting) onDismiss(); }}
         className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#02060d]/72 p-4 backdrop-blur-[10px]"
         dir={isRtl ? 'rtl' : 'ltr'}
         role="presentation"
       >
         <motion.section
-          initial={{ opacity: 0, scale: 0.95, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 8 }}
-          transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
+          initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="premium-confirm-title"
@@ -3532,9 +3556,9 @@ function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfir
 
           <div className="relative">
             <motion.div
-              initial={{ opacity: 0, scale: 0.82 }}
+              initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.09, duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+              transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
               className="mx-auto flex h-[66px] w-[66px] items-center justify-center rounded-full border border-rose-300/25 bg-rose-400/[0.11] text-rose-200 shadow-[0_0_0_8px_rgba(244,63,94,.035),0_0_32px_rgba(244,63,94,.20)]"
             ><AlertTriangle className="h-7 w-7 stroke-[1.65]" /></motion.div>
 
@@ -3558,6 +3582,5 @@ function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfir
           </div>
         </motion.section>
       </motion.div>
-    </AnimatePresence>
   );
 }

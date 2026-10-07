@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AlertCircle,
   AlertTriangle,
@@ -77,6 +78,7 @@ async function compressFaqImage(file: File): Promise<string> {
 
 export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionProps) {
   const isAr = lang === 'ar';
+  const reducedMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<AdminTab>('faqs');
 
   const [categories, setCategories] = useState<FaqCategory[]>([]);
@@ -1011,15 +1013,17 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
       {/* ========================================================================= */}
       {/* FAQ MODAL: ADD / EDIT WITH RICH ANSWER EDITOR & PREVIEW                    */}
       {/* ========================================================================= */}
-      {faqModalOpen && (
-        <div
+      <AnimatePresence>{faqModalOpen && (
+        <motion.div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
           onClick={() => !savingFaq && setFaqModalOpen(false)}
         >
-          <div
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[#24343e] bg-[#101b23] p-6 shadow-2xl animate-in zoom-in-95 duration-200 space-y-5"
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[#24343e] bg-[#101b23] p-6 shadow-2xl space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1288,22 +1292,24 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
                 <span>{isAr ? 'حفظ السؤال' : 'Save Question'}</span>
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        </motion.div>
+      )}</AnimatePresence>
 
       {/* ========================================================================= */}
       {/* CATEGORY MODAL: ADD / EDIT                                                */}
       {/* ========================================================================= */}
-      {catModalOpen && (
-        <div
+      <AnimatePresence>{catModalOpen && (
+        <motion.div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
           onClick={() => !savingCat && setCatModalOpen(false)}
         >
-          <div
-            className="relative w-full max-w-lg rounded-2xl border border-[#24343e] bg-[#101b23] p-6 shadow-2xl animate-in zoom-in-95 duration-200 space-y-4"
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+            className="relative w-full max-w-lg rounded-2xl border border-[#24343e] bg-[#101b23] p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#24343e] pb-3">
@@ -1425,22 +1431,24 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
                 <span>{isAr ? 'حفظ التصنيف' : 'Save Category'}</span>
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        </motion.div>
+      )}</AnimatePresence>
 
       {/* ========================================================================= */}
       {/* CONFIRMATION MODAL (No Browser confirm())                                 */}
       {/* ========================================================================= */}
-      {confirmModal.open && (
-        <div
+      <AnimatePresence>{confirmModal.open && (
+        <motion.div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+          initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}
+          className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           onClick={() => !confirmLoading && setConfirmModal((prev) => ({ ...prev, open: false }))}
         >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-[#24343e] bg-[#101b23] p-6 text-center space-y-4 animate-in zoom-in-95 duration-150"
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+            className="w-full max-w-sm rounded-2xl border border-[#24343e] bg-[#101b23] p-6 text-center space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">
@@ -1471,9 +1479,9 @@ export function HelpAdminSection({ lang, isDark, onNotify }: HelpAdminSectionPro
                 <span>{isAr ? 'نعم، حذف' : 'Yes, Delete'}</span>
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        </motion.div>
+      )}</AnimatePresence>
     </div>
   );
 }

@@ -185,7 +185,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  transition: all 0.2s ease-out;
+  transition: transform 180ms ease-out, opacity 180ms ease-out, background-color 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
   overflow: hidden;
 }
 
@@ -2366,7 +2366,7 @@ body {
 }
 
 .portal-shell button:active:not(:disabled) {
-  transform: scale(.985);
+  transform: scale(.98);
 }
 
 .portal-shell button:focus-visible,
@@ -2871,4 +2871,38 @@ body {
   .portal-shell .portal-breadcrumbs {
     max-width: 48vw;
   }
+}
+
+/* Small, composited feedback for existing cards and transient surfaces. */
+@media (prefers-reduced-motion: no-preference) {
+  .portal-shell .products-stat-card,
+  .portal-shell .admin-product-card,
+  .portal-shell--light .overview-stat-card {
+    transition: transform 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+  }
+
+  .portal-shell [role="menu"],
+  .portal-shell [role="listbox"],
+  .portal-shell [data-radix-popper-content-wrapper] > * {
+    animation: portal-popover-in 170ms ease-out both;
+  }
+
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .portal-shell .products-stat-card:hover,
+  .portal-shell .admin-product-card:hover,
+  .portal-shell--light .overview-stat-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .portal-shell .products-stat-card:hover {
+    border-color: var(--sd-border-strong, rgba(148, 163, 184, .32));
+    box-shadow: 0 10px 22px rgba(0, 5, 15, .10);
+  }
+}
+
+@keyframes portal-popover-in {
+  from { opacity: 0; transform: translateY(-4px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }

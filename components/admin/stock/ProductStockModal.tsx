@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   X,
   Key as KeyIcon,
@@ -93,6 +93,7 @@ export function ProductStockModal({
   onClose,
   onProductUpdated,
 }: ProductStockModalProps) {
+  const reducedMotion = useReducedMotion();
   // Tab state
   const [activeTab, setActiveTab] = useState<ModalTab>(initialTab);
 
@@ -625,7 +626,11 @@ export function ProductStockModal({
   const isRtl = lang === 'ar';
 
   return (
-    <div
+    <motion.div
+      initial={reducedMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reducedMotion ? 0 : 0.18 }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-hidden"
       dir={isRtl ? 'rtl' : 'ltr'}
       role="dialog"
@@ -635,10 +640,10 @@ export function ProductStockModal({
       {/* Modal Dialog Card */}
       <motion.div
         ref={modalRef}
-        initial={{ opacity: 0, scale: 0.97, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 15 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.97 }}
+        transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
         className="stock-management-modal w-full max-w-5xl h-[90vh] max-h-[880px] bg-[#090d16] border border-white/10 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden text-slate-200 relative select-none"
       >
         {/* ====================================================================
@@ -1597,11 +1602,12 @@ export function ProductStockModal({
           ==================================================================== */}
       <AnimatePresence>
         {deletingKey && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <motion.div initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
               className="w-full max-w-md p-6 rounded-2xl border border-rose-500/20 bg-[#0f172a] shadow-2xl space-y-4"
             >
               <div className="flex items-center gap-3 text-rose-400">
@@ -1637,7 +1643,7 @@ export function ProductStockModal({
                 </button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1646,11 +1652,12 @@ export function ProductStockModal({
           ==================================================================== */}
       <AnimatePresence>
         {showExitConfirm && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <motion.div initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
               className="w-full max-w-md p-6 rounded-2xl border border-amber-500/25 bg-[#0f172a] shadow-2xl space-y-4"
             >
               <div className="flex items-center gap-3 text-amber-400">
@@ -1685,7 +1692,7 @@ export function ProductStockModal({
                 </button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1694,11 +1701,12 @@ export function ProductStockModal({
           ==================================================================== */}
       <AnimatePresence>
         {newFieldModalOpen && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <motion.div initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={reducedMotion ? false : { opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
               className="w-full max-w-md p-6 rounded-2xl border border-white/10 bg-[#0f172a] shadow-2xl space-y-4"
             >
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -1799,9 +1807,9 @@ export function ProductStockModal({
                 </button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

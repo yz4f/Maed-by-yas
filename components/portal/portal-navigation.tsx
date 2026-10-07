@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import {
   ArrowUpLeft,
   ArrowUpRight,
@@ -222,6 +222,7 @@ export function PortalNavigation({
   );
 
   const navigation = (compact: boolean, surface: 'desktop' | 'mobile') => (
+    <LayoutGroup id={`portal-navigation-${surface}`}>
     <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'} onScroll={() => setTooltip(null)}>
       {groups.map((group, index) => (
         <div className={css.group} key={group.title}>
@@ -283,6 +284,7 @@ export function PortalNavigation({
         </div>
       ))}
     </nav>
+    </LayoutGroup>
   );
 
   const footer = (compact: boolean) => (

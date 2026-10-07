@@ -101,3 +101,8 @@
 @media(max-width:960px){.hero h1{font-size:38px}}
 @media(max-width:760px){.hero h1{font-size:34px}.description{font-size:16px}}
 @media(max-width:760px){.brand > span{font-size:22px}}
+
+.languageOptions{animation:none}
+.control,.primary,.certificate{transition:background-color .18s ease-out,border-color .18s ease-out,box-shadow .18s ease-out,transform .15s ease-out}
+.control:active:not(:disabled),.primary:active:not(:disabled),.certificate:active:not(:disabled){transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){.control,.primary,.certificate{transition:none}.control:active:not(:disabled),.primary:active:not(:disabled),.certificate:active:not(:disabled){transform:none}}

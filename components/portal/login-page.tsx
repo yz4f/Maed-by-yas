@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { ArrowUpLeft, Check, ChevronDown, Copy, Globe2, LoaderCircle, Moon, Sun } from 'lucide-react';
@@ -17,6 +18,7 @@ interface LoginPageProps {
 
 export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: LoginPageProps) {
   const ar = lang === 'ar';
+  const reducedMotion = useReducedMotion();
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
@@ -102,11 +104,11 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
               <button ref={languageButton} className={styles.control} type="button" aria-expanded={languagesOpen} aria-controls="login-language-options" aria-label={ar ? 'تغيير اللغة' : 'Change language'} onClick={() => setLanguagesOpen(value => !value)}>
                 <Globe2 size={17} /><span>{ar ? 'العربية' : 'English'}</span><ChevronDown size={13} />
               </button>
-              {languagesOpen && <div id="login-language-options" className={styles.languageOptions}>
+              <AnimatePresence initial={false}>{languagesOpen && <motion.div id="login-language-options" className={styles.languageOptions} initial={reducedMotion ? false : { opacity: 0, y: -4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }} transition={{ duration: reducedMotion ? 0 : 0.18, ease: 'easeOut' }}>
                 {(['ar', 'en'] as const).map(value => <button key={value} type="button" lang={value} aria-pressed={value === lang} onClick={() => { onLanguageChange(value); setLanguagesOpen(false); languageButton.current?.focus(); }}>
                   <span>{value === 'ar' ? 'العربية' : 'English'}</span>{value === lang && <Check size={15} />}
                 </button>)}
-              </div>}
+              </motion.div>}</AnimatePresence>
             </div>
             <button type="button" className={`${styles.control} ${styles.theme}`} onClick={onToggleTheme} title={ar ? (isDark ? 'الوضع الفاتح' : 'الوضع الداكن') : (isDark ? 'Light mode' : 'Dark mode')} aria-label={ar ? (isDark ? 'الوضع الفاتح' : 'الوضع الداكن') : (isDark ? 'Light mode' : 'Dark mode')}>
               {isDark ? <Sun size={19} /> : <Moon size={19} />}

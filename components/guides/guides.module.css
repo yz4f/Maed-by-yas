@@ -45,6 +45,12 @@
 @media(max-width:640px){.singleResult .card{display:flex;min-height:0}.singleResult .cardPreview{height:150px}.filterBar{padding:6px}.filterMenu{grid-template-columns:1fr;width:min(300px,calc(100vw - 36px))}.overlay{padding:10px}.dialog{max-height:calc(100dvh - 20px)}.header{padding:13px}.scroll{padding:15px}}
 @media(prefers-reduced-motion:reduce){.dialog{animation:none}.card:hover{transform:none}}
 
+/* GuideDialog animates its surface with Motion, so the old CSS entry must not compete. */
+.dialog{animation:none}
+.card{transition:transform .18s ease-out,border-color .18s ease-out,box-shadow .18s ease-out}
+@media(hover:hover) and (pointer:fine){.card:hover{box-shadow:0 8px 20px #0002}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+
 .articleLayout{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:22px;align-items:start}
 .articleMedia{display:grid;gap:12px;min-width:0;position:sticky;top:0}
 .articleMedia .imageButton{max-width:none}

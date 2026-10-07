@@ -586,3 +586,20 @@
 .product-guide-wrp__download:focus-visible{outline:2px solid #a8eee5;outline-offset:3px}
 @media(max-width:640px){.product-guide-wrp__download{justify-self:stretch}}
 @media(prefers-reduced-motion:reduce){.product-guide-wrp__download{transition:none}.product-guide-wrp__download:hover{transform:none}}
+
+/* Keep the current card surfaces while making their hover feedback brief and subtle. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .portal-shell.portal-luxe :is(.overview-stat-card,.product-license-card,.admin-product-card) {
+    transition: transform .18s ease-out, border-color .18s ease-out, box-shadow .18s ease-out;
+  }
+  .portal-shell.portal-luxe :is(.overview-stat-card,.product-license-card,.admin-product-card):hover {
+    transform: translateY(-2px);
+    border-color: var(--luxe-accent-line) !important;
+    box-shadow: 0 10px 24px rgba(0, 7, 14, .16) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal-shell.portal-luxe :is(.overview-stat-card,.product-license-card,.admin-product-card):hover {
+    transform: none;
+  }
+}
