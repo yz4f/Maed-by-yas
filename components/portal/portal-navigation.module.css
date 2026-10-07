@@ -17,8 +17,8 @@
 .itemIcon { display: flex; align-items: center; justify-content: center; width: 22px; flex-shrink: 0; }
 .itemLabel { font-size: 12px; font-weight: 500; text-align: start; white-space: nowrap; }
 .item:hover { color: var(--luxe-ink); background: var(--luxe-hover); }
-.item[data-active='true'] { color: var(--luxe-accent); background: var(--luxe-soft); border-color: var(--luxe-accent-line); }
-.item[data-active='true']::before { content: ''; position: absolute; inset-inline-start: -1px; top: 15px; bottom: 15px; width: 3px; border-radius: 3px; background: var(--luxe-accent); }
+.item[data-active='true'] { color: var(--luxe-accent); background: transparent; border-color: transparent; }
+.item[data-active='true']::before { content: none; }
 .badge { margin-inline-start: auto; font: 10px/20px Arial, sans-serif; padding-inline: 6px; min-width: 22px; border-radius: 6px; text-align: center; background: var(--luxe-hover); color: var(--luxe-ink); }
 .chevron { margin-inline-start: auto; flex-shrink: 0; opacity: .65; }
 .supportCard { display: grid; grid-template-columns: 27px 1fr; column-gap: 9px; align-items: center; margin: 22px 16px; padding: 15px; border: 1px solid var(--luxe-line); border-radius: 12px; background: var(--luxe-soft); }
@@ -98,3 +98,65 @@
 .sidebar[data-animate='true']:not(.collapsed) .itemLabel,
 .sidebar[data-animate='true']:not(.collapsed) .userCopy,
 .sidebar[data-animate='true']:not(.collapsed) .logout span { transition-delay: 0s, .06s, 0s; }
+
+/* Motion uses the existing sidebar geometry and palette. */
+.sidebar { animation: sidebarEnter .32s ease-out both; }
+:global([dir='ltr']) .sidebar { animation-name: sidebarEnterLtr; }
+.sidebar .item,
+.mobileOverlay[data-open='true'] .drawer .item { animation: sidebarItemEnter .24s ease-out both; }
+:global([dir='ltr']) .sidebar .item,
+:global([dir='ltr']) .mobileOverlay[data-open='true'] .drawer .item { animation-name: sidebarItemEnterLtr; }
+.itemIcon { position: relative; z-index: 1; transition: transform .15s ease-out; }
+.item:hover .itemIcon { transform: translateX(-2px); }
+:global([dir='ltr']) .item:hover .itemIcon { transform: translateX(2px); }
+.itemLabel, .badge, .chevron { z-index: 1; }
+.itemLabel, .chevron { position: relative; }
+.item[data-active='true'] { background: transparent; border-color: transparent; }
+.item[data-active='true']::before { content: none; }
+.activeHighlight {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 1px solid rgba(90,230,220,.35);
+  border-radius: inherit;
+  background: rgba(40,200,190,.08);
+}
+.activeHighlight::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -1px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 3px;
+  background: var(--luxe-accent);
+}
+@keyframes sidebarEnter {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes sidebarEnterLtr {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes sidebarItemEnter {
+  from { opacity: 0; transform: translateX(5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes sidebarItemEnterLtr {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 767px) {
+  .mobileOverlay { transition: opacity .28s ease-out, visibility 0s linear .3s; }
+  .mobileOverlay[data-open='true'] { transition: opacity .28s ease-out; }
+  .drawer { transition: transform .3s ease-out; }
+  .drawer .nav, .drawer .account { transition: opacity .16s ease-out .08s; }
+  .mobileOverlay:not([data-open='true']) .drawer .nav,
+  .mobileOverlay:not([data-open='true']) .drawer .account { opacity: 0; transition-delay: 0s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .sidebar .item, .mobileOverlay[data-open='true'] .drawer .item { animation: none; }
+  .itemIcon, .mobileOverlay, .drawer, .drawer .nav, .drawer .account { transition: none; }
+}

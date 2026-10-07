@@ -79,7 +79,7 @@ export function PortalNavigation({
   const Chevron = ar ? ChevronLeft : ChevronRight;
   const shouldAnimate = animateCollapse && !reducedMotion;
   const layoutTransition = shouldAnimate
-    ? { type: 'spring' as const, stiffness: 360, damping: 36, mass: 0.9 }
+    ? { duration: 0.28, ease: 'easeOut' as const }
     : { duration: 0 };
   const labelMotion = (compact: boolean, order: number) => ({
     initial: false as const,
@@ -205,6 +205,11 @@ export function PortalNavigation({
     },
     ...(isAdmin ? [{ title: ar ? 'الإدارة' : 'ADMIN', items: [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Administration', icon: ShieldCheck }] }] : []),
   ];
+  const staggerOrder = (groupIndex: number, itemIndex: number) =>
+    groups.slice(0, groupIndex).reduce(
+      (total, group, index) => total + group.items.length + (index === 1 ? 1 : 0),
+      0
+    ) + itemIndex;
 
   const brand = (
     <>
@@ -216,7 +221,7 @@ export function PortalNavigation({
     </>
   );
 
-  const navigation = (compact: boolean) => (
+  const navigation = (compact: boolean, surface: 'desktop' | 'mobile') => (
     <nav className={css.nav} aria-label={ar ? 'القائمة الرئيسية' : 'Main navigation'} onScroll={() => setTooltip(null)}>
       {groups.map((group, index) => (
         <div className={css.group} key={group.title}>
@@ -226,6 +231,7 @@ export function PortalNavigation({
               type="button"
               key={tab}
               className={css.item}
+              style={{ animationDelay: `${130 + staggerOrder(index, itemIndex) * 55}ms` }}
               data-active={activeTab === tab}
               aria-current={activeTab === tab ? 'page' : undefined}
               aria-label={label}
@@ -235,6 +241,15 @@ export function PortalNavigation({
               onBlur={() => setTooltip(null)}
               onClick={() => navigate(tab)}
             >
+              {activeTab === tab && (
+                <motion.span
+                  className={css.activeHighlight}
+                  layoutId={`portal-navigation-active-${surface}`}
+                  initial={false}
+                  transition={reducedMotion ? { duration: 0 } : { duration: 0.28, ease: 'easeOut' }}
+                  aria-hidden="true"
+                />
+              )}
               <span className={css.itemIcon}>
                 <Icon size={19} strokeWidth={1.7} />
               </span>
@@ -249,6 +264,7 @@ export function PortalNavigation({
           {index === 1 && (
             <a
               className={css.item}
+              style={{ animationDelay: `${130 + staggerOrder(index, group.items.length) * 55}ms` }}
               href="https://discord.gg/t3n"
               target="_blank"
               rel="noopener noreferrer"
@@ -373,7 +389,7 @@ export function PortalNavigation({
             </AnimatePresence>
           </motion.button>
         </motion.div>
-        {navigation(collapsed)}
+        {navigation(collapsed, 'desktop')}
         {footer(collapsed)}
         {collapsed && tooltip && (
           <span className={css.tooltip} role="tooltip" style={{ top: tooltip.top }}>
@@ -458,7 +474,7 @@ export function PortalNavigation({
                 <X size={20} />
               </button>
             </div>
-            {navigation(false)}
+            {navigation(false, 'mobile')}
             {footer(false)}
           </aside>
         </div>
