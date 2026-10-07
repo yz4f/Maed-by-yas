@@ -52,7 +52,6 @@ import {
   Unlock,
   Hash,
   Megaphone,
-  Mic2,
   Send,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -68,7 +67,6 @@ const HelpCenter = dynamic(() => import('./help-center').then((module) => module
 const HelpAdminSection = dynamic(() => import('./help-admin-section').then((module) => module.HelpAdminSection), { ssr: false });
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
-const VoiceSupportAdmin = dynamic(() => import('./voice-support-admin').then((module) => module.VoiceSupportAdmin), { ssr: false });
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
 const loadProductStockModal = () => import('@/components/admin/stock/ProductStockModal').then((module) => module.ProductStockModal);
 const ProductStockModal = dynamic(loadProductStockModal, { ssr: false });
@@ -398,7 +396,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'voiceSessions' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -547,16 +545,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     const timer = window.setInterval(() => { void loadAdminStats(); }, 15_000);
     return () => window.clearInterval(timer);
   }, [activeTab, adminSectionTab, isAdmin]);
-
-  useEffect(() => {
-    if (!currentUser) return;
-    void fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ action: 'page_activity', page: activeTab }),
-    }).catch(() => undefined);
-  }, [activeTab, currentUser?.id]);
 
   const loadUserProducts = async (silent = false): Promise<void> => {
     if (!currentUser || userProductsRequestInFlightRef.current) return;
@@ -1826,7 +1814,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'انضم إلى ديسكورد' : 'Join Discord'}</span>
-                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الدعم والتحديثات والمجتمع' : 'Get support & updates'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'التحديثات والمجتمع' : 'Updates and community'}</span>
                     </div>
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
@@ -1860,7 +1848,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     </div>
                     <div className={`min-w-0 flex flex-col ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                       <span className={`text-sm font-extrabold leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>{lang === 'ar' ? 'مركز المساعدة' : 'Help center'}</span>
-                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الشروحات وطلبات Reset والدعم الخارجي في مكان واحد' : 'Guides, reset requests, and external support in one place'}</span>
+                      <span className="text-xs font-medium mt-1 text-neutral-500">{lang === 'ar' ? 'الأسئلة والشروحات وحلول المشاكل' : 'Questions, guides, and solutions'}</span>
                     </div>
                   </div>
                   <ArrowLeft className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${isDark ? 'text-neutral-600 group-hover:text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-800'} ${lang === 'ar' ? '' : 'rotate-180 group-hover:-translate-x-0.5'}`} />
@@ -2202,23 +2190,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               </div>
             </div>
 
-            {/* Support Box */}
-            <div className="bg-[#0e0e11] border border-white/[0.08] border-r-4 border-r-indigo-500 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
-                <h4 className={`text-sm font-bold ${styles.textTitle}`}>{lang === 'ar' ? 'هل تحتاج إلى تحديث بياناتك؟' : 'Need to update details?'}</h4>
-                <p className={`text-[11px] ${styles.textMuted} mt-1`}>
-                  {lang === 'ar' ? 'تواصل مع الدعم الفني لمزامنة الرتب أو حل مشكلات الحساب.' : 'Connect with our Discord support team to resolve billing or access issues.'}
-                </p>
-              </div>
-              <a
-                href="https://discord.gg/t3n"
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/10 cursor-pointer shrink-0"
-              >
-                {lang === 'ar' ? 'تواصل مع الدعم' : 'Contact Support'}
-              </a>
-            </div>
           </div>
         )}
 
@@ -2237,7 +2208,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />}
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
                     {adminSectionTab === 'help' && <HelpCircle className="w-6 h-6 text-teal-500 dark:text-teal-400" />}
-                    {adminSectionTab === 'voiceSessions' && <Mic2 className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'updates' && <Megaphone className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'resetRequests' && <RefreshCw className="w-6 h-6 text-amber-500 dark:text-amber-300" />}
                     {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-indigo-600 dark:text-primary" />}
@@ -2248,7 +2218,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'products' && (lang === 'ar' ? 'إدارة المنتجات والمخزون' : 'Products & Inventory')}
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
                     {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
-                    {adminSectionTab === 'voiceSessions' && (lang === 'ar' ? 'جلسات الدعم الصوتية' : 'Voice Support Sessions')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
                     {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات الريست' : 'Reset requests')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
@@ -2260,7 +2229,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'products' && (lang === 'ar' ? 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.' : 'Full control over product settings and manual key addition.')}
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
                   {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة تصنيفات وأسئلة مركز المساعدة، وتتبع الأسئلة الأكثر بحثاً وتعديل الإجابات باحترافية.' : 'Manage Help Center categories and FAQs, view real search stats, and edit rich answers.')}
-                  {adminSectionTab === 'voiceSessions' && (lang === 'ar' ? 'أنشئ جلسة دعم صوتية خاصة واطلب موافقة العميل قبل الصوت أو مشاركة الشاشة.' : 'Create private voice sessions and request consent before audio or screen sharing.')}
                   {adminSectionTab === 'updates' && (lang === 'ar' ? 'أنشئ تحديثاً موثقاً بصورة، اعتمده، ثم انشره مرة واحدة إلى Discord.' : 'Create an image-backed update, approve it, then publish it once to Discord.')}
                   {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات العملاء لإعادة ضبط الترخيص، مع السبب والمفتاح ووقت الطلب.' : 'Customer license reset requests with their reason, key, and request time.')}
                   {adminSectionTab === 'keys' && (lang === 'ar' ? 'تتبع سريع للمفاتيح المباعة والمتاحة في النظام.' : 'Quick tracking of sold and available license keys in the system.')}
@@ -2306,7 +2274,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'العملاء' : 'Customers', icon: Users },
                 { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
-                { id: 'voiceSessions', label: lang === 'ar' ? 'الدعم الصوتي' : 'Voice support', icon: Mic2 },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات الريست' : 'Reset requests', icon: RefreshCw },
               ].map((tab) => {
@@ -2549,9 +2516,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
               <SitePresenceAdmin lang={lang} isDark={isDark} />
             )}
 
-            {adminSectionTab === 'voiceSessions' && (
-              <VoiceSupportAdmin customers={allCustomersList.map((customer: any) => ({ discordId: customer.discordId || customer.id, name: customer.name || 'عميل', image: customer.image || null, email: customer.email || null })).filter((customer: any) => Boolean(customer.discordId))} />
-            )}
 
             {adminSectionTab === 'updates' && (
               <SiteUpdatesAdmin lang={lang} isDark={isDark} onNotify={showToast} />
@@ -3522,7 +3486,7 @@ function PremiumConfirmationModal({ modal, lang, submitting, onDismiss, onConfir
   const primaryRef = useRef<HTMLButtonElement>(null);
   const title = modal.title || (isRtl ? 'تأكيد الإجراء' : 'Confirm action');
   const destructive = /حذف|Delete|إلغاء|Revoke|حظر|Ban/i.test(title);
-  const entity = /حساب|Account/i.test(title) ? (isRtl ? 'الحساب' : 'account') : /مفتاح|Key/i.test(title) ? (isRtl ? 'المفتاح' : 'key') : /منتج|Product/i.test(title) ? (isRtl ? 'المنتج' : 'product') : (isRtl ? 'التذكرة' : 'ticket');
+  const entity = /حساب|Account/i.test(title) ? (isRtl ? 'الحساب' : 'account') : /مفتاح|Key/i.test(title) ? (isRtl ? 'المفتاح' : 'key') : /منتج|Product/i.test(title) ? (isRtl ? 'المنتج' : 'product') : (isRtl ? 'العنصر' : 'item');
   const actionLabel = destructive ? (isRtl ? `حذف ${entity}` : `Delete ${entity}`) : (isRtl ? 'تأكيد الإجراء' : 'Confirm action');
 
   useEffect(() => {

@@ -230,8 +230,6 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
 
 function commands() {
   return [
-    { name: 'مساعد', description: 'فتح مساعد تعن للحلول السريعة', type: 1 },
-    { name: 'دعم', description: 'فتح جلسة دعم ذكي خاصة', type: 1 },
     { name: 'موقعي', description: 'فتح منصة تعن ومنتجاتك', type: 1 },
   ];
 }
@@ -1185,15 +1183,12 @@ async function answerInteraction(interaction: any, token: string) {
 
   if (interaction.type === 2) {
     const commandName = interaction.data?.name;
-    if (commandName === 'دعم') {
-      const result = await createDiscordSupportThread(interaction, token);
-      await respond({ content: result.existing ? `لديك جلسة دعم نشطة بالفعل: <#${result.threadId}>` : `تم إنشاء جلسة دعمك الخاصة: <#${result.threadId}>`, flags: 64 });
+    if (commandName === 'دعم' || commandName === 'مساعد') {
+      await respond({ content: `تجد الأسئلة الشائعة والشروحات في مركز المساعدة: ${websiteUrl}/?tab=tickets`, flags: 64 });
       return;
     }
     const data = commandName === 'موقعي'
-      ? { content: `منصة تعن ومنتجاتك: ${websiteUrl}\nافتح «منتجاتي» للوصول إلى «دليل المنتج» والتحميل، أو «مساعد تعن» للسؤال السريع.`, flags: 64 }
-      : commandName === 'مساعد'
-        ? { embeds: [assistantEmbed()], flags: 64 }
+      ? { content: `منصة تعن ومنتجاتك: ${websiteUrl}\nافتح «منتجاتي» لدليل المنتج، أو «مركز المساعدة» للأسئلة والشروحات.`, flags: 64 }
         : null;
     if (data) await respond(data);
     return;
@@ -1291,13 +1286,8 @@ async function answerInteraction(interaction: any, token: string) {
     await respond({ content: 'هذا الطلب منتهٍ أو تم التعامل معه بالفعل.', flags: 64 });
     return;
   }
-  if (customId === 'ta3n_support_start') {
-    if (String(interaction.channel_id) !== discordRoomChannels.smartSupport) {
-      await respond({ content: 'استخدم زر بدء المساعدة من روم الدعم الذكي المحدد.', flags: 64 });
-      return;
-    }
-    const result = await createDiscordSupportThread(interaction, token);
-    await respond({ content: result.existing ? `لديك جلسة دعم نشطة بالفعل: <#${result.threadId}>` : `تم إنشاء جلسة دعمك الخاصة: <#${result.threadId}>`, flags: 64 });
+  if (customId.startsWith('ta3n_support_') || customId.startsWith('ta3n_voice_')) {
+    await respond({ content: `تجد الأسئلة الشائعة والشروحات في مركز المساعدة: ${websiteUrl}/?tab=tickets`, flags: 64 });
     return;
   }
 
@@ -1411,7 +1401,6 @@ function handleGatewayMessage(data: RawData, token: string) {
     return;
   }
   if (packet.t === 'INTERACTION_CREATE') void answerInteraction(packet.d, token).catch((error) => console.error('[Discord Bot] Interaction handling failed:', error));
-  if (packet.t === 'MESSAGE_CREATE') void handleDiscordSupportMessage(packet.d, token).catch((error) => console.error('[Discord Bot] Support message handling failed:', error));
 }
 
 function connect(token: string) {
@@ -1446,21 +1435,11 @@ export async function startDiscordBot() {
     if (migratedResetLogs) console.info(`[Discord Reset] Moved ${migratedResetLogs} active request logs to the private audit channel.`);
     const panel = await ensureDiscordResetPanelPublished();
     if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
-    const supportLink = await ensureDiscordSupportLinkSent();
-    if (supportLink.sent) console.info(`[Discord Support] Sent support link ${supportLink.messageId}.`);
     const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
     if (announcement.published) console.info(`[Discord Updates] Published reset feature announcement ${announcement.messageId}.`);
   } catch (error) {
     console.error('[Discord Audit] Private reset channel permissions, private audit setup, or reset panel publish failed:', error);
   }
   await verifyCustomerAuditRooms(token).catch((error) => console.error('[Discord Audit] Customer audit rooms are unavailable:', error));
-  supportMaintenanceTimer = setInterval(() => {
-    if (supportMaintenanceRunning) return;
-    supportMaintenanceRunning = true;
-    void maintainDiscordSupportSessions(token)
-      .catch((error) => console.error('[Discord Support] Maintenance failed:', error))
-      .finally(() => { supportMaintenanceRunning = false; });
-  }, 30_000);
-  void maintainDiscordSupportSessions(token).catch((error) => console.error('[Discord Support] Initial maintenance failed:', error));
   connect(token);
 }

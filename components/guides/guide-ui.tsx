@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, BookOpen, Check, ChevronLeft, CircleHelp, Download, ExternalLink, Info, Play, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, CircleHelp, Download, ExternalLink, Info, Play, X } from 'lucide-react';
 import type { Product } from '@/types';
 import type { GuideArticle } from '@/lib/guide-library';
 import { guideStepEntries } from '@/lib/guide-library';
@@ -94,7 +94,7 @@ export function GuideVideo({ url, title, image, product, skipNotice = false, hid
   const [mode, setMode] = useState<'poster' | 'play'>('poster');
   const [failed, setFailed] = useState(false);
   const media = videoEmbed(url);
-  if (!media) return <p className={styles.warning}>رابط الفيديو غير صالح. تواصل مع الدعم.</p>;
+  if (!media) return <p className={styles.warning}>رابط الفيديو غير صالح.</p>;
   const poster = image || media.thumbnail;
   return <section className={styles.videoBlock}>
     {mode === 'poster' ? <button className={styles.videoPoster} onClick={() => setMode('play')} aria-label={`تشغيل شرح ${title}`}>
@@ -103,7 +103,7 @@ export function GuideVideo({ url, title, image, product, skipNotice = false, hid
     </button> : <div className={styles.player}>
       {media.kind === 'iframe' ? <iframe title={title} src={media.src} allow="fullscreen; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /> : <video src={media.src} controls playsInline preload="metadata" onError={() => setFailed(true)} />}
     </div>}
-    {failed && <p className={styles.warning}>تعذّر تحميل الفيديو. أعد المحاولة أو تواصل مع الدعم.</p>}
+    {failed && <p className={styles.warning}>تعذّر تحميل الفيديو. أعد المحاولة.</p>}
     {!hideCaption && <div className="px-4 py-3 text-xs text-slate-400">{title} · يمكنك قراءة الخطوات المكتوبة أدناه.</div>}
   </section>;
 }
@@ -136,7 +136,6 @@ export function GuideArticleView({ article, product, savedVariant, onVariant }: 
     </section>)}</div>
     </div>
     {article.links?.map(link => <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className={styles.smallButton}><Download size={16} />{link.label}</a>)}
-    <div className={styles.panel}><h4 className="text-sm font-semibold">هل ما زالت المشكلة موجودة؟</h4><a className={`${styles.smallButton} mt-3`} href={`/support?guide=${encodeURIComponent(article.category + ' — ' + article.title)}`}>فتح تذكرة دعم<ChevronLeft size={16} /></a></div>
     {article.source && <details className={styles.muted}><summary className="cursor-pointer">مرجع الشرح</summary><a className={styles.source} href={article.source} target="_blank" rel="noreferrer"><ExternalLink size={14} />المصدر الأصلي</a></details>}
   </article>;
 }
