@@ -1030,6 +1030,43 @@ export async function sendDiscordAdminDirectMessage(event: {
   return { sent: true, reason: 'sent' as const };
 }
 
+export async function sendDiscordResetCompletedDirectMessage(event: {
+  requestId: string;
+  customerDiscordId: string;
+  productName: string;
+  productImage?: string | null;
+}) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال تنبيه الرستات الخاص.');
+  const customerDiscordId = String(event.customerDiscordId || '').trim();
+  if (!/^\d{16,22}$/.test(customerDiscordId)) throw new Error('لا يوجد Discord ID صالح لهذا العميل.');
+  const productName = String(event.productName || 'المنتج').trim().slice(0, 180) || 'المنتج';
+  let imageUrl = `${websiteUrl}/logo.png`;
+  try {
+    const image = new URL(String(event.productImage || '/logo.png'), websiteUrl);
+    if ((image.protocol === 'https:' || image.protocol === 'http:') && image.href.length <= 1900) imageUrl = image.href;
+  } catch {
+    // A missing or invalid product image must not prevent the customer message.
+  }
+
+  const dmId = await openDiscordDm(customerDiscordId, token);
+  const message = await postDiscordMessage(dmId, token, {
+    nonce: event.requestId.slice(-25),
+    enforce_nonce: true,
+    embeds: [{
+      color: 0x22c55e,
+      title: 'تم رستات مفتاحك بنجاح',
+      description: `تمت إعادة ضبط مفتاحك الخاص بمنتج **${productName}**. يمكنك الآن العودة إلى الموقع واستخدام المنتج من جديد.`,
+      thumbnail: { url: imageUrl },
+      footer: { text: 'تعن • إشعار خاص بمنتجك' },
+      timestamp: new Date().toISOString(),
+    }],
+    components: [{ type: 1, components: [{ type: 2, style: 5, label: 'فتح منتجاتي', url: websiteUrl }] }],
+    allowed_mentions: { parse: [] },
+  });
+  return { messageId: message.id };
+}
+
 export async function sendDiscordCustomerReplyReminder(event: {
   conversationId: string;
   supportSessionId?: string | null;

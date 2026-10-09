@@ -1,13 +1,15 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
+import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordResetCompletedDirectMessage, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
 const KNOWLEDGE_COLLECTION = 'aiKnowledge';
 const RESET_COLLECTION = 'resetRequests';
 const SUPPORT_NOTIFICATIONS_COLLECTION = 'supportNotifications';
+const RESET_COMPLETION_CLAIM_MS = 5 * 60 * 1000;
+const RESET_DM_CLAIM_MS = 5 * 60 * 1000;
 const CUSTOMER_IDLE_CLOSE_MS = 5 * 60 * 1000;
 const CUSTOMER_IDLE_WARNING_MS = 1 * 60 * 1000;
 const SUPPORT_HUMAN_REPLY_GRACE_MS = 60 * 1000;
@@ -1167,15 +1169,81 @@ export async function deleteAiConversation(actor: TicketActor, conversationId: s
   return { closedConversationId: conversationId };
 }
 
-export async function processResetRequest(actor: TicketActor, input: { requestId: string; action: 'approve' | 'reject' | 'request_info' | 'complete'; note?: string }) {
+async function deliverResetCompletionDm(requestId: string): Promise<ResetRequest> {
+  const requestRef = doc(database(), RESET_COLLECTION, requestId);
+  const claimId = makeId('dm-claim');
+  const claimed = await runTransaction(database(), async (transaction) => {
+    const snapshot = await transaction.get(requestRef);
+    if (!snapshot.exists()) throw new Error('طلب Reset غير موجود.');
+    const request = toResetRequest(snapshot);
+    if (request.status !== 'COMPLETED') throw new Error('لم يُنفذ الرستات لهذا الطلب بعد.');
+    if (request.customerDmMessageId) return { request, alreadySent: true };
+    if (request.customerDmClaimId) {
+      const claimedAtMs = request.customerDmClaimedAt ? new Date(request.customerDmClaimedAt).getTime() : Number.NaN;
+      if (!Number.isFinite(claimedAtMs) || Date.now() - claimedAtMs < RESET_DM_CLAIM_MS) {
+        throw new Error('يجري إرسال رسالة الرستات الخاصة حالياً. انتظر قليلاً ثم حدّث الطلب.');
+      }
+    }
+    transaction.update(requestRef, { customerDmClaimId: claimId, customerDmClaimedAt: new Date().toISOString() });
+    return { request, alreadySent: false };
+  });
+  if (claimed.alreadySent) return claimed.request;
+
+  let messageId: string;
+  try {
+    const dm = await sendDiscordResetCompletedDirectMessage({
+      requestId: claimed.request.id,
+      customerDiscordId: claimed.request.customerDiscordId,
+      productName: claimed.request.productName,
+      productImage: claimed.request.productImage,
+    });
+    messageId = dm.messageId;
+  } catch (error) {
+    try {
+      await runTransaction(database(), async (transaction) => {
+        const snapshot = await transaction.get(requestRef);
+        if (snapshot.exists() && snapshot.data().customerDmClaimId === claimId) {
+          transaction.update(requestRef, { customerDmClaimId: null, customerDmClaimedAt: null });
+        }
+      });
+    } catch (releaseError) {
+      console.error('[Discord Reset] Unable to release failed DM claim:', releaseError);
+    }
+    throw error;
+  }
+
+  const sentAt = new Date().toISOString();
+  await runTransaction(database(), async (transaction) => {
+    const snapshot = await transaction.get(requestRef);
+    if (!snapshot.exists() || snapshot.data().customerDmClaimId !== claimId) {
+      throw new Error('أُرسلت الرسالة الخاصة لكن تعذر حفظ تأكيد الإرسال. تحقق من الطلب قبل المحاولة مجدداً.');
+    }
+    transaction.update(requestRef, {
+      customerDmMessageId: messageId,
+      customerDmSentAt: sentAt,
+      customerDmClaimId: null,
+      customerDmClaimedAt: null,
+    });
+  });
+  return { ...claimed.request, customerDmMessageId: messageId, customerDmSentAt: sentAt, customerDmClaimId: null, customerDmClaimedAt: null };
+}
+
+export async function processResetRequest(actor: TicketActor, input: { requestId: string; action: 'approve' | 'reject' | 'request_info' | 'complete' | 'retry_dm'; note?: string }) {
   if (!isStaff(actor)) throw new Error('تنفيذ ومراجعة Reset مخصصان للإدارة فقط.');
   const requestRef = doc(database(), RESET_COLLECTION, input.requestId);
   const snapshot = await getDoc(requestRef);
   if (!snapshot.exists()) throw new Error('طلب Reset غير موجود.');
   const request = toResetRequest(snapshot);
+  if (input.action === 'retry_dm') return deliverResetCompletionDm(request.id);
   const note = input.note?.trim().slice(0, 1000) || '';
-  const now = new Date().toISOString();
+  let now = new Date().toISOString();
   let status: ResetRequestStatus;
+  let completionClaimId: string | null = null;
+
+  if (request.status === 'COMPLETED' || request.status === 'CANCELLED' || request.status === 'REJECTED') {
+    throw new Error('هذا الطلب منتهٍ ولا يمكن إعادة تنفيذه.');
+  }
+  if (input.action === 'approve' && request.status === 'APPROVED') return request;
 
   if (input.action === 'approve') {
     status = 'APPROVED';
@@ -1186,22 +1254,56 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     status = 'WAITING_FOR_CUSTOMER';
   } else {
     if (request.status !== 'APPROVED') throw new Error('يجب الموافقة على الطلب أولاً قبل تنفيذ Reset.');
-    const result = await StoreDB.resetUserProductHwid(request.customerId, request.productId);
-    if (!result.success) throw new Error(result.message || 'تعذر تنفيذ Reset للمفتاح.');
+    completionClaimId = makeId('rst-claim');
+    const claimId = completionClaimId;
+    await runTransaction(database(), async (transaction) => {
+      const currentSnapshot = await transaction.get(requestRef);
+      if (!currentSnapshot.exists()) throw new Error('طلب Reset غير موجود.');
+      const current = toResetRequest(currentSnapshot);
+      if (current.status !== 'APPROVED') throw new Error('تمت معالجة هذا الطلب أو تغيرت حالته. حدّث القائمة ثم حاول مجدداً.');
+      const previous = current.completionClaimedAt || null;
+      if (current.completionClaimId) {
+        const claimedAtMs = previous ? new Date(previous).getTime() : Number.NaN;
+        if (!Number.isFinite(claimedAtMs) || Date.now() - claimedAtMs < RESET_COMPLETION_CLAIM_MS) {
+          throw new Error('يجري تنفيذ الرستات لهذا الطلب حالياً. انتظر اكتمال العملية.');
+        }
+      }
+      transaction.update(requestRef, { completionClaimId: claimId, completionClaimedAt: now });
+    });
+    try {
+      const result = await StoreDB.resetUserProductHwid(request.customerId, request.productId, request.id, request.keyId || undefined);
+      if (!result.success) throw new Error(result.message || 'تعذر تنفيذ Reset للمفتاح.');
+    } catch (error) {
+      try {
+        await runTransaction(database(), async (transaction) => {
+          const currentSnapshot = await transaction.get(requestRef);
+          if (currentSnapshot.exists() && currentSnapshot.data().completionClaimId === claimId) {
+            transaction.update(requestRef, { completionClaimId: null, completionClaimedAt: null });
+          }
+        });
+      } catch (releaseError) {
+        console.error('[Reset] Unable to release failed completion claim:', releaseError);
+      }
+      throw error;
+    }
     status = 'COMPLETED';
+    now = new Date().toISOString();
   }
 
-  await updateDoc(requestRef, {
+  const requestUpdate = {
     status,
     adminNotes: note || null,
     updatedAt: now,
     processedAt: status === 'APPROVED' || status === 'REJECTED' || status === 'COMPLETED' ? now : null,
     processedById: actor.id,
     processedByName: actor.name,
-  });
+    ...(status === 'COMPLETED' ? { completionClaimId: null, completionClaimedAt: null } : {}),
+  };
+  let customerDmMessageId = request.customerDmMessageId || null;
+  let customerDmSentAt = request.customerDmSentAt || null;
   if (status === 'COMPLETED') {
     const notificationRef = doc(database(), SUPPORT_NOTIFICATIONS_COLLECTION, `reset-completed-${request.id}`);
-    await setDoc(notificationRef, {
+    const notification = {
       id: notificationRef.id,
       customerDiscordId: request.customerDiscordId,
       conversationId: `reset:${request.id}`,
@@ -1209,11 +1311,37 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
       priority: 'high',
       title: 'تم رستات مفتاحك بنجاح',
       message: `تمت إعادة ضبط مفتاح ${request.productName}. يمكنك الآن التسجيل أو تشغيل المنتج من صفحة منتجاتي.`,
+      productName: request.productName,
+      productImage: request.productImage || null,
       createdAt: now,
       seenAt: null,
-    } satisfies SupportNotification);
+    } satisfies SupportNotification;
+    await runTransaction(database(), async (transaction) => {
+      const currentSnapshot = await transaction.get(requestRef);
+      if (!currentSnapshot.exists() || currentSnapshot.data().status !== 'APPROVED' || currentSnapshot.data().completionClaimId !== completionClaimId) {
+        throw new Error('تمت معالجة الطلب بواسطة إجراء آخر. حدّث القائمة للتحقق من حالته.');
+      }
+      transaction.update(requestRef, requestUpdate);
+      transaction.set(notificationRef, notification);
+    });
+    try {
+      const delivered = await deliverResetCompletionDm(request.id);
+      customerDmMessageId = delivered.customerDmMessageId || null;
+      customerDmSentAt = delivered.customerDmSentAt || null;
+    } catch (error) {
+      console.error('[Discord Reset] Unable to send completion DM; the private site notification remains available:', error);
+    }
+  } else {
+    await runTransaction(database(), async (transaction) => {
+      const currentSnapshot = await transaction.get(requestRef);
+      if (!currentSnapshot.exists()) throw new Error('طلب Reset غير موجود.');
+      const current = toResetRequest(currentSnapshot);
+      if (current.completionClaimId) throw new Error('يجري تنفيذ الرستات لهذا الطلب حالياً. انتظر اكتمال العملية.');
+      if (['COMPLETED', 'CANCELLED', 'REJECTED'].includes(current.status)) throw new Error('هذا الطلب منتهٍ ولا يمكن تغييره.');
+      transaction.update(requestRef, requestUpdate);
+    });
   }
-  const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null };
+  const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null, customerDmMessageId, customerDmSentAt };
 
   void syncDiscordResetRequestLog({
     reference: updatedRequest.reference,
@@ -1249,7 +1377,10 @@ function resetStatusLabel(status: ResetRequestStatus) {
 export async function purgeTerminalResetRequests(actor: TicketActor) {
   if (!isStaff(actor)) throw new Error('هذه العملية مخصصة للإدارة.');
   const snapshot = await getDocs(collection(database(), RESET_COLLECTION));
-  const terminalRequests = snapshot.docs.map(toResetRequest).filter((request) => ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(request.status));
+  const terminalRequests = snapshot.docs.map(toResetRequest).filter((request) =>
+    request.status === 'REJECTED'
+    || request.status === 'CANCELLED'
+    || (request.status === 'COMPLETED' && Boolean(request.customerDmMessageId)));
   for (const request of terminalRequests) {
     void deleteDiscordResetRequestCard(request.discordMessageId).catch((error) => console.error('[Discord Reset] Unable to remove old request card:', error));
     await deleteDoc(doc(database(), RESET_COLLECTION, request.id));

@@ -55,7 +55,7 @@ import {
   Send,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration } from '@/types';
+import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration, ResetRequest, SupportNotification } from '@/types';
 import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
 import { PortalNavigation, type PortalTab } from './portal-navigation';
@@ -78,6 +78,13 @@ const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_mod
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
 }
+
+type ResetCompletionPayload = SupportNotification & {
+  productId?: string | null;
+  productName?: string | null;
+  productImage?: string | null;
+};
+type ResetCompletionNotice = ResetCompletionPayload & { ownerId: string };
 
 
 
@@ -262,8 +269,12 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
   const [resetRequestReason, setResetRequestReason] = useState('');
   const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
-  const [resetCompletionNotice, setResetCompletionNotice] = useState<{ id: string; title: string; message: string } | null>(null);
-  const [isAcknowledgingResetCompletion, setIsAcknowledgingResetCompletion] = useState(false);
+  const [resetCompletionNotice, setResetCompletionNotice] = useState<ResetCompletionNotice | null>(null);
+  const resetNoticeOwnerRef = useRef<string | null>(null);
+  const resetNoticeAcknowledgingRef = useRef<string | null>(null);
+  const resetNoticeAutoDismissedRef = useRef<Set<string>>(new Set());
+  const resetNoticeSeenRef = useRef<Set<string>>(new Set());
+  const acknowledgeResetCompletionRef = useRef<() => Promise<void>>(async () => undefined);
 
 
   const guideTitle = lang === 'ar'
@@ -435,22 +446,129 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const isAdmin = currentUser?.role === 'Boss' || currentUser?.role === 'Co-Boss' || currentUser?.role === 'Admin' || currentUser?.email === 'boss@t3n-store.com';
 
   useEffect(() => {
-    if (activeTab !== 'my-products' || !currentUser) return;
-    let active = true;
-    const loadResetCompletion = async () => {
-      try {
-        const response = await fetch('/api/ai?view=notifications', { credentials: 'same-origin', cache: 'no-store' });
-        const data = await response.json();
-        if (!response.ok || !data.success || !active) return;
-        const next = (Array.isArray(data.notifications) ? data.notifications : []).find((item: any) => item.type === 'RESET_COMPLETED' && !item.seenAt) || null;
-        setResetCompletionNotice((current) => current?.id === next?.id ? current : next);
-      } catch {
-        // A reset completion notice is non-blocking and will be retried on the next visit.
+    resetNoticeOwnerRef.current = currentUser?.id || null;
+    return () => { resetNoticeOwnerRef.current = null; };
+  }, [currentUser?.id]);
+
+  const loadResetCompletion = React.useCallback(async (ownerId: string) => {
+    try {
+      const response = await fetch('/api/ai?view=notifications', { credentials: 'same-origin', cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.success || resetNoticeOwnerRef.current !== ownerId) return;
+      const next = (Array.isArray(data.notifications) ? data.notifications as ResetCompletionPayload[] : [])
+        .find((item) => item.type === 'RESET_COMPLETED' && !item.seenAt && !resetNoticeSeenRef.current.has(`${ownerId}:${item.id}`));
+      if (!next) {
+        setResetCompletionNotice(null);
+        return;
       }
+
+      let request: ResetRequest | undefined;
+      if ((!next.productName || !next.productImage) && next.conversationId?.startsWith('reset:')) {
+        try {
+          const requestResponse = await fetch('/api/ai?view=reset_requests', { credentials: 'same-origin', cache: 'no-store' });
+          const requestData = await requestResponse.json();
+          if (requestResponse.ok && requestData.success && Array.isArray(requestData.requests)) {
+            request = (requestData.requests as ResetRequest[]).find((item) => item.id === next.conversationId.slice(6));
+          }
+        } catch {
+          // Older notices can still be shown if their reset request is unavailable.
+        }
+      }
+      if (resetNoticeOwnerRef.current !== ownerId) return;
+      const legacyProductName = next.message.match(/^تمت إعادة ضبط مفتاح (.+?)\./)?.[1];
+      setResetCompletionNotice({
+        ...next,
+        ownerId,
+        productId: next.productId || request?.productId || null,
+        productName: next.productName || request?.productName || legacyProductName || null,
+        productImage: next.productImage || request?.productImage || null,
+      });
+    } catch {
+      // A reset completion notice is non-blocking and will be retried on the next visit.
+    }
+  }, []);
+
+  useEffect(() => {
+    const ownerId = currentUser?.id;
+    if (!ownerId) return;
+    const timer = window.setTimeout(() => { void loadResetCompletion(ownerId); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [currentUser?.id, loadResetCompletion]);
+
+  const acknowledgeResetCompletion = async () => {
+    const notice = resetCompletionNotice;
+    if (!notice || notice.ownerId !== currentUser?.id || notice.ownerId !== resetNoticeOwnerRef.current) return;
+    const noticeKey = `${notice.ownerId}:${notice.id}`;
+    if (resetNoticeAcknowledgingRef.current === noticeKey) return;
+    resetNoticeAcknowledgingRef.current = noticeKey;
+    setResetCompletionNotice(null);
+    let reload = false;
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: 'notification_seen', notificationId: notice.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error('mark-seen-failed');
+      resetNoticeSeenRef.current.add(`${notice.ownerId}:${notice.id}`);
+      reload = true;
+    } catch {
+      if (notice.ownerId === resetNoticeOwnerRef.current) {
+        setResetCompletionNotice((current) => current || notice);
+        showToast(lang === 'ar' ? 'تعذر إغلاق التنبيه. حاول مرة أخرى.' : 'Could not dismiss the notification. Try again.', 'error');
+      }
+    } finally {
+      if (resetNoticeAcknowledgingRef.current === noticeKey) resetNoticeAcknowledgingRef.current = null;
+    }
+    if (reload && resetNoticeOwnerRef.current === notice.ownerId) void loadResetCompletion(notice.ownerId);
+  };
+  useEffect(() => {
+    acknowledgeResetCompletionRef.current = acknowledgeResetCompletion;
+  });
+
+  useEffect(() => {
+    const notice = resetCompletionNotice;
+    const noticeKey = notice ? `${notice.ownerId}:${notice.id}` : '';
+    if (!notice || notice.ownerId !== currentUser?.id || resetNoticeAutoDismissedRef.current.has(noticeKey)) return;
+    let remainingMs = 12_000;
+    let startedAt = 0;
+    let timer: number | null = null;
+    const pause = () => {
+      if (timer === null) return;
+      window.clearTimeout(timer);
+      timer = null;
+      remainingMs -= Date.now() - startedAt;
     };
-    void loadResetCompletion();
-    return () => { active = false; };
-  }, [activeTab, currentUser?.id]);
+    const resume = () => {
+      if (document.visibilityState !== 'visible' || timer !== null) return;
+      startedAt = Date.now();
+      timer = window.setTimeout(() => {
+        timer = null;
+        if (notice.ownerId !== resetNoticeOwnerRef.current) return;
+        resetNoticeAutoDismissedRef.current.add(noticeKey);
+        void acknowledgeResetCompletionRef.current();
+      }, Math.max(0, remainingMs));
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resume();
+      else pause();
+    };
+    onVisibilityChange();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [resetCompletionNotice, currentUser?.id]);
+
+  const noticeProduct = resetCompletionNotice
+    ? products.find((product) => product.id === resetCompletionNotice.productId || product.name === resetCompletionNotice.productName)
+      || userProducts.find((license) => license.productId === resetCompletionNotice.productId || license.product?.name === resetCompletionNotice.productName)?.product
+    : undefined;
+  const noticeProductName = resetCompletionNotice?.productName || noticeProduct?.name || (lang === 'ar' ? 'منتجك' : 'your product');
+  const noticeProductImage = resetCompletionNotice?.productImage || getProductImage(noticeProduct);
   const getLicenseTiming = (license: UserProduct) => {
     const parsedExpiry = license.expiresAt ? new Date(license.expiresAt).getTime() : Number.NaN;
     const hasValidExpiry = Number.isFinite(parsedExpiry) && parsedExpiry > 0;
@@ -1634,6 +1752,20 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         user={currentUser}
       />
 
+      {resetCompletionNotice?.ownerId === currentUser.id && (
+        <div className="pointer-events-none fixed inset-x-4 bottom-4 z-[55] flex justify-center md:inset-x-auto md:right-6 md:bottom-6" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <section role="status" aria-live="polite" className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border p-3.5 shadow-[0_18px_48px_rgba(0,0,0,.22)] backdrop-blur-xl ${isDark ? 'border-emerald-300/25 bg-[#0d2522]/95 text-emerald-50' : 'border-emerald-200 bg-white/95 text-slate-900'}`}>
+            <img src={noticeProductImage} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/logo.png'; }} />
+            <div className="min-w-0 flex-1 text-start">
+              <p className={`text-[11px] font-black ${isDark ? 'text-emerald-200' : 'text-emerald-700'}`}>{lang === 'ar' ? 'تم رستات مفتاحك بنجاح' : 'Your license key was reset'}</p>
+              <p className="mt-1 truncate text-sm font-black" title={noticeProductName}>{noticeProductName}</p>
+              <p className={`mt-1 text-[11px] leading-5 ${isDark ? 'text-emerald-50/75' : 'text-slate-600'}`}>{lang === 'ar' ? 'يمكنك الآن التسجيل أو تشغيل المنتج من جديد.' : 'You can now register or use the product again.'}</p>
+            </div>
+            <button type="button" onClick={() => void acknowledgeResetCompletion()} aria-label={lang === 'ar' ? 'إغلاق تنبيه الرستات' : 'Dismiss reset notification'} className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition ${isDark ? 'text-emerald-100/70 hover:bg-white/10 hover:text-white' : 'text-slate-500 hover:bg-emerald-50 hover:text-slate-900'}`}><X className="h-4 w-4" /></button>
+          </section>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <main className="portal-main-content portal-scroll-region min-w-0 flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
         <div className="portal-content-frame mx-auto flex min-h-full max-w-[1520px] flex-col gap-6">
@@ -1873,14 +2005,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 2: MY PRODUCTS */}
         {activeTab === 'my-products' && (
           <div className="products-experience space-y-7">
-            {resetCompletionNotice && <section dir={lang === 'ar' ? 'rtl' : 'ltr'} role="alert" className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_22px_48px_rgba(16,185,129,.14)] sm:p-6 ${isDark ? 'border-emerald-300/[.28] bg-[linear-gradient(135deg,rgba(6,78,59,.88),rgba(10,36,42,.94))] text-emerald-50' : 'border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5,#f0fdfa)] text-emerald-950'}`}>
-              <div className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
-              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-start gap-4"><span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border ${isDark ? 'border-emerald-200/25 bg-emerald-300/[.14] text-emerald-100' : 'border-emerald-200 bg-white text-emerald-600'}`}><CheckCircle2 className="h-6 w-6" /></span><div><p className={`text-[10px] font-black tracking-[.16em] ${isDark ? 'text-emerald-200/75' : 'text-emerald-700/75'}`}>{lang === 'ar' ? 'تحديث الترخيص' : 'LICENSE UPDATE'}</p><h3 className="mt-1 text-base font-black sm:text-lg">{lang === 'ar' ? 'تم رستات المفتاح الخاص بك بنجاح' : 'Your license key was reset successfully'}</h3><p className={`mt-1.5 max-w-2xl text-xs leading-6 ${isDark ? 'text-emerald-50/80' : 'text-emerald-900/75'}`}>{resetCompletionNotice.message}</p><p className={`mt-1 text-[11px] font-bold ${isDark ? 'text-emerald-200' : 'text-emerald-700'}`}>{lang === 'ar' ? 'يمكنك الآن التسجيل أو تشغيل المنتج من جديد.' : 'You can now register or start the product again.'}</p></div></div>
-                <button type="button" disabled={isAcknowledgingResetCompletion} onClick={async () => { const notice = resetCompletionNotice; if (!notice || isAcknowledgingResetCompletion) return; setIsAcknowledgingResetCompletion(true); setResetCompletionNotice(null); try { const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ action: 'notification_seen', notificationId: notice.id }) }); const data = await response.json(); if (!response.ok || !data.success) throw new Error('mark-seen-failed'); } catch { setResetCompletionNotice(notice); } finally { setIsAcknowledgingResetCompletion(false); } }} className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60 ${isDark ? 'bg-emerald-300 text-emerald-950 hover:bg-emerald-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}>{isAcknowledgingResetCompletion ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{isAcknowledgingResetCompletion ? (lang === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : (lang === 'ar' ? 'متابعة' : 'Continue')}</button>
-              </div>
-            </section>}
-
             <section className={`products-page-hero flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-sky-100/[0.14] bg-[#0d1c2f]/82' : 'border-slate-200 bg-white shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`}>
               <div className="min-w-0">
                 <p className={`text-[10px] font-black tracking-[0.16em] uppercase ${isDark ? 'text-sky-200/70' : 'text-sky-700/70'}`}>{lang === 'ar' ? 'مكتبة التراخيص' : 'License Library'}</p>

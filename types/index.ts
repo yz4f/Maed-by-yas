@@ -115,6 +115,8 @@ export interface UserProduct {
   expiresAt?: string | null;
   hwidResetAt?: string | null;
   hwidResetCount?: number;
+  /** يمنع إعادة احتساب الرستات لنفس طلب الإدارة بعد إعادة المحاولة. */
+  lastHwidResetRequestId?: string | null;
   revokedAt?: string | null;
   revokedById?: string | null;
   discordRoleGranted: boolean;
@@ -375,6 +377,8 @@ export interface SupportNotification {
   priority: SupportNotificationPriority;
   title: string;
   message: string;
+  productName?: string | null;
+  productImage?: string | null;
   createdAt: string;
   seenAt?: string | null;
 }
@@ -434,6 +438,14 @@ export interface ResetRequest {
   discordMessageId?: string | null;
   /** قناة سجل الإدارة الخاصة التي تحتوي بطاقة الطلب؛ لا تستخدم قناة العملاء. */
   discordLogChannelId?: string | null;
+  /** يحفظ إرسال تنبيه الإكمال الخاص لتجنب تكراره عند مراجعة الطلب لاحقاً. */
+  customerDmMessageId?: string | null;
+  customerDmSentAt?: string | null;
+  customerDmClaimId?: string | null;
+  customerDmClaimedAt?: string | null;
+  /** حجز مؤقت يمنع تنفيذ الرستات مرتين عند وصول إجراءين إداريين معاً. */
+  completionClaimId?: string | null;
+  completionClaimedAt?: string | null;
 }
 
 export type SiteUpdateStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'DISCORD_SENT' | 'DISCORD_FAILED';
