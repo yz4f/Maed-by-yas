@@ -975,14 +975,18 @@ const LocalDB = {
     }
     return result;
   },
-  resetUserProductHwid(userId: string, productId: string): {success: boolean; message?: string; resetAt?: string} {
+  resetUserProductHwid(userId: string, productId: string, requestId?: string, keyId?: string): {success: boolean; message?: string; resetAt?: string} {
     const d = getFallbackData();
-    const product = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId && item.status === 'Active');
+    const product = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId && item.status === 'Active' && (!keyId || item.keyId === keyId));
     if (!product) return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.' };
+    if (requestId && product.lastHwidResetRequestId === requestId) {
+      return { success: true, resetAt: product.hwidResetAt || undefined };
+    }
 
     const resetAt = new Date().toISOString();
     product.hwidResetAt = resetAt;
     product.hwidResetCount = (product.hwidResetCount || 0) + 1;
+    if (requestId) product.lastHwidResetRequestId = requestId;
     saveFallbackData(d);
     this.addLog('HWID Reset', `تمت إعادة تعيين ربط الجهاز للمنتج ${productId}`, userId, 'Customer');
     return { success: true, resetAt };
@@ -2179,24 +2183,44 @@ export const StoreDB = {
     );
   },
 
-  async resetUserProductHwid(userId: string, productId: string): Promise<{success: boolean; message?: string; resetAt?: string}> {
+  async resetUserProductHwid(userId: string, productId: string, requestId?: string, keyId?: string): Promise<{success: boolean; message?: string; resetAt?: string}> {
     return runDbOp(
       async () => {
         const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId), where("productId", "==", productId));
         const snapshot = await getDocs(q);
-        const activeLicense = snapshot.docs.find((item) => (item.data() as UserProduct).status === 'Active');
+        const activeLicense = snapshot.docs.find((item) => {
+          const product = item.data() as UserProduct;
+          return product.status === 'Active' && (!keyId || product.keyId === keyId);
+        });
         if (!activeLicense) return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.' };
 
-        const resetAt = new Date().toISOString();
-        const current = activeLicense.data() as UserProduct;
-        await updateDoc(activeLicense.ref, {
-          hwidResetAt: resetAt,
-          hwidResetCount: (current.hwidResetCount || 0) + 1
+        const result = await runTransaction(getDb(), async (transaction) => {
+          const latest = await transaction.get(activeLicense.ref);
+          if (!latest.exists() || (latest.data() as UserProduct).status !== 'Active' || (keyId && (latest.data() as UserProduct).keyId !== keyId)) {
+            return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.', alreadyApplied: false };
+          }
+          const current = latest.data() as UserProduct;
+          if (requestId && current.lastHwidResetRequestId === requestId) {
+            return { success: true, resetAt: current.hwidResetAt || undefined, alreadyApplied: true };
+          }
+          const resetAt = new Date().toISOString();
+          transaction.update(activeLicense.ref, {
+            hwidResetAt: resetAt,
+            hwidResetCount: (current.hwidResetCount || 0) + 1,
+            ...(requestId ? { lastHwidResetRequestId: requestId } : {}),
+          });
+          return { success: true, resetAt, alreadyApplied: false };
         });
-        await this.addLog('HWID Reset', `تمت إعادة تعيين ربط الجهاز للمنتج ${productId}`, userId, 'Customer');
-        return { success: true, resetAt };
+        if (result.success && !result.alreadyApplied) {
+          try {
+            await this.addLog('HWID Reset', `تمت إعادة تعيين ربط الجهاز للمنتج ${productId}`, userId, 'Customer');
+          } catch (error) {
+            console.error('HWID reset succeeded, but its audit log could not be saved:', error);
+          }
+        }
+        return { success: result.success, message: result.message, resetAt: result.resetAt };
       },
-      () => LocalDB.resetUserProductHwid(userId, productId)
+      () => LocalDB.resetUserProductHwid(userId, productId, requestId, keyId)
     );
   },
 

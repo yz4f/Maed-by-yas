@@ -25,7 +25,7 @@ const resetSchema = z.object({
 const adminResetPatchSchema = z.object({
   action: z.literal('process_reset'),
   requestId: z.string().trim().min(1).max(180),
-  decision: z.enum(['approve', 'reject', 'request_info', 'complete']),
+  decision: z.enum(['approve', 'reject', 'request_info', 'complete', 'retry_dm']),
   note: z.string().trim().max(1000).optional(),
 });
 const notificationSeenSchema = z.object({

@@ -100,7 +100,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
     }
   };
 
-  const process = async (requestId: string, decision: 'approve' | 'reject' | 'complete') => {
+  const process = async (requestId: string, decision: 'approve' | 'reject' | 'complete' | 'retry_dm') => {
     setBusyId(requestId);
     try {
       const response = await fetch('/api/ai', {
@@ -118,9 +118,15 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
         requestCacheRef.current = next;
         return next;
       });
-      onNotify(data.request?.removed
-        ? (lang === 'ar' ? 'تمت معالجة الطلب وإزالته من القائمة المنتهية.' : 'The request was processed and removed from the completed list.')
-        : (lang === 'ar' ? 'تم تحديث حالة الطلب.' : 'Request status updated.'), 'success');
+      if (decision === 'retry_dm') {
+        onNotify(lang === 'ar' ? 'تم إرسال إشعار الرستات للعميل في الخاص.' : 'The reset notification was sent to the customer privately.', 'success');
+      } else if (decision === 'complete' && !data.request?.customerDmMessageId) {
+        onNotify(lang === 'ar' ? 'اكتمل الرستات ووصل إشعار الموقع؛ تعذر إرسال رسالة Discord الخاصة. يمكنك إعادة المحاولة.' : 'Reset completed and the site notice was saved; the Discord DM could not be sent. You can retry.', 'info');
+      } else {
+        onNotify(data.request?.removed
+          ? (lang === 'ar' ? 'تمت معالجة الطلب وإزالته من القائمة المنتهية.' : 'The request was processed and removed from the completed list.')
+          : (lang === 'ar' ? 'تم تحديث حالة الطلب.' : 'Request status updated.'), 'success');
+      }
     } catch (error) {
       onNotify(error instanceof Error ? error.message : 'تعذر تحديث الطلب.', 'error');
     } finally {
@@ -187,6 +193,17 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
               </div>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold ${muted}`}><Clock3 size={12} />{new Date(request.createdAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span><div className="flex items-center gap-2">{request.status === 'PENDING' && <><button disabled={busyId === request.id} onClick={() => void process(request.id, 'approve')} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-sky-300/20 bg-sky-300/[0.1] text-sky-100 hover:bg-sky-300/[0.18]' : 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100'}`}><CheckCircle2 size={13} />{lang === 'ar' ? 'اعتماد' : 'Approve'}</button><button disabled={busyId === request.id} onClick={() => void process(request.id, 'reject')} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-rose-300/20 bg-rose-300/[0.1] text-rose-100 hover:bg-rose-300/[0.18]' : 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100'}`}><XCircle size={13} />{lang === 'ar' ? 'رفض' : 'Reject'}</button></>}{request.status === 'APPROVED' && <button disabled={busyId === request.id} onClick={() => void process(request.id, 'complete')} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-emerald-300/20 bg-emerald-300/[0.1] text-emerald-100 hover:bg-emerald-300/[0.18]' : 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'}`}><CheckCircle2 size={13} />{lang === 'ar' ? 'تنفيذ الرستات' : 'Complete reset'}</button>}</div></div>
+              {request.status === 'COMPLETED' && !request.customerDmMessageId && (
+                <button
+                  type="button"
+                  disabled={busyId === request.id}
+                  onClick={() => void process(request.id, 'retry_dm')}
+                  className={`mt-3 inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-black transition disabled:opacity-50 ${isDark ? 'border-sky-300/20 bg-sky-300/[0.08] text-sky-100 hover:bg-sky-300/[0.15]' : 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100'}`}
+                >
+                  <Send size={13} />
+                  {lang === 'ar' ? 'إعادة إرسال تنبيه الخاص' : 'Retry private notification'}
+                </button>
+              )}
             </article>;
           })}
         </div>
