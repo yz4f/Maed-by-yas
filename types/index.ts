@@ -154,6 +154,8 @@ export interface SystemLog {
   ipAddress: string;
   createdAt: string;
   auditEventId?: string;
+  userImage?: string | null;
+  userRole?: RoleType | null;
 }
 
 export interface AuditEvent {

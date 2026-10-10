@@ -68,6 +68,7 @@ const HelpAdminSection = dynamic(() => import('./help-admin-section').then((modu
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
+const AdminAuditLog = dynamic(() => import('./admin-audit-log').then((module) => module.AdminAuditLog), { ssr: false });
 const loadProductStockModal = () => import('@/components/admin/stock/ProductStockModal').then((module) => module.ProductStockModal);
 const ProductStockModal = dynamic(loadProductStockModal, { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
@@ -295,8 +296,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [customerSearch, setCustomerSearch] = useState('');
   const [foundCustomer, setFoundCustomer] = useState<any>(null);
   const [adminLogs, setAdminLogs] = useState<SystemLog[]>([]);
-  const [adminLogQuery, setAdminLogQuery] = useState('');
-  const [adminLogAction, setAdminLogAction] = useState('all');
 
   // Inventory Modal States
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
@@ -657,12 +656,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     }
     if (adminSectionTab === 'customers') void loadAdminCustomersList();
     if (adminSectionTab === 'keys') void loadAllKeysList();
-  }, [activeTab, adminSectionTab, isAdmin]);
-
-  useEffect(() => {
-    if (activeTab !== 'admin' || !isAdmin || adminSectionTab !== 'logs') return;
-    const timer = window.setInterval(() => { void loadAdminStats(); }, 15_000);
-    return () => window.clearInterval(timer);
   }, [activeTab, adminSectionTab, isAdmin]);
 
   const loadUserProducts = async (silent = false): Promise<void> => {
@@ -1703,13 +1696,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
   }[activeTab];
-  const adminLogActions = Array.from(new Set(adminLogs.map((log) => log.action))).sort();
-  const normalizedLogQuery = adminLogQuery.trim().toLowerCase();
-  const visibleAdminLogs = adminLogs.filter((log) => {
-    const matchesAction = adminLogAction === 'all' || log.action === adminLogAction;
-    const haystack = `${lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action} ${log.details} ${log.userName || ''} ${log.ipAddress || ''}`.toLowerCase();
-    return matchesAction && (!normalizedLogQuery || haystack.includes(normalizedLogQuery));
-  });
 
   return (
     <div
@@ -1768,7 +1754,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
       {/* Main Content Area */}
       <main className="portal-main-content portal-scroll-region min-w-0 flex-grow h-full overflow-y-auto p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 relative z-10">
-        <div className="portal-content-frame mx-auto flex min-h-full max-w-[1520px] flex-col gap-6">
+        <div className={`portal-content-frame mx-auto flex min-h-full max-w-[1520px] flex-col gap-6 ${activeTab === 'admin' ? 'portal-content-frame--admin' : ''}`}>
 
         {currentUser?.warningMessage && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -2333,7 +2319,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
         {/* TAB 4: ADMIN PANEL (Categorized Dashboard with Sub-Tabs) */}
         {activeTab === 'admin' && isAdmin && (
-          <div className="admin-workspace space-y-5 w-full max-w-[1440px] mx-auto">
+          <div className="admin-workspace admin-workspace--redesign space-y-5 w-full max-w-[1440px] mx-auto">
             {/* Top Admin Header */}
             <div className={`admin-hero ${styles.bgCard} border ${styles.borderNormal} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
               <div className="min-w-0">
@@ -2357,7 +2343,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
                     {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات الريست' : 'Reset requests')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
-                    {adminSectionTab === 'logs' && (lang === 'ar' ? 'سجلات النظام' : 'System Logs')}
+                    {adminSectionTab === 'logs' && (lang === 'ar' ? 'مركز النشاط' : 'Activity Center')}
                   </span>
                 </h1>
                 <p className={`text-xs ${styles.textMuted} mt-2`}>
@@ -2412,6 +2398,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات الريست' : 'Reset requests', icon: RefreshCw },
+                { id: 'logs', label: lang === 'ar' ? 'سجل النشاط' : 'Activity log', icon: FileText },
+                { id: 'sitePresence', label: lang === 'ar' ? 'حضور العملاء' : 'Customer presence', icon: Activity },
+                { id: 'keys', label: lang === 'ar' ? 'بحث المفاتيح' : 'Key search', icon: Key },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 const isActive = adminSectionTab === tab.id;
@@ -2432,7 +2421,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   </button>
                 );
               })}
-              <details className="relative"><summary className="cursor-pointer rounded-xl px-3 py-2 text-sm">{lang==='ar'?'المزيد':'More'}</summary><div className="absolute end-0 top-full z-30 mt-2 grid min-w-44 gap-1 rounded-xl border border-white/15 bg-[#101e29] p-2 shadow-lg">{[{id:'sitePresence',ar:'نشاط الموقع',en:'Site activity'},{id:'keys',ar:'بحث المفاتيح',en:'Key search'},{id:'logs',ar:'سجل النظام',en:'System log'}].map(item=><button key={item.id} aria-pressed={adminSectionTab===item.id} onClick={event=>{setAdminSectionTab(item.id as any);event.currentTarget.closest('details')?.removeAttribute('open')}} className="rounded-lg px-3 py-2 text-start text-xs text-slate-200 hover:bg-white/10">{lang==='ar'?item.ar:item.en}</button>)}</div></details>
             </div>
 
             {/* ==================== SUB-TAB 1: PRODUCTS & INVENTORY ==================== */}
@@ -2788,112 +2776,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             )}
 
             {/* ==================== SUB-TAB 4: SYSTEM AUDIT LOGS ==================== */}
-            {adminSectionTab === 'logs' && (
-              <div className="glass-card rounded-[24px] p-6 md:p-8 space-y-6 animate-slide-up">
-                <h3 className={`text-lg font-black ${styles.textTitle} flex items-center gap-2`}>
-                  <FileText className="w-5 h-5 text-indigo-500 dark:text-primary" />
-                  <span>{lang === 'ar' ? 'سجلات الأمان والنشاط المباشرة (System Audit Logs)' : 'Live security audit logs'}</span>
-                </h3>
-
-                <div className="flex flex-col gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/[.05] p-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="relative flex h-3 w-3"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" /></span>
-                    <div>
-                      <p className="text-xs font-black text-emerald-500">{lang === 'ar' ? 'مراقبة مباشرة مفعلة' : 'Live monitoring enabled'}</p>
-                      <p className={`mt-0.5 text-[10px] ${styles.textMuted}`}>{lang === 'ar' ? 'يتم تحديث السجلات تلقائياً وإرسال الأحداث الخاصة إلى قناة Discord السرية.' : 'Logs refresh automatically and private events are forwarded to Discord.'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] font-bold">
-                    <span className={`rounded-lg border ${styles.borderNormal} px-2.5 py-1.5 ${styles.textMuted}`}>{visibleAdminLogs.length} {lang === 'ar' ? 'ظاهر' : 'visible'}</span>
-                    <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1.5 text-emerald-500">Discord • private audit</span>
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-                  <label className="relative block">
-                    <Search className={`pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 ${styles.textMuted}`} />
-                    <input value={adminLogQuery} onChange={(event) => setAdminLogQuery(event.target.value)} placeholder={lang === 'ar' ? 'ابحث في الحدث أو التفاصيل أو المستخدم أو IP...' : 'Search action, details, user, or IP...'} className={`h-11 w-full rounded-xl border ${styles.borderNormal} ${styles.bgInnerCard} ps-10 pe-3 text-xs ${styles.textTitle} outline-none focus:border-emerald-400`} />
-                  </label>
-                  <select value={adminLogAction} onChange={(event) => setAdminLogAction(event.target.value)} className={`h-11 rounded-xl border ${styles.borderNormal} ${styles.bgInnerCard} px-3 text-xs ${styles.textTitle} outline-none focus:border-emerald-400`}>
-                    <option value="all">{lang === 'ar' ? 'كل الأحداث' : 'All events'}</option>
-                    {adminLogActions.map((action) => <option key={action} value={action}>{action}</option>)}
-                  </select>
-                </div>
-
-                <div className="overflow-x-auto scrollbar-none">
-                  <table className="w-full text-right text-xs">
-                    <thead>
-                      <tr className={`border-b ${styles.borderNormal} ${styles.textMuted} font-bold`}>
-                        <th className="pb-4">{lang === 'ar' ? 'الحدث' : 'Action'}</th>
-                        <th className="pb-4">{lang === 'ar' ? 'التفاصيل' : 'Details'}</th>
-                        <th className="pb-4">{lang === 'ar' ? 'المستخدم / Discord' : 'User / Discord'}</th>
-                        <th className="pb-4">{lang === 'ar' ? 'عنوان IP' : 'IP Address'}</th>
-                        <th className="pb-4">{lang === 'ar' ? 'التوقيت' : 'Time'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${styles.borderSubtle}`}>
-                      {visibleAdminLogs.map((log) => {
-                        const logUser = allCustomersList.find(c => c.id === log.userId || c.discordId === log.discordId);
-                        const logAvatar = logUser?.image || 'https://cdn.discordapp.com/embed/avatars/0.png';
-                        const logRole = logUser?.role || 'Guest';
-                        
-                        // Custom Action Badge Style
-                        let actionBadgeClass = 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
-                        if (log.action.includes('Register') || log.action.includes('Activation') || log.action.includes('Login')) {
-                          actionBadgeClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-                        } else if (log.action.includes('Grant') || log.action.includes('Add')) {
-                          actionBadgeClass = 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
-                        } else if (log.action.includes('Warn') || log.action.includes('Update')) {
-                          actionBadgeClass = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-                        } else if (log.action.includes('Ban') || log.action.includes('Revoke') || log.action.includes('Delete')) {
-                          actionBadgeClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-                        }
-
-                        return (
-                          <tr key={log.id} className={`${styles.textTitle} hover:bg-black/[0.02] dark:hover:bg-white/5 transition-colors duration-200`}>
-                            <td className="py-4 font-extrabold pr-2">
-                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide ${actionBadgeClass}`}>
-                                {lang === 'ar' ? ({ 'Key Started': 'بدء مدة المنتج', 'Key Activation': 'تفعيل مفتاح', 'Stock Keys Added': 'إضافة مفاتيح للمخزون', 'Login': 'تسجيل الدخول', 'Register': 'تسجيل حساب' } as Record<string, string>)[log.action] || log.action : log.action}
-                              </span>
-                            </td>
-                            <td className="py-4 font-medium text-slate-350 max-w-xs truncate" title={log.details}>
-                              {log.details}
-                            </td>
-                            <td className="py-4">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={logAvatar}
-                                  alt={log.userName || 'User'}
-                                  className="w-7 h-7 rounded-full border border-white/5 object-cover"
-                                  onError={(e) => { e.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-                                />
-                                <div>
-                                  <div className="font-extrabold text-[12px] flex items-center gap-1.5">
-                                    <span>{log.userName || logUser?.name || (lang === 'ar' ? 'زائر' : 'Guest')}</span>
-                                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${logRole === 'Boss' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/20' : 'bg-slate-800 text-slate-400 border border-white/5'}`}>
-                                      {logRole}
-                                    </span>
-                                  </div>
-                                  {logUser?.discordId && (
-                                    <div className="text-[9px] text-slate-500 font-mono">ID: {logUser.discordId}</div>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className={`py-4 font-mono text-[11px] ${styles.textMuted}`}>{log.ipAddress}</td>
-                            <td className={`py-4 ${styles.textMuted} font-medium`}>
-                              {new Date(log.createdAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {visibleAdminLogs.length === 0 && (
-                        <tr><td colSpan={5} className={`py-12 text-center text-sm ${styles.textMuted}`}>{lang === 'ar' ? 'لا توجد سجلات مطابقة للبحث الحالي.' : 'No audit events match the current filters.'}</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+            {adminSectionTab === 'logs' && <AdminAuditLog lang={lang} />}
 
             {/* ==================== SUB-TAB 5: OVERVIEW & STATS ==================== */}
             {adminSectionTab === 'overview' && adminStats && (

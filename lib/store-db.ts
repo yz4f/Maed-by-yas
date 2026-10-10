@@ -2,7 +2,7 @@ import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, Do
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
-import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, writeBatch, runTransaction, increment } from "firebase/firestore";
+import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, startAfter, writeBatch, runTransaction, increment } from "firebase/firestore";
 
 
 // Safe dynamic imports for Server-side filesystem operations
@@ -2342,6 +2342,59 @@ export const StoreDB = {
         return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       },
       () => LocalDB.getLogs()
+    );
+  },
+
+  async getLogsPage(cursor?: string, pageSize = 40): Promise<{ logs: SystemLog[]; nextCursor: string | null }> {
+    const count = Math.min(Math.max(pageSize, 1), 100);
+    const enrich = (logs: SystemLog[], users: User[]) => {
+      const byIdentity = new Map<string, User>();
+      for (const user of users) {
+        byIdentity.set(user.id, user);
+        if (user.discordId) byIdentity.set(user.discordId, user);
+      }
+      return logs.map((log) => {
+        const user = byIdentity.get(log.userId || '') || byIdentity.get(log.discordId || '');
+        if (!user) return log;
+        return {
+          ...log,
+          userName: log.userName && !['Customer', 'Guest', 'زائر'].includes(log.userName) ? log.userName : user.name,
+          discordId: log.discordId || user.discordId,
+          userImage: user.image || null,
+          userRole: user.role,
+        };
+      });
+    };
+    return runDbOp(
+      async () => {
+        const database = getDb();
+        const cursorSnapshot = cursor ? await getDoc(doc(database, 'logs', cursor)) : null;
+        if (cursor && !cursorSnapshot?.exists()) return { logs: [], nextCursor: null };
+        const logsQuery = cursorSnapshot?.exists()
+          ? query(collection(database, 'logs'), orderBy('createdAt', 'desc'), startAfter(cursorSnapshot), limit(count + 1))
+          : query(collection(database, 'logs'), orderBy('createdAt', 'desc'), limit(count + 1));
+        const [logsSnapshot, usersSnapshot] = await Promise.all([
+          getDocs(logsQuery),
+          getDocs(collection(database, 'users')),
+        ]);
+        const hasMore = logsSnapshot.docs.length > count;
+        const logs = logsSnapshot.docs.slice(0, count).map((item) => ({ ...item.data(), id: item.id } as SystemLog));
+        return {
+          logs: enrich(logs, usersSnapshot.docs.map((item) => item.data() as User)),
+          nextCursor: hasMore ? logs[logs.length - 1]?.id || null : null,
+        };
+      },
+      () => {
+        const all = LocalDB.getLogs();
+        const cursorIndex = cursor ? all.findIndex((log) => log.id === cursor) : -1;
+        if (cursor && cursorIndex < 0) return { logs: [], nextCursor: null };
+        const offset = cursorIndex + 1;
+        const logs = all.slice(offset, offset + count);
+        return {
+          logs: enrich(logs, LocalDB.getUsers()),
+          nextCursor: all.length > offset + count ? logs[logs.length - 1]?.id || null : null,
+        };
+      },
     );
   },
 
