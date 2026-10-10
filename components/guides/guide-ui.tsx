@@ -147,12 +147,33 @@ export function GuideArticleView({ article, product, savedVariant, onVariant }: 
         {step.value && <div className="mt-3 text-xs text-slate-400">القيمة المطلوبة: <bdi className={styles.value} dir="ltr">{step.value}</bdi></div>}
         <p className={styles.stepText}><BidiText text={step.text} /></p>
         {step.commands?.map(command => <code key={command} dir="ltr" data-allow-copy className={`${styles.path} block select-text`}>{command}</code>)}
+        {step.links && step.links.length > 0 && <div className="mt-3 flex flex-wrap items-center gap-2">
+          {step.links.map(link => (
+            <a
+              key={link.url}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-400/60 hover:bg-cyan-500/20 hover:text-white"
+            >
+              <ExternalLink size={13} className="shrink-0" />
+              <span>{link.label}</span>
+            </a>
+          ))}
+        </div>}
         {step.image && <ImageLightbox src={step.image} alt={step.title} />}
       </div>
     </section>)}</div>
     </div>
-    {article.links?.map(link => <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className={styles.smallButton}><Download size={16} />{link.label}</a>)}
-    {article.source && <details className={styles.muted}><summary className="cursor-pointer">مرجع الشرح</summary><a className={styles.source} href={article.source} target="_blank" rel="noreferrer"><ExternalLink size={14} />المصدر الأصلي</a></details>}
+    {article.links && article.links.length > 0 && <div className="flex flex-wrap items-center gap-2.5 pt-2">
+      {article.links.map(link => {
+        const isDownload = link.url.endsWith('.exe') || link.url.includes('/download') || link.label.includes('تحميل');
+        return <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className={styles.smallButton}>
+          {isDownload ? <Download size={15} className="shrink-0" /> : <ExternalLink size={15} className="shrink-0" />}
+          <span>{link.label}</span>
+        </a>;
+      })}
+    </div>}
   </article>;
 }
 

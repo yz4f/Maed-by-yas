@@ -1,7 +1,7 @@
 import type { Product } from '@/types';
 
 export type GuideCategory = 'BIOS' | 'Windows' | 'RAID' | 'Permanent Spoof' | 'Network' | 'VPN' | 'Disk' | 'Visual C++' | 'تشغيل البرنامج' | 'أخطاء البرنامج';
-export interface GuideStep { title: string; text: string; value?: string; path?: string; image?: string; commands?: string[] }
+export interface GuideStep { title: string; text: string; value?: string; path?: string; image?: string; commands?: string[]; links?: { label: string; url: string }[] }
 export interface GuideArticle {
   id: string; title: string; description: string; category: GuideCategory; stage: number;
   source?: string; image?: string; video?: string; videoLabel?: string;
@@ -11,7 +11,6 @@ export interface GuideArticle {
 }
 export const GUIDE_STAGES = ['قبل البدء', 'إعداد BIOS', 'تجهيز Windows', 'إعداد النظام', 'تشغيل المنتج', 'الخطوات النهائية', 'المشاكل الشائعة'];
 export const GUIDE_CATEGORIES: GuideCategory[] = ['Windows', 'BIOS', 'Network', 'VPN', 'RAID', 'Disk', 'تشغيل البرنامج', 'Visual C++', 'أخطاء البرنامج', 'Permanent Spoof'];
-const BASE = 'https://spiritxx.gitbook.io/eon/';
 const FILES = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/';
 const PERMANENT_IMAGE = 'https://3845978534-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FUSC6VrOP0gtVeq3Dc1gX%2Fuploads%2F4a9fbfPCtIWvMcv9rRZV%2Fspoof.png?alt=media&token=cfc99705-d4e5-443f-8d5f-ecd7953fad6f';
 export const MAIN_VIDEO_FALLBACK = FILES + 'mHiKjOdRBJBDsCnu.mp4';
@@ -21,7 +20,7 @@ export const DEFAULT_GUIDE_SECTIONS = ['bios', 'windows', 'raid', 'normal', 'asu
 export const GUIDE_ARTICLES: GuideArticle[] = [
   {
     id: 'bios', title: 'إعداد BIOS', description: 'إعدادات TPM والاتصال حسب اللوحة الأم.', category: 'BIOS', stage: 1,
-    source: BASE + 'getting-started/step-2-bios-config', variantStepIndex: 3,
+    variantStepIndex: 3,
     warning: 'بحسب المصدر، شريحة TPM الجديدة لا تتطلب تعطيلها. خطوات Wi-Fi وBluetooth تخص الأجهزة التي تحتوي عليهما فقط.',
     steps: [
       { title: 'TPM', value: 'Disabled', text: 'اختر الشركة أدناه وشاهد موضع الخيار. يبدأ Intel عند 00:00 وAMD عند 01:20 في الفيديو المرفق.' },
@@ -45,7 +44,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
   },
   {
     id: 'raid', title: 'إعادة تثبيت RAID', description: 'تحضير USB وإعداد الأقراص وتثبيت Windows.', category: 'RAID', stage: 3,
-    source: BASE + 'getting-started/quickstart/raid-reinstallation', video: 'https://streamable.com/9o2zci', variantStepIndex: 3,
+    video: 'https://streamable.com/9o2zci', variantStepIndex: 3,
     warning: 'هذه العملية تمسح بيانات الأقراص. انسخ ملفاتك احتياطيًا أولًا. المصدر موجّه أساسًا إلى AMD، ولا يقدّم مسار Intel مفصلًا.',
     steps: [
       { title: 'التجهيز', text: 'جهّز USB بسعة 8–32GB باستخدام Media Creation Tool، وتعريفات RAID من أرشيف اللودر وتعريف LAN للوحة. صوّر الأرقام التسلسلية.' },
@@ -62,7 +61,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
   },
   {
     id: 'normal', title: 'Normal Permanent Spoof', description: 'المسار العادي وخيار EFI عند عدم تغير الأرقام.', category: 'Permanent Spoof', stage: 4,
-    source: BASE + 'setup-spoofing/step-6-permanent-spoofing/normal-permanent-spoof', image: PERMANENT_IMAGE,
+    image: PERMANENT_IMAGE,
     steps: [
       { title: 'اكتمال العملية', text: 'عند ظهور رسالة اكتمال Permanent Spoof، أغلق الأداة وأعد تشغيل الجهاز.' },
       { title: 'إذا لم تتغير الأرقام', path: 'Custom Spoofing > EFI SPOOF - Auto', text: 'انتظر انتهاء الخيار، ثم افتح BIOS وأقلع من UEFI OS أو UEFI Partition 1. اختر UEFI ثم افحص الأرقام مجددًا.' },
@@ -72,7 +71,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
   },
   {
     id: 'asus', title: 'ASUS Permanent Spoof', description: 'مسار مستقل للمنتجات التي تدعم لوحات ASUS.', category: 'Permanent Spoof', stage: 4,
-    source: BASE + 'setup-spoofing/step-6-permanent-spoofing/asus-permanent-spoof', image: PERMANENT_IMAGE,
+    image: PERMANENT_IMAGE,
     warning: 'يشترط المصدر استمرار الإقلاع عبر قسم UEFI الخاص بهذه الطريقة. هذا المسار يغيّر إعدادات الإقلاع ومفاتيح Secure Boot؛ اتبعه فقط للمنتج واللوحة المدعومين.',
     steps: [
       { title: 'بعد الاكتمال', text: 'أغلق الأداة عند اكتمال Permanent Spoof، وأعد التشغيل إلى BIOS. يذكر المصدر الأمر التالي من CMD بصلاحية المسؤول.', commands: ['shutdown /r /fw /t 0'] },
@@ -83,7 +82,6 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
   },
   {
     id: 'network', title: 'إعدادات الشبكة / Network Unflag', description: 'مسار إضافي لإعدادات محول Ethernet.', category: 'Network', stage: 5,
-    source: BASE + 'setup-spoofing/step-7-network-unflag',
     image: 'https://content.gitbook.com/content/USC6VrOP0gtVeq3Dc1gX/blobs/CtMdCAXLFF94mzUDMxhq/image.png',
     warning: 'المصدر يخص هذا المسار الإضافي بحالات حظر البلاغات أو حظر 24 ساعة، وليس بكل مشكلة اتصال. تجاوز الخيارات غير الموجودة في جهازك.',
     steps: [
@@ -94,17 +92,37 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
   },
   {
     id: 'vpn', title: 'استخدام VPN', description: 'إعدادات الاتصال الواردة في دليل T3N.', category: 'VPN', stage: 5,
-    source: BASE + 'setup-spoofing/step-8-usage-of-vpn',
     warning: 'هذه توصيات المصدر لمنتجه؛ لا تمثل ضمانًا لمنع الحظر. يذكر أن NordVPN وProtonVPN غير مناسبين لهذا المسار.',
     steps: [
-      { title: 'المدة المذكورة', text: 'يوصي المصدر باستخدام VPN خلال الأسبوع الأول مع EAC وBE، ثم يسمح بإيقافه بعد الأسبوع.' },
-      { title: 'الخدمة', text: 'يسمّي المصدر Windscribe وIPVanish، ويخص Mysteriumdark بلعبة Rust واتصال Residential. كما يشترط دعم Double-hop.' },
-      { title: 'Windscribe', value: 'Stealth / Firewall: Automatic', text: 'اختر Stealth وفعّل Firewall مع وضع Automatic بحسب المصدر.' },
+      {
+        title: 'المدة المذكورة',
+        text: 'يوصي المصدر باستخدام VPN خلال الأسبوع الأول مع EAC وBE، ثم يسمح بإيقافه بعد الأسبوع.',
+      },
+      {
+        title: 'الخدمة',
+        text: 'يسمّي المصدر Windscribe وIPVanish، ويخص Mysteriumdark بلعبة Rust واتصال Residential. كما يشترط دعم Double-hop.',
+        links: [
+          { label: 'موقع Mysterium Dark', url: 'https://www.mysteriumdark.com/' },
+          { label: 'موقع Windscribe (استخدام مجاني)', url: 'https://windscribe.com/features/use-for-free' },
+        ],
+      },
+      {
+        title: 'Windscribe',
+        value: 'Stealth / Firewall: Automatic',
+        text: 'اختر Stealth وفعّل Firewall مع وضع Automatic بحسب المصدر.',
+        links: [
+          { label: 'رابط تثبيت واستخدام Windscribe مجاناً', url: 'https://windscribe.com/features/use-for-free' },
+        ],
+      },
+    ],
+    links: [
+      { label: 'تحميل واستخدام Windscribe مجاناً', url: 'https://windscribe.com/features/use-for-free' },
+      { label: 'موقع Mysterium Dark الرسمي', url: 'https://www.mysteriumdark.com/' },
     ],
   },
   {
     id: 'disk', title: 'مشاكل القرص / Disk Guide', description: 'دليل VHD مستقل عن مشاكل Windows العامة.', category: 'Disk', stage: 3,
-    source: BASE + 'miscellaneous/disk-bypass-eac-be-rico-ace', video: 'https://spiritx.wtf/cdn/0cab4d685f5ef464/8e0fd169486d5811.mp4',
+    video: 'https://spiritx.wtf/cdn/0cab4d685f5ef464/8e0fd169486d5811.mp4',
     warning: 'يصف المصدر هذا المسار بأنه بديل مؤقت لمن تعذّر عليه تنفيذ RAID Reinstallation. اختر قرص VHD مكانًا لتثبيت اللعبة.',
     steps: [
       { title: 'إنشاء VHD', text: 'اتبع فيديو المصدر لإنشاء المصفوفة باستخدام VHD؛ لا تضف إعدادات خارج الشرح.' },
