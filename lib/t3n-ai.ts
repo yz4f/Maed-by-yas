@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordResetCompletedDirectMessage, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
+import { sendDiscordConversationClosedAuditLog, sendDiscordResetCompletedDirectMessage, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
@@ -1297,7 +1297,7 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
     processedAt: status === 'APPROVED' || status === 'REJECTED' || status === 'COMPLETED' ? now : null,
     processedById: actor.id,
     processedByName: actor.name,
-    ...(status === 'COMPLETED' ? { completionClaimId: null, completionClaimedAt: null } : {}),
+    ...(status === 'COMPLETED' ? { completionClaimId: null, completionClaimedAt: null, archivedAt: now } : {}),
   };
   let customerDmMessageId = request.customerDmMessageId || null;
   let customerDmSentAt = request.customerDmSentAt || null;
@@ -1341,7 +1341,7 @@ export async function processResetRequest(actor: TicketActor, input: { requestId
       transaction.update(requestRef, requestUpdate);
     });
   }
-  const updatedRequest = { ...request, status, adminNotes: note || null, updatedAt: now, processedAt: now, processedById: actor.id, processedByName: actor.name, discordMessageId: request.discordMessageId || null, customerDmMessageId, customerDmSentAt };
+  const updatedRequest = { ...request, ...requestUpdate, discordMessageId: request.discordMessageId || null, customerDmMessageId, customerDmSentAt };
 
   void syncDiscordResetRequestLog({
     reference: updatedRequest.reference,
@@ -1378,14 +1378,11 @@ export async function purgeTerminalResetRequests(actor: TicketActor) {
   if (!isStaff(actor)) throw new Error('هذه العملية مخصصة للإدارة.');
   const snapshot = await getDocs(collection(database(), RESET_COLLECTION));
   const terminalRequests = snapshot.docs.map(toResetRequest).filter((request) =>
-    request.status === 'REJECTED'
-    || request.status === 'CANCELLED'
-    || (request.status === 'COMPLETED' && Boolean(request.customerDmMessageId)));
+    !request.archivedAt && ['REJECTED', 'CANCELLED', 'COMPLETED'].includes(request.status));
   for (const request of terminalRequests) {
-    void deleteDiscordResetRequestCard(request.discordMessageId).catch((error) => console.error('[Discord Reset] Unable to remove old request card:', error));
-    await deleteDoc(doc(database(), RESET_COLLECTION, request.id));
+    await updateDoc(doc(database(), RESET_COLLECTION, request.id), { archivedAt: request.processedAt || request.updatedAt || new Date().toISOString() });
   }
-  if (terminalRequests.length) await StoreDB.addLog('AI Reset Requests Purged', `تمت إزالة ${terminalRequests.length} طلبات رستات منتهية من لوحة المتابعة`, actor.id, actor.name);
+  if (terminalRequests.length) await StoreDB.addLog('AI Reset Requests Archived', `تم حفظ ${terminalRequests.length} طلبات رستات منتهية في السجل`, actor.id, actor.name);
   return { removedCount: terminalRequests.length };
 }
 

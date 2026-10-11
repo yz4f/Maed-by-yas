@@ -33,6 +33,7 @@ const ACTION_NAMES: Record<string, string> = {
   'Key Inventory Updated': 'تعديل مفتاح المخزون',
   'Key Inventory Deleted': 'حذف مفتاح المخزون',
   'AI Reset Requests Purged': 'تنظيف طلبات إعادة التعيين',
+  'AI Reset Requests Archived': 'أرشفة سجلات الرستات',
   'AI Knowledge Updated': 'تحديث محتوى المساعدة',
   'AI Conversation Reopened': 'إعادة فتح محادثة',
   'AI Conversation Auto Closed': 'إغلاق محادثة تلقائيًا',

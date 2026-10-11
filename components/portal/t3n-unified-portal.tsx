@@ -56,7 +56,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration, ResetRequest, SupportNotification } from '@/types';
-import { durationLabel, KEY_DURATION_OPTIONS } from '@/lib/license-duration';
+import { durationLabel, KEY_DURATION_OPTIONS, getLicenseState } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
 import { PortalNavigation, type PortalTab } from './portal-navigation';
 import { DiscordMark as DiscordIcon } from './discord-mark';
@@ -233,10 +233,11 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [userProducts, setUserProducts] = useState<UserProduct[]>([]);
   const [userActivity, setUserActivity] = useState<AuditEvent[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [showExpiredLicenses, setShowExpiredLicenses] = useState(false);
+  const [showExpiredLicenses, setShowExpiredLicenses] = useState(true);
   const [newUserWelcome, setNewUserWelcome] = useState<{ name: string } | null>(null);
   const userProductsRequestInFlightRef = useRef(false);
   const userProductsRevisionRef = useRef('');
+  const guideMutationVersionRef = useRef(0);
   const [licenseClock, setLicenseClock] = useState(() => Date.now());
 
   useEffect(() => {
@@ -569,14 +570,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const noticeProductName = resetCompletionNotice?.productName || noticeProduct?.name || (lang === 'ar' ? 'منتجك' : 'your product');
   const noticeProductImage = resetCompletionNotice?.productImage || getProductImage(noticeProduct);
   const getLicenseTiming = (license: UserProduct) => {
-    const parsedExpiry = license.expiresAt ? new Date(license.expiresAt).getTime() : Number.NaN;
-    const hasValidExpiry = Number.isFinite(parsedExpiry) && parsedExpiry > 0;
-    const isPendingStart = license.status === 'Active' && !license.startedAt;
-    const isLifetime = Boolean(license.startedAt) && !license.expiresAt;
-    const expiresAtMs = hasValidExpiry ? parsedExpiry : 0;
-    const remainingMs = hasValidExpiry ? Math.max(0, expiresAtMs - licenseClock) : 0;
-    const isExpired = !isLifetime && hasValidExpiry && remainingMs === 0;
-    const isUsable = license.status === 'Active' && (isPendingStart || isLifetime || (hasValidExpiry && remainingMs > 0));
+    const { isPendingStart, isLifetime, expiresAtMs, remainingMs, isExpired, isUsable } = getLicenseState(license, licenseClock);
     const totalSeconds = Math.floor(remainingMs / 1000);
     const days = Math.floor(totalSeconds / 86_400);
     const hours = Math.floor((totalSeconds % 86_400) / 3_600);
@@ -661,6 +655,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const loadUserProducts = async (silent = false): Promise<void> => {
     if (!currentUser || userProductsRequestInFlightRef.current) return;
     userProductsRequestInFlightRef.current = true;
+    const guideVersion = guideMutationVersionRef.current;
     if (!silent) setIsLoadingProducts(true);
     try {
       const res = await fetch(silent ? '/api/user/products?sync=1' : '/api/user/products', {
@@ -670,6 +665,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       });
       if (res.ok) {
         const data = await res.json();
+        if (guideVersion !== guideMutationVersionRef.current) return;
         if (data.unchanged) return;
         if (typeof data.revision === 'string') userProductsRevisionRef.current = data.revision;
         const nextProducts = Array.isArray(data.products) ? data.products as UserProduct[] : [];
@@ -1184,12 +1180,17 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const handleOpenProductGuide = async (license: UserProduct) => {
     if (openingGuideProductId || !license.productId) return;
     setOpeningGuideProductId(license.productId);
+    guideMutationVersionRef.current += 1;
     try {
-      const response = await fetch(`/api/products/${license.productId}/guide/open`, { method: 'POST', credentials: 'same-origin' });
+      const response = await fetch(`/api/products/${license.productId}/guide/open`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ licenseId: license.id }) });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'));
-      const updated = { ...license, startedAt: data.startedAt || license.startedAt, expiresAt: data.expiresAt ?? license.expiresAt };
-      setUserProducts((current) => current.map((item) => item.id === license.id ? updated : item));
+      if (data.licenseId && data.licenseId !== license.id) throw new Error(lang === 'ar' ? 'تعذر مطابقة الترخيص. أعد المحاولة.' : 'License mismatch. Please try again.');
+      const timing = { startedAt: data.startedAt || license.startedAt, expiresAt: data.expiresAt === null ? null : data.expiresAt ?? license.expiresAt };
+      const updated = { ...license, ...timing };
+      guideMutationVersionRef.current += 1;
+      userProductsRevisionRef.current = '';
+      setUserProducts((current) => current.map((item) => item.id === license.id ? { ...item, ...timing } : item));
       setGuideModalProduct(updated);
       setGuideView('notice');
       setGuideFlashVersion(null);
@@ -1197,6 +1198,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     } catch (error) {
       showToast(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر فتح دليل المنتج.' : 'Could not open the product guide.'), 'error');
     } finally {
+      guideMutationVersionRef.current += 1;
       setOpeningGuideProductId(null);
     }
   };
