@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
-import { Award } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Award, Check, Copy } from 'lucide-react';
 import { FREELANCE_DOCUMENT_NUMBER } from '@/lib/site-identity';
 
 interface FooterProps {
@@ -12,38 +12,36 @@ interface FooterProps {
 
 export function Footer({ lang = 'ar', isDark = true }: FooterProps) {
   const isAr = lang === 'ar';
-  const currentYear = new Date().getFullYear();
-  const muted = isDark ? 'text-slate-400' : 'text-slate-600';
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const copyDocument = async () => {
+    try {
+      await navigator.clipboard.writeText(FREELANCE_DOCUMENT_NUMBER);
+      setError(false);
+      setCopied(true);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 2000);
+    } catch { setError(true); }
+  };
 
   return (
     <footer
       dir={isAr ? 'rtl' : 'ltr'}
-      className={`w-full overflow-hidden rounded-2xl border ${isDark ? 'border-white/[.09] bg-[#0e1925] text-slate-100' : 'border-slate-200 bg-white text-slate-900 shadow-[0_12px_32px_rgba(22,78,120,.06)]'}`}
+      className="flex flex-col items-center gap-2 py-5"
+      data-allow-copy
     >
-      <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border p-1 ${isDark ? 'border-cyan-300/15 bg-[#111f2b]' : 'border-slate-200 bg-slate-50'}`}>
-            <Image src="/logo.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl object-cover" />
-          </span>
-          <div className="min-w-0">
-            <strong className="block text-lg font-semibold leading-tight" translate="no">{isAr ? 'تعن' : 'T3N'}</strong>
-            <p className={`mt-1 text-xs leading-5 ${muted}`}>{isAr ? 'منتجاتك وتراخيصك في مكان واحد' : 'Your products and licenses in one place'}</p>
-          </div>
-        </div>
-
-
+      <div className={`inline-flex max-w-full flex-wrap items-center justify-center gap-3 rounded-xl border px-4 py-2.5 text-xs ${isDark ? 'border-cyan-200/15 bg-cyan-200/[.035] text-slate-200' : 'border-slate-200 bg-white/60 text-slate-700'}`}>
+        <Award className={`h-5 w-5 shrink-0 ${isDark ? 'text-cyan-200' : 'text-teal-700'}`} aria-hidden="true" />
+        <span className="font-semibold">{isAr ? 'وثيقة عميل تعن' : 'T3N customer document'}</span>
+        <bdi className="select-all font-mono text-[11px] tracking-wide">{FREELANCE_DOCUMENT_NUMBER}</bdi>
+        <button type="button" onClick={() => void copyDocument()} aria-label={isAr ? 'نسخ رقم الوثيقة' : 'Copy document number'} className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 ${isDark ? 'bg-white/[.06] hover:bg-white/10 text-cyan-100' : 'bg-teal-50 hover:bg-teal-100 text-teal-800'}`}>
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          <span aria-live="polite">{copied ? (isAr ? 'تم النسخ' : 'Copied') : (isAr ? 'نسخ' : 'Copy')}</span>
+        </button>
       </div>
-
-      <div className={`flex flex-col gap-3 border-t px-5 py-4 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 ${isDark ? 'border-white/[.08] bg-black/[.13]' : 'border-slate-200 bg-slate-50/70'}`}>
-        <div title={isAr ? 'وثيقة العمل الحر' : 'Freelance certificate'} className={`inline-flex w-fit items-center gap-2 rounded-lg border px-2.5 py-1.5 ${isDark ? 'border-emerald-300/20 bg-emerald-300/[.06] text-emerald-200' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
-          <Award className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="font-semibold">{isAr ? 'وثيقة العمل الحر' : 'Freelance certificate'}</span>
-          <bdi className="font-mono text-[11px] font-bold tracking-wide">{FREELANCE_DOCUMENT_NUMBER}</bdi>
-        </div>
-        <p className={`text-[11px] font-medium ${muted}`}>
-          {isAr ? `جميع الحقوق محفوظة © ${currentYear} تعن` : `© ${currentYear} T3N. All rights reserved.`}
-        </p>
-      </div>
+      {error && <p role="alert" className="text-xs text-rose-400">{isAr ? 'تعذر النسخ. يمكنك تحديد رقم الوثيقة ونسخه.' : 'Copy failed. Select the document number to copy it.'}</p>}
     </footer>
   );
 }

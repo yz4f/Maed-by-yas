@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
+import { z } from 'zod';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -13,12 +14,19 @@ export async function POST(req: Request, { params }: RouteContext) {
     return NextResponse.json({ success: false, code: 'UNAUTHENTICATED', message: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
   }
   try {
+    const text = await req.text();
+    let payload: unknown = {};
+    try { payload = text ? JSON.parse(text) : {}; } catch {
+      return NextResponse.json({ success: false, message: 'بيانات الطلب غير صالحة.' }, { status: 400 });
+    }
+    const parsed = z.object({ licenseId: z.string().min(1).max(160).optional() }).safeParse(payload);
+    if (!parsed.success) return NextResponse.json({ success: false, message: 'معرف الترخيص غير صالح.' }, { status: 400 });
     const { id: productId } = await params;
     const user = await StoreDB.getUserByDiscordId(actor.discordId);
     if (!user) {
       return NextResponse.json({ success: false, code: 'USER_NOT_FOUND', message: 'لم يتم العثور على حساب العميل.' }, { status: 404 });
     }
-    const result = await StoreDB.openProductGuide(user.id, productId, getClientIp(req));
+    const result = await StoreDB.openProductGuide(user.id, productId, getClientIp(req), parsed.data.licenseId);
     return NextResponse.json(result, { status: result.success ? 200 : 400 });
   } catch (error) {
     console.error('Product guide open failed:', error);

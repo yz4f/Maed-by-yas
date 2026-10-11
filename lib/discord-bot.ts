@@ -469,20 +469,14 @@ async function migrateLegacyResetRequestLogs(token: string) {
   return migrated;
 }
 
-async function purgeTerminalResetRequestsOnStartup(token: string) {
+async function purgeTerminalResetRequestsOnStartup() {
   const database = supportDatabase();
   const snapshot = await getDocs(collection(database, 'resetRequests'));
   const terminalRequests = snapshot.docs
     .map((item) => ({ id: item.id, data: item.data() as Record<string, unknown> }))
-    .filter(({ data }) => ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(String(data.status)));
+    .filter(({ data }) => !data.archivedAt && ['REJECTED', 'COMPLETED', 'CANCELLED'].includes(String(data.status)));
   for (const request of terminalRequests) {
-    const messageId = typeof request.data.discordMessageId === 'string' ? request.data.discordMessageId : null;
-    if (messageId) {
-      const auditChannelId = typeof request.data.discordLogChannelId === 'string' ? request.data.discordLogChannelId : discordRoomChannels.keyResetRequests;
-      const response = await discordApi(`/channels/${auditChannelId}/messages/${messageId}`, token, { method: 'DELETE' });
-      if (!response.ok && response.status !== 404) throw new Error(`تعذر إزالة بطاقة طلب الريست القديمة (HTTP ${response.status}).`);
-    }
-    await deleteDoc(doc(database, 'resetRequests', request.id));
+    await updateDoc(doc(database, 'resetRequests', request.id), { archivedAt: request.data.processedAt || request.data.updatedAt || new Date().toISOString() });
   }
   return terminalRequests.length;
 }

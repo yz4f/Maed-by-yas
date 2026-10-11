@@ -37,6 +37,31 @@ export function isLicenseCurrentlyActive(license: Pick<UserProduct, 'status' | '
   return Number.isFinite(expiresAtMs) && expiresAtMs > nowMs;
 }
 
+export function getLicenseState(license: Pick<UserProduct, 'status' | 'expiresAt' | 'startedAt'>, nowMs = Date.now()) {
+  const expiry = license.expiresAt ? Date.parse(license.expiresAt) : Number.NaN;
+  const hasExpiry = Number.isFinite(expiry);
+  const isExpired = license.status === 'Expired' || (hasExpiry && expiry <= nowMs);
+  const isPendingStart = license.status === 'Active' && !license.startedAt && !license.expiresAt;
+  const isLifetime = Boolean(license.startedAt) && !license.expiresAt;
+  const isUsable = license.status === 'Active' && !isExpired && (isPendingStart || isLifetime || (hasExpiry && expiry > nowMs));
+  return { isExpired, isPendingStart, isLifetime, isUsable, expiresAtMs: hasExpiry ? expiry : 0, remainingMs: hasExpiry ? Math.max(0, expiry - nowMs) : 0 };
+}
+
+/** A renewed product can have several licenses. Never start a different one. */
+export function selectGuideLicense(licenses: UserProduct[], licenseId?: string, nowMs = Date.now()): UserProduct | undefined {
+  return licenses.filter((license) => (!licenseId || license.id === licenseId) && getLicenseState(license, nowMs).isUsable)
+    .sort((a, b) => (Date.parse(b.activatedAt) || 0) - (Date.parse(a.activatedAt) || 0))[0];
+}
+
+export function getGuideStartTiming(license: UserProduct, duration: unknown, now: string) {
+  // Keep an already running/legacy license's deadline. Opening a guide cannot renew it.
+  if (license.startedAt) return { startedAt: license.startedAt, expiresAt: license.expiresAt ?? null };
+  return {
+    startedAt: now,
+    expiresAt: duration === 'Lifetime' ? null : license.expiresAt ?? computeLicenseExpiresAt(now, duration),
+  };
+}
+
 export function durationLabel(duration: unknown, lang: 'ar' | 'en' = 'ar'): string {
   const value = normalizeKeyDuration(duration);
   if (lang === 'en') return value;

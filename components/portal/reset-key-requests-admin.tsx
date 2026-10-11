@@ -42,6 +42,8 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [view, setView] = useState<'active' | 'history'>('active');
+  const mutationVersionRef = useRef(0);
   const mountedRef = useRef(false);
   const inFlightRef = useRef(false);
   const requestCacheRef = useRef<ResetRequest[]>([]);
@@ -52,11 +54,13 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const load = useCallback(async () => {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
+    const version = mutationVersionRef.current;
     setIsLoading(true);
 
     try {
       const response = await fetch('/api/ai?view=admin_resets', { credentials: 'same-origin', cache: 'no-store' });
       const data = await response.json();
+      if (version !== mutationVersionRef.current) return;
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحميل الطلبات.');
       const next = Array.isArray(data.requests) ? data.requests as ResetRequest[] : [];
       requestCacheRef.current = next;
@@ -71,8 +75,9 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
 
   useEffect(() => {
     mountedRef.current = true;
-    void load();
-    return () => { mountedRef.current = false; };
+    const startup = window.setTimeout(() => { void load(); }, 0);
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 15_000);
+    return () => { mountedRef.current = false; window.clearTimeout(startup); window.clearInterval(timer); };
   }, [load]);
 
   const copyKey = async (key: string, id: string) => {
@@ -101,6 +106,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   };
 
   const process = async (requestId: string, decision: 'approve' | 'reject' | 'complete' | 'retry_dm') => {
+    mutationVersionRef.current += 1;
     setBusyId(requestId);
     try {
       const response = await fetch('/api/ai', {
@@ -111,6 +117,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'تعذر تحديث الطلب.');
+      mutationVersionRef.current += 1;
       setRequests((current) => {
         const next = data.request?.removed
           ? current.filter((request) => request.id !== requestId)
@@ -125,7 +132,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
       } else {
         onNotify(data.request?.removed
           ? (lang === 'ar' ? 'تمت معالجة الطلب وإزالته من القائمة المنتهية.' : 'The request was processed and removed from the completed list.')
-          : (lang === 'ar' ? 'تم تحديث حالة الطلب.' : 'Request status updated.'), 'success');
+          : decision === 'complete' ? (lang === 'ar' ? 'اكتمل الرستات وانتقل الطلب إلى سجلات الرستات.' : 'Reset completed. The request is now in reset history.') : (lang === 'ar' ? 'تم تحديث حالة الطلب.' : 'Request status updated.'), 'success');
       }
     } catch (error) {
       onNotify(error instanceof Error ? error.message : 'تعذر تحديث الطلب.', 'error');
@@ -136,6 +143,9 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
 
   const pendingCount = requests.filter((request) => request.status === 'PENDING').length;
   const completedCount = requests.filter((request) => request.status === 'COMPLETED').length;
+  const history = requests.filter((request) => ['COMPLETED', 'REJECTED', 'CANCELLED'].includes(request.status));
+  const activeRequests = requests.filter((request) => !['COMPLETED', 'REJECTED', 'CANCELLED'].includes(request.status));
+  const visibleRequests = view === 'active' ? activeRequests : history;
   const cardClass = isDark ? 'border-white/[0.08] bg-[#0b111b]/90 shadow-[0_16px_40px_rgba(0,0,0,0.18)] hover:border-cyan-200/[0.16]' : 'border-slate-200 bg-white shadow-[0_14px_34px_rgba(33,82,118,0.08)] hover:border-sky-200';
   const muted = isDark ? 'text-slate-400' : 'text-slate-500';
   const keyPanel = isDark ? 'border-cyan-200/[0.1] bg-black/20' : 'border-sky-100 bg-sky-50/70';
@@ -149,7 +159,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
           <div className={`grid h-11 w-11 place-items-center rounded-2xl border ${isDark ? 'border-cyan-300/20 bg-cyan-300/[0.1] text-cyan-100' : 'border-sky-200 bg-sky-100 text-sky-700'}`}><KeyRound size={21} /></div>
           <div>
             <h3 className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{lang === 'ar' ? 'طلبات رستات المفاتيح' : 'Key reset requests'}</h3>
-            <p className={`mt-1 text-xs ${muted}`}>{lang === 'ar' ? 'الطلبات مستقرة ولا تتغير إلا عند التحديث أو تنفيذ إجراء إداري.' : 'Requests remain stable and change only after refresh or an administrative action.'}</p>
+            <p className={`mt-1 text-xs ${muted}`}>{lang === 'ar' ? 'تنتقل الطلبات المكتملة تلقائيًا إلى سجلات الرستات مع حفظ بيانات التنفيذ.' : 'Completed requests move automatically to reset history with their execution details.'}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -160,17 +170,20 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2" aria-label={lang === 'ar' ? 'عرض طلبات الرستات' : 'Reset request view'}>
+        {(['active', 'history'] as const).map((tab) => <button key={tab} type="button" aria-pressed={view === tab} onClick={() => setView(tab)} className={`rounded-xl border px-4 py-2.5 text-xs font-semibold ${view === tab ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-600 dark:text-cyan-200' : isDark ? 'border-white/10 text-slate-300' : 'border-slate-200 text-slate-600'}`}>{tab === 'active' ? (lang === 'ar' ? 'الطلبات الحالية' : 'Active requests') : (lang === 'ar' ? 'سجلات الرستات' : 'Reset history')} <span className="ms-2">{tab === 'active' ? activeRequests.length : history.length}</span></button>)}
+      </div>
+
       {isLoading && requests.length === 0 ? (
         <div className="grid gap-3 md:grid-cols-2">{[0, 1].map((item) => <div key={item} className={`h-56 animate-pulse rounded-[22px] border ${isDark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-slate-200 bg-slate-100'}`} />)}</div>
-      ) : requests.length === 0 ? (
+      ) : visibleRequests.length === 0 ? (
         <div className={`rounded-[22px] border border-dashed px-6 py-14 text-center ${isDark ? 'border-white/[0.12] bg-white/[0.02]' : 'border-slate-200 bg-white'}`}>
           <UserRound className={`mx-auto mb-3 ${isDark ? 'text-slate-600' : 'text-slate-400'}`} size={28} />
-          <p className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{lang === 'ar' ? 'لا توجد طلبات رستات مفاتيح حالياً.' : 'No key reset requests yet.'}</p>
-          <p className={`mt-1 text-xs ${muted}`}>{lang === 'ar' ? 'ستظهر هنا الطلبات المرسلة من بطاقات المنتجات.' : 'Requests sent from product cards will appear here.'}</p>
+          <p className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{view === 'active' ? (lang === 'ar' ? 'لا توجد طلبات رستات قيد المتابعة.' : 'No active reset requests.') : (lang === 'ar' ? 'لا توجد سجلات رستات حتى الآن.' : 'No reset history yet.')}</p>
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
-          {requests.map((request) => {
+          {visibleRequests.map((request) => {
             const hasFullKey = Boolean(request.keyValue?.trim());
             return <article key={request.id} className={`rounded-[22px] border p-4 transition ${cardClass}`}>
               <div className={`flex items-start justify-between gap-3 border-b pb-3 ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
@@ -204,6 +217,10 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
                   {lang === 'ar' ? 'إعادة إرسال تنبيه الخاص' : 'Retry private notification'}
                 </button>
               )}
+              {view === 'history' && <div className={`mt-3 rounded-xl border p-3 text-xs leading-6 ${isDark ? 'border-white/10 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
+                <p>{lang === 'ar' ? 'المسؤول: ' : 'Processed by: '}{request.processedByName || '—'}</p>
+                <p>{lang === 'ar' ? 'وقت الإجراء: ' : 'Processed at: '}{new Date(request.processedAt || request.updatedAt).toLocaleString(lang === 'ar' ? 'ar-SA-u-ca-gregory' : 'en-US', { timeZone: 'Asia/Riyadh', weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })} {lang === 'ar' ? 'بتوقيت الرياض' : 'Riyadh time'}</p>
+              </div>}
             </article>;
           })}
         </div>

@@ -436,6 +436,8 @@ export interface ResetRequest {
   processedAt?: string | null;
   processedById?: string | null;
   processedByName?: string | null;
+  /** Retained as reset evidence after leaving the active request queue. */
+  archivedAt?: string | null;
   /** معرف بطاقة Discord المرتبطة بالطلب، لتحديثها دون تكرار الرسائل. */
   discordMessageId?: string | null;
   /** قناة سجل الإدارة الخاصة التي تحتوي بطاقة الطلب؛ لا تستخدم قناة العملاء. */

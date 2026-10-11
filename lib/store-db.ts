@@ -1,5 +1,5 @@
 import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
-import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration } from '@/lib/license-duration';
+import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration, getLicenseState, selectGuideLicense, getGuideStartTiming } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
 import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, startAfter, writeBatch, runTransaction, increment } from "firebase/firestore";
@@ -931,16 +931,16 @@ const LocalDB = {
     this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
     return { success: true, message: 'تم التفعيل بنجاح', product, duration: keyObj.duration };
   },
-  openProductGuide(userId: string, productId: string, ipAddress: string): { success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } {
+  openProductGuide(userId: string, productId: string, ipAddress: string, licenseId?: string): { success: boolean; message: string; licenseId?: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } {
     const d = getFallbackData();
-    const userProduct = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId);
+    const userProduct = selectGuideLicense(d.userProducts.filter((item: UserProduct) => item.userId === userId && item.productId === productId), licenseId);
     if (!userProduct) return { success: false, message: 'لا يوجد ترخيص لهذا المنتج.' };
     const key = userProduct.keyId ? d.keys.find((item: Key) => item.id === userProduct.keyId) : null;
     if (userProduct.startedAt) {
-      return { success: true, message: 'تم فتح الدليل مسبقاً.', startedAt: userProduct.startedAt, expiresAt: userProduct.expiresAt || null, status: key?.status || 'active' };
+      return { success: true, message: 'تم فتح الدليل مسبقاً.', licenseId: userProduct.id, startedAt: userProduct.startedAt, expiresAt: userProduct.expiresAt ?? null, status: key?.status || 'active' };
     }
     const startedAt = new Date().toISOString();
-    const expiresAt = computeLicenseExpiresAt(startedAt, key?.duration || '3 Days');
+    const { expiresAt } = getGuideStartTiming(userProduct, key?.duration || '3 Days', startedAt);
     userProduct.startedAt = startedAt;
     userProduct.expiresAt = expiresAt;
     if (key) {
@@ -949,7 +949,7 @@ const LocalDB = {
     }
     saveFallbackData(d);
     this.addLog('Key Started', `بدأت مدة المنتج ${productId} عند فتح الدليل`, userId, undefined, ipAddress);
-    return { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', startedAt, expiresAt, status: 'active' };
+    return { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', licenseId: userProduct.id, startedAt, expiresAt, status: 'active' };
   },
   getUserDetails(userId: string): {user: User, products: UserProduct[]} | undefined {
     const d = getFallbackData();
@@ -2106,39 +2106,41 @@ export const StoreDB = {
       () => LocalDB.activateProductWithKey(keyString, userDetails, ipAddress)
     );
   },
-  async openProductGuide(userId: string, productId: string, ipAddress: string): Promise<{ success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus }> {
+  async openProductGuide(userId: string, productId: string, ipAddress: string, licenseId?: string): Promise<{ success: boolean; message: string; licenseId?: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus }> {
     return runDbOp(
       async () => {
         const q = query(collection(getDb(), 'userProducts'), where('userId', '==', userId), where('productId', '==', productId));
         const snapshot = await getDocs(q);
-        const candidate = snapshot.docs.find((item) => (item.data() as UserProduct).status === 'Active');
+        const selected = selectGuideLicense(snapshot.docs.map((item) => ({ ...item.data(), id: item.id } as UserProduct)), licenseId);
+        const candidate = snapshot.docs.find((item) => item.id === selected?.id);
         if (!candidate) return { success: false, message: 'لا يوجد ترخيص لهذا المنتج.' };
         const userProductRef = candidate.ref;
-        const keyId = (candidate.data() as UserProduct).keyId;
         const now = new Date().toISOString();
-        let result: { success: boolean; message: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } = { success: false, message: 'تعذر بدء المدة.' };
+        let result: { success: boolean; message: string; licenseId?: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } = { success: false, message: 'تعذر بدء المدة.' };
         await runTransaction(getDb(), async (transaction) => {
+          result = { success: false, message: 'الترخيص منتهٍ أو غير فعّال.' };
           const currentSnapshot = await transaction.get(userProductRef);
           if (!currentSnapshot.exists()) return;
           const current = currentSnapshot.data() as UserProduct;
+          if (current.userId !== userId || current.productId !== productId || !getLicenseState(current).isUsable) return;
           if (current.startedAt) {
-            result = { success: true, message: 'تم فتح الدليل مسبقاً.', startedAt: current.startedAt, expiresAt: current.expiresAt || null, status: 'active' };
+            result = { success: true, message: 'تم فتح الدليل مسبقاً.', licenseId: candidate.id, startedAt: current.startedAt, expiresAt: current.expiresAt ?? null, status: 'active' };
             return;
           }
-          const keyRef = keyId ? doc(getDb(), 'keys', keyId) : null;
+          const keyRef = current.keyId ? doc(getDb(), 'keys', current.keyId) : null;
           const keySnapshot = keyRef ? await transaction.get(keyRef) : null;
           const key = keySnapshot?.exists() ? keySnapshot.data() as Key : null;
-          const expiresAt = computeLicenseExpiresAt(now, key?.duration || '3 Days');
+          const { expiresAt } = getGuideStartTiming(current, key?.duration || '3 Days', now);
           transaction.update(userProductRef, { startedAt: now, expiresAt });
-          if (keyRef) transaction.update(keyRef, { status: 'active', updatedAt: now });
-          result = { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', startedAt: now, expiresAt, status: 'active' };
+          if (keyRef && keySnapshot?.exists()) transaction.update(keyRef, { status: 'active', updatedAt: now });
+          result = { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', licenseId: candidate.id, startedAt: now, expiresAt, status: 'active' };
         });
         if (result.success && result.startedAt === now) {
           await this.addLog('Key Started', `بدأت مدة المنتج ${productId} عند فتح الدليل`, userId, undefined, ipAddress);
         }
         return result;
       },
-      () => LocalDB.openProductGuide(userId, productId, ipAddress)
+      () => LocalDB.openProductGuide(userId, productId, ipAddress, licenseId)
     );
   },
 
