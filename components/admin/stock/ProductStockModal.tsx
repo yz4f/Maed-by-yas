@@ -31,6 +31,7 @@ import { Product, Key, KeyStatus, KeyDuration, ProductCustomField } from '@/type
 import { toast } from '@/lib/toast';
 import { ProductGuideSettings, DEFAULT_NOTICE } from '@/components/guides/product-guide-settings';
 import { DEFAULT_GUIDE_SECTIONS } from '@/lib/guide-library';
+import { LIFETIME_PRODUCT_ID, resolveProductKeyDuration } from '@/lib/license-duration';
 
 async function prepareGuideCover(file: File): Promise<string> {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('اختر صورة JPG أو PNG أو WebP.');
@@ -186,6 +187,7 @@ export function ProductStockModal({
   useEffect(() => {
     if (!product) return;
 
+    setSelectedDuration(resolveProductKeyDuration(product.id));
     setGuideSettings({ notice: product.notice || DEFAULT_NOTICE, guideSections: product.guideSections || DEFAULT_GUIDE_SECTIONS });
     setProductFormData({
       name: product.name || '',
@@ -789,7 +791,7 @@ export function ProductStockModal({
                         onChange={(e) => setSelectedDuration(e.target.value as KeyDuration)}
                         className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#090d16] text-xs font-semibold text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
                       >
-                        {KEY_DURATION_OPTIONS.map((opt) => (
+                        {(product.id === LIFETIME_PRODUCT_ID ? (['Lifetime'] as KeyDuration[]) : KEY_DURATION_OPTIONS).map((opt) => (
                           <option key={opt} value={opt}>
                             {opt}
                           </option>
