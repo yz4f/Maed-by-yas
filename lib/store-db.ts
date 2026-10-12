@@ -1,5 +1,5 @@
 import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
-import { computeLicenseExpiresAt, isLicenseCurrentlyActive, normalizeKeyDuration, getLicenseState, selectGuideLicense, getGuideStartTiming } from '@/lib/license-duration';
+import { computeLicenseExpiresAt, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, LIFETIME_PRODUCT_ID, resolveProductKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
 import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, startAfter, writeBatch, runTransaction, increment } from "firebase/firestore";
@@ -488,7 +488,7 @@ const LocalDB = {
     const d = getFallbackData();
     const product = d.products.find((p: any) => p.id === productId);
     if (!product) return { success: false, keys: [] };
-    const licenseDuration = normalizeKeyDuration(duration);
+    const licenseDuration = resolveProductKeyDuration(productId, duration);
     const generatedKeys: string[] = [];
     for (let i = 0; i < count; i++) {
       const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -517,7 +517,7 @@ const LocalDB = {
       return { success: false, count: 0, skipped: 0, message: 'المنتج المطلوب غير موجود.' };
     }
 
-    const licenseDuration = normalizeKeyDuration(duration);
+    const licenseDuration = resolveProductKeyDuration(productId, duration);
     const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
     const activeCodes = new Set(d.keys.filter((key: Key) => !key.isArchived || key.isUsed).map((key: Key) => key.key.trim().toUpperCase()));
     const reusableByCode = new Map<string, Key>(d.keys.filter((key: Key) => key.isArchived && !key.isUsed).map((key: Key): [string, Key] => [key.key.trim().toUpperCase(), key]));
@@ -691,7 +691,7 @@ const LocalDB = {
       return { success: false, message: 'هذا المفتاح موجود بالفعل في المخزون.' };
     }
 
-    const licenseDuration = normalizeKeyDuration(duration);
+    const licenseDuration = resolveProductKeyDuration(productId, duration);
     const now = new Date().toISOString();
     const newKey: Key = {
       id: `key-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -718,7 +718,7 @@ const LocalDB = {
     const product = d.products.find((p: Product) => p.id === productId);
     if (!product) return { success: false, inserted: 0, duplicates: 0, invalid: 0, message: 'المنتج غير موجود.' };
 
-    const licenseDuration = normalizeKeyDuration(duration);
+    const licenseDuration = resolveProductKeyDuration(productId, duration);
     const existingActiveCodes = new Set(
       d.keys
         .filter((k: Key) => !k.isArchived || k.isUsed)
@@ -929,7 +929,7 @@ const LocalDB = {
     saveFallbackData(d);
 
     this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
-    return { success: true, message: 'تم التفعيل بنجاح', product, duration: keyObj.duration };
+    return { success: true, message: 'تم التفعيل بنجاح', product, duration: resolveProductKeyDuration(product.id, keyObj.duration) };
   },
   openProductGuide(userId: string, productId: string, ipAddress: string, licenseId?: string): { success: boolean; message: string; licenseId?: string; startedAt?: string; expiresAt?: string | null; status?: KeyStatus } {
     const d = getFallbackData();
@@ -940,7 +940,7 @@ const LocalDB = {
       return { success: true, message: 'تم فتح الدليل مسبقاً.', licenseId: userProduct.id, startedAt: userProduct.startedAt, expiresAt: userProduct.expiresAt ?? null, status: key?.status || 'active' };
     }
     const startedAt = new Date().toISOString();
-    const { expiresAt } = getGuideStartTiming(userProduct, key?.duration || '3 Days', startedAt);
+    const { expiresAt } = getGuideStartTiming(userProduct, resolveProductKeyDuration(productId, key?.duration), startedAt);
     userProduct.startedAt = startedAt;
     userProduct.expiresAt = expiresAt;
     if (key) {
@@ -962,7 +962,14 @@ const LocalDB = {
     const d = getFallbackData();
     const result: UserProduct[] = [];
     const ups = d.userProducts.filter((up: any) => up.userId === userId);
+    let correctedLifetime = false;
     for (const up of ups) {
+      if (up.productId === LIFETIME_PRODUCT_ID && up.status === 'Active' && up.expiresAt) {
+        up.expiresAt = null;
+        const linkedKey = d.keys.find((key: Key) => key.id === up.keyId);
+        if (linkedKey) linkedKey.duration = 'Lifetime';
+        correctedLifetime = true;
+      }
       if (up.keyId && !up.keyString) {
         const keyObj = d.keys.find((k: any) => k.id === up.keyId);
         if (keyObj) up.keyString = keyObj.key;
@@ -973,6 +980,7 @@ const LocalDB = {
         result.push(up);
       }
     }
+    if (correctedLifetime) saveFallbackData(d);
     return result;
   },
   resetUserProductHwid(userId: string, productId: string, requestId?: string, keyId?: string): {success: boolean; message?: string; resetAt?: string} {
@@ -1005,7 +1013,7 @@ const LocalDB = {
       productId,
       status: 'Active',
       activatedAt: new Date().toISOString(),
-      expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '3 Days'),
+      expiresAt: computeLicenseExpiresAt(new Date().toISOString(), resolveProductKeyDuration(productId)),
       discordRoleGranted: false
     };
     d.userProducts.push(userProduct);
@@ -1506,7 +1514,7 @@ export const StoreDB = {
         const generatedKeys: string[] = [];
         const product = await this.getProductById(productId);
         if (!product) throw new Error("المنتج غير موجود");
-        const licenseDuration = normalizeKeyDuration(duration);
+        const licenseDuration = resolveProductKeyDuration(productId, duration);
 
         for (let i = 0; i < count; i++) {
           const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -1539,7 +1547,7 @@ export const StoreDB = {
         const db = getDb();
         const product = await this.getProductById(productId);
         if (!product) return { success: false, count: 0, skipped: 0, message: 'المنتج المطلوب غير موجود.' };
-        const licenseDuration = normalizeKeyDuration(duration);
+        const licenseDuration = resolveProductKeyDuration(productId, duration);
 
         const lines = rawKeysText.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
         const existingKeys = await this.getKeys();
@@ -1763,7 +1771,7 @@ export const StoreDB = {
           return { success: false, message: 'هذا المفتاح موجود بالفعل في المخزون.' };
         }
 
-        const licenseDuration = normalizeKeyDuration(duration);
+        const licenseDuration = resolveProductKeyDuration(productId, duration);
         const now = new Date().toISOString();
         const newKey: Key = {
           id: `key-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -1793,7 +1801,7 @@ export const StoreDB = {
         const db = getDb();
         const product = await this.getProductById(productId);
         if (!product) return { success: false, inserted: 0, duplicates: 0, invalid: 0, message: 'المنتج المطلوب غير موجود.' };
-        const licenseDuration = normalizeKeyDuration(duration);
+        const licenseDuration = resolveProductKeyDuration(productId, duration);
 
         const existingKeys = await this.getKeys();
         const activeCodes = new Set(
@@ -2101,7 +2109,7 @@ export const StoreDB = {
         }
 
         await this.addLog('Key Activation', `تم تفعيل مفتاح ${product.name}`, user.id, user.name, ipAddress);
-        return { success: true, message: 'تم التفعيل بنجاح', product, duration: keyObj.duration };
+        return { success: true, message: 'تم التفعيل بنجاح', product, duration: resolveProductKeyDuration(product.id, keyObj.duration) };
       },
       () => LocalDB.activateProductWithKey(keyString, userDetails, ipAddress)
     );
@@ -2130,7 +2138,7 @@ export const StoreDB = {
           const keyRef = current.keyId ? doc(getDb(), 'keys', current.keyId) : null;
           const keySnapshot = keyRef ? await transaction.get(keyRef) : null;
           const key = keySnapshot?.exists() ? keySnapshot.data() as Key : null;
-          const { expiresAt } = getGuideStartTiming(current, key?.duration || '3 Days', now);
+          const { expiresAt } = getGuideStartTiming(current, resolveProductKeyDuration(productId, key?.duration), now);
           transaction.update(userProductRef, { startedAt: now, expiresAt });
           if (keyRef && keySnapshot?.exists()) transaction.update(keyRef, { status: 'active', updatedAt: now });
           result = { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', licenseId: candidate.id, startedAt: now, expiresAt, status: 'active' };
@@ -2165,9 +2173,28 @@ export const StoreDB = {
       async () => {
         const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId));
         const [snapshot, catalog] = await Promise.all([getDocs(q), catalogPromise || Promise.resolve(undefined)]);
+        // Repair legacy finite Spoofer Perm licenses once for their owners, then persist the lifetime term.
+        const lifetimeLicenses = snapshot.docs.filter((item) => {
+          const license = item.data() as UserProduct;
+          return license.productId === LIFETIME_PRODUCT_ID && license.status === 'Active' && Boolean(license.expiresAt);
+        });
+        if (lifetimeLicenses.length) {
+          const batch = writeBatch(getDb());
+          const keySnapshots = await Promise.all(lifetimeLicenses.map(async (item) => {
+            const keyId = (item.data() as UserProduct).keyId;
+            return keyId ? getDoc(doc(getDb(), 'keys', keyId)) : null;
+          }));
+          lifetimeLicenses.forEach((item, index) => {
+            batch.update(item.ref, { expiresAt: null });
+            if (keySnapshots[index]?.exists()) batch.update(keySnapshots[index].ref, { duration: 'Lifetime' });
+          });
+          await batch.commit();
+        }
+        const correctedIds = new Set(lifetimeLicenses.map((item) => item.id));
         const productsById = catalog ? new Map(catalog.map((product) => [product.id, product])) : null;
         const result = await Promise.all(snapshot.docs.map(async (d) => {
           const up = { ...(d.data() as UserProduct) };
+          if (correctedIds.has(d.id)) up.expiresAt = null;
           const [keyResult, product] = await Promise.all([
             up.keyId && !up.keyString
               ? getDoc(doc(getDb(), "keys", up.keyId)).catch((error) => { console.error("Failed to fetch key for user product:", error); return null; })
@@ -2249,7 +2276,7 @@ export const StoreDB = {
           productId,
           status: 'Active',
           activatedAt: new Date().toISOString(),
-          expiresAt: computeLicenseExpiresAt(new Date().toISOString(), '3 Days'),
+          expiresAt: computeLicenseExpiresAt(new Date().toISOString(), resolveProductKeyDuration(productId)),
           discordRoleGranted: false
         };
         await setDoc(doc(getDb(), "userProducts", userProduct.id), userProduct);

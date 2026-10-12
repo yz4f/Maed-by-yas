@@ -1,6 +1,11 @@
 import type { KeyDuration, UserProduct } from '@/types';
 
 export const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', 'Lifetime'];
+export const LIFETIME_PRODUCT_ID = 'prod-hwid-master';
+
+export function resolveProductKeyDuration(productId: string, duration?: unknown): KeyDuration {
+  return productId === LIFETIME_PRODUCT_ID ? 'Lifetime' : normalizeKeyDuration(duration);
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -54,11 +59,12 @@ export function selectGuideLicense(licenses: UserProduct[], licenseId?: string, 
 }
 
 export function getGuideStartTiming(license: UserProduct, duration: unknown, now: string) {
-  // Keep an already running/legacy license's deadline. Opening a guide cannot renew it.
+  // Lifetime keys have no deadline; finite licenses retain their existing deadline.
+  if (duration === 'Lifetime') return { startedAt: license.startedAt || now, expiresAt: null };
   if (license.startedAt) return { startedAt: license.startedAt, expiresAt: license.expiresAt ?? null };
   return {
     startedAt: now,
-    expiresAt: duration === 'Lifetime' ? null : license.expiresAt ?? computeLicenseExpiresAt(now, duration),
+    expiresAt: license.expiresAt ?? computeLicenseExpiresAt(now, duration),
   };
 }
 
