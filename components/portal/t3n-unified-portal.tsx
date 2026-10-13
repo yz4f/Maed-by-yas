@@ -1854,13 +1854,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <section className={`col-span-full flex flex-col items-center gap-3 rounded-2xl border bg-transparent px-5 py-5 text-center sm:py-6 ${isDark ? 'border-white/[0.14] text-white' : 'border-slate-200 text-slate-950'}`} aria-labelledby="service-tour-title">
+            <section className={`col-span-full flex flex-col items-center gap-3 rounded-2xl border bg-transparent px-5 py-5 text-center sm:py-6 ${isDark ? 'border-white/[0.07] text-white' : 'border-slate-300/40 text-slate-950'}`} aria-labelledby="service-tour-title">
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold ${isDark ? 'border-rose-400/40 bg-rose-500/15 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-700'}`}><AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />{lang === 'ar' ? 'تنبيه: شرح خدمات الموقع متاح' : 'Notice: site tour available'}</span>
               <div>
                 <h2 id="service-tour-title" className="text-base font-extrabold sm:text-lg">{lang === 'ar' ? 'شرح خدمات الموقع' : 'Site services tour'}</h2>
                 <p className={`mt-1 text-xs leading-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lang === 'ar' ? 'شاهد جولة قصيرة لتتعرف على حسابك ومنتجاتك ومركز المساعدة.' : 'Watch a short tour of your account, products, and help center.'}</p>
               </div>
-              <button type="button" onClick={() => setShowServiceTour(true)} className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${isDark ? 'bg-cyan-200 text-slate-950 focus-visible:outline-cyan-200' : 'bg-slate-900 text-white focus-visible:outline-slate-900'}`}><Play className="h-4 w-4" aria-hidden="true" />{lang === 'ar' ? 'متابعة' : 'Watch tour'}</button>
+              <button type="button" onClick={() => setShowServiceTour(true)} className={`inline-flex min-h-10 min-w-[116px] items-center justify-center gap-2 rounded-xl border px-5 text-xs font-extrabold shadow-sm transition-[transform,background-color] duration-150 ease-out hover:-translate-y-px active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transform-none ${isDark ? 'border-white/15 bg-cyan-200/90 text-slate-950 hover:bg-cyan-100 focus-visible:outline-cyan-200' : 'border-slate-900/10 bg-slate-900/95 text-white hover:bg-slate-800 focus-visible:outline-slate-900'}`}><Play className="h-4 w-4" aria-hidden="true" />{lang === 'ar' ? 'متابعة' : 'Watch tour'}</button>
             </section>
             <div className="min-w-0 space-y-6">
               {newUserWelcome && (
