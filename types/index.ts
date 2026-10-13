@@ -32,6 +32,8 @@ export interface User {
   banExpiresAt?: string | null;
   warningMessage?: string | null;
   warningCount?: number;
+  welcomeVideoRequiredAt?: string | null;
+  welcomeVideoCompletedAt?: string | null;
   isArchived?: boolean;
   archivedAt?: string | null;
 }

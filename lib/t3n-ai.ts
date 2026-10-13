@@ -136,6 +136,8 @@ async function ensureCustomer(actor: TicketActor): Promise<User> {
     role: actor.role,
     discordRoles: [],
     createdAt: now,
+    welcomeVideoRequiredAt: now,
+    welcomeVideoCompletedAt: null,
     lastLogin: now,
     isBanned: false,
     warningCount: 0,

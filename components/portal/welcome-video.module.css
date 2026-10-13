@@ -1,0 +1,38 @@
+.dialog { width: min(1000px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto; border: 1px solid rgba(116, 207, 219, .28); border-radius: 28px; background: #0b1c29; color: #f5fcff; box-shadow: 0 40px 120px rgba(0, 0, 0, .65), 0 0 65px rgba(27, 152, 177, .1); font-family: 'Vazirmatn Variable', Arial, sans-serif; }
+.dialog::backdrop { background: rgba(1, 10, 17, .86); backdrop-filter: blur(10px); }
+.shell { padding: clamp(16px, 3vw, 30px); background: radial-gradient(ellipse at 50% 0%, rgba(46, 143, 165, .13), transparent 55%), #0b1c29; }
+.heading { text-align: center; margin-bottom: 19px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #83e0e2; font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+.eyebrow span { width: 7px; height: 7px; border-radius: 50%; background: #68e2cf; box-shadow: 0 0 14px #68e2cf; }
+.heading h2 { margin: 5px 0 4px; font-size: clamp(20px, 2.5vw, 29px); font-weight: 800; line-height: 1.4; }
+.heading p { margin: 0 auto; max-width: 740px; color: #b1c7d0; font-size: clamp(12px, 1.3vw, 14px); line-height: 1.85; }
+.videoFrame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(145, 215, 226, .18); border-radius: 17px; background: #031019; box-shadow: 0 20px 42px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .08); }
+.videoFrame video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.videoTag { position: absolute; top: 13px; inset-inline-end: 13px; padding: 5px 10px; border: 1px solid rgba(178, 240, 238, .22); border-radius: 999px; background: rgba(4, 22, 31, .75); color: #c5fbf5; font-size: 10px; font-weight: 700; pointer-events: none; }
+.playOverlay, .finishOverlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 11px; background: rgba(3, 14, 22, .58); color: white; font-size: 16px; font-weight: 700; }
+.playOverlay { width: 100%; cursor: pointer; }
+.playOverlay:hover { background: rgba(3, 14, 22, .4); }
+.finishOverlay { pointer-events: none; color: #b8fff0; }
+.statusRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 17px; font-size: 12px; }
+.stage { display: inline-flex; align-items: center; gap: 10px; min-width: 0; color: #e6f7f7; font-weight: 700; }
+.stageNumber { display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; border: 1px solid rgba(121, 218, 215, .27); border-radius: 8px; color: #84e4dd; font-size: 10px; font-variant-numeric: tabular-nums; }
+.counter { color: #a4bac3; font: 600 11px Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.progress { width: 100%; height: 4px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: rgba(153, 199, 212, .16); }
+.progress span { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #55bdc0, #90ece1); transform-origin: left center; transition: transform .15s linear; }
+.actions { display: flex; align-items: center; gap: 16px; margin-top: 19px; }
+.playerActions { display: inline-flex; gap: 8px; flex: none; }
+.playerActions button { display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid rgba(151, 213, 226, .22); border-radius: 11px; background: rgba(255, 255, 255, .05); color: #d9f0f3; cursor: pointer; transition: background .18s, transform .18s; }
+.playerActions button:hover:not(:disabled) { background: rgba(114, 213, 217, .14); transform: translateY(-1px); }
+.playerActions button:disabled { opacity: .4; cursor: default; }
+.hint { flex: 1; margin: 0; color: #a7bdc5; font-size: 11px; line-height: 1.7; }
+.start { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 180px; min-height: 42px; padding: 9px 17px; border: 1px solid rgba(179, 255, 238, .38); border-radius: 12px; background: linear-gradient(120deg, #2ba3a1, #267f96); color: white; box-shadow: 0 9px 30px rgba(30, 169, 161, .22); font-size: 13px; font-weight: 800; cursor: pointer; animation: arrive .35s ease-out both, breathe 2.5s ease-in-out .35s infinite; transition: transform .18s, filter .18s; }
+.start:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+.start:disabled { opacity: .7; cursor: wait; }
+.error { margin: 10px 0 0; color: #fecaca; font-size: 12px; text-align: center; }
+.spinner { animation: spin 1s linear infinite; }
+.dialog button:focus-visible { outline: 2px solid #a6f6e8; outline-offset: 3px; }
+@keyframes arrive { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@keyframes breathe { 50% { box-shadow: 0 9px 30px rgba(30, 169, 161, .4), 0 0 0 5px rgba(96, 216, 195, .08); } }
+@keyframes spin { to { rotate: 360deg; } }
+@media (max-width: 640px) { .dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); border-radius: 18px; } .shell { padding: 15px; } .heading { margin-bottom: 13px; } .heading p { font-size: 11px; } .videoFrame { border-radius: 11px; } .videoTag { top: 7px; inset-inline-end: 7px; font-size: 8px; padding: 3px 6px; } .statusRow { margin-top: 12px; } .actions { flex-wrap: wrap; gap: 9px; margin-top: 13px; } .hint { order: 3; flex-basis: 100%; text-align: center; } .start { flex: 1; min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .start, .spinner { animation: none; } .start, .playerActions button, .progress span { transition: none; } }

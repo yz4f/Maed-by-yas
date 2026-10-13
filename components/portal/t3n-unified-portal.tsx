@@ -61,6 +61,7 @@ import { DashboardLayout } from './DashboardLayout';
 import { PortalNavigation, type PortalTab } from './portal-navigation';
 import { DiscordMark as DiscordIcon } from './discord-mark';
 import { LoginPage } from './login-page';
+const WelcomeVideo = dynamic(() => import('./welcome-video').then((module) => module.WelcomeVideo), { ssr: false });
 import { Footer } from '@/components/ui/footer';
 import { ProductNotice } from '@/components/guides/product-notice';
 const HelpCenter = dynamic(() => import('./help-center').then((module) => module.HelpCenter), { ssr: false });
@@ -235,6 +236,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [showExpiredLicenses, setShowExpiredLicenses] = useState(true);
   const [newUserWelcome, setNewUserWelcome] = useState<{ name: string } | null>(null);
+  const [welcomeVideo, setWelcomeVideo] = useState<{ name: string } | null>(null);
+  const welcomeVideoCompletedForRef = useRef<string | null>(null);
   const userProductsRequestInFlightRef = useRef(false);
   const userProductsRevisionRef = useRef('');
   const guideMutationVersionRef = useRef(0);
@@ -666,7 +669,10 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       if (res.ok) {
         const data = await res.json();
         if (guideVersion !== guideMutationVersionRef.current) return;
-        if (data.unchanged) return;
+        if (data.unchanged) {
+          if (data.showWelcomeVideo && welcomeVideoCompletedForRef.current !== currentUser.id) setWelcomeVideo({ name: data.welcomeName || currentUser.name });
+          return;
+        }
         if (typeof data.revision === 'string') userProductsRevisionRef.current = data.revision;
         const nextProducts = Array.isArray(data.products) ? data.products as UserProduct[] : [];
         setUserProducts((current) => JSON.stringify(current) === JSON.stringify(nextProducts) ? current : nextProducts);
@@ -683,6 +689,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           sessionStorage.setItem('t3n-new-user-welcome-shown', '1');
           setNewUserWelcome({ name: data.user?.name || currentUser.name });
         }
+        if (data.showWelcomeVideo && welcomeVideoCompletedForRef.current !== currentUser.id) setWelcomeVideo({ name: data.user?.name || currentUser.name });
       }
     } catch (e) {
       console.error('Failed to load user products:', e);
@@ -1720,6 +1727,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <div className="portal-ambient" aria-hidden="true" />
       <div className="portal-grid" aria-hidden="true" />
       <div className="portal-noise" aria-hidden="true" />
+      {welcomeVideo && <WelcomeVideo lang={lang} name={welcomeVideo.name} onComplete={() => { welcomeVideoCompletedForRef.current = currentUser.id; setWelcomeVideo(null); }} />}
 
       {/* Compact mobile top bar and navigation drawer */}
       <PortalNavigation

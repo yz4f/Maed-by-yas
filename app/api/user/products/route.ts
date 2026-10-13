@@ -27,6 +27,8 @@ export async function GET(req: Request) {
         role: actor.role === 'Boss' ? 'Boss' : actor.role === 'Co-Boss' ? 'Co-Boss' : 'Customer',
         discordRoles: [],
         createdAt,
+        welcomeVideoRequiredAt: createdAt,
+        welcomeVideoCompletedAt: null,
         lastLogin: createdAt,
         lastIp: ip,
         isBanned: false,
@@ -81,10 +83,11 @@ export async function GET(req: Request) {
     ]);
     const revision = createHash('sha256').update(JSON.stringify({ products, catalog })).digest('hex');
     const headers = { 'Cache-Control': 'private, no-store' };
+    const showWelcomeVideo = Boolean(user.welcomeVideoRequiredAt && !user.welcomeVideoCompletedAt);
     if (isBackgroundSync && req.headers.get('X-Sync-Revision') === revision) {
-      return NextResponse.json({ success: true, unchanged: true, revision }, { headers });
+      return NextResponse.json({ success: true, unchanged: true, revision, showWelcomeVideo, welcomeName: showWelcomeVideo ? user.name : undefined }, { headers });
     }
-    return NextResponse.json({ success: true, products, user, activity, catalog, isNewUser, revision }, { headers });
+    return NextResponse.json({ success: true, products, user, activity, catalog, isNewUser, showWelcomeVideo, revision }, { headers });
   } catch (error) {
     console.error('User products synchronization failed:', error);
     return NextResponse.json({ success: false, message: 'تعذر تحميل المنتجات الآن. حاول مرة أخرى.' }, { status: 500 });
