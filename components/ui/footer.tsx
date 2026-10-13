@@ -33,11 +33,14 @@ export function Footer({ lang = 'ar', isDark = true }: FooterProps) {
       className="flex flex-col items-center gap-2 py-5"
       data-allow-copy
     >
-      <div className={`inline-flex max-w-full flex-wrap items-center justify-center gap-3 rounded-xl border bg-transparent px-3 py-2 text-xs ${isDark ? 'border-cyan-200/20 text-slate-100' : 'border-slate-200 text-slate-800'}`}>
-        <span className="grid h-10 w-14 shrink-0 place-items-center px-1"><Image src="/freelance-mark.png" alt={isAr ? 'شعار العمل الحر' : 'Freelance logo'} width={48} height={28} className={`h-7 w-full object-contain ${isDark ? 'drop-shadow-[0_0_5px_rgba(125,211,252,0.45)]' : ''}`} /></span>
+      <div className={`flex w-[208px] max-w-full flex-col items-center gap-2 rounded-2xl border bg-transparent px-4 py-3 text-center text-xs ${isDark ? 'border-cyan-200/20 text-slate-100' : 'border-slate-200 text-slate-800'}`}>
+        <Image src="/freelance-logo-full.png" alt={isAr ? 'شعار العمل الحر' : 'Freelance logo'} width={144} height={72} className={`h-[62px] w-36 object-contain ${isDark ? 'drop-shadow-[0_0_5px_rgba(125,211,252,0.45)]' : ''}`} />
         <span className="font-bold">{isAr ? 'وثيقة تعن' : 'T3N document'}</span>
-        <bdi className="select-all font-mono text-[11px] font-semibold tracking-wide">{FREELANCE_DOCUMENT_NUMBER}</bdi>
-        <button type="button" onClick={() => void copyDocument()} aria-label={isAr ? 'نسخ رقم الوثيقة' : 'Copy document number'} className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg border bg-transparent px-2.5 text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 ${isDark ? 'border-white/15 text-cyan-100 hover:bg-white/10' : 'border-slate-200 text-teal-800 hover:bg-slate-100/60'}`}>
+        <div className={`flex w-full flex-col items-center gap-0.5 rounded-lg border px-2 py-1.5 ${isDark ? 'border-white/10' : 'border-slate-200/70'}`}>
+          <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{isAr ? 'رقم الوثيقة' : 'Document number'}</span>
+          <bdi className="select-all font-mono text-[11px] font-semibold tracking-wide">{FREELANCE_DOCUMENT_NUMBER}</bdi>
+        </div>
+        <button type="button" onClick={() => void copyDocument()} aria-label={isAr ? 'نسخ رقم الوثيقة' : 'Copy document number'} className={`inline-flex min-h-8 w-full items-center justify-center gap-1.5 rounded-lg border bg-transparent px-2.5 text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 ${isDark ? 'border-white/15 text-cyan-100 hover:bg-white/10' : 'border-slate-200 text-teal-800 hover:bg-slate-100/60'}`}>
           {copied ? <Check size={14} /> : <Copy size={14} />}
           <span aria-live="polite">{copied ? (isAr ? 'تم النسخ' : 'Copied') : (isAr ? 'نسخ' : 'Copy')}</span>
         </button>
