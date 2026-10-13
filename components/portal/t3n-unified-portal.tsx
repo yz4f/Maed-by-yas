@@ -1854,7 +1854,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <section className={`col-span-full flex flex-col items-center gap-3 rounded-2xl border px-5 py-5 text-center sm:py-6 ${isDark ? 'border-white/[0.14] bg-[#171b22]/92 text-white' : 'border-slate-200 bg-white text-slate-950 shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`} aria-labelledby="service-tour-title">
+            <section className={`col-span-full flex flex-col items-center gap-3 rounded-2xl border bg-transparent px-5 py-5 text-center sm:py-6 ${isDark ? 'border-white/[0.14] text-white' : 'border-slate-200 text-slate-950'}`} aria-labelledby="service-tour-title">
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold ${isDark ? 'border-rose-400/40 bg-rose-500/15 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-700'}`}><AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />{lang === 'ar' ? 'تنبيه: شرح خدمات الموقع متاح' : 'Notice: site tour available'}</span>
               <div>
                 <h2 id="service-tour-title" className="text-base font-extrabold sm:text-lg">{lang === 'ar' ? 'شرح خدمات الموقع' : 'Site services tour'}</h2>
