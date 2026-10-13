@@ -1,6 +1,8 @@
 .dialog { width: min(1000px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto; border: 1px solid rgba(116, 207, 219, .28); border-radius: 28px; background: #0b1c29; color: #f5fcff; box-shadow: 0 40px 120px rgba(0, 0, 0, .65), 0 0 65px rgba(27, 152, 177, .1); font-family: 'Vazirmatn Variable', Arial, sans-serif; }
 .dialog::backdrop { background: rgba(1, 10, 17, .86); backdrop-filter: blur(10px); }
-.shell { padding: clamp(16px, 3vw, 30px); background: radial-gradient(ellipse at 50% 0%, rgba(46, 143, 165, .13), transparent 55%), #0b1c29; }
+.shell { position: relative; padding: clamp(16px, 3vw, 30px); background: radial-gradient(ellipse at 50% 0%, rgba(46, 143, 165, .13), transparent 55%), #0b1c29; }
+.close { position: absolute; top: 17px; inset-inline-end: 17px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(151, 213, 226, .24); border-radius: 10px; background: rgba(255, 255, 255, .06); color: #d9f0f3; cursor: pointer; transition: background .18s, transform .18s; }
+.close:hover { background: rgba(114, 213, 217, .16); transform: translateY(-1px); }
 .heading { text-align: center; margin-bottom: 19px; }
 .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #83e0e2; font-size: 11px; font-weight: 700; letter-spacing: .06em; }
 .eyebrow span { width: 7px; height: 7px; border-radius: 50%; background: #68e2cf; box-shadow: 0 0 14px #68e2cf; }
@@ -35,4 +37,4 @@
 @keyframes breathe { 50% { box-shadow: 0 9px 30px rgba(30, 169, 161, .4), 0 0 0 5px rgba(96, 216, 195, .08); } }
 @keyframes spin { to { rotate: 360deg; } }
 @media (max-width: 640px) { .dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); border-radius: 18px; } .shell { padding: 15px; } .heading { margin-bottom: 13px; } .heading p { font-size: 11px; } .videoFrame { border-radius: 11px; } .videoTag { top: 7px; inset-inline-end: 7px; font-size: 8px; padding: 3px 6px; } .statusRow { margin-top: 12px; } .actions { flex-wrap: wrap; gap: 9px; margin-top: 13px; } .hint { order: 3; flex-basis: 100%; text-align: center; } .start { flex: 1; min-width: 0; } }
-@media (prefers-reduced-motion: reduce) { .start, .spinner { animation: none; } .start, .playerActions button, .progress span { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .start, .spinner { animation: none; } .start, .close, .playerActions button, .progress span { transition: none; } }

@@ -237,6 +237,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [showExpiredLicenses, setShowExpiredLicenses] = useState(true);
   const [newUserWelcome, setNewUserWelcome] = useState<{ name: string } | null>(null);
   const [welcomeVideo, setWelcomeVideo] = useState<{ name: string } | null>(null);
+  const [showServiceTour, setShowServiceTour] = useState(false);
   const welcomeVideoCompletedForRef = useRef<string | null>(null);
   const userProductsRequestInFlightRef = useRef(false);
   const userProductsRevisionRef = useRef('');
@@ -1728,6 +1729,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       <div className="portal-grid" aria-hidden="true" />
       <div className="portal-noise" aria-hidden="true" />
       {welcomeVideo && <WelcomeVideo lang={lang} name={welcomeVideo.name} onComplete={() => { welcomeVideoCompletedForRef.current = currentUser.id; setWelcomeVideo(null); }} />}
+      {showServiceTour && !welcomeVideo && <WelcomeVideo lang={lang} name={currentUser.name} mode="replay" onComplete={() => setShowServiceTour(false)} />}
 
       {/* Compact mobile top bar and navigation drawer */}
       <PortalNavigation
@@ -1852,6 +1854,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="overview-dashboard grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <section className={`col-span-full flex flex-col items-center gap-3 rounded-2xl border px-5 py-5 text-center sm:py-6 ${isDark ? 'border-white/[0.14] bg-[#171b22]/92 text-white' : 'border-slate-200 bg-white text-slate-950 shadow-[0_14px_32px_rgba(30,64,95,0.08)]'}`} aria-labelledby="service-tour-title">
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold ${isDark ? 'border-rose-400/40 bg-rose-500/15 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-700'}`}><AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />{lang === 'ar' ? 'تنبيه: شرح خدمات الموقع متاح' : 'Notice: site tour available'}</span>
+              <div>
+                <h2 id="service-tour-title" className="text-base font-extrabold sm:text-lg">{lang === 'ar' ? 'شرح خدمات الموقع' : 'Site services tour'}</h2>
+                <p className={`mt-1 text-xs leading-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lang === 'ar' ? 'شاهد جولة قصيرة لتتعرف على حسابك ومنتجاتك ومركز المساعدة.' : 'Watch a short tour of your account, products, and help center.'}</p>
+              </div>
+              <button type="button" onClick={() => setShowServiceTour(true)} className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${isDark ? 'bg-cyan-200 text-slate-950 focus-visible:outline-cyan-200' : 'bg-slate-900 text-white focus-visible:outline-slate-900'}`}><Play className="h-4 w-4" aria-hidden="true" />{lang === 'ar' ? 'متابعة' : 'Watch tour'}</button>
+            </section>
             <div className="min-w-0 space-y-6">
               {newUserWelcome && (
                 <section className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-sky-300/20 bg-gradient-to-br from-sky-400/[.16] via-[#171b22]/95 to-[#171b22]/95 text-white' : 'border-sky-200 bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-slate-950 shadow-[0_18px_38px_rgba(30,120,180,0.12)]'}`}>
