@@ -21,8 +21,10 @@ const sections = [
   { id:'أخطاء البرنامج', label:'أخطاء البرنامج', text:'حلول الأخطاء الشائعة', icon:Wrench },
   { id:'admin', label:'الإدارة', text:'الحساب والمفاتيح', icon:KeyRound },
 ];
-const rank = ['windows','bios','network','vpn','menu','normal','asus','runtime','connection','clock'];
-const articles = GUIDE_ARTICLES.filter(item => item.id !== 'disk' && item.id !== 'raid').sort((a,b) => rank.indexOf(a.id)-rank.indexOf(b.id));
+const rank = ['windows','network','vpn','runtime','connection'];
+const hiddenHelpArticles = new Set(['disk', 'raid', 'bios', 'normal', 'asus', 'clock', 'menu']);
+const articles = GUIDE_ARTICLES.filter(item => !hiddenHelpArticles.has(item.id)).sort((a,b) => rank.indexOf(a.id)-rank.indexOf(b.id));
+const visibleSections = sections.filter(item => item.id === 'admin' || articles.some(article => article.category === item.id));
 
 function FaqAnswer({ text }: { text: string }) {
   return <div className="space-y-2.5">{text.split('\n').map((line, index) => {
@@ -92,13 +94,13 @@ export function HelpCenter({lang, products=[], onNavigateTab, initialCategoryId}
     setOpenFaq(current=>current===id?null:id);
     if(!viewed.current.has(id)){viewed.current.add(id);void fetch(`/api/help/faqs/${encodeURIComponent(id)}/view`,{method:'POST'}).catch(()=>{})}
   };
-  const chips=[{id:'all',label:ar?'الكل':'All'},...sections.slice(0,4),...sections.filter(item=>item.id==='Permanent Spoof'||item.id==='أخطاء البرنامج')];
-  return <section dir={ar?'rtl':'ltr'} className={`${css.hub} ${css.stack}`}>
+  const chips=[{id:'all',label:ar?'الكل':'All'},...visibleSections.slice(0,4),...visibleSections.filter(item=>item.id==='أخطاء البرنامج')];
+  return <section dir={ar?'rtl':'ltr'} className={`${css.hub} ${css.helpHub} ${css.stack}`}>
     <header className={css.helpHeader}><div><h2>{ar?'مركز المساعدة':'Help center'}</h2><p>{ar?'ابحث عن المشكلة أو اختر القسم المناسب.':'Search for an issue or choose a category.'}</p></div>{onNavigateTab&&<button className={css.smallButton} onClick={()=>onNavigateTab('my-products')}><BookOpen size={17}/>{ar?'دليل منتجك في «منتجاتي»':'Find your product guide in My products'}</button>}</header>
-    <label className={css.search} style={{marginTop:0}}><Search size={19}/><span className="sr-only">{ar?'ابحث عن مشكلتك':'Search help'}</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={ar?'ابحث عن مشكلتك... Windows، BIOS، Network':'Search... Windows, BIOS, Network'}/>{query&&<button aria-label={ar?'مسح البحث':'Clear search'} onClick={()=>setQuery('')}><X size={18}/></button>}</label>
+    <label className={css.search} style={{marginTop:0}}><Search size={19}/><span className="sr-only">{ar?'ابحث عن مشكلتك':'Search help'}</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={ar?'ابحث عن مشكلتك... Windows، Network، VPN':'Search... Windows, Network, VPN'}/>{query&&<button aria-label={ar?'مسح البحث':'Clear search'} onClick={()=>setQuery('')}><X size={18}/></button>}</label>
     <div className={css.filterBar}><nav className={css.filterRail} aria-label="تصنيفات مركز المساعدة">{chips.map(item=><button key={item.id} className={css.tab} aria-pressed={category===item.id} onClick={()=>select(item.id)}>{item.label}</button>)}<button className={css.tab} aria-expanded={more} aria-controls="help-more-categories" aria-pressed={more || !chips.some(item=>item.id===category)} onClick={()=>setMore(!more)}>المزيد<ChevronDown size={14}/></button></nav>
-    <AnimatePresence initial={false}>{more&&<motion.div id="help-more-categories" className={css.filterMenu} initial={reducedMotion?false:{opacity:0,y:-4,scale:0.98}} animate={{opacity:1,y:0,scale:1}} exit={reducedMotion?{opacity:1}:{opacity:0,y:-4,scale:0.98}} transition={{duration:reducedMotion?0:0.18,ease:'easeOut'}}>{sections.filter(s=>!chips.some(c=>c.id===s.id)).map(item=><button key={item.id} className={css.tab} aria-pressed={category===item.id} onClick={()=>select(item.id)}>{item.label}</button>)}{categories.map(item=><button key={item.id} className={css.tab} aria-pressed={category===`admin:${item.id}`} onClick={()=>select(`admin:${item.id}`)}>{ar?item.name_ar:item.name_en}</button>)}</motion.div>}</AnimatePresence></div>
-    {!query&&category==='all'&&<details open className={css.stack}><summary className="mb-3 cursor-pointer text-sm font-semibold">الأقسام</summary><div className={css.categoryGrid}>{sections.map(item=><button key={item.id} className={css.categoryCard} onClick={()=>{select(item.id);resultHeading.current?.scrollIntoView({block:'start'})}}><item.icon size={19} strokeWidth={1.7}/><div><strong>{item.label}</strong><p>{item.text}</p><small>{item.id==='admin'?faqs.length:articles.filter(a=>a.category===item.id).length} {item.id==='admin'?'أسئلة':'شروحات'}</small></div></button>)}</div></details>}
+    <AnimatePresence initial={false}>{more&&<motion.div id="help-more-categories" className={css.filterMenu} initial={reducedMotion?false:{opacity:0,y:-4,scale:0.98}} animate={{opacity:1,y:0,scale:1}} exit={reducedMotion?{opacity:1}:{opacity:0,y:-4,scale:0.98}} transition={{duration:reducedMotion?0:0.18,ease:'easeOut'}}>{visibleSections.filter(s=>!chips.some(c=>c.id===s.id)).map(item=><button key={item.id} className={css.tab} aria-pressed={category===item.id} onClick={()=>select(item.id)}>{item.label}</button>)}{categories.map(item=><button key={item.id} className={css.tab} aria-pressed={category===`admin:${item.id}`} onClick={()=>select(`admin:${item.id}`)}>{ar?item.name_ar:item.name_en}</button>)}</motion.div>}</AnimatePresence></div>
+    {!query&&category==='all'&&<details open className={css.stack}><summary className="mb-3 cursor-pointer text-sm font-semibold">الأقسام</summary><div className={css.categoryGrid}>{visibleSections.map(item=><button key={item.id} className={css.categoryCard} onClick={()=>{select(item.id);resultHeading.current?.scrollIntoView({block:'start'})}}><item.icon size={19} strokeWidth={1.7}/><div><strong>{item.label}</strong><p>{item.text}</p><small>{item.id==='admin'?faqs.length:articles.filter(a=>a.category===item.id).length} {item.id==='admin'?'أسئلة':'شروحات'}</small></div></button>)}</div></details>}
     <div className="flex flex-wrap items-center justify-between gap-3"><h3 ref={resultHeading} className="text-lg font-semibold">{ar?'مكتبة الشروحات والحلول':'Guides and solutions'}</h3><span role="status" className={css.muted}>{filteredArticles.length+filteredFaqs.length} {ar?'نتيجة':'results'}</span></div>
     {filteredArticles.length>0&&<div className={filteredArticles.length===1?css.singleResult:css.grid}>{filteredArticles.map(item=><GuideCard key={item.id} article={item} number={articles.indexOf(item)+1} onOpen={()=>setArticle(item)}/>)}</div>}
     {(category==='all'||category.startsWith('admin'))&&<>
@@ -109,6 +111,6 @@ export function HelpCenter({lang, products=[], onNavigateTab, initialCategoryId}
     </>}
     {!loading&&!error&&!filteredArticles.length&&!filteredFaqs.length&&<div className={css.empty}>لا توجد نتائج مطابقة.<button className={`${css.smallButton} mt-3`} onClick={()=>{setQuery('');select('all')}}>عرض الكل</button></div>}
     {products.length>0&&<details className={css.panel}><summary className="cursor-pointer text-sm font-medium">متطلبات وتنبيهات المنتجات قبل الشراء</summary><div className="mt-4 grid gap-3">{products.map(product=><section key={product.id}><h3 className="mb-2 text-sm font-medium">{product.name}</h3><ProductNotice product={product} placement="beforePurchase"/></section>)}</div></details>}
-    {article&&<GuideDialog title={article.title} onClose={()=>setArticle(null)}><GuideArticleView key={article.id} article={article}/></GuideDialog>}
+    {article&&<GuideDialog title={article.title} className={css.helpDialog} onClose={()=>setArticle(null)}><GuideArticleView key={article.id} article={article}/></GuideDialog>}
   </section>;
 }

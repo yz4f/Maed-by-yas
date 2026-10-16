@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, BookOpen, Check, CircleHelp, Download, ExternalLink, Info, Play, ShieldCheck, X } from 'lucide-react';
+import { ArrowRight, BookOpen, CircleHelp, Download, ExternalLink, Info, Play, ShieldCheck, X } from 'lucide-react';
 import type { Product } from '@/types';
 import type { GuideArticle } from '@/lib/guide-library';
 import { guideStepEntries } from '@/lib/guide-library';
@@ -14,7 +14,7 @@ function BidiText({ text }: { text: string }) {
   return <>{text.split(/([A-Za-z][A-Za-z0-9_+./:#-]*(?:[ >]+[A-Za-z0-9_+./:#-]+)*)/g).map((part, index) => /^[A-Za-z]/.test(part) ? <bdi key={index} dir="ltr">{part}</bdi> : part)}</>;
 }
 
-export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyebrow = 'مركز المساعدة' }: { title: string; onClose: () => void; onBack?: () => void; children: ReactNode; sectionKey?: string; eyebrow?: string }) {
+export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyebrow = 'مركز المساعدة', className = '' }: { title: string; onClose: () => void; onBack?: () => void; children: ReactNode; sectionKey?: string; eyebrow?: string; className?: string }) {
   const dialog = useRef<HTMLDivElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -29,7 +29,7 @@ export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyeb
     if (reduceMotion) closeRef.current();
     else setClosing(true);
   };
-  requestCloseRef.current = requestClose;
+  useEffect(() => { requestCloseRef.current = requestClose; });
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
   useEffect(() => { scroll.current?.scrollTo({ top: 0 }); }, [sectionKey]);
   useEffect(() => {
@@ -51,7 +51,7 @@ export function GuideDialog({ title, onClose, onBack, children, sectionKey, eyeb
     return () => { document.removeEventListener('keydown', keydown); document.body.style.overflow = overflow; previous?.focus(); };
   }, []);
   return createPortal(<motion.div className={styles.overlay} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: closing ? 0 : 1 }} transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }} onClick={event => { if (event.target === event.currentTarget) requestClose(); }}>
-    <motion.div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} dir="rtl" className={styles.dialog}
+    <motion.div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} dir="rtl" className={`${styles.dialog} ${className}`}
       initial={reduceMotion ? false : 'initial'} animate={closing ? 'closed' : 'open'}
       variants={{ initial: { opacity: 0, y: 6, scale: 0.98 }, open: { opacity: 1, y: 0, scale: 1 }, closed: { opacity: 0, y: 6, scale: 0.98 } }}
       transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
@@ -119,7 +119,7 @@ export function GuideVideo({ url, title, image, product, skipNotice = false, hid
     </button> : <div className={styles.player}>
       {media.kind === 'iframe' ? <iframe title={title} src={media.src} allow="fullscreen; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /> : <video src={media.src} controls playsInline preload="metadata" onError={() => setFailed(true)} />}
     </div>}
-    {failed && <p className={styles.warning}>تعذّر تحميل الفيديو. أعد المحاولة.</p>}
+    {failed && <div className={styles.warning}>تعذّر تحميل الفيديو.<button type="button" className={styles.smallButton} onClick={() => { setFailed(false); setMode('poster'); }}>إعادة المحاولة</button></div>}
     {!hideCaption && <div className="px-4 py-3 text-xs text-slate-400">{title} · يمكنك قراءة الخطوات المكتوبة أدناه.</div>}
   </section>;
 }

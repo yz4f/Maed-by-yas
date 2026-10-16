@@ -57,3 +57,46 @@
 .articleMedia .videoBlock{width:100%}
 .articlePlaceholder{min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:1px solid #ffffff19;border-radius:15px;background:radial-gradient(circle at 50% 35%,#23505a55,transparent 70%),#0d1e2a;color:#9bd8d5;font-weight:700}
 @media(max-width:700px){.articleLayout{grid-template-columns:minmax(0,1fr)}.articleMedia{position:static}.articlePlaceholder{min-height:150px}}
+
+/* Roomier help library; product guide dialogs keep their existing layout. */
+.helpHub{gap:26px;padding:clamp(20px,2.4vw,38px)}
+.helpHub .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.helpHub .card{gap:12px;padding:24px}
+.helpHub .cardPreview{height:clamp(190px,18vw,270px)}
+.helpHub .card h3{font-size:20px;line-height:1.55;margin-top:4px}
+.helpHub .card .muted{font-size:14px;line-height:1.85}
+.helpHub .card .smallButton{min-height:42px;font-size:13px}
+.helpHub .singleResult .card{max-width:none;min-height:250px}
+.helpHub .categoryGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.helpHub .categoryCard{min-height:104px;padding:20px}
+.helpHub .categoryCard strong{font-size:16px}
+.helpHub .categoryCard p{font-size:13px}
+.helpHub .filterRail .tab{min-height:44px;font-size:13px;padding-inline:16px}
+.helpHub .faq>button{min-height:62px;font-size:15px;padding:20px}
+.helpHub .faqBody{font-size:15px;line-height:2;padding:24px}
+.dialog.helpDialog{width:min(1320px,calc(100vw - 32px));max-height:calc(100dvh - 32px)}
+.helpDialog .header{padding:20px 28px}
+.helpDialog .scroll{padding:28px 32px 36px}
+.helpDialog .articleLayout{grid-template-columns:minmax(0,54%) minmax(0,1fr);gap:28px}
+.helpDialog .articleMedia{gap:16px}
+.helpDialog .imageButton{max-width:none}
+.helpDialog .imageButton img{max-height:480px}
+.helpDialog .step{padding:22px}
+.helpDialog .stepText{font-size:15px;line-height:2}
+@media(max-width:900px){
+  .helpHub .categoryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .helpDialog .articleLayout{grid-template-columns:minmax(0,1fr)}
+  .helpDialog .articleMedia{position:static}
+}
+@media(max-width:640px){
+  .helpHub{padding:16px;gap:22px}
+  .helpHub .grid,.helpHub .categoryGrid{grid-template-columns:minmax(0,1fr)}
+  .helpHub .card{padding:18px}
+  .helpHub .singleResult .card{min-height:0}
+  .helpHub .cardPreview{height:auto;aspect-ratio:16/9;min-height:170px}
+  .helpHub .categoryCard{min-height:82px;padding:16px}
+  .dialog.helpDialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}
+  .helpDialog .header{padding:15px}
+  .helpDialog .scroll{padding:18px}
+  .helpDialog .step{padding:17px}
+}

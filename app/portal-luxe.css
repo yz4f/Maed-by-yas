@@ -709,3 +709,15 @@
   .portal-shell.portal-luxe .admin-audit__tools, .portal-shell.portal-luxe .admin-audit__entry { grid-template-columns: 1fr; }
   .portal-shell.portal-luxe .admin-audit__entry { gap: 12px; }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .portal-shell button:not(:disabled):active,
+  .portal-shell a[href]:active {
+    animation: portal-control-press 160ms ease-out both;
+  }
+}
+
+@keyframes portal-control-press {
+  from { scale: 1; }
+  to { scale: .975; }
+}

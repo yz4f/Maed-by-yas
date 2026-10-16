@@ -2,7 +2,7 @@ import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, Do
 import { computeLicenseExpiresAt, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, LIFETIME_PRODUCT_ID, resolveProductKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
-import { CURRENT_PRODUCT_FILE_SIZE, CURRENT_PRODUCT_FILE_URL, CURRENT_PRODUCT_VIDEO_URL, withCurrentProductMedia } from '@/lib/product-media';
+import { CURRENT_PRODUCT_FILE_SIZE, CURRENT_PRODUCT_FILE_URL, CURRENT_PRODUCT_VIDEO_URL, withDefaultProductMedia } from '@/lib/product-media';
 import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, startAfter, writeBatch, runTransaction, increment } from "firebase/firestore";
 
 
@@ -401,12 +401,12 @@ async function runDbOp<T>(firebaseOp: () => Promise<T>, localOp: () => T | Promi
 const LocalDB = {
   getProducts(): Product[] {
     const d = getFallbackData();
-    return d.products.map(withCurrentProductMedia).sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+    return d.products.sort((a: any, b: any) => a.displayOrder - b.displayOrder);
   },
   getProductById(id: string): Product | undefined {
     const d = getFallbackData();
     const product = d.products.find((p: any) => p.id === id);
-    return product ? withCurrentProductMedia(product) : undefined;
+    return product;
   },
   createProduct(product: Product): {success: boolean; product?: Product} {
     const d = getFallbackData();
@@ -980,7 +980,7 @@ const LocalDB = {
       }
       const p = d.products.find((prod: any) => prod.id === up.productId);
       if (p) {
-        up.product = withCurrentProductMedia(p);
+        up.product = p;
         result.push(up);
       }
     }
@@ -1357,7 +1357,7 @@ export const StoreDB = {
           }
           products = [...initialProducts];
         }
-        return products.map(withCurrentProductMedia).sort((a, b) => a.displayOrder - b.displayOrder);
+        return products.sort((a, b) => a.displayOrder - b.displayOrder);
       },
       () => LocalDB.getProducts()
     );
@@ -1367,7 +1367,7 @@ export const StoreDB = {
     return runDbOp(
       async () => {
         const docSnap = await getDoc(doc(getDb(), "products", id));
-        if (docSnap.exists()) return withCurrentProductMedia(docSnap.data() as Product);
+        if (docSnap.exists()) return docSnap.data() as Product;
         return undefined;
       },
       () => LocalDB.getProductById(id)
@@ -1375,7 +1375,7 @@ export const StoreDB = {
   },
 
   async createProduct(product: Product): Promise<{success: boolean; message?: string; product?: Product}> {
-    product = validateProductGuideFields(product);
+    product = withDefaultProductMedia(validateProductGuideFields(product));
     return runDbOp(
       async () => {
         await setDoc(doc(getDb(), "products", product.id), product);
