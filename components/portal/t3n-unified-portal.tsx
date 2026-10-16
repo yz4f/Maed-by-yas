@@ -59,6 +59,7 @@ import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as Us
 import { durationLabel, KEY_DURATION_OPTIONS, getLicenseState } from '@/lib/license-duration';
 import { DashboardLayout } from './DashboardLayout';
 import { PortalNavigation, type PortalTab } from './portal-navigation';
+import { ResaleRules } from './resale-rules';
 import { DiscordMark as DiscordIcon } from './discord-mark';
 import { LoginPage } from './login-page';
 const WelcomeVideo = dynamic(() => import('./welcome-video').then((module) => module.WelcomeVideo), { ssr: false });
@@ -148,6 +149,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<PortalTab>('overview');
+  const [routeReady, setRouteReady] = useState(false);
 
   // Custom Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -189,11 +191,33 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     const savedLanguage = window.localStorage.getItem('self-delivery.language');
     if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
     if (savedLanguage === 'ar' || savedLanguage === 'en') setLang(savedLanguage);
-    const tabParam = new URLSearchParams(window.location.search).get('tab');
-    if (tabParam === 'tickets' || tabParam === 'overview' || tabParam === 'my-products' || tabParam === 'redeem' || tabParam === 'profile' || tabParam === 'admin') {
-      setActiveTab(tabParam as PortalTab);
-    }
+    const syncTabFromLocation = () => {
+      if (window.location.pathname.replace(/\/$/, '') === '/resale-rules') {
+        setActiveTab('resale-rules');
+        return;
+      }
+      const tabParam = new URLSearchParams(window.location.search).get('tab');
+      if (tabParam === 'tickets' || tabParam === 'overview' || tabParam === 'my-products' || tabParam === 'redeem' || tabParam === 'profile' || tabParam === 'admin' || tabParam === 'resale-rules') {
+        setActiveTab(tabParam);
+      } else {
+        setActiveTab('overview');
+      }
+    };
+    syncTabFromLocation();
+    setRouteReady(true);
+    window.addEventListener('popstate', syncTabFromLocation);
+    return () => window.removeEventListener('popstate', syncTabFromLocation);
   }, []);
+
+  useEffect(() => {
+    if (!routeReady) return;
+    const onRulesPath = window.location.pathname.replace(/\/$/, '') === '/resale-rules';
+    if (activeTab === 'resale-rules' && !onRulesPath) {
+      window.history.pushState({ tab: activeTab }, '', '/resale-rules');
+    } else if (activeTab !== 'resale-rules' && onRulesPath) {
+      window.history.pushState({ tab: activeTab }, '', activeTab === 'overview' ? '/' : `/?tab=${activeTab}`);
+    }
+  }, [activeTab, routeReady]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -1709,6 +1733,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     redeem: lang === 'ar' ? 'تفعيل مفتاح' : 'Redeem Key',
     tickets: lang === 'ar' ? 'مركز المساعدة' : 'Help center',
     profile: lang === 'ar' ? 'الملف الشخصي' : 'Profile',
+    'resale-rules': lang === 'ar' ? 'إعادة البيع' : 'Resale rules',
     admin: lang === 'ar' ? 'لوحة الإدارة' : 'Admin Control',
   }[activeTab];
 
@@ -1843,6 +1868,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
         </header>
 
         {/* HELP CENTER */}
+        {activeTab === 'resale-rules' && <ResaleRules lang={lang} isDark={isDark} />}
+
         {activeTab === 'tickets' && (
           <HelpCenter
             lang={lang}

@@ -19,6 +19,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   ShieldCheck,
+  ScrollText,
   Sun,
   UserRound,
   X,
@@ -27,7 +28,7 @@ import {
 import { DiscordMark } from './discord-mark';
 import css from './portal-navigation.module.css';
 
-export type PortalTab = 'overview' | 'my-products' | 'redeem' | 'tickets' | 'admin' | 'profile';
+export type PortalTab = 'overview' | 'my-products' | 'redeem' | 'tickets' | 'admin' | 'profile' | 'resale-rules';
 
 interface PortalNavigationProps {
   activeTab: PortalTab;
@@ -200,7 +201,7 @@ export function PortalNavigation({
       title: ar ? 'الحساب' : 'ACCOUNT',
       items: [
         { tab: 'profile', label: ar ? 'الملف الشخصي' : 'Profile', icon: UserRound },
-
+        { tab: 'resale-rules', label: ar ? 'إعادة البيع' : 'Resale rules', icon: ScrollText },
       ],
     },
     ...(isAdmin ? [{ title: ar ? 'الإدارة' : 'ADMIN', items: [{ tab: 'admin' as const, label: ar ? 'لوحة الإدارة' : 'Administration', icon: ShieldCheck }] }] : []),
