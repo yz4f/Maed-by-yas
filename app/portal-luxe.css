@@ -761,3 +761,29 @@
     aspect-ratio: 4 / 3;
   }
 }
+
+/* Match the admin catalog previews to the square product artwork. */
+.portal-shell.portal-luxe .admin-product-card .admin-product-card__media {
+  height: auto !important;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  background: #081522;
+}
+.portal-shell.portal-luxe .admin-product-card .admin-product-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain !important;
+  object-position: center;
+  opacity: 1;
+  filter: none;
+}
+.portal-shell.portal-luxe .admin-product-card:hover .admin-product-card__image {
+  transform: scale(1.012);
+}
+.portal-shell.portal-luxe .admin-product-card .admin-product-card__media-overlay {
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 80%, rgba(3, 13, 22, .3));
+}

@@ -6,7 +6,7 @@ export const initialProducts: Product[] = [
     id: 'prod-fortnite',
     name: 'فك باند فورت نايت',
     description: 'يقوم بتغيير معلومات جهازك إلى معلومات جديدة لإلغاء الحظر في لعبة فورت نايت نهائيًا.\n\nالمميزات:\n- فك باند فورت نايت.\n- فك باند البطولات.\n- نسبة نجاح 100%.\n- فك باند دائم.',
-    image: '/products/fortnite-unban.png',
+    image: '/products/fortnite-card.png',
     cardColor: 'blue',
     category: 'Spoofer',
     displayOrder: 1,

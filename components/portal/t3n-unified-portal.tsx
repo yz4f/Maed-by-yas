@@ -126,10 +126,13 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
   const getProductImageFallback = (product?: Partial<Product> | null): string => {
     const name = (product?.name || '').toLowerCase();
-    if (product?.id === 'prod-fortnite' || name.includes('فورت') || name.includes('fortnite') || name.includes('فك باند')) {
-      return '/products/fortnite-unban.png';
+    if (product?.id === 'prod-1787361890081') {
+      return '/products/spoofer-premium.png';
     }
-    if (product?.id === 'prod-hwid-master' || product?.id === 'prod-1787361890081' || name.includes('سبوفر') || name.includes('spoofer')) {
+    if (product?.id === 'prod-fortnite' || name.includes('فورت') || name.includes('fortnite') || name.includes('فك باند')) {
+      return '/products/fortnite-card.png';
+    }
+    if (product?.id === 'prod-hwid-master' || name.includes('سبوفر') || name.includes('spoofer')) {
       return '/products/spoofer-ta3n.png';
     }
     return '/logo.png';
@@ -2504,17 +2507,24 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                         className="admin-product-card glass-card rounded-[24px] overflow-hidden hover:border-indigo-500/40 dark:hover:border-primary/40 transition-all duration-300 flex flex-col group"
                       >
                         {/* Top Image Banner - Full Width */}
-                        <div className={`relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
+                        <div className={`admin-product-card__media relative h-48 w-full bg-black/[0.02] dark:bg-[#050505] overflow-hidden border-b ${styles.borderSubtle}`}>
                           <img
                             src={getProductImage(product)}
                             alt={product.name}
-                            className="w-full h-full transition-transform duration-700 group-hover:scale-110 object-cover"
-                            onError={(e) => { 
-                              e.currentTarget.src = '/logo.png'; 
-                              e.currentTarget.className = 'w-full h-full transition-transform duration-700 group-hover:scale-110 object-contain p-6 opacity-80'; 
+                            className="admin-product-card__image w-full h-full object-contain transition-transform duration-300"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              const image = e.currentTarget;
+                              if (image.dataset.fallbackTried) {
+                                image.style.visibility = 'hidden';
+                                return;
+                              }
+                              image.dataset.fallbackTried = 'true';
+                              image.src = getProductImageFallback(product);
                             }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 dark:from-[#0a0a0a] via-transparent to-transparent" />
+                          <div className="admin-product-card__media-overlay absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                           
                           <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-indigo-500/20 dark:border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
                             <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{lang === 'ar' ? 'المخزون المتاح:' : 'Stock:'}</span>
