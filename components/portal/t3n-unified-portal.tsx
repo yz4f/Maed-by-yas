@@ -75,7 +75,6 @@ const ProductStockModal = dynamic(loadProductStockModal, { ssr: false });
 import { ToastContainer } from '@/components/ui/toast';
 import { toast as centralToast } from '@/lib/toast';
 
-const DIRECT_TUTORIAL_VIDEO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4';
 
 interface T3NUnifiedPortalProps {
   initialProducts: Product[];
@@ -3043,7 +3042,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           ) : guideView === 'video' && guideModalProduct.product?.videoUrl ? (
             <div className="product-guide-video">
               <GuideVideo
-                url={guideModalProduct.product.videoUrl.includes('drive.google.com') ? DIRECT_TUTORIAL_VIDEO_URL : guideModalProduct.product.videoUrl}
+                url={guideModalProduct.product.videoUrl}
                 title={guideTitle}
                 image={guideModalProduct.product.guideImage || guideModalProduct.product.image}
                 hideCaption

@@ -1,4 +1,5 @@
 import { Product } from '@/types';
+import { CURRENT_PRODUCT_FILE_SIZE, CURRENT_PRODUCT_FILE_URL, CURRENT_PRODUCT_VIDEO_URL } from '@/lib/product-media';
 
 export const initialProducts: Product[] = [
   {
@@ -10,9 +11,9 @@ export const initialProducts: Product[] = [
     category: 'Spoofer',
     displayOrder: 1,
     version: 'v3.5.2',
-    fileSize: '24.8 MB',
-    fileUrl: '/discord.gg_t3n.rar',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    fileSize: CURRENT_PRODUCT_FILE_SIZE,
+    fileUrl: CURRENT_PRODUCT_FILE_URL,
+    videoUrl: CURRENT_PRODUCT_VIDEO_URL,
     guideUrl: 'https://discord.gg/t3n',
     downloadsCount: 1420,
     isVisible: true,
@@ -30,9 +31,9 @@ export const initialProducts: Product[] = [
     category: 'PERM',
     displayOrder: 2,
     version: 'v4.1.0',
-    fileSize: '100 MB',
-    fileUrl: '/discord.gg_t3n.rar',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    fileSize: CURRENT_PRODUCT_FILE_SIZE,
+    fileUrl: CURRENT_PRODUCT_FILE_URL,
+    videoUrl: CURRENT_PRODUCT_VIDEO_URL,
     guideUrl: 'https://discord.gg/t3n',
     downloadsCount: 980,
     isVisible: true,
@@ -50,9 +51,9 @@ export const initialProducts: Product[] = [
     category: 'VIP',
     displayOrder: 3,
     version: 'v4.1.0',
-    fileSize: '100 MB',
-    fileUrl: '/discord.gg_t3n.rar',
-    videoUrl: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/mHiKjOdRBJBDsCnu.mp4',
+    fileSize: CURRENT_PRODUCT_FILE_SIZE,
+    fileUrl: CURRENT_PRODUCT_FILE_URL,
+    videoUrl: CURRENT_PRODUCT_VIDEO_URL,
     guideUrl: 'https://t3nn.wtf',
     downloadsCount: 0,
     isVisible: true,

@@ -776,9 +776,9 @@ var init_db = __esm({
         {
           id: "file-spoofer-1",
           product_id: "spoofer-prod-1",
-          filename: "discord.gg_t3n.rar",
-          original_name: "discord.gg_t3n.rar",
-          size: 100353901,
+          filename: "perm-t3n.rar",
+          original_name: "perm-t3n.rar",
+          size: 38452094,
           mime_type: "application/x-rar-compressed",
           download_count: 1482,
           created_at: (/* @__PURE__ */ new Date()).toISOString()
@@ -786,9 +786,9 @@ var init_db = __esm({
         {
           id: "file-unban-2",
           product_id: "unban-prod-2",
-          filename: "discord.gg_t3n.rar",
-          original_name: "discord.gg_t3n.rar",
-          size: 100353901,
+          filename: "perm-t3n.rar",
+          original_name: "perm-t3n.rar",
+          size: 38452094,
           mime_type: "application/x-rar-compressed",
           download_count: 1240,
           created_at: (/* @__PURE__ */ new Date()).toISOString()
