@@ -124,20 +124,23 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
     );
   };
 
-  // Helper to get exact user-provided product image
-  const getProductImage = (product?: Partial<Product> | null): string => {
-    if (!product) return '/logo.png';
-    if (product.image && product.image !== '/logo.png?v=6' && product.image !== '/logo.png' && product.image !== '') {
-      return product.image;
+  const getProductImageFallback = (product?: Partial<Product> | null): string => {
+    const name = (product?.name || '').toLowerCase();
+    if (product?.id === 'prod-fortnite' || name.includes('فورت') || name.includes('fortnite') || name.includes('فك باند')) {
+      return '/products/fortnite-unban.png';
     }
-    const name = (product.name || '').toLowerCase();
-    if (name.includes('فورت') || name.includes('fortnite') || name.includes('فك باند')) {
-      return '/fortnite-unban-logo.png';
-    }
-    if (name.includes('سبوفر') || name.includes('spoofer')) {
-      return '/spoofer-logo.png';
+    if (product?.id === 'prod-hwid-master' || product?.id === 'prod-1787361890081' || name.includes('سبوفر') || name.includes('spoofer')) {
+      return '/products/spoofer-ta3n.png';
     }
     return '/logo.png';
+  };
+
+  // Prefer the product's saved image, with a stable local asset if its remote URL expires.
+  const getProductImage = (product?: Partial<Product> | null): string => {
+    if (product?.image && product.image !== '/logo.png?v=6' && product.image !== '/logo.png') {
+      return product.image;
+    }
+    return getProductImageFallback(product);
   };
 
   // Navigation State
@@ -2123,8 +2126,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                       className={`product-license-card product-license-card--premium group ${canUseProduct ? '' : 'opacity-75 grayscale-[0.15]'}`}
                       data-active={canUseProduct ? 'true' : 'false'}
                     >
-                      <div className="product-license-card__media" aria-hidden="true">
-                        <img className="product-license-card__image" src={productImg} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                      <div className="product-license-card__media">
+                        <img className="product-license-card__image" src={productImg} alt={up.product?.name || (lang === 'ar' ? 'صورة المنتج' : 'Product image')} loading="lazy" decoding="async" onError={(e) => {
+                          const image = e.currentTarget;
+                          if (image.dataset.fallbackTried) {
+                            image.style.visibility = 'hidden';
+                            return;
+                          }
+                          image.dataset.fallbackTried = 'true';
+                          image.src = getProductImageFallback(up.product);
+                        }} />
                         <div className="product-license-card__media-overlay" />
                         <div className={`product-license-card__expiry ${timing.isExpired ? 'product-license-card__expiry--expired' : ''}`}>
                           <Clock size={12} />
