@@ -25,6 +25,7 @@
 
 @media(max-width:600px){.categoryGrid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.imageButton img{max-height:240px}}
 .imageButton{aspect-ratio:16/9}.imageButton img{height:calc(100% - 28px)}
+.imageButtonFailed{display:grid;place-items:center;aspect-ratio:auto;min-height:58px;padding:12px;color:#b8dce1;font-size:13px;text-align:center}
 
 /* Guide library: one clear category rail and previews for existing media. */
 .filterBar{position:relative;z-index:3;border:1px solid #ffffff14;border-radius:14px;background:#0d1c28;padding:8px;min-width:0}

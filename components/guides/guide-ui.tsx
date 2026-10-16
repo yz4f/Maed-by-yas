@@ -75,11 +75,11 @@ export function ImageLightbox({ src, alt, className = '' }: { src: string; alt: 
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   return <>
-    <button type="button" className={`${styles.imageButton} ${className}`} onClick={() => { if (failed) setFailed(false); else setOpen(true); }} aria-label={failed ? `إعادة تحميل الصورة: ${alt}` : `تكبير الصورة: ${alt}`}>
-      {failed ? <span>تعذر تحميل الصورة — اضغط للمحاولة</span> : <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />}
-      <span className={styles.imageHint}>تكبير الصورة</span>
+    <button type="button" className={`${styles.imageButton} ${failed ? styles.imageButtonFailed : ''} ${className}`} onClick={() => { if (failed) setFailed(false); else setOpen(true); }} aria-label={failed ? `إعادة تحميل الصورة: ${alt}` : `تكبير الصورة: ${alt}`}>
+      {failed ? <span>تعذّر تحميل الصورة — اضغط لإعادة المحاولة</span> : <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />}
+      {!failed && <span className={styles.imageHint}>تكبير الصورة</span>}
     </button>
-    {open && <GuideDialog title={alt} onClose={() => setOpen(false)}><img src={src} alt={alt} className={styles.lightboxImage} /></GuideDialog>}
+    {open && <GuideDialog title={alt} onClose={() => setOpen(false)}><img src={src} alt={alt} className={styles.lightboxImage} onError={() => { setOpen(false); setFailed(true); }} /></GuideDialog>}
   </>;
 }
 

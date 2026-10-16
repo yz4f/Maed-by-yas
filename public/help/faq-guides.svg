@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">فتح دليل المنتج</title>
+  <desc id="desc">افتح منتجاتي ثم اضغط دليل المنتج على بطاقة المنتج المفعّل</desc>
+  <rect width="960" height="540" rx="28" fill="#071622"/>
+  <rect x="28" y="28" width="904" height="484" rx="24" fill="#102534" stroke="#3b7280" stroke-width="2"/>
+  <text x="880" y="95" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="34" font-weight="700" fill="#eefaff">كيف أشاهد الشروحات؟</text>
+  <text x="880" y="133" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="20" fill="#aed1db">خطوتان للوصول إلى شرح منتجك</text>
+  <rect x="88" y="186" width="330" height="224" rx="22" fill="#0b1b28" stroke="#356779" stroke-width="2"/>
+  <circle cx="363" cy="224" r="22" fill="#9be8ed"/><text x="363" y="232" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#09202c">1</text>
+  <text x="364" y="290" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="28" font-weight="700" fill="#ffffff">منتجاتي</text>
+  <text x="364" y="328" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="18" fill="#a8c7d0">افتح صفحة منتجاتك</text>
+  <path d="M470 299h45m-14-14 14 14-14 14" stroke="#9be8ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="548" y="186" width="326" height="224" rx="22" fill="#0b1b28" stroke="#356779" stroke-width="2"/>
+  <circle cx="819" cy="224" r="22" fill="#9be8ed"/><text x="819" y="232" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#09202c">2</text>
+  <rect x="598" y="267" width="226" height="68" rx="14" fill="#a4e8f0"/>
+  <text x="711" y="310" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#09202c">دليل المنتج</text>
+  <text x="480" y="467" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="18" fill="#b4d5dd">يظهر الزر داخل بطاقة المنتج المفعّل</text>
+</svg>

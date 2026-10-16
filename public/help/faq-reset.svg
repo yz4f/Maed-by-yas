@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">طلب إعادة ضبط المفتاح</title>
+  <desc id="desc">افتح منتجاتي واختر طلب رستات المفتاح ثم اكتب السبب وأرسل الطلب</desc>
+  <rect width="960" height="540" rx="28" fill="#071622"/>
+  <rect x="28" y="28" width="904" height="484" rx="24" fill="#102534" stroke="#3b7280" stroke-width="2"/>
+  <text x="880" y="95" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="34" font-weight="700" fill="#eefaff">كيفية طلب رستات المفتاح</text>
+  <text x="880" y="133" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="20" fill="#aed1db">من بطاقة المنتج المفعّل</text>
+  <rect x="94" y="184" width="772" height="260" rx="22" fill="#0b1b28" stroke="#356779" stroke-width="2"/>
+  <rect x="540" y="239" width="280" height="80" rx="16" fill="#544324" stroke="#b7944e" stroke-width="2"/>
+  <text x="680" y="290" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#fff2ce">طلب رستات المفتاح</text>
+  <path d="M500 279h-58m14-14-14 14 14 14" stroke="#9be8ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="144" y="239" width="260" height="80" rx="16" fill="#152e3d" stroke="#589ca9" stroke-width="2"/>
+  <text x="274" y="288" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#ecfbff">اكتب سبب الطلب</text>
+  <text x="480" y="388" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="21" fill="#b4d5dd">ثم اضغط «إرسال طلب الرستات» ليصل إلى الإدارة</text>
+  <text x="480" y="485" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="18" fill="#b4d5dd">الطلب متاح للتراخيص الفعّالة عند وجود مشكلة فعلية في الجهاز أو الترخيص</text>
+</svg>

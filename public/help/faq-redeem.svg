@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">استرداد مفتاح الترخيص</title>
+  <desc id="desc">افتح منتجاتي واضغط استرداد مفتاح ثم أدخل مفتاحك وأكد التفعيل</desc>
+  <rect width="960" height="540" rx="28" fill="#071622"/>
+  <rect x="28" y="28" width="904" height="484" rx="24" fill="#102534" stroke="#3b7280" stroke-width="2"/>
+  <text x="880" y="95" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="34" font-weight="700" fill="#eefaff">طريقة تفعيل المفتاح</text>
+  <text x="880" y="133" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="20" fill="#aed1db">من صفحة منتجاتي إلى تفعيل الترخيص</text>
+  <rect x="92" y="190" width="776" height="235" rx="22" fill="#0b1b28" stroke="#356779" stroke-width="2"/>
+  <text x="812" y="250" text-anchor="end" direction="rtl" font-family="Arial,sans-serif" font-size="26" font-weight="700" fill="#eefaff">منتجاتي</text>
+  <rect x="515" y="274" width="290" height="75" rx="16" fill="#a4e8f0"/>
+  <text x="660" y="322" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#09202c">استرداد مفتاح</text>
+  <path d="M472 311h-65m14-14-14 14 14 14" stroke="#9be8ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="148" y="274" width="220" height="75" rx="16" fill="#152e3d" stroke="#589ca9" stroke-width="2"/>
+  <text x="258" y="321" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#ecfbff">أدخل مفتاحك</text>
+  <text x="480" y="471" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="18" fill="#b4d5dd">بعد إدخال المفتاح أكّد التفعيل ليظهر المنتج في حسابك</text>
+</svg>
