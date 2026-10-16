@@ -1,16 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Check, Copy, Headset, Megaphone, PackagePlus, ShieldAlert } from 'lucide-react';
+import { Headset, Megaphone, PackagePlus, ShieldAlert } from 'lucide-react';
 import styles from './resale-rules.module.css';
 
 type Rule = { label: string; text: string };
 type RulesContent = {
   title: string;
   subtitle: string;
-  linkLabel: string;
-  copy: string;
-  copied: string;
   sections: {
     title: string;
     eyebrow: string;
@@ -24,9 +20,6 @@ type RulesContent = {
 const arabic: RulesContent = {
   title: 'إعادة البيع',
   subtitle: 'قوانين طلب المخزون والخدمة والتنويهات المهمة لشركاء تعن. يرجى قراءتها قبل تقديم أي طلب.',
-  linkLabel: 'رابط الصفحة',
-  copy: 'نسخ الرابط',
-  copied: 'تم النسخ',
   penaltiesTitle: 'المخالفات والعقوبات',
   sections: [
     {
@@ -88,9 +81,6 @@ const arabic: RulesContent = {
 const english: RulesContent = {
   title: 'Resale rules',
   subtitle: 'Stock requests, service requests and important notices for T3N partners. Please read before submitting a request.',
-  linkLabel: 'Page link',
-  copy: 'Copy link',
-  copied: 'Copied',
   penaltiesTitle: 'Violations and penalties',
   sections: [
     {
@@ -141,22 +131,6 @@ const icons = [PackagePlus, Headset, Megaphone];
 
 export function ResaleRules({ lang, isDark }: { lang: 'ar' | 'en'; isDark: boolean }) {
   const content = lang === 'ar' ? arabic : english;
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timeout = window.setTimeout(() => setCopied(false), 2200);
-    return () => window.clearTimeout(timeout);
-  }, [copied]);
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/resale-rules`);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  };
 
   return (
     <section className={styles.page} data-theme={isDark ? 'dark' : 'light'} data-allow-copy data-allow-context-menu aria-label={content.title}>
@@ -165,14 +139,6 @@ export function ResaleRules({ lang, isDark }: { lang: 'ar' | 'en'; isDark: boole
           <span className={styles.kicker}>{lang === 'ar' ? 'سياسة شركاء تعن' : 'T3N partner policy'}</span>
           <h2>{content.title}</h2>
           <p>{content.subtitle}</p>
-        </div>
-        <div className={styles.linkBox}>
-          <span>{content.linkLabel}</span>
-          <code dir="ltr">/resale-rules</code>
-          <button type="button" onClick={copyLink} aria-label={copied ? content.copied : content.copy}>
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? content.copied : content.copy}
-          </button>
         </div>
       </div>
       <div className={styles.grid}>
