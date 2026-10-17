@@ -9,3 +9,6 @@ coverage/
 .vercel/
 .next/
 .vercel
+
+# Local Netlify folder
+.netlify
