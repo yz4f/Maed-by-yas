@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071925">
+  <meta name="description" content="شروحات تعن: فيديوهات شرح سبوفر، تجهيز النظام، وحلول المشاكل الشائعة في مكان واحد.">
+  <title>شروحات تعن | دليل الفيديو</title>
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">تجاوز إلى الشروحات</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="شروحات تعن، العودة إلى الأعلى">
+        <img src="assets/logo.png" width="42" height="42" alt="">
+        <span><strong>تعن</strong><small>مكتبة الشروحات</small></span>
+      </a>
+      <nav class="header-nav" aria-label="أقسام الصفحة">
+        <a href="#spoofer">شرح سبوفر</a>
+        <a href="#preparation">التجهيز</a>
+        <a href="#common-issues">مشاكل شائعة</a>
+      </nav>
+      <a class="back-link" href="https://t3nn.wtf/" target="_blank" rel="noopener noreferrer">العودة للموقع <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-content">
+          <span class="eyebrow"><span class="eyebrow-dot"></span> مكتبة فيديوهات تعن</span>
+          <h1 id="hero-title">شروحات <span>تعن</span></h1>
+          <p>ابدأ بشرح سبوفر، جهّز جهازك بالخطوات المناسبة، ثم افتح حل المشكلة التي تواجهك. كل الشروحات مرتبة لتصل إلى الفيديو المطلوب بسرعة.</p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#spoofer">ابدأ بالشرح <span aria-hidden="true">↙</span></a>
+            <a class="secondary-action" href="#common-issues">استعرض المشاكل الشائعة</a>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="hero-art-frame"><img src="assets/spoofer.png" alt=""></div>
+          <span class="hero-art-caption">دليل المنتج بالفيديو</span>
+        </div>
+      </section>
+
+      <section class="library" aria-labelledby="library-title">
+        <div class="library-heading">
+          <div><span class="section-kicker">اختر ما يناسبك</span><h2 id="library-title">تصفح الشروحات</h2></div>
+          <p>قسمان أساسيان، مع تجهيزات النظام في قائمة مستقلة لتسهيل المتابعة.</p>
+        </div>
+        <div class="toolbar">
+          <div class="filter-list" role="group" aria-label="تصفية الفيديوهات">
+            <button type="button" class="filter is-active" data-filter="all" aria-pressed="true">الكل</button>
+            <button type="button" class="filter" data-filter="spoofer" aria-pressed="false">شرح سبوفر</button>
+            <button type="button" class="filter" data-filter="preparation" aria-pressed="false">التجهيز</button>
+            <button type="button" class="filter" data-filter="issues" aria-pressed="false">مشاكل شائعة</button>
+          </div>
+          <label class="search-wrap"><span class="sr-only">ابحث عن شرح</span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="search" type="search" autocomplete="off" placeholder="ابحث عن شرح أو مشكلة..."></label>
+        </div>
+        <p class="results-status" id="results-status" role="status" aria-live="polite"></p>
+
+        <section class="video-section" id="spoofer" aria-labelledby="spoofer-title">
+          <div class="section-title"><span class="section-index">01</span><div><span class="section-kicker">من البداية</span><h2 id="spoofer-title">شرح سبوفر</h2></div><p>ابدأ بالفيديو الأساسي ثم شاهد الشرح الإضافي عند الحاجة.</p></div>
+          <div class="cards cards-spoofer" data-section="spoofer"></div>
+        </section>
+
+        <section class="video-section" id="preparation" aria-labelledby="preparation-title">
+          <div class="section-title"><span class="section-index">02</span><div><span class="section-kicker">قبل التشغيل</span><h2 id="preparation-title">تجهيز الجهاز</h2></div><p>شروحات Windows واللوحة الأم والخطوات المرتبطة بالنظام.</p></div>
+          <div class="cards" data-section="preparation"></div>
+        </section>
+
+        <section class="video-section" id="common-issues" aria-labelledby="issues-title">
+          <div class="section-title"><span class="section-index">03</span><div><span class="section-kicker">حلول سريعة</span><h2 id="issues-title">مشاكل شائعة</h2></div><p>اختر المشكلة المطابقة للرسالة أو الحالة التي تظهر لديك.</p></div>
+          <div class="cards" data-section="issues"></div>
+        </section>
+
+        <div class="empty-state" id="empty-state" hidden><strong>لم نجد شرحًا مطابقًا</strong><p>جرّب كلمة أخرى أو اعرض جميع الأقسام.</p><button type="button" id="reset-search">عرض الكل</button></div>
+      </section>
+
+      <aside class="help-note"><span class="help-icon" aria-hidden="true">؟</span><div><strong>لم تجد الشرح الذي تحتاجه؟</strong><p>راجع مركز المساعدة في الموقع الأصلي للاطلاع على الشروحات المكتوبة والتعليمات الخاصة بمنتجك.</p></div><a href="https://t3nn.wtf/?tab=tickets" target="_blank" rel="noopener noreferrer">مركز المساعدة <span aria-hidden="true">↗</span></a></aside>
+    </main>
+
+    <footer class="site-footer"><span><img src="assets/logo.png" width="25" height="25" alt=""> شروحات تعن</span><p>مكتبة فيديوهات المنتجات والمساعدة</p><a href="https://t3nn.wtf/" target="_blank" rel="noopener noreferrer">الموقع الرئيسي ↗</a></footer>
+  </div>
+
+  <dialog class="video-dialog" id="video-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-inner"><div class="dialog-top"><div><span id="dialog-category"></span><h2 id="dialog-title"></h2></div><button class="close-dialog" id="close-dialog" type="button" aria-label="إغلاق الفيديو">×</button></div><div class="player" id="player"></div><p id="dialog-description"></p><a id="source-link" href="#" target="_blank" rel="noopener noreferrer">فتح الفيديو من المصدر ↗</a></div>
+  </dialog>
+</body>
+</html>
