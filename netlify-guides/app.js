@@ -1,5 +1,5 @@
 const videos = [
-  { id: 'product', section: 'spoofer', title: 'شرح سبوفر تعن', description: 'الفيديو الأساسي لدليل المنتج. ابدأ به وشاهد الخطوات كاملة قبل تشغيل سبوفر.', type: 'mp4', url: 'https://t3nn.wtf/videos/product-guide-1016.mp4', thumbnail: 'assets/spoofer.png', label: 'الشرح الأساسي' },
+  { id: 'product', section: 'spoofer', title: 'شرح المنتج', description: 'الفيديو الأساسي لدليل المنتج. ابدأ به وشاهد الخطوات كاملة قبل التشغيل.', type: 'mp4', url: 'https://t3nn.wtf/videos/product-guide-1016.mp4', label: 'شرح المنتج' },
   { id: 'wrp', section: 'spoofer', title: 'شرح WRP', description: 'خطوات WRP الإضافية بعد إكمال شرح المنتج عند استمرار الحظر أو الطرد.', type: 'mp4', url: 'https://t3nn.wtf/guides/wrp-guide.mp4', thumbnail: 'assets/wrp.jpg', label: 'شرح إضافي' },
   { id: 'win11', section: 'preparation', title: 'تجهيز فلاش Windows 11', description: 'شرح تجهيز فلاش Windows 11 قبل متابعة خطوات المنتج.', type: 'youtube', url: 'https://youtu.be/XZ-9RbqlA2k', videoId: 'XZ-9RbqlA2k', thumbnail: 'https://i.ytimg.com/vi/XZ-9RbqlA2k/hqdefault.jpg', label: 'Windows 11' },
   { id: 'win10', section: 'preparation', title: 'تجهيز فلاش Windows 10', description: 'شرح تجهيز فلاش Windows 10 قبل متابعة خطوات المنتج.', type: 'youtube', url: 'https://youtu.be/WaFxvUmsNWs', videoId: 'WaFxvUmsNWs', thumbnail: 'https://i.ytimg.com/vi/WaFxvUmsNWs/hqdefault.jpg', label: 'Windows 10' },
@@ -10,10 +10,10 @@ const videos = [
   { id: 'disk', section: 'preparation', title: 'مشاكل القرص / Disk Guide', description: 'رابط فيديو المصدر يعيد 404 حاليًا، لذلك لا يمكن تشغيله حتى يُوفّر بديل.', type: 'unavailable', url: 'https://spiritx.wtf/cdn/0cab4d685f5ef464/8e0fd169486d5811.mp4', label: 'غير متاح حاليًا' },
   { id: 'network', section: 'issues', title: 'مشكلة الشبكة أو Wi‑Fi', description: 'فيديو حل رسالة فشل الاتصال أو تعذّر الوصول إلى اسم المضيف.', type: 'mp4', url: 'https://t3nn.wtf/guides/network-error-fix.mp4', thumbnail: 'assets/network.png', label: 'اتصال' },
   { id: 'time', section: 'issues', title: 'خطأ الوقت والتحقق', description: 'خطوات معالجة تنبيه مزامنة وقت Windows أو التحقق من التوقيع.', type: 'mp4', url: 'https://t3nn.wtf/guides/timer-error-fix.mp4', thumbnail: 'assets/time.png', label: 'Windows' },
-  { id: 'menu', section: 'issues', title: 'قائمة البرنامج لا تظهر', description: 'شرح حالة عمل WebUI مع عدم ظهور قائمة سبوفر.', type: 'mp4', url: 'https://t3nn.wtf/spoofer-list-fix.mp4', thumbnail: 'assets/spoofer.png', label: 'تشغيل البرنامج' },
+  { id: 'menu', section: 'issues', title: 'قائمة البرنامج لا تظهر', description: 'شرح حالة عمل WebUI مع عدم ظهور قائمة سبوفر.', type: 'mp4', url: 'https://t3nn.wtf/spoofer-list-fix.mp4', label: 'تشغيل البرنامج' },
 ];
 
-const sectionNames = { spoofer: 'شرح سبوفر', preparation: 'تجهيز الجهاز', issues: 'مشاكل شائعة' };
+const sectionNames = { spoofer: 'شرح المنتج', preparation: 'تجهيز الجهاز', issues: 'مشاكل شائعة' };
 const normalize = (value) => value.toLocaleLowerCase().replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[\u064B-\u065F\u0670ـ]/g, '').trim();
 const dialog = document.querySelector('#video-dialog');
 const player = document.querySelector('#player');
