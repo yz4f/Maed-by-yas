@@ -7,7 +7,7 @@ import { addGiveawayKeys, createGiveaway, deliverGiveaway, listGiveaways, publis
 export const dynamic = 'force-dynamic';
 
 const bodySchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('create'), title: z.string().trim().min(3).max(100), body: z.string().trim().min(10).max(1500), productId: z.string().trim().min(1), duration: z.enum(['3 Days', 'Lifetime']), endsAt: z.string() }),
+  z.object({ action: z.literal('create'), title: z.string().trim().min(3).max(100), body: z.string().trim().min(10).max(1500), productId: z.string().trim().min(1), duration: z.enum(['3 Days', 'Lifetime']), durationHours: z.number().int().min(1).max(720), keys: z.array(z.string()).min(1).max(125) }),
   z.object({ action: z.literal('addKeys'), id: z.string().uuid(), keys: z.array(z.string()).min(1).max(125) }),
   z.object({ action: z.literal('publish'), id: z.string().uuid() }),
   z.object({ action: z.literal('retryDelivery'), id: z.string().uuid() }),

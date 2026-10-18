@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHash, randomInt, randomUUID } from 'node:crypto';
-import { collection, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import { isLicenseCurrentlyActive, resolveProductKeyDuration } from '@/lib/license-duration';
 import type { KeyDuration, Product, User, UserProduct } from '@/types';
@@ -11,7 +11,7 @@ const SITE_URL = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/,
 
 export type Giveaway = {
   id: string; title: string; body: string; productId: string; productName: string;
-  duration: KeyDuration; endsAt: string; status: 'DRAFT' | 'PUBLISHING' | 'OPEN' | 'DRAWING' | 'SENDING' | 'DELIVERED' | 'DELIVERY_FAILED' | 'EMPTY' | 'CANCELLED';
+  duration: KeyDuration; durationHours?: number; endsAt: string; status: 'DRAFT' | 'PUBLISHING' | 'OPEN' | 'DRAWING' | 'SENDING' | 'DELIVERED' | 'DELIVERY_FAILED' | 'EMPTY' | 'CANCELLED';
   createdAt: string; createdBy: string; messageId?: string; winnerId?: string; keyId?: string;
   deliveredAt?: string; deliveryAttemptedAt?: string; deliveryError?: string; entryCount?: number;
 };
@@ -32,14 +32,39 @@ export async function listGiveaways() {
   return counts;
 }
 
-export async function createGiveaway(input: { title: string; body: string; productId: string; duration: KeyDuration; endsAt: string }, actorId: string) {
+function normalizeGiveawayKeys(values: string[]) {
+  const keys = [...new Set(values.map(value => value.trim()).filter(Boolean))];
+  if (!keys.length || keys.length > 125 || keys.some(key => key.length < 6 || key.length > 160)) throw new Error('أدخل من 1 إلى 125 مفتاحًا صالحًا.');
+  return keys;
+}
+
+async function assertKeysAreNotStock(keys: string[]) {
+  // Keep the giveaway pool separate from sale inventory, including plaintext collisions.
+  for (let index = 0; index < keys.length; index += 20) {
+    await Promise.all(keys.slice(index, index + 20).map(async key => {
+      const stock = await getDocs(query(collection(database(), 'keys'), where('key', '==', key)));
+      if (!stock.empty) throw new Error(`المفتاح ${key} موجود في مخزون البيع.`);
+    }));
+  }
+}
+
+export async function createGiveaway(input: { title: string; body: string; productId: string; duration: KeyDuration; durationHours: number; keys: string[] }, actorId: string) {
   const product = await StoreDB.getProductById(input.productId);
   if (!product || product.isDisabled) throw new Error('اختر منتجًا متاحًا.');
-  const ends = Date.parse(input.endsAt);
-  if (!Number.isFinite(ends) || ends < Date.now() + 60_000 || ends > Date.now() + 30 * 86400_000) throw new Error('حدد وقت نهاية بين دقيقة و30 يومًا من الآن.');
+  if (!Number.isInteger(input.durationHours) || input.durationHours < 1 || input.durationHours > 720) throw new Error('حدد مدة بين ساعة و720 ساعة.');
+  const keys = normalizeGiveawayKeys(input.keys);
+  await assertKeysAreNotStock(keys);
   const now = new Date().toISOString();
-  const giveaway: Giveaway = { id: randomUUID(), title: input.title, body: input.body, productId: product.id, productName: product.name, duration: resolveProductKeyDuration(product.id, input.duration), endsAt: new Date(ends).toISOString(), status: 'DRAFT', createdAt: now, createdBy: actorId };
-  await setDoc(doc(database(), 'giveaways', giveaway.id), giveaway);
+  const giveaway: Giveaway = { id: randomUUID(), title: input.title, body: input.body, productId: product.id, productName: product.name, duration: resolveProductKeyDuration(product.id, input.duration), durationHours: input.durationHours, endsAt: new Date(Date.now() + input.durationHours * 3600_000).toISOString(), status: 'DRAFT', createdAt: now, createdBy: actorId };
+  await runTransaction(database(), async transaction => {
+    const previous = await Promise.all(keys.map(key => transaction.get(doc(database(), 'giveawayKeys', keyId(key)))));
+    if (previous.some(item => item.exists())) throw new Error('أحد مفاتيح السحب موجود مسبقًا.');
+    transaction.set(doc(database(), 'giveaways', giveaway.id), giveaway);
+    for (const key of keys) {
+      const item: GiveawayKey = { id: keyId(key), key, giveawayId: giveaway.id, productId: giveaway.productId, duration: giveaway.duration, status: 'AVAILABLE', createdAt: now };
+      transaction.set(doc(database(), 'giveawayKeys', item.id), item);
+    }
+  });
   return giveaway;
 }
 
@@ -48,16 +73,12 @@ export async function addGiveawayKeys(giveawayId: string, values: string[]) {
   const snapshot = await getDoc(ref);
   if (!snapshot.exists() || snapshot.data().status !== 'DRAFT') throw new Error('إضافة المفاتيح متاحة للمسودة فقط.');
   const giveaway = snapshot.data() as Giveaway;
-  const keys = [...new Set(values.map(value => value.trim()).filter(Boolean))];
-  if (!keys.length || keys.length > 125 || keys.some(key => key.length < 6 || key.length > 160)) throw new Error('أدخل من 1 إلى 125 مفتاحًا صالحًا.');
-  // Check sale inventory too: the same plaintext key must never be redeemable in both pools.
+  const keys = normalizeGiveawayKeys(values);
+  await assertKeysAreNotStock(keys);
   for (let index = 0; index < keys.length; index += 20) {
     await Promise.all(keys.slice(index, index + 20).map(async key => {
-      const [stock, existing] = await Promise.all([
-        getDocs(query(collection(database(), 'keys'), where('key', '==', key))),
-        getDoc(doc(database(), 'giveawayKeys', keyId(key))),
-      ]);
-      if (!stock.empty || existing.exists()) throw new Error(`المفتاح ${key} موجود مسبقًا.`);
+      const existing = await getDoc(doc(database(), 'giveawayKeys', keyId(key)));
+      if (existing.exists()) throw new Error(`المفتاح ${key} موجود مسبقًا.`);
     }));
   }
   await runTransaction(database(), async transaction => {
@@ -76,24 +97,28 @@ export async function publishGiveaway(id: string) {
   const snap = await getDoc(ref);
   if (!snap.exists() || snap.data().status !== 'DRAFT') throw new Error('السحب غير متاح للنشر.');
   const giveaway = snap.data() as Giveaway;
-  if (Date.parse(giveaway.endsAt) <= Date.now()) throw new Error('انتهى وقت السحب؛ غيّر المسودة.');
+  if (!giveaway.durationHours && Date.parse(giveaway.endsAt) <= Date.now()) throw new Error('انتهى وقت المسودة القديمة؛ أنشئ سحبًا جديدًا.');
   const keys = await getDocs(query(collection(database(), 'giveawayKeys'), where('giveawayId', '==', id)));
   if (!keys.docs.some(item => item.data().status === 'AVAILABLE')) throw new Error('أضف مفتاح سحب واحدًا على الأقل قبل النشر.');
-  await runTransaction(database(), async transaction => {
+  const scheduled = await runTransaction(database(), async transaction => {
     const current = await transaction.get(ref);
     if (!current.exists() || current.data().status !== 'DRAFT') throw new Error('بدأ نشر السحب بالفعل.');
-    transaction.update(ref, { status: 'PUBLISHING' });
+    const latest = current.data() as Giveaway;
+    const endsAt = latest.durationHours ? new Date(Date.now() + latest.durationHours * 3600_000).toISOString() : latest.endsAt;
+    const ready: Giveaway = { ...latest, endsAt, status: 'PUBLISHING' };
+    transaction.update(ref, { status: 'PUBLISHING', endsAt });
+    return ready;
   });
   let messageId: string;
   try {
     const { publishDiscordGiveaway } = await import('@/lib/discord-bot');
-    messageId = await publishDiscordGiveaway(giveaway);
+    messageId = await publishDiscordGiveaway(scheduled);
     await updateDoc(ref, { status: 'OPEN', messageId });
   } catch (error) {
     await updateDoc(ref, { status: 'DRAFT' }).catch(() => undefined);
     throw error;
   }
-  return { ...giveaway, status: 'OPEN' as const, messageId };
+  return { ...scheduled, status: 'OPEN' as const, messageId };
 }
 
 export async function joinGiveaway(id: string, discordId: string, channelId: string, messageId: string) {
