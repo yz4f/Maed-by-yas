@@ -24,7 +24,7 @@
 .page[data-theme='light'] .ambient { background: linear-gradient(125deg, rgba(240,250,255,.2), rgba(197,234,252,.12) 49%, rgba(239,250,255,.24)), #d9edf9; }
 .page[data-theme='light'] .ambient::before { opacity: .24; }
 .page[data-theme='dark'] .hero, .page[data-theme='dark'] .footer { --muted: #d0e2f2; --aqua: #c5edff; }
-.page[data-theme='dark'] .hero h1 span { background-image: linear-gradient(110deg, #b7d9ff, #b5f1fa); }
+.page[data-theme='dark'] .hero h1 .waveAccent { background-image: linear-gradient(110deg, #b7d9ff, #b5f1fa); }
 .header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid transparent; transition: border-color .2s, background-color .2s; }
 .scrolled { background: var(--panel); border-color: var(--line); backdrop-filter: blur(18px); }
 .headerInner { width: 100%; height: 78px; margin-inline: auto; padding-inline: clamp(24px, 3vw, 56px); display: flex; align-items: center; gap: 24px; }
@@ -47,8 +47,10 @@
 .badge { display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(56,189,248,.13); border-radius: 30px; padding: 6px 13px; background: rgba(56,189,248,.06); color: var(--aqua); font-size: 14px; font-weight: 500; margin-bottom: 24px; }
 .badge i { width: 6px; height: 6px; border-radius: 50%; background: #67e8f9; animation: pulse 3s ease-in-out infinite; }
 .hero h1 { font-size: clamp(40px, 2.9vw, 52px); line-height: 1.5; font-weight: 700; margin: 0; text-wrap: balance; }
-.hero h1 span { background: linear-gradient(110deg, #4a97fa, #84e1f0); background-clip: text; -webkit-text-fill-color: transparent; }
-.page[data-theme='light'] .hero h1 span { background-image: linear-gradient(110deg, #246bdd, #087e9a); }
+.hero h1 .waveAccent { background: linear-gradient(110deg, #4a97fa, #84e1f0); background-clip: text; -webkit-text-fill-color: transparent; }
+.page[data-theme='light'] .hero h1 .waveAccent { background-image: linear-gradient(110deg, #246bdd, #087e9a); }
+.waveWord { display: inline-block; animation: wordWave 850ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes wordWave { from { opacity: 0; transform: translateY(var(--wave-y, 0px)); } to { opacity: 1; transform: translateY(0); } }
 .description { max-width: 490px; color: var(--muted); font-size: 16px; line-height: 2; margin-top: 22px; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 430px; margin-top: 36px; }
 .stats > div { display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 4px; padding-inline: 23px; border-inline-start: 1px solid var(--line); animation: enter .6s ease both; }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
@@ -14,6 +14,15 @@ interface LoginPageProps {
   isDark: boolean;
   onLanguageChange: (lang: 'ar' | 'en') => void;
   onToggleTheme: () => void;
+}
+
+function WaveWords({ text, start = 0, accent = false }: { text: string; start?: number; accent?: boolean }) {
+  const words = text.split(' ');
+  return <>{words.map((word, index) => {
+    const position = start + index;
+    const style = { '--wave-y': `${Math.round(12 * Math.sin((position + 1) * 1.1))}px`, animationDelay: `${position * 75}ms` } as CSSProperties;
+    return <Fragment key={`${word}-${index}`}><span className={`${styles.waveWord} ${accent ? styles.waveAccent : ''}`} style={style}>{word}</span>{index < words.length - 1 ? ' ' : null}</Fragment>;
+  })}</>;
 }
 
 export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: LoginPageProps) {
@@ -120,7 +129,9 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
       <div className={styles.content}>
         <section className={styles.hero} aria-labelledby="login-hero-title">
           <span className={styles.badge}><i aria-hidden="true" />{ar ? 'تفعيل الترخيص' : 'License activation'}</span>
-          <h1 id="login-hero-title">{ar ? <>فعّل <span>مفتاح الترخيص</span><br />وافتح جميع المزايا</> : <>Activate <span>your license.</span><br />Unlock every feature.</>}</h1>
+          <h1 id="login-hero-title" aria-label={ar ? 'فعّل مفتاح الترخيص وافتح جميع المزايا' : 'Activate your license. Unlock every feature.'}>
+            <span aria-hidden="true"><WaveWords text={ar ? 'فعّل' : 'Activate'} />{' '}<WaveWords text={ar ? 'مفتاح الترخيص' : 'your license.'} start={1} accent /><br /><WaveWords text={ar ? 'وافتح جميع المزايا' : 'Unlock every feature.'} start={3} /></span>
+          </h1>
           <p className={styles.description}>{ar ? 'أدخل بحسابك عبر Discord للوصول إلى منتجاتك، أدلة الاستخدام والتحديثات، من مكان واحد.' : 'Sign in with Discord to access your products, guides and updates. Everything you need, in one place.'}</p>
           <dl className={styles.stats}>
             {[['+2,400', ar ? 'عضو نشط' : 'Active members'], ['99.9%', ar ? 'وقت التشغيل' : 'Uptime'], ['24/7', ar ? 'دعم مستمر' : 'Support']].map(([number, label]) => <div key={number}><dt>{label}</dt><dd dir="ltr">{number}</dd></div>)}
@@ -132,7 +143,7 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-256.png" width={54} height={54} alt="" />
           </div>
-          <h2 id="login-card-title">{ar ? 'تسجيل الدخول' : 'Welcome back'}</h2>
+          <h2 id="login-card-title" aria-label={ar ? 'تسجيل الدخول' : 'Welcome back'}><span aria-hidden="true"><WaveWords text={ar ? 'تسجيل الدخول' : 'Welcome back'} start={3} /></span></h2>
           <p>{ar ? 'اربط حساب Discord الخاص بك للوصول إلى حسابك وإدارة تراخيصك.' : 'Connect your Discord account to access and manage your licenses.'}</p>
           <button type="button" className={styles.primary} disabled={busy} aria-busy={busy} onClick={connect}>
             {busy && <LoaderCircle size={19} className={styles.spinner} />}
