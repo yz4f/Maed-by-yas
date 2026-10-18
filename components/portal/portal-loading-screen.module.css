@@ -1,0 +1,23 @@
+.screen {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  overflow: hidden;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 44%, rgba(31, 127, 170, .17), transparent 38%), #07131f;
+  color: #f0f9ff;
+}
+.content { display: grid; width: min(100%, 420px); justify-items: center; gap: 9px; text-align: center; }
+.mark { display: grid; width: 70px; height: 70px; place-items: center; margin-bottom: 5px; border: 1px solid rgba(145, 219, 248, .27); border-radius: 21px; background: rgba(94, 184, 225, .1); box-shadow: 0 15px 38px rgba(0, 8, 20, .22); animation: arrive .52s ease-out both; }
+.mark img { width: 54px; height: 54px; border-radius: 15px; object-fit: cover; }
+.brand { margin: 0; color: #8bdcf5; font-size: 13px; font-weight: 800; animation: arrive .5s .05s both; }
+.title { margin: 0; font-size: clamp(22px, 5vw, 30px); font-weight: 800; line-height: 1.5; animation: arrive .52s .11s both; }
+.description { margin: 0; color: #a6bed0; font-size: 14px; line-height: 1.8; animation: arrive .52s .18s both; }
+.progress { width: min(210px, 60vw); height: 3px; overflow: hidden; margin-top: 17px; border-radius: 999px; background: rgba(154, 211, 237, .15); animation: arrive .52s .24s both; }
+.progress::before { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4aa7d8, #b3f2ff); content: ''; animation: sweep 1.3s ease-in-out infinite; }
+@keyframes arrive { from { opacity: 0; transform: translateX(22px) translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes sweep { from { transform: translateX(250%); } to { transform: translateX(-150%); } }
+@media (prefers-reduced-motion: reduce) {
+  .mark, .brand, .title, .description, .progress, .progress::before { animation: none; }
+  .progress::before { width: 100%; opacity: .55; }
+}
