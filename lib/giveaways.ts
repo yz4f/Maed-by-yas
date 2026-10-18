@@ -13,7 +13,7 @@ export type Giveaway = {
   id: string; title: string; body: string; productId: string; productName: string;
   duration: KeyDuration; durationHours?: number; endsAt: string; status: 'DRAFT' | 'PUBLISHING' | 'OPEN' | 'DRAWING' | 'SENDING' | 'DELIVERED' | 'DELIVERY_FAILED' | 'EMPTY' | 'CANCELLED';
   createdAt: string; createdBy: string; messageId?: string; joinEnabledAt?: string; joinEnableError?: string; repostCount?: number; winnerId?: string; keyId?: string;
-  deliveredAt?: string; deliveryAttemptedAt?: string; deliveryError?: string; entryCount?: number;
+  deliveredAt?: string; deliveryAttemptedAt?: string; deliveryError?: string; entryCount?: number; deletedAt?: string; deleteError?: string;
 };
 type GiveawayKey = { id: string; key: string; giveawayId: string; productId: string; duration: KeyDuration; status: 'AVAILABLE' | 'RESERVED' | 'REDEEMED'; winnerId?: string; usedAt?: string; createdAt: string };
 const database = () => { const value = getDb(); if (!value) throw new Error('قاعدة البيانات غير متاحة.'); return value; };
@@ -21,7 +21,7 @@ const keyId = (key: string) => createHash('sha256').update(key.trim()).digest('h
 
 export async function listGiveaways() {
   const snap = await getDocs(collection(database(), 'giveaways'));
-  const giveaways = snap.docs.map(item => item.data() as Giveaway).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 40);
+  const giveaways = snap.docs.map(item => item.data() as Giveaway).filter(item => !item.deletedAt).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 40);
   const counts = await Promise.all(giveaways.map(async giveaway => {
     const [keys, entries] = await Promise.all([
       getDocs(query(collection(database(), 'giveawayKeys'), where('giveawayId', '==', giveaway.id))),
@@ -30,6 +30,39 @@ export async function listGiveaways() {
     return { ...giveaway, entryCount: entries.size, keyCount: keys.size, availableKeys: keys.docs.filter(item => item.data().status === 'AVAILABLE').length };
   }));
   return counts;
+}
+
+export async function deleteGiveaway(id: string) {
+  const ref = doc(database(), 'giveaways', id);
+  const giveaway = await runTransaction(database(), async transaction => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists()) throw new Error('السحب غير موجود.');
+    const current = snapshot.data() as Giveaway;
+    if (current.deletedAt) return null;
+    if (['PUBLISHING', 'DRAWING', 'SENDING'].includes(current.status)) throw new Error('انتظر اكتمال العملية الجارية ثم أعد محاولة الحذف.');
+    if (current.status !== 'CANCELLED') transaction.update(ref, { status: 'CANCELLED', deleteError: '' });
+    return current;
+  });
+  if (!giveaway) return;
+  try {
+    if (giveaway.messageId) {
+      const { deleteDiscordGiveawayMessage } = await import('@/lib/discord-bot');
+      await deleteDiscordGiveawayMessage(giveaway.messageId);
+    }
+    const keys = await getDocs(query(collection(database(), 'giveawayKeys'), where('giveawayId', '==', id)));
+    for (const key of keys.docs) {
+      if (key.data().status !== 'AVAILABLE') continue;
+      await runTransaction(database(), async transaction => {
+        const current = await transaction.get(key.ref);
+        if (current.exists() && current.data().status === 'AVAILABLE') transaction.delete(key.ref);
+      });
+    }
+    await updateDoc(ref, { deletedAt: new Date().toISOString(), deleteError: '' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'تعذر إكمال حذف السحب.';
+    await updateDoc(ref, { deleteError: message.slice(0, 200) }).catch(() => undefined);
+    throw new Error(`توقفت المشاركة، لكن لم يكتمل الحذف: ${message} أعد المحاولة من القائمة.`);
+  }
 }
 
 function normalizeGiveawayKeys(values: string[]) {
@@ -82,7 +115,8 @@ export async function addGiveawayKeys(giveawayId: string, values: string[]) {
     }));
   }
   await runTransaction(database(), async transaction => {
-    const previous = await Promise.all(keys.map(key => transaction.get(doc(database(), 'giveawayKeys', keyId(key)))));
+    const [latest, ...previous] = await Promise.all([transaction.get(ref), ...keys.map(key => transaction.get(doc(database(), 'giveawayKeys', keyId(key))))]);
+    if (!latest.exists() || latest.data().status !== 'DRAFT') throw new Error('إضافة المفاتيح متاحة للمسودة فقط.');
     if (previous.some(item => item.exists())) throw new Error('أحد المفاتيح موجود مسبقًا.');
     for (const key of keys) {
       const item: GiveawayKey = { id: keyId(key), key, giveawayId, productId: giveaway.productId, duration: giveaway.duration, status: 'AVAILABLE', createdAt: new Date().toISOString() };

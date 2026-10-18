@@ -884,9 +884,9 @@ export async function discordGiveawayMessageExists(messageId: string) {
 
 export async function deleteDiscordGiveawayMessage(messageId: string) {
   const token = process.env.DISCORD_BOT_TOKEN;
-  if (!token) return;
+  if (!token) throw new Error('بوت Discord غير متصل حاليًا.');
   const response = await discordApi(`/channels/1444216009094467695/messages/${messageId}`, token, { method: 'DELETE' });
-  if (!response.ok && response.status !== 404) throw new Error(`تعذر حذف الإعلان غير المكتمل (HTTP ${response.status}).`);
+  if (!response.ok && response.status !== 404) throw new Error(`تعذر حذف إعلان السحب (HTTP ${response.status}).`);
 }
 
 export async function sendDiscordGiveawayWinner(giveaway: Giveaway, key: string, siteUrl: string) {
