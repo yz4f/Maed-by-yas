@@ -10,7 +10,6 @@ const videos = [
   { id: 'disk', section: 'preparation', title: 'مشاكل القرص / Disk Guide', description: 'رابط فيديو المصدر يعيد 404 حاليًا، لذلك لا يمكن تشغيله حتى يُوفّر بديل.', type: 'unavailable', url: 'https://spiritx.wtf/cdn/0cab4d685f5ef464/8e0fd169486d5811.mp4', label: 'غير متاح حاليًا' },
   { id: 'network', section: 'issues', title: 'مشكلة الشبكة أو Wi‑Fi', description: 'فيديو حل رسالة فشل الاتصال أو تعذّر الوصول إلى اسم المضيف.', type: 'mp4', url: 'https://t3nn.wtf/guides/network-error-fix.mp4', thumbnail: 'assets/network.png', label: 'اتصال' },
   { id: 'time', section: 'issues', title: 'خطأ الوقت والتحقق', description: 'خطوات معالجة تنبيه مزامنة وقت Windows أو التحقق من التوقيع.', type: 'mp4', url: 'https://t3nn.wtf/guides/timer-error-fix.mp4', thumbnail: 'assets/time.png', label: 'Windows' },
-  { id: 'menu', section: 'issues', title: 'قائمة البرنامج لا تظهر', description: 'شرح حالة عمل WebUI مع عدم ظهور قائمة سبوفر.', type: 'mp4', url: 'https://t3nn.wtf/spoofer-list-fix.mp4', label: 'تشغيل البرنامج' },
 ];
 
 const sectionNames = { spoofer: 'شرح المنتج', preparation: 'تجهيز الجهاز', issues: 'مشاكل شائعة' };
