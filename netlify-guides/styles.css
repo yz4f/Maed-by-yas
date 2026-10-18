@@ -14,6 +14,11 @@
 /* Lightweight navigation and card motion. */
 .site-header{display:grid;grid-template-columns:1fr auto 1fr}
 .hero h1{margin-top:0}
+.video-card[data-id="product"] .card-media{aspect-ratio:16/9;background:#0a2536}
+.video-card[data-id="product"] .card-media img{opacity:.88;object-position:center 45%}
+.video-card[data-id="product"] .card-media:after{background:linear-gradient(0deg,#061b29ba,transparent 60%),linear-gradient(90deg,#061b2933,transparent 55%)}
+.video-card[data-id="product"] .play-icon{width:62px;height:62px;background:#0b3447e8;border-color:#d7f9ffbe;transition:transform .18s ease-out,background .18s ease-out}
+.video-card[data-id="product"] .card-media:hover .play-icon{transform:scale(1.07);background:#0d4a5ee8}
 .brand{justify-self:start}
 .header-nav{grid-column:2;justify-self:center}
 .header-nav a{border:1px solid transparent;transition:color .18s ease-out,background .18s ease-out,border-color .18s ease-out,transform .18s ease-out}
@@ -43,4 +48,4 @@
 @keyframes dialog-arrive{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes backdrop-arrive{from{opacity:0}to{opacity:1}}
 @media(max-width:760px){.site-header{display:flex}.header-nav{grid-column:auto}.card-actions{gap:8px}}
-@media(prefers-reduced-motion:reduce){.hero-content,.video-card,.video-dialog[open],.video-dialog[open]::backdrop{animation:none}.header-nav a:hover,.filter:hover,.card-actions .download-action:hover,.dialog-actions a:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.hero-content,.video-card,.video-dialog[open],.video-dialog[open]::backdrop{animation:none}.header-nav a:hover,.filter:hover,.card-actions .download-action:hover,.dialog-actions a:hover,.video-card[data-id="product"] .card-media:hover .play-icon{transform:none}}
