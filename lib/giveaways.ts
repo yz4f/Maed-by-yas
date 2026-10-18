@@ -12,7 +12,7 @@ const SITE_URL = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/,
 export type Giveaway = {
   id: string; title: string; body: string; productId: string; productName: string;
   duration: KeyDuration; durationHours?: number; endsAt: string; status: 'DRAFT' | 'PUBLISHING' | 'OPEN' | 'DRAWING' | 'SENDING' | 'DELIVERED' | 'DELIVERY_FAILED' | 'EMPTY' | 'CANCELLED';
-  createdAt: string; createdBy: string; messageId?: string; joinEnabledAt?: string; winnerId?: string; keyId?: string;
+  createdAt: string; createdBy: string; messageId?: string; joinEnabledAt?: string; joinEnableError?: string; winnerId?: string; keyId?: string;
   deliveredAt?: string; deliveryAttemptedAt?: string; deliveryError?: string; entryCount?: number;
 };
 type GiveawayKey = { id: string; key: string; giveawayId: string; productId: string; duration: KeyDuration; status: 'AVAILABLE' | 'RESERVED' | 'REDEEMED'; winnerId?: string; usedAt?: string; createdAt: string };
@@ -124,11 +124,8 @@ export async function publishGiveaway(id: string) {
     await updateDoc(ref, { status: 'DRAFT' }).catch(() => undefined);
     throw error;
   }
-  try {
-    const { enableDiscordGiveawayParticipation } = await import('@/lib/discord-bot');
-    await enableDiscordGiveawayParticipation(messageId, id);
-    await updateDoc(ref, { joinEnabledAt: new Date().toISOString() });
-  } catch (error) {
+  try { await enableGiveawayParticipation(id); }
+  catch (error) {
     // The posted button stays disabled until maintenance retries the enable step.
     console.error('[Giveaway] Participation button enable will be retried:', error);
   }
@@ -142,6 +139,23 @@ export async function createAndPublishGiveaway(input: Parameters<typeof createGi
     const failure = new Error(error instanceof Error ? error.message : 'تعذر إرسال السحب إلى Discord.') as Error & { savedId?: string };
     failure.savedId = giveaway.id;
     throw failure;
+  }
+}
+
+export async function enableGiveawayParticipation(id: string) {
+  const ref = doc(database(), 'giveaways', id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('السحب غير موجود.');
+  const giveaway = snap.data() as Giveaway;
+  if (giveaway.status !== 'OPEN' || !giveaway.messageId) throw new Error('السحب غير جاهز للمشاركة.');
+  if (giveaway.joinEnabledAt) return;
+  try {
+    const { enableDiscordGiveawayParticipation } = await import('@/lib/discord-bot');
+    await enableDiscordGiveawayParticipation(giveaway.messageId, giveaway.id);
+    await updateDoc(ref, { joinEnabledAt: new Date().toISOString(), joinEnableError: '' });
+  } catch (error) {
+    await updateDoc(ref, { joinEnableError: error instanceof Error ? error.message.slice(0, 200) : 'تعذر تفعيل زر المشاركة.' }).catch(() => undefined);
+    throw error;
   }
 }
 
@@ -174,11 +188,8 @@ export async function finishDueGiveaways() {
     const giveaway = item.data() as Giveaway;
     if (Date.parse(giveaway.endsAt) > Date.now()) {
       if (!giveaway.joinEnabledAt && giveaway.messageId) {
-        try {
-          const { enableDiscordGiveawayParticipation } = await import('@/lib/discord-bot');
-          await enableDiscordGiveawayParticipation(giveaway.messageId, giveaway.id);
-          await updateDoc(item.ref, { joinEnabledAt: new Date().toISOString() });
-        } catch (error) { console.error('[Giveaway] Participation button retry failed:', giveaway.id, error); }
+        try { await enableGiveawayParticipation(giveaway.id); }
+        catch (error) { console.error('[Giveaway] Participation button retry failed:', giveaway.id, error); }
       }
       continue;
     }

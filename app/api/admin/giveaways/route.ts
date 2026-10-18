@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 import { getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
-import { addGiveawayKeys, createAndPublishGiveaway, createGiveaway, deliverGiveaway, listGiveaways, publishGiveaway } from '@/lib/giveaways';
+import { addGiveawayKeys, createAndPublishGiveaway, createGiveaway, deliverGiveaway, enableGiveawayParticipation, listGiveaways, publishGiveaway } from '@/lib/giveaways';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,7 @@ const bodySchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('addKeys'), id: z.string().uuid(), keys: z.array(z.string()).min(1).max(125) }),
   z.object({ action: z.literal('publish'), id: z.string().uuid() }),
   z.object({ action: z.literal('retryDelivery'), id: z.string().uuid() }),
+  z.object({ action: z.literal('retryParticipation'), id: z.string().uuid() }),
 ]);
 
 export async function GET() {
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     if (body.action === 'createAndPublish') return NextResponse.json({ success: true, giveaway: await createAndPublishGiveaway(body, actor.discordId) });
     if (body.action === 'addKeys') return NextResponse.json({ success: true, added: await addGiveawayKeys(body.id, body.keys) });
     if (body.action === 'publish') return NextResponse.json({ success: true, giveaway: await publishGiveaway(body.id) });
+    if (body.action === 'retryParticipation') { await enableGiveawayParticipation(body.id); return NextResponse.json({ success: true }); }
     await deliverGiveaway(body.id);
     return NextResponse.json({ success: true });
   } catch (error) {
