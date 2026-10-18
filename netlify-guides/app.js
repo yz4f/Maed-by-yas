@@ -1,6 +1,6 @@
 const videos = [
   { id: 'product', section: 'spoofer', title: 'شرح المنتج', description: 'الفيديو الأساسي لدليل المنتج. ابدأ به وشاهد الخطوات كاملة قبل التشغيل.', type: 'mp4', url: 'https://t3nn.wtf/videos/product-guide-1016.mp4', label: 'شرح المنتج' },
-  { id: 'wrp', section: 'spoofer', title: 'شرح WRP', description: 'خطوات WRP الإضافية بعد إكمال شرح المنتج عند استمرار الحظر أو الطرد.', type: 'mp4', url: 'https://t3nn.wtf/guides/wrp-guide.mp4', thumbnail: 'assets/wrp.jpg', label: 'شرح إضافي' },
+  { id: 'wrp', section: 'spoofer', title: 'شرح WRP', description: 'شاهد الخطوات بالترتيب، ثم حمّل الملف عند الحاجة.', type: 'mp4', url: 'https://t3nn.wtf/guides/wrp-guide.mp4', downloadUrl: 'https://downloads.cloudflareclient.com/v1/download/windows/ga', thumbnail: 'assets/wrp.jpg', label: 'شرح إضافي' },
   { id: 'win11', section: 'preparation', title: 'تجهيز فلاش Windows 11', description: 'شرح تجهيز فلاش Windows 11 قبل متابعة خطوات المنتج.', type: 'youtube', url: 'https://youtu.be/XZ-9RbqlA2k', videoId: 'XZ-9RbqlA2k', thumbnail: 'https://i.ytimg.com/vi/XZ-9RbqlA2k/hqdefault.jpg', label: 'Windows 11' },
   { id: 'win10', section: 'preparation', title: 'تجهيز فلاش Windows 10', description: 'شرح تجهيز فلاش Windows 10 قبل متابعة خطوات المنتج.', type: 'youtube', url: 'https://youtu.be/WaFxvUmsNWs', videoId: 'WaFxvUmsNWs', thumbnail: 'https://i.ytimg.com/vi/WaFxvUmsNWs/hqdefault.jpg', label: 'Windows 10' },
   { id: 'bios-msi', section: 'preparation', title: 'إعداد BIOS — MSI', description: 'موضع خيارات Wi‑Fi وBluetooth على لوحات MSI عند اتباع مسار BIOS.', type: 'streamable', url: 'https://streamable.com/n7q3dk', videoId: 'n7q3dk', label: 'BIOS' },
@@ -65,7 +65,19 @@ function makeCard(video) {
   action.textContent = video.type === 'unavailable' ? 'بانتظار رابط بديل' : 'مشاهدة الشرح ←';
   action.disabled = video.type === 'unavailable';
   if (!action.disabled) action.addEventListener('click', () => openVideo(video, action));
-  foot.append(group, action);
+  const actions = document.createElement('div');
+  actions.className = 'card-actions';
+  actions.append(action);
+  if (video.downloadUrl) {
+    const download = document.createElement('a');
+    download.className = 'download-action';
+    download.href = video.downloadUrl;
+    download.target = '_blank';
+    download.rel = 'noopener noreferrer';
+    download.textContent = 'تحميل الملف ↓';
+    actions.append(download);
+  }
+  foot.append(group, actions);
   body.append(title, description, foot);
   card.append(media, body);
   return card;
@@ -77,13 +89,19 @@ for (const video of videos) {
 
 function applyFilters() {
   const term = normalize(search.value);
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let visible = 0;
   for (const section of document.querySelectorAll('.video-section')) {
     let sectionVisible = 0;
     for (const card of section.querySelectorAll('.video-card')) {
       const matches = (activeFilter === 'all' || activeFilter === section.querySelector('.cards').dataset.section) && (!term || card.dataset.search.includes(term));
+      const wasHidden = card.hidden;
       card.hidden = !matches;
-      if (matches) { visible++; sectionVisible++; }
+      if (matches) {
+        if (wasHidden && !reducedMotion && typeof card.animate === 'function') card.animate([{ opacity: 0, transform: 'translateX(8px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 280, delay: Math.min(sectionVisible * 45, 180), easing: 'ease-out' });
+        visible++;
+        sectionVisible++;
+      }
     }
     section.hidden = sectionVisible === 0;
   }
@@ -116,6 +134,9 @@ function openVideo(video, trigger) {
   document.querySelector('#dialog-category').textContent = sectionNames[video.section];
   document.querySelector('#dialog-description').textContent = video.description;
   document.querySelector('#source-link').href = video.url;
+  const downloadLink = document.querySelector('#download-link');
+  downloadLink.hidden = !video.downloadUrl;
+  if (video.downloadUrl) downloadLink.href = video.downloadUrl;
   player.replaceChildren();
 
   let element;
@@ -147,5 +168,26 @@ function openVideo(video, trigger) {
 document.querySelector('#close-dialog').addEventListener('click', () => dialog.close());
 dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
 dialog.addEventListener('close', () => { player.replaceChildren(); lastTrigger?.focus(); });
+
+const navLinks = [...document.querySelectorAll('.header-nav a')];
+function setCurrentSection(id) {
+  for (const link of navLinks) {
+    const selected = link.getAttribute('href') === `#${id}`;
+    link.classList.toggle('is-current', selected);
+    if (selected) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  }
+}
+for (const link of navLinks) link.addEventListener('click', () => setCurrentSection(link.hash.slice(1)));
+if ('IntersectionObserver' in window) {
+  const sectionObserver = new IntersectionObserver((entries) => {
+    const visibleSection = entries.find((entry) => entry.isIntersecting);
+    if (visibleSection) setCurrentSection(visibleSection.target.id);
+  }, { rootMargin: '-20% 0px -60% 0px' });
+  for (const link of navLinks) {
+    const section = document.querySelector(link.getAttribute('href'));
+    if (section) sectionObserver.observe(section);
+  }
+}
 
 applyFilters();
