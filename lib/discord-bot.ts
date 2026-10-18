@@ -850,12 +850,32 @@ export async function publishDiscordGiveaway(giveaway: Giveaway): Promise<string
   const details = await channel.json() as { guild_id?: string };
   if (details.guild_id !== '1396959491786018826') throw new Error('روم السحب لا يتبع السيرفر المحدد.');
   const message = await postDiscordMessage('1444216009094467695', token, {
-    embeds: [{ color: 0x57d6e6, title: `🎉 ${giveaway.title}`, description: `${giveaway.body}\n\n**الجائزة:** ${giveaway.productName}\n**ينتهي:** <t:${Math.floor(Date.parse(giveaway.endsAt) / 1000)}:R> · <t:${Math.floor(Date.parse(giveaway.endsAt) / 1000)}:F>\n\nاضغط الزر للمشاركة. سيصل المفتاح للفائز بالخاص، ويمكن تفعيله عبر ${websiteUrl}.`, footer: { text: 'قيفاوي تعن • مشاركة واحدة لكل عضو' } }],
-    components: [{ type: 1, components: [{ type: 2, style: 1, label: 'المشاركة في السحب', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_join:${giveaway.id}` }] }],
+    embeds: [{ color: 0x57d6e6, title: `🎉 ${giveaway.title}`, description: giveaway.body, fields: [
+      { name: '🎁 الجائزة', value: giveaway.productName, inline: true },
+      { name: '⏳ ينتهي السحب', value: `<t:${Math.floor(Date.parse(giveaway.endsAt) / 1000)}:R>`, inline: true },
+      { name: 'طريقة المشاركة', value: `اضغط زر المشاركة مرة واحدة. يُرسل المفتاح للفائز بالخاص، ويُفعّل من ${websiteUrl}.`, inline: false },
+    ], footer: { text: 'قيفاوي تعن • مشاركة واحدة لكل عضو' } }],
+    components: [{ type: 1, components: [{ type: 2, style: 1, label: 'المشاركة في السحب', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_join:${giveaway.id}`, disabled: true }] }],
     allowed_mentions: { parse: [] },
     nonce: `giveaway-${giveaway.id}`.slice(0, 25), enforce_nonce: true,
   });
   return message.id;
+}
+
+export async function enableDiscordGiveawayParticipation(messageId: string, giveawayId: string) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً.');
+  const response = await discordApi(`/channels/1444216009094467695/messages/${messageId}`, token, {
+    method: 'PATCH', body: JSON.stringify({ components: [{ type: 1, components: [{ type: 2, style: 1, label: 'المشاركة في السحب', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_join:${giveawayId}` }] }] }),
+  });
+  if (!response.ok) throw new Error(`تعذر إتاحة زر المشاركة (HTTP ${response.status}).`);
+}
+
+export async function deleteDiscordGiveawayMessage(messageId: string) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) return;
+  const response = await discordApi(`/channels/1444216009094467695/messages/${messageId}`, token, { method: 'DELETE' });
+  if (!response.ok && response.status !== 404) throw new Error(`تعذر حذف الإعلان غير المكتمل (HTTP ${response.status}).`);
 }
 
 export async function sendDiscordGiveawayWinner(giveaway: Giveaway, key: string, siteUrl: string) {

@@ -12,7 +12,7 @@ const SITE_URL = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/,
 export type Giveaway = {
   id: string; title: string; body: string; productId: string; productName: string;
   duration: KeyDuration; durationHours?: number; endsAt: string; status: 'DRAFT' | 'PUBLISHING' | 'OPEN' | 'DRAWING' | 'SENDING' | 'DELIVERED' | 'DELIVERY_FAILED' | 'EMPTY' | 'CANCELLED';
-  createdAt: string; createdBy: string; messageId?: string; winnerId?: string; keyId?: string;
+  createdAt: string; createdBy: string; messageId?: string; joinEnabledAt?: string; winnerId?: string; keyId?: string;
   deliveredAt?: string; deliveryAttemptedAt?: string; deliveryError?: string; entryCount?: number;
 };
 type GiveawayKey = { id: string; key: string; giveawayId: string; productId: string; duration: KeyDuration; status: 'AVAILABLE' | 'RESERVED' | 'REDEEMED'; winnerId?: string; usedAt?: string; createdAt: string };
@@ -109,27 +109,59 @@ export async function publishGiveaway(id: string) {
     transaction.update(ref, { status: 'PUBLISHING', endsAt });
     return ready;
   });
-  let messageId: string;
+  let messageId: string | null = null;
   try {
     const { publishDiscordGiveaway } = await import('@/lib/discord-bot');
     messageId = await publishDiscordGiveaway(scheduled);
     await updateDoc(ref, { status: 'OPEN', messageId });
   } catch (error) {
+    if (messageId) {
+      try {
+        const { deleteDiscordGiveawayMessage } = await import('@/lib/discord-bot');
+        await deleteDiscordGiveawayMessage(messageId);
+      } catch (cleanupError) { console.error('[Giveaway] Unable to remove incomplete announcement:', cleanupError); }
+    }
     await updateDoc(ref, { status: 'DRAFT' }).catch(() => undefined);
     throw error;
   }
+  try {
+    const { enableDiscordGiveawayParticipation } = await import('@/lib/discord-bot');
+    await enableDiscordGiveawayParticipation(messageId, id);
+    await updateDoc(ref, { joinEnabledAt: new Date().toISOString() });
+  } catch (error) {
+    // The posted button stays disabled until maintenance retries the enable step.
+    console.error('[Giveaway] Participation button enable will be retried:', error);
+  }
   return { ...scheduled, status: 'OPEN' as const, messageId };
+}
+
+export async function createAndPublishGiveaway(input: Parameters<typeof createGiveaway>[0], actorId: string) {
+  const giveaway = await createGiveaway(input, actorId);
+  try { return await publishGiveaway(giveaway.id); }
+  catch (error) {
+    const failure = new Error(error instanceof Error ? error.message : 'تعذر إرسال السحب إلى Discord.') as Error & { savedId?: string };
+    failure.savedId = giveaway.id;
+    throw failure;
+  }
 }
 
 export async function joinGiveaway(id: string, discordId: string, channelId: string, messageId: string) {
   if (channelId !== GIVEAWAY_CHANNEL_ID || !/^\d{16,22}$/.test(discordId)) throw new Error('المشاركة متاحة في روم السحب المحدد فقط.');
   const ref = doc(database(), 'giveaways', id);
   const entryRef = doc(database(), 'giveaways', id, 'entries', discordId);
+  // Messages published before disabled buttons were introduced can be clicked before the OPEN write completes.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const snapshot = await getDoc(ref);
+    if (!snapshot.exists() || snapshot.data().status !== 'PUBLISHING') break;
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
   return runTransaction(database(), async transaction => {
     const [giveawaySnap, entrySnap] = await Promise.all([transaction.get(ref), transaction.get(entryRef)]);
     if (!giveawaySnap.exists()) throw new Error('هذا السحب غير موجود.');
     const giveaway = giveawaySnap.data() as Giveaway;
-    if (giveaway.status !== 'OPEN' || Date.parse(giveaway.endsAt) <= Date.now() || giveaway.messageId !== messageId) throw new Error('انتهى السحب أو توقفت المشاركة.');
+    if (giveaway.status !== 'OPEN') throw new Error('السحب غير جاهز للمشاركة الآن. حاول مرة أخرى بعد لحظات.');
+    if (Date.parse(giveaway.endsAt) <= Date.now()) throw new Error('انتهى وقت هذا السحب.');
+    if (giveaway.messageId !== messageId) throw new Error('هذا الزر لا يتبع رسالة السحب الحالية.');
     if (entrySnap.exists()) return false;
     transaction.set(entryRef, { discordId, joinedAt: new Date().toISOString() });
     return true;
@@ -140,7 +172,16 @@ export async function finishDueGiveaways() {
   const open = await getDocs(query(collection(database(), 'giveaways'), where('status', '==', 'OPEN')));
   for (const item of open.docs) {
     const giveaway = item.data() as Giveaway;
-    if (Date.parse(giveaway.endsAt) > Date.now()) continue;
+    if (Date.parse(giveaway.endsAt) > Date.now()) {
+      if (!giveaway.joinEnabledAt && giveaway.messageId) {
+        try {
+          const { enableDiscordGiveawayParticipation } = await import('@/lib/discord-bot');
+          await enableDiscordGiveawayParticipation(giveaway.messageId, giveaway.id);
+          await updateDoc(item.ref, { joinEnabledAt: new Date().toISOString() });
+        } catch (error) { console.error('[Giveaway] Participation button retry failed:', giveaway.id, error); }
+      }
+      continue;
+    }
     try { await finishGiveaway(giveaway.id); } catch (error) { console.error('[Giveaway] Draw failed:', giveaway.id, error); }
   }
   for (const status of ['DRAWING', 'SENDING'] as const) {
