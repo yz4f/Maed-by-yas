@@ -562,6 +562,13 @@ body {
   border-color: rgba(202, 232, 255, 0.16);
   background: linear-gradient(135deg, rgba(21, 34, 49, 0.97), rgba(12, 20, 31, 0.97));
   color: #f6fbff;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .toast-card:hover { border-color: rgba(153, 223, 255, 0.4); box-shadow: 0 15px 36px rgba(0, 11, 28, 0.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-card { transition: none; }
 }
 .toast-card__icon {
   display: inline-flex;
