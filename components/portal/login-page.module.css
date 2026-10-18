@@ -70,11 +70,14 @@
 .cardLogo img { width: 54px; height: 54px; border-radius: 17px; object-fit: cover; }
 .card h2 { font-size: 25px; font-weight: 700; margin: 0 0 10px; line-height: 1.5; }
 .card > p { font-size: 15px; color: var(--muted); line-height: 1.9; margin: 0; }
-.primary { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 53px; padding: 12px; border-radius: 15px; margin-top: 30px; background: linear-gradient(115deg, #3865d9, #4b78e7); border: 1px solid rgba(190, 211, 255, .35); color: white; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 0 -2px #2549a0, 0 16px 28px -15px rgba(59, 109, 230, .85), inset 0 1px 0 rgba(255, 255, 255, .28); transition: transform .18s ease-out, box-shadow .18s ease-out, filter .18s ease-out; }
+.primary { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 53px; padding: 12px; border-radius: 15px; margin-top: 30px; background: linear-gradient(115deg, #3865d9, #4b78e7); border: 1px solid rgba(190, 211, 255, .35); color: white; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 0 -2px #2549a0, 0 16px 28px -15px rgba(59, 109, 230, .85), inset 0 1px 0 rgba(255, 255, 255, .28); transition: transform .15s ease-out, box-shadow .15s ease-out, filter .15s ease-out; }
 .primary:hover:not(:disabled) { filter: brightness(1.09); transform: translateY(-2px); box-shadow: 0 7px 0 -2px #2549a0, 0 20px 31px -15px rgba(59, 109, 230, .92), inset 0 1px 0 rgba(255, 255, 255, .28); }
-.primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 -1px #2549a0, 0 8px 16px -12px rgba(59, 109, 230, .7); }
+.primary:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 4px 4px 9px rgba(16, 34, 100, .52), inset -4px -4px 9px rgba(178, 216, 255, .22), 0 3px 10px -6px rgba(25, 65, 167, .6); }
 .primary:disabled { opacity: .75; cursor: wait; }
-.primary svg { flex-shrink: 0; }
+.primary svg { position: relative; z-index: 1; flex-shrink: 0; }
+.primary > span:not(.ripple) { position: relative; z-index: 1; }
+.ripple { position: absolute; z-index: 0; border-radius: 50%; background: rgba(235, 247, 255, .3); pointer-events: none; transform: scale(0); animation: loginRipple 600ms ease-out forwards; }
+@keyframes loginRipple { to { transform: scale(1); opacity: 0; } }
 .divider { display: flex; align-items: center; gap: 14px; margin: 27px 0 17px; color: var(--muted); font-size: 13px; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .card .storePrompt { font-size: 13px; }

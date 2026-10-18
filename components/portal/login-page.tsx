@@ -29,6 +29,7 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
   const ar = lang === 'ar';
   const reducedMotion = useReducedMotion();
   const [busy, setBusy] = useState(false);
+  const [ripple, setRipple] = useState<{ id: number; x: number; y: number; size: number } | null>(null);
   const pending = useRef(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -83,6 +84,18 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
       pending.current = false;
       setBusy(false);
     }
+  }
+
+  function showRipple(button: HTMLButtonElement, clientX?: number, clientY?: number) {
+    if (reducedMotion || busy) return;
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    setRipple({
+      id: Date.now(),
+      x: (clientX ?? rect.left + rect.width / 2) - rect.left - size / 2,
+      y: (clientY ?? rect.top + rect.height / 2) - rect.top - size / 2,
+      size,
+    });
   }
 
   async function copyCertificate() {
@@ -145,7 +158,8 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
           </div>
           <h2 id="login-card-title" aria-label={ar ? 'تسجيل الدخول' : 'Welcome back'}><span aria-hidden="true"><WaveWords text={ar ? 'تسجيل الدخول' : 'Welcome back'} start={3} /></span></h2>
           <p>{ar ? 'اربط حساب Discord الخاص بك للوصول إلى حسابك وإدارة تراخيصك.' : 'Connect your Discord account to access and manage your licenses.'}</p>
-          <button type="button" className={styles.primary} disabled={busy} aria-busy={busy} onClick={connect}>
+          <button type="button" className={styles.primary} disabled={busy} aria-busy={busy} onPointerDown={event => showRipple(event.currentTarget, event.clientX, event.clientY)} onClick={event => { if (event.detail === 0) showRipple(event.currentTarget); void connect(); }}>
+            {ripple && <span key={ripple.id} className={styles.ripple} style={{ left: ripple.x, top: ripple.y, width: ripple.size, height: ripple.size }} aria-hidden="true" onAnimationEnd={() => setRipple(null)} />}
             {busy && <LoaderCircle size={19} className={styles.spinner} />}
             <span aria-live="polite">{busy ? (ar ? 'جارٍ تسجيل الدخول...' : 'Signing in…') : (ar ? 'تسجيل دخول' : 'Sign in')}</span>
           </button>
