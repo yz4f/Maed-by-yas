@@ -13,6 +13,7 @@
 
 /* Lightweight navigation and card motion. */
 .site-header{display:grid;grid-template-columns:1fr auto 1fr}
+.hero h1{margin-top:0}
 .brand{justify-self:start}
 .header-nav{grid-column:2;justify-self:center}
 .header-nav a{border:1px solid transparent;transition:color .18s ease-out,background .18s ease-out,border-color .18s ease-out,transform .18s ease-out}

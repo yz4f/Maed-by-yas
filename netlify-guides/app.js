@@ -7,7 +7,6 @@ const videos = [
   { id: 'bios-gigabyte', section: 'preparation', title: 'إعداد BIOS — GIGABYTE / AORUS', description: 'شرح خيارات الاتصال في BIOS للوحات GIGABYTE وAORUS.', type: 'streamable', url: 'https://streamable.com/1qhn35', videoId: '1qhn35', label: 'BIOS' },
   { id: 'bios-asrock', section: 'preparation', title: 'إعداد BIOS — ASROCK', description: 'شرح إعدادات Wi‑Fi وBluetooth في BIOS للوحات ASROCK.', type: 'streamable', url: 'https://streamable.com/ec8u3s', videoId: 'ec8u3s', label: 'BIOS' },
   { id: 'raid', section: 'preparation', title: 'إعادة تثبيت RAID', description: 'فيديو تجهيز RAID. راجع التحذير واحتفظ بنسخة احتياطية قبل أي خطوة تمس الأقراص.', type: 'streamable', url: 'https://streamable.com/9o2zci', videoId: '9o2zci', label: 'RAID' },
-  { id: 'disk', section: 'preparation', title: 'مشاكل القرص / Disk Guide', description: 'رابط فيديو المصدر يعيد 404 حاليًا، لذلك لا يمكن تشغيله حتى يُوفّر بديل.', type: 'unavailable', url: 'https://spiritx.wtf/cdn/0cab4d685f5ef464/8e0fd169486d5811.mp4', label: 'غير متاح حاليًا' },
   { id: 'network', section: 'issues', title: 'مشكلة الشبكة أو Wi‑Fi', description: 'فيديو حل رسالة فشل الاتصال أو تعذّر الوصول إلى اسم المضيف.', type: 'mp4', url: 'https://t3nn.wtf/guides/network-error-fix.mp4', thumbnail: 'assets/network.png', label: 'اتصال' },
   { id: 'time', section: 'issues', title: 'خطأ الوقت والتحقق', description: 'خطوات معالجة تنبيه مزامنة وقت Windows أو التحقق من التوقيع.', type: 'mp4', url: 'https://t3nn.wtf/guides/timer-error-fix.mp4', thumbnail: 'assets/time.png', label: 'Windows' },
 ];
