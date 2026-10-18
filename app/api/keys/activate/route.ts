@@ -3,6 +3,7 @@ import { StoreDB } from '@/lib/store-db';
 import { DiscordBotService } from '@/lib/discord';
 import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
+import { activateGiveawayKey } from '@/lib/giveaways';
 
 export async function POST(req: Request) {
   try {
@@ -20,16 +21,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'مفتاح التفعيل مطلوب.' }, { status: 400 });
     }
 
-    const res = await StoreDB.activateProductWithKey(
-      keyString.trim(),
-      {
-        discordId: actor.discordId,
-        name: actor.name,
-        email: actor.email || undefined,
-        image: actor.image || undefined,
-      },
-      getClientIp(req),
-    );
+    const userDetails = {
+      discordId: actor.discordId,
+      name: actor.name,
+      email: actor.email || undefined,
+      image: actor.image || undefined,
+    };
+    let res = await activateGiveawayKey(keyString.trim(), userDetails, getClientIp(req));
+    if (!res.success && res.message === 'المفتاح غير صحيح أو غير موجود') {
+      res = await StoreDB.activateProductWithKey(keyString.trim(), userDetails, getClientIp(req));
+    }
 
     let discordRoleSync: { success: boolean; message: string; grantedRoleIds: string[]; failedRoleIds: string[] } | null = null;
     if (res.success && res.product) {

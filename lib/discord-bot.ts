@@ -2,6 +2,7 @@ import WebSocket, { RawData } from 'ws';
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db as getDb } from '@/lib/store-db';
 import type { SiteUpdate } from '@/types';
+import type { Giveaway } from '@/lib/giveaways';
 import { DISCORD_ROLES } from '@/lib/roles';
 
 const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
@@ -93,7 +94,8 @@ let socket: WebSocket | null = null;
 let heartbeatTimer: NodeJS.Timeout | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let supportMaintenanceTimer: NodeJS.Timeout | null = null;
-let supportMaintenanceRunning = false;
+let giveawayTimer: NodeJS.Timeout | null = null;
+const supportMaintenanceRunning = false;
 let sequence: number | null = null;
 let started = false;
 
@@ -101,9 +103,11 @@ function clearTimers() {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   if (reconnectTimer) clearTimeout(reconnectTimer);
   if (supportMaintenanceTimer) clearInterval(supportMaintenanceTimer);
+  if (giveawayTimer) clearInterval(giveawayTimer);
   heartbeatTimer = null;
   reconnectTimer = null;
   supportMaintenanceTimer = null;
+  giveawayTimer = null;
 }
 
 function gatewayPayload(op: number, d: unknown) {
@@ -838,6 +842,51 @@ async function postDiscordMessage(channelId: string, token: string, data: Record
   return response.json() as Promise<{ id: string }>;
 }
 
+export async function publishDiscordGiveaway(giveaway: Giveaway): Promise<string> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً.');
+  const channel = await discordApi(`/channels/${'1444216009094467695'}`, token);
+  if (!channel.ok) throw new Error('تعذر الوصول إلى روم السحب المحدد.');
+  const details = await channel.json() as { guild_id?: string };
+  if (details.guild_id !== '1396959491786018826') throw new Error('روم السحب لا يتبع السيرفر المحدد.');
+  const message = await postDiscordMessage('1444216009094467695', token, {
+    embeds: [{ color: 0x57d6e6, title: `🎉 ${giveaway.title}`, description: `${giveaway.body}\n\n**الجائزة:** ${giveaway.productName}\n**ينتهي:** <t:${Math.floor(Date.parse(giveaway.endsAt) / 1000)}:R> · <t:${Math.floor(Date.parse(giveaway.endsAt) / 1000)}:F>\n\nاضغط الزر للمشاركة. سيصل المفتاح للفائز بالخاص، ويمكن تفعيله عبر ${websiteUrl}.`, footer: { text: 'قيفاوي تعن • مشاركة واحدة لكل عضو' } }],
+    components: [{ type: 1, components: [{ type: 2, style: 1, label: 'المشاركة في السحب', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_join:${giveaway.id}` }] }],
+    allowed_mentions: { parse: [] },
+    nonce: `giveaway-${giveaway.id}`.slice(0, 25), enforce_nonce: true,
+  });
+  return message.id;
+}
+
+export async function sendDiscordGiveawayWinner(giveaway: Giveaway, key: string, siteUrl: string) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token || !giveaway.winnerId) throw new Error('بوت Discord غير متصل حالياً.');
+  const dmId = await openDiscordDm(giveaway.winnerId, token);
+  await postDiscordMessage(dmId, token, {
+    content: `🎉 مبروك! فزت في **${giveaway.title}**.\nالمنتج: **${giveaway.productName}**\nمفتاحك الخاص: \`${key}\`\nادخل ${siteUrl} وسجل بحساب Discord الفائز، ثم افتح «تفعيل مفتاح» والصق المفتاح.`,
+    allowed_mentions: { parse: [] },
+    nonce: `giveaway-${giveaway.id}`.slice(0, 25), enforce_nonce: true,
+  });
+}
+
+export async function updateDiscordGiveawayResult(id: string) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) return;
+  const snap = await getDoc(doc(supportDatabase(), 'giveaways', id));
+  if (!snap.exists()) return;
+  const giveaway = snap.data() as Giveaway;
+  if (!giveaway.messageId) return;
+  const hasWinner = Boolean(giveaway.winnerId);
+  const response = await discordApi(`/channels/1444216009094467695/messages/${giveaway.messageId}`, token, {
+    method: 'PATCH', body: JSON.stringify({
+      embeds: [{ color: hasWinner ? 0x45c9a8 : 0x75808d, title: `🎉 ${giveaway.title}`, description: `${giveaway.body}\n\n**الجائزة:** ${giveaway.productName}\n**انتهى السحب:** <t:${Math.floor(Date.parse(giveaway.endsAt) / 1000)}:F>\n${hasWinner ? `**الفائز:** <@${giveaway.winnerId}>\nإن تعذر وصول الخاص، اضغط زر استلام الجائزة؛ سيظهر المفتاح لك وحدك.` : 'انتهى السحب دون مشاركات أو جائزة متاحة.'}`, footer: { text: 'قيفاوي تعن' } }],
+      components: hasWinner ? [{ type: 1, components: [{ type: 2, style: 3, label: 'استلام جائزتي', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_claim:${id}` }] }] : [],
+      allowed_mentions: { parse: [] },
+    }),
+  });
+  if (!response.ok) throw new Error(`تعذر تحديث رسالة السحب (HTTP ${response.status}).`);
+}
+
 export async function publishDiscordSupportPanel(): Promise<{ messageId: string }> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم نشر لوحة الدعم.');
@@ -1263,6 +1312,37 @@ async function answerInteraction(interaction: any, token: string) {
 
   if (interaction.type !== 3) return;
   const customId = String(interaction.data?.custom_id || '');
+  if (customId.startsWith('ta3n_giveaway_join:')) {
+    const deferred = await fetch(`https://discord.com/api/v10/interactions/${interaction.id}/${interaction.token}/callback`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 5, data: { flags: 64 } }),
+    });
+    if (!deferred.ok) return;
+    let content: string;
+    try {
+      const { joinGiveaway } = await import('@/lib/giveaways');
+      const added = await joinGiveaway(customId.slice('ta3n_giveaway_join:'.length), String(interaction.member?.user?.id || interaction.user?.id || ''), String(interaction.channel_id || ''), String(interaction.message?.id || ''));
+      content = added ? '🎉 تم تسجيل مشاركتك في السحب. بالتوفيق!' : 'أنت مشارك في هذا السحب بالفعل.';
+    } catch (error) { content = error instanceof Error ? error.message : 'تعذرت المشاركة الآن.'; }
+    await fetch(`https://discord.com/api/v10/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+    });
+    return;
+  }
+  if (customId.startsWith('ta3n_giveaway_claim:')) {
+    const deferred = await fetch(`https://discord.com/api/v10/interactions/${interaction.id}/${interaction.token}/callback`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 5, data: { flags: 64 } }),
+    });
+    if (!deferred.ok) return;
+    let content: string;
+    try {
+      const { claimGiveawayKey } = await import('@/lib/giveaways');
+      content = await claimGiveawayKey(customId.slice('ta3n_giveaway_claim:'.length), String(interaction.member?.user?.id || interaction.user?.id || ''), String(interaction.channel_id || ''), String(interaction.message?.id || ''));
+    } catch (error) { content = error instanceof Error ? error.message : 'تعذر استلام الجائزة.'; }
+    await fetch(`https://discord.com/api/v10/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+    });
+    return;
+  }
   if (customId.startsWith('ta3n_reset_approve:') || customId.startsWith('ta3n_reset_reject:') || customId.startsWith('ta3n_reset_info:')) {
     const resetAuditChannels = await ensurePrivateAuditChannels(token);
     if (String(interaction.channel_id) !== resetAuditChannels.resetAuditChannelId) {
@@ -1429,6 +1509,11 @@ function handleGatewayMessage(data: RawData, token: string) {
     const tag = packet.d?.user?.global_username || packet.d?.user?.username || 'Ta3n Bot';
     console.info(`[Discord Bot] Connected as ${tag}.`);
     if (applicationId) void registerCommands(applicationId, token).catch((error) => console.error('[Discord Bot] Unable to register commands:', error));
+    if (!giveawayTimer) {
+      const sweep = () => void import('@/lib/giveaways').then(({ finishDueGiveaways }) => finishDueGiveaways()).catch(error => console.error('[Giveaway] Sweep failed:', error));
+      sweep();
+      giveawayTimer = setInterval(sweep, 15_000);
+    }
     return;
   }
   if (packet.t === 'INTERACTION_CREATE') void answerInteraction(packet.d, token).catch((error) => console.error('[Discord Bot] Interaction handling failed:', error));
@@ -1473,4 +1558,7 @@ export async function startDiscordBot() {
   }
   await verifyCustomerAuditRooms(token).catch((error) => console.error('[Discord Audit] Customer audit rooms are unavailable:', error));
   connect(token);
+  const sweep = () => void import('@/lib/giveaways').then(({ finishDueGiveaways }) => finishDueGiveaways()).catch(error => console.error('[Giveaway] Sweep failed:', error));
+  sweep();
+  giveawayTimer = setInterval(sweep, 15_000);
 }

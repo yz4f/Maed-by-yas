@@ -2144,7 +2144,7 @@ export const StoreDB = {
           const keyRef = current.keyId ? doc(getDb(), 'keys', current.keyId) : null;
           const keySnapshot = keyRef ? await transaction.get(keyRef) : null;
           const key = keySnapshot?.exists() ? keySnapshot.data() as Key : null;
-          const { expiresAt } = getGuideStartTiming(current, resolveProductKeyDuration(productId, key?.duration), now);
+          const { expiresAt } = getGuideStartTiming(current, resolveProductKeyDuration(productId, current.licenseDuration ?? key?.duration), now);
           transaction.update(userProductRef, { startedAt: now, expiresAt });
           if (keyRef && keySnapshot?.exists()) transaction.update(keyRef, { status: 'active', updatedAt: now });
           result = { success: true, message: 'بدأت مدة المنتج عند فتح الدليل.', licenseId: candidate.id, startedAt: now, expiresAt, status: 'active' };

@@ -103,6 +103,7 @@ export interface Key {
 }
 
 export interface UserProduct {
+  licenseDuration?: KeyDuration;
   id: string;
   userId: string;
   user?: User;

@@ -52,6 +52,7 @@ import {
   Unlock,
   Hash,
   Megaphone,
+  Gift,
   Send,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -68,6 +69,7 @@ import { ProductNotice } from '@/components/guides/product-notice';
 const HelpCenter = dynamic(() => import('./help-center').then((module) => module.HelpCenter), { ssr: false });
 const HelpAdminSection = dynamic(() => import('./help-admin-section').then((module) => module.HelpAdminSection), { ssr: false });
 const SiteUpdatesAdmin = dynamic(() => import('./site-updates-admin').then((module) => module.SiteUpdatesAdmin), { ssr: false });
+const GiveawayAdmin = dynamic(() => import('./giveaway-admin').then((module) => module.GiveawayAdmin), { ssr: false });
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
 const AdminAuditLog = dynamic(() => import('./admin-audit-log').then((module) => module.AdminAuditLog), { ssr: false });
@@ -441,7 +443,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'updates' | 'resetRequests' | 'keys' | 'logs'>('overview');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'sitePresence' | 'help' | 'updates' | 'giveaways' | 'resetRequests' | 'keys' | 'logs'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -2391,6 +2393,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
                     {adminSectionTab === 'help' && <HelpCircle className="w-6 h-6 text-teal-500 dark:text-teal-400" />}
                     {adminSectionTab === 'updates' && <Megaphone className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
+                    {adminSectionTab === 'giveaways' && <Gift className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'resetRequests' && <RefreshCw className="w-6 h-6 text-amber-500 dark:text-amber-300" />}
                     {adminSectionTab === 'keys' && <Key className="w-6 h-6 text-indigo-600 dark:text-primary" />}
                     {adminSectionTab === 'logs' && <FileText className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
@@ -2401,6 +2404,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
                     {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
+                    {adminSectionTab === 'giveaways' && (lang === 'ar' ? 'قيفاوي' : 'Giveaways')}
                     {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات الريست' : 'Reset requests')}
                     {adminSectionTab === 'keys' && (lang === 'ar' ? 'البحث في المفاتيح' : 'Keys Search')}
                     {adminSectionTab === 'logs' && (lang === 'ar' ? 'مركز النشاط' : 'Activity Center')}
@@ -2412,6 +2416,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
                   {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة تصنيفات وأسئلة مركز المساعدة، وتتبع الأسئلة الأكثر بحثاً وتعديل الإجابات باحترافية.' : 'Manage Help Center categories and FAQs, view real search stats, and edit rich answers.')}
                   {adminSectionTab === 'updates' && (lang === 'ar' ? 'أنشئ تحديثاً موثقاً بصورة، اعتمده، ثم انشره مرة واحدة إلى Discord.' : 'Create an image-backed update, approve it, then publish it once to Discord.')}
+                  {adminSectionTab === 'giveaways' && (lang === 'ar' ? 'أنشئ سحباً، أضف مفاتيحه الخاصة، وانشره في Discord مع تسليم آلي للفائز.' : 'Create a giveaway and deliver its separate key pool to the winner.')}
                   {adminSectionTab === 'resetRequests' && (lang === 'ar' ? 'طلبات العملاء لإعادة ضبط الترخيص، مع السبب والمفتاح ووقت الطلب.' : 'Customer license reset requests with their reason, key, and request time.')}
                   {adminSectionTab === 'keys' && (lang === 'ar' ? 'تتبع سريع للمفاتيح المباعة والمتاحة في النظام.' : 'Quick tracking of sold and available license keys in the system.')}
                   {adminSectionTab === 'logs' && (lang === 'ar' ? 'مراقبة حية لجميع حركات دخول وخروج واستخدام الموقع.' : 'Live auditing of all logins, transactions, and site usage.')}
@@ -2457,6 +2462,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'customers', label: lang === 'ar' ? 'العملاء' : 'Customers', icon: Users },
                 { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
+                { id: 'giveaways', label: lang === 'ar' ? 'قيفاوي' : 'Giveaways', icon: Gift },
                 { id: 'resetRequests', label: lang === 'ar' ? 'طلبات الريست' : 'Reset requests', icon: RefreshCw },
                 { id: 'logs', label: lang === 'ar' ? 'سجل النشاط' : 'Activity log', icon: FileText },
                 { id: 'sitePresence', label: lang === 'ar' ? 'حضور العملاء' : 'Customer presence', icon: Activity },
@@ -2710,6 +2716,9 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
 
             {adminSectionTab === 'updates' && (
               <SiteUpdatesAdmin lang={lang} isDark={isDark} onNotify={showToast} />
+            )}
+            {adminSectionTab === 'giveaways' && (
+              <GiveawayAdmin products={products} lang={lang} isDark={isDark} onNotify={showToast} />
             )}
 
             {adminSectionTab === 'resetRequests' && (
