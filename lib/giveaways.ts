@@ -194,6 +194,17 @@ export async function finishDueGiveaways() {
   }
 }
 
+let maintenanceTimer: NodeJS.Timeout | null = null;
+
+/** Run scheduled draws and repair participation buttons independently of Discord gateway readiness. */
+export function startGiveawayMaintenance() {
+  if (maintenanceTimer) return;
+  const sweep = () => void finishDueGiveaways().catch(error => console.error('[Giveaway] Maintenance failed:', error));
+  sweep();
+  maintenanceTimer = setInterval(sweep, 15_000);
+  maintenanceTimer.unref?.();
+}
+
 export async function finishGiveaway(id: string) {
   const ref = doc(database(), 'giveaways', id);
   const [entriesSnap, keysSnap] = await Promise.all([

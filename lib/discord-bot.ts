@@ -94,7 +94,6 @@ let socket: WebSocket | null = null;
 let heartbeatTimer: NodeJS.Timeout | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let supportMaintenanceTimer: NodeJS.Timeout | null = null;
-let giveawayTimer: NodeJS.Timeout | null = null;
 const supportMaintenanceRunning = false;
 let sequence: number | null = null;
 let started = false;
@@ -103,11 +102,9 @@ function clearTimers() {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   if (reconnectTimer) clearTimeout(reconnectTimer);
   if (supportMaintenanceTimer) clearInterval(supportMaintenanceTimer);
-  if (giveawayTimer) clearInterval(giveawayTimer);
   heartbeatTimer = null;
   reconnectTimer = null;
   supportMaintenanceTimer = null;
-  giveawayTimer = null;
 }
 
 function gatewayPayload(op: number, d: unknown) {
@@ -1529,11 +1526,6 @@ function handleGatewayMessage(data: RawData, token: string) {
     const tag = packet.d?.user?.global_username || packet.d?.user?.username || 'Ta3n Bot';
     console.info(`[Discord Bot] Connected as ${tag}.`);
     if (applicationId) void registerCommands(applicationId, token).catch((error) => console.error('[Discord Bot] Unable to register commands:', error));
-    if (!giveawayTimer) {
-      const sweep = () => void import('@/lib/giveaways').then(({ finishDueGiveaways }) => finishDueGiveaways()).catch(error => console.error('[Giveaway] Sweep failed:', error));
-      sweep();
-      giveawayTimer = setInterval(sweep, 15_000);
-    }
     return;
   }
   if (packet.t === 'INTERACTION_CREATE') void answerInteraction(packet.d, token).catch((error) => console.error('[Discord Bot] Interaction handling failed:', error));
@@ -1578,7 +1570,4 @@ export async function startDiscordBot() {
   }
   await verifyCustomerAuditRooms(token).catch((error) => console.error('[Discord Audit] Customer audit rooms are unavailable:', error));
   connect(token);
-  const sweep = () => void import('@/lib/giveaways').then(({ finishDueGiveaways }) => finishDueGiveaways()).catch(error => console.error('[Giveaway] Sweep failed:', error));
-  sweep();
-  giveawayTimer = setInterval(sweep, 15_000);
 }
