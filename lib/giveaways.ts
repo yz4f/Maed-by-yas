@@ -12,7 +12,7 @@ const SITE_URL = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/,
 export type Giveaway = {
   id: string; title: string; body: string; productId: string; productName: string;
   duration: KeyDuration; durationHours?: number; endsAt: string; status: 'DRAFT' | 'PUBLISHING' | 'OPEN' | 'DRAWING' | 'SENDING' | 'DELIVERED' | 'DELIVERY_FAILED' | 'EMPTY' | 'CANCELLED';
-  createdAt: string; createdBy: string; messageId?: string; joinEnabledAt?: string; joinEnableError?: string; winnerId?: string; keyId?: string;
+  createdAt: string; createdBy: string; messageId?: string; joinEnabledAt?: string; joinEnableError?: string; repostCount?: number; winnerId?: string; keyId?: string;
   deliveredAt?: string; deliveryAttemptedAt?: string; deliveryError?: string; entryCount?: number;
 };
 type GiveawayKey = { id: string; key: string; giveawayId: string; productId: string; duration: KeyDuration; status: 'AVAILABLE' | 'RESERVED' | 'REDEEMED'; winnerId?: string; usedAt?: string; createdAt: string };
@@ -154,6 +154,29 @@ export async function enableGiveawayParticipation(id: string) {
     await enableDiscordGiveawayParticipation(giveaway.messageId, giveaway.id);
     await updateDoc(ref, { joinEnabledAt: new Date().toISOString(), joinEnableError: '' });
   } catch (error) {
+    if (error && typeof error === 'object' && 'status' in error && error.status === 404 && !giveaway.repostCount) {
+      try {
+        const { discordGiveawayMessageExists, publishDiscordGiveaway, enableDiscordGiveawayParticipation } = await import('@/lib/discord-bot');
+        if (!await discordGiveawayMessageExists(giveaway.messageId)) {
+          const reserved = await runTransaction(database(), async transaction => {
+            const latest = await transaction.get(ref);
+            if (!latest.exists() || latest.data().status !== 'OPEN' || latest.data().messageId !== giveaway.messageId || latest.data().repostCount) return false;
+            transaction.update(ref, { repostCount: 1 });
+            return true;
+          });
+          if (reserved) {
+            const replacementId = await publishDiscordGiveaway(giveaway, true);
+            await updateDoc(ref, { messageId: replacementId });
+            await enableDiscordGiveawayParticipation(replacementId, giveaway.id);
+            await updateDoc(ref, { joinEnabledAt: new Date().toISOString(), joinEnableError: '' });
+            return;
+          }
+        }
+      } catch (repostError) {
+        await updateDoc(ref, { joinEnableError: repostError instanceof Error ? repostError.message.slice(0, 200) : 'تعذر إعادة نشر رسالة السحب.' }).catch(() => undefined);
+        throw repostError;
+      }
+    }
     await updateDoc(ref, { joinEnableError: error instanceof Error ? error.message.slice(0, 200) : 'تعذر تفعيل زر المشاركة.' }).catch(() => undefined);
     throw error;
   }

@@ -839,7 +839,7 @@ async function postDiscordMessage(channelId: string, token: string, data: Record
   return response.json() as Promise<{ id: string }>;
 }
 
-export async function publishDiscordGiveaway(giveaway: Giveaway): Promise<string> {
+export async function publishDiscordGiveaway(giveaway: Giveaway, replacement = false): Promise<string> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً.');
   const channel = await discordApi(`/channels/${'1444216009094467695'}`, token);
@@ -854,7 +854,7 @@ export async function publishDiscordGiveaway(giveaway: Giveaway): Promise<string
     ], footer: { text: 'قيفاوي تعن • مشاركة واحدة لكل عضو' } }],
     components: [{ type: 1, components: [{ type: 2, style: 1, label: 'المشاركة في السحب', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_join:${giveaway.id}`, disabled: true }] }],
     allowed_mentions: { parse: [] },
-    nonce: `giveaway-${giveaway.id}`.slice(0, 25), enforce_nonce: true,
+    nonce: replacement ? `giveaway-${Date.now()}-${giveaway.id.slice(0, 5)}`.slice(0, 25) : `giveaway-${giveaway.id}`.slice(0, 25), enforce_nonce: true,
   });
   return message.id;
 }
@@ -865,7 +865,21 @@ export async function enableDiscordGiveawayParticipation(messageId: string, give
   const response = await discordApi(`/channels/1444216009094467695/messages/${messageId}`, token, {
     method: 'PATCH', body: JSON.stringify({ components: [{ type: 1, components: [{ type: 2, style: 1, label: 'المشاركة في السحب', emoji: { name: '🎁' }, custom_id: `ta3n_giveaway_join:${giveawayId}` }] }] }),
   });
-  if (!response.ok) throw new Error(`تعذر إتاحة زر المشاركة (HTTP ${response.status}).`);
+  if (!response.ok) {
+    const body = await response.text();
+    const error = new Error(`تعذر إتاحة زر المشاركة (HTTP ${response.status}: ${body.slice(0, 160)}).`) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
+}
+
+export async function discordGiveawayMessageExists(messageId: string) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير متصل حالياً.');
+  const response = await discordApi(`/channels/1444216009094467695/messages/${messageId}`, token);
+  if (response.status === 404) return false;
+  if (!response.ok) throw new Error(`تعذر التحقق من رسالة السحب (HTTP ${response.status}).`);
+  return true;
 }
 
 export async function deleteDiscordGiveawayMessage(messageId: string) {
