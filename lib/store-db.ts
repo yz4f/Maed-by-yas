@@ -2348,10 +2348,10 @@ export const StoreDB = {
       },
       () => LocalDB.addLog(action, details, userId, userName, ipAddress, auditEvent)
     );
-    if (typeof window === 'undefined' && process.env.SMS_ALERTS_ENABLED === '1') {
-      void import('@/lib/sms-alerts')
-        .then(({ sendSmsAuditAlert }) => sendSmsAuditAlert({ action, actorName: userName }))
-        .catch((error) => console.error('[SMS Audit] Delivery failed:', error));
+    if (typeof window === 'undefined' && process.env.WHATSAPP_ALERTS_ENABLED === '1') {
+      void import('@/lib/whatsapp-alerts')
+        .then(({ sendWhatsAppAuditAlert }) => sendWhatsAppAuditAlert({ action, actorName: userName }))
+        .catch((error) => console.error('[WhatsApp Audit] Delivery failed:', error));
     }
     // Dedicated Discord cards already cover these high-volume events; all other
     // system logs receive one private, redacted audit entry immediately.
