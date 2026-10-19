@@ -4,6 +4,7 @@ import { DISCORD_ROLES } from './roles';
 import { DiscordBotService } from './discord';
 import { sendDiscordWebsiteLog } from './discord-bot';
 import { recordSiteLogin } from './site-presence';
+import { sendSmsAuditAlert } from './sms-alerts';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -46,6 +47,10 @@ export const authOptions: NextAuthOptions = {
           recordSiteLogin({ discordId: profile.id, name: customerName, image: token.image, role: token.role || 'Customer' }),
           sendDiscordWebsiteLog({ type: 'login', customerId: profile.id, customerName, customerImage: token.image }),
         ]).catch((error) => console.error('[Website Presence] Login event failed:', error));
+        if (process.env.SMS_ALERTS_ENABLED === '1') {
+          void sendSmsAuditAlert({ action: 'Login', actorName: customerName })
+            .catch((error) => console.error('[SMS Audit] Login alert failed:', error));
+        }
       }
       return token;
     },

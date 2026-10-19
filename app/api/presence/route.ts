@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
 import { listActiveSitePresence, recordSiteHeartbeat, recordSiteLogout } from '@/lib/site-presence';
+import { sendSmsAuditAlert } from '@/lib/sms-alerts';
 import { canManageTickets, getTicketActor, requestHasTrustedOrigin } from '@/lib/ticket-auth';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,10 @@ export async function PATCH(request: NextRequest) {
     if (!actor) throw new Error('يجب تسجيل الدخول أولاً.');
     const presence = await recordSiteLogout({ discordId: actor.id, name: actor.name, image: actor.image, role: actor.role });
     await sendDiscordWebsiteLog({ type: 'logout', customerId: actor.id, customerName: actor.name, customerImage: actor.image }).catch((error) => console.error('[Website Presence] Logout log failed:', error));
+    if (process.env.SMS_ALERTS_ENABLED === '1') {
+      void sendSmsAuditAlert({ action: 'Logout', actorName: actor.name })
+        .catch((error) => console.error('[SMS Audit] Logout alert failed:', error));
+    }
     return NextResponse.json({ success: true, presence });
   } catch (error) {
     return failed(error);
