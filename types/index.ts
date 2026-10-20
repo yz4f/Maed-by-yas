@@ -23,6 +23,8 @@ export interface User {
   image?: string | null;
   role: RoleType;
   discordRoles: string[]; // Role IDs
+  botVerifiedAt?: string | null;
+  botVerifiedRole?: 'Customer' | 'Member' | null;
   createdAt: string;
   lastLogin?: string;
   lastIp?: string;

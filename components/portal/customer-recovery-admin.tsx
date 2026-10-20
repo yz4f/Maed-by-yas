@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, Loader2, Search, ShieldCheck, UserRoundPlus } from 'lucide-react';
+import { CheckCircle2, Copy, Loader2, Search, ShieldCheck, UserRoundPlus, Users, UserX } from 'lucide-react';
 
 type Result = {
   member: { discordId: string; name: string; image: string | null; verifiedRole: 'Customer' | 'Member' };
   state: 'missing' | 'archived' | 'active';
+  membership: 'in' | 'out';
+  verification: 'live' | 'historical';
+  canRejoin: boolean;
+  blocked: boolean;
 };
 
 export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'; onRecovered: () => void }) {
@@ -18,16 +22,22 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
   const [members, setMembers] = useState<Result[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [listStarted, setListStarted] = useState(false);
+  const [listMode, setListMode] = useState<'server' | 'history'>('server');
+  const [membershipFilter, setMembershipFilter] = useState<'all' | 'in' | 'out'>('out');
 
-  const loadMembers = async (cursor?: string) => {
+  const loadMembers = async (mode: 'server' | 'history', cursor?: string) => {
     setBusy(true);
     setError('');
     try {
-      const response = await fetch(`/api/admin/customers/recovery?list=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, { cache: 'no-store' });
+      const query = mode === 'server'
+        ? `list=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
+        : `list=history${cursor ? `&offset=${encodeURIComponent(cursor)}` : ''}`;
+      const response = await fetch(`/api/admin/customers/recovery?${query}`, { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || (ar ? 'تعذر تحميل أعضاء البوت.' : 'Could not load bot members.'));
       setMembers((current) => cursor ? [...current, ...data.members] : data.members);
-      setNextCursor(data.nextCursor || null);
+      setNextCursor(mode === 'server' ? data.nextCursor || null : data.nextOffset === null ? null : String(data.nextOffset));
+      setListMode(mode);
       setListStarted(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : (ar ? 'تعذر تحميل أعضاء البوت.' : 'Could not load bot members.'));
@@ -45,7 +55,7 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
       const response = await fetch(`/api/admin/customers/recovery?discordId=${encodeURIComponent(discordId.trim())}`, { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || (ar ? 'تعذر فحص الحساب.' : 'Could not check the account.'));
-      setResult({ member: data.member, state: data.state });
+      setResult({ member: data.member, state: data.state, membership: data.membership, verification: data.verification, canRejoin: data.canRejoin, blocked: data.blocked });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : (ar ? 'تعذر فحص الحساب.' : 'Could not check the account.'));
     } finally {
@@ -54,7 +64,7 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
   };
 
   const recover = async (candidate: Result) => {
-    if (candidate.state === 'active') return;
+    if (candidate.state === 'active' && candidate.membership === 'in') return;
     setBusy(true);
     setError('');
     setMessage('');
@@ -66,16 +76,43 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || (ar ? 'تعذر الاسترجاع.' : 'Recovery failed.'));
-      setResult((current) => current?.member.discordId === candidate.member.discordId ? { ...current, state: 'active' } : current);
-      setMembers((current) => current.map((item) => item.member.discordId === candidate.member.discordId ? { ...item, state: 'active' } : item));
+      setResult((current) => current?.member.discordId === candidate.member.discordId ? { ...current, state: 'active', membership: 'in', verification: 'live' } : current);
+      setMembers((current) => current.map((item) => item.member.discordId === candidate.member.discordId ? { ...item, state: 'active', membership: 'in', verification: 'live' } : item));
       setMessage(data.message || (ar ? 'تم استرجاع العميل.' : 'Customer recovered.'));
       onRecovered();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : (ar ? 'تعذر الاسترجاع.' : 'Recovery failed.'));
+      if (candidate.membership === 'out') void loadMembers(listMode);
     } finally {
       setBusy(false);
     }
   };
+
+  const copyReturnLink = async () => {
+    try {
+      await navigator.clipboard.writeText('https://t3nn.wtf/rejoin-consent');
+      setMessage(ar ? 'تم نسخ رابط الموقع. أرسله للعميل ليسجل الدخول ويوافق على إعادة الانضمام.' : 'Site link copied. Ask the customer to sign in and authorize rejoining.');
+    } catch {
+      setError(ar ? 'تعذر نسخ الرابط. أرسل للعميل https://t3nn.wtf/rejoin-consent مباشرة.' : 'Could not copy the link. Send https://t3nn.wtf/rejoin-consent to the customer.');
+    }
+  };
+
+  const action = (candidate: Result) => candidate.blocked
+    ? <span className="shrink-0 rounded-lg bg-rose-400/10 px-2.5 py-1.5 text-[11px] font-bold text-rose-300">{ar ? 'محظور إدارياً' : 'Admin blocked'}</span>
+    : candidate.membership === 'out' && !candidate.canRejoin
+    ? <button type="button" onClick={() => void copyReturnLink()} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-[11px] font-bold text-amber-200 transition-colors hover:bg-amber-400/20"><Copy className="h-3.5 w-3.5" />{ar ? 'نسخ رابط الموافقة' : 'Copy consent link'}</button>
+    : candidate.membership === 'out' || candidate.state !== 'active'
+      ? <button type="button" onClick={() => void recover(candidate)} disabled={busy} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-[11px] font-black text-cyan-200 transition-all hover:bg-cyan-400/20 active:translate-y-0.5 disabled:opacity-50">{busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserRoundPlus className="h-3.5 w-3.5" />}{ar ? 'استرجاع' : 'Recover'}</button>
+      : <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" />{ar ? 'موجود' : 'Present'}</span>;
+
+  const status = (candidate: Result) => <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
+    <span className={`rounded-full px-2 py-0.5 ${candidate.membership === 'in' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-amber-400/10 text-amber-200'}`}>{candidate.membership === 'in' ? (ar ? 'داخل السيرفر' : 'In server') : (ar ? 'خارج السيرفر' : 'Left server')}</span>
+    <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-cyan-200">{candidate.member.verifiedRole === 'Customer' ? (ar ? 'عميل' : 'Customer') : (ar ? 'عضو' : 'Member')}</span>
+    <span className="text-slate-400">{candidate.verification === 'historical' ? (ar ? 'رتبة محفوظة بالسجل' : 'Previously recorded role') : (ar ? 'رتبة مؤكدة الآن' : 'Role verified now')}</span>
+    {candidate.state === 'archived' && <span className="text-amber-300">{ar ? 'حساب مؤرشف' : 'Archived account'}</span>}
+  </div>;
+
+  const visibleMembers = listMode === 'history' ? members.filter((item) => membershipFilter === 'all' || item.membership === membershipFilter) : members;
 
   return (
     <section className="glass-card rounded-[24px] border border-cyan-400/10 p-5 md:p-8 space-y-5" dir={ar ? 'rtl' : 'ltr'}>
@@ -83,7 +120,7 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
         <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-cyan-300"><UserRoundPlus className="h-5 w-5" /></div>
         <div>
           <h3 className="text-lg font-black">{ar ? 'استرجاع الأعضاء والعملاء الموثقين بالبوت' : 'Recover bot verified members and customers'}</h3>
-          <p className="mt-1 text-xs leading-6 text-slate-400">{ar ? 'استعرض أصحاب رتبة عضو أو عميل في البوت، أو افحص Discord ID مباشرة. يمكنك استعادة الحساب المؤرشف أو إضافة حساب لم يُسجل في الموقع بعد.' : 'Browse members with the bot Member or Customer role, or check a Discord ID directly, then recover a missing or archived account.'}</p>
+          <p className="mt-1 text-xs leading-6 text-slate-400">{ar ? 'افحص عضوية ديسكورد الفعلية، واعرض من هم داخل السيرفر أو غادروه مع رتبتهم المسجلة. إعادة من غادر تتطلب موافقته على صلاحية البوت عند تسجيل الدخول.' : 'Check live Discord membership and browse people in or out of the server. Rejoining requires their OAuth consent when they sign in.'}</p>
         </div>
       </div>
 
@@ -105,30 +142,30 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
         <div className="flex min-w-0 items-center gap-3">
           <img src={result.member.image || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-11 w-11 rounded-xl object-cover" />
           <div className="min-w-0"><p className="truncate text-sm font-black">{result.member.name}</p><p className="font-mono text-[11px] text-slate-400">{result.member.discordId}</p></div>
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300"><ShieldCheck className="h-3 w-3" />{ar ? (result.member.verifiedRole === 'Customer' ? 'رتبة عميل' : 'رتبة عضو') : result.member.verifiedRole}</span>
+          <ShieldCheck className="h-4 w-4 shrink-0 text-cyan-300" />
         </div>
-        {result.state === 'active'
-          ? <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300"><CheckCircle2 className="h-4 w-4" />{ar ? 'العميل موجود في الموقع' : 'Already on site'}</span>
-          : <button type="button" onClick={() => void recover(result)} disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2.5 text-xs font-black text-cyan-200 transition-all hover:bg-cyan-400/20 active:translate-y-0.5 disabled:opacity-50">
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserRoundPlus className="h-4 w-4" />}
-              {result.state === 'archived' ? (ar ? 'استعادة الحساب المحفوظ' : 'Restore archived account') : (ar ? 'إضافة العميل إلى الموقع' : 'Add customer to site')}
-            </button>}
+        {status(result)}
+        {action(result)}
       </div>}
       <div className="border-t border-white/10 pt-5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-sm font-black">{ar ? 'أعضاء وعملاء البوت' : 'Bot members and customers'}</h4>
-          <button type="button" onClick={() => void loadMembers()} disabled={busy} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold transition-colors hover:bg-white/[.06] disabled:opacity-50">{ar ? 'عرض الحسابات الموثقة' : 'Show verified accounts'}</button>
+          <h4 className="text-sm font-black">{ar ? 'حالة أعضاء وعملاء البوت' : 'Bot member status'}</h4>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => void loadMembers('server')} disabled={busy} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-50 ${listMode === 'server' && listStarted ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200' : 'border-white/10 hover:bg-white/[.06]'}`}><Users className="h-3.5 w-3.5" />{ar ? 'داخل السيرفر' : 'In server'}</button>
+            <button type="button" onClick={() => { setMembershipFilter('out'); void loadMembers('history'); }} disabled={busy} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-50 ${listMode === 'history' && listStarted ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/10 hover:bg-white/[.06]'}`}><UserX className="h-3.5 w-3.5" />{ar ? 'خارج السيرفر' : 'Left server'}</button>
+          </div>
         </div>
-        {listStarted && members.length === 0 && <p className="text-xs text-slate-400">{ar ? 'لم تظهر حسابات برتبة عضو أو عميل في هذه الصفحة من الخادم.' : 'No Member or Customer role holders appeared on this server page.'}</p>}
-        {members.length > 0 && <div className="grid gap-2 md:grid-cols-2">
-          {members.map((candidate) => <div key={candidate.member.discordId} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[.025] p-3">
-            <div className="min-w-0"><p className="truncate text-xs font-black">{candidate.member.name}</p><p className="font-mono text-[10px] text-slate-400">{candidate.member.discordId}</p><p className="mt-1 text-[10px] text-slate-500">{candidate.member.verifiedRole === 'Customer' ? (ar ? 'عميل' : 'Customer') : (ar ? 'عضو' : 'Member')} · {candidate.state === 'active' ? (ar ? 'موجود في الموقع' : 'On site') : candidate.state === 'archived' ? (ar ? 'مؤرشف' : 'Archived') : (ar ? 'غير مسجل' : 'Not registered')}</p></div>
-            {candidate.state !== 'active' && <button type="button" onClick={() => void recover(candidate)} disabled={busy} className="shrink-0 rounded-lg border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-[11px] font-bold text-cyan-200 transition-colors hover:bg-cyan-400/20 disabled:opacity-50">{ar ? 'استرجاع' : 'Recover'}</button>}
+        {listMode === 'history' && listStarted && <div className="flex flex-wrap gap-1.5">{(['out', 'in', 'all'] as const).map((filter) => <button key={filter} type="button" onClick={() => setMembershipFilter(filter)} className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors ${membershipFilter === filter ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400 hover:bg-white/[.05]'}`}>{filter === 'out' ? (ar ? 'غادروا' : 'Left') : filter === 'in' ? (ar ? 'ما زالوا' : 'Still here') : (ar ? 'الكل' : 'All')}</button>)}</div>}
+        {listStarted && visibleMembers.length === 0 && <p className="rounded-xl border border-white/10 bg-white/[.025] p-4 text-xs text-slate-400">{ar ? 'لا توجد حسابات في هذه المجموعة من الصفحات المحمّلة.' : 'No accounts in this group among loaded pages.'}</p>}
+        {visibleMembers.length > 0 && <div className="grid gap-2 md:grid-cols-2">
+          {visibleMembers.map((candidate) => <div key={candidate.member.discordId} className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[.025] p-3 transition-colors hover:border-cyan-400/20">
+            <div className="flex min-w-0 items-center gap-2.5"><img src={candidate.member.image || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-9 w-9 rounded-lg object-cover" /><div className="min-w-0"><p className="truncate text-xs font-black">{candidate.member.name}</p><p className="font-mono text-[10px] text-slate-400">{candidate.member.discordId}</p>{status(candidate)}</div></div>
+            {action(candidate)}
           </div>)}
         </div>}
-        {nextCursor && <button type="button" onClick={() => void loadMembers(nextCursor)} disabled={busy} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold transition-colors hover:bg-white/[.06] disabled:opacity-50">{busy ? (ar ? 'جارٍ التحميل...' : 'Loading...') : (ar ? 'عرض المزيد' : 'Load more')}</button>}
+        {nextCursor && <button type="button" onClick={() => void loadMembers(listMode, nextCursor)} disabled={busy} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold transition-colors hover:bg-white/[.06] disabled:opacity-50">{busy ? (ar ? 'جارٍ التحميل...' : 'Loading...') : (ar ? 'عرض المزيد' : 'Load more')}</button>}
       </div>
-      <p className="text-[11px] leading-5 text-slate-500">{ar ? 'يُسترجع ملف العميل فقط. المنتجات والمفاتيح لا تُضاف تلقائيًا؛ تبقى التراخيص السابقة المحفوظة كما هي.' : 'Only the customer profile is recovered. Products and keys are never granted automatically; saved licenses remain intact.'}</p>
+      <p className="text-[11px] leading-5 text-slate-500">{ar ? 'لا يمكن إعادة عضو غادر دون موافقته على صلاحية Discord. الاسترجاع لا يمنح مفاتيح أو منتجات جديدة ولا يلغي الحظر الإداري.' : 'A former member must consent to Discord rejoining. Recovery grants no new keys or products and never lifts an administrative ban.'}</p>
     </section>
   );
 }

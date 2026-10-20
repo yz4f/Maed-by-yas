@@ -2404,7 +2404,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'overview' && (lang === 'ar' ? 'نظرة عامة وإحصائيات' : 'Overview & Stats')}
                     {adminSectionTab === 'products' && (lang === 'ar' ? 'إدارة المنتجات والمخزون' : 'Products & Inventory')}
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
-                  {adminSectionTab === 'customerRecovery' && (lang === 'ar' ? 'استرجاع العملاء' : 'Customer Recovery')}
+                  {adminSectionTab === 'customerRecovery' && (lang === 'ar' ? 'استرجاع أعضاء ديسكورد' : 'Discord Member Recovery')}
                     {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
                     {adminSectionTab === 'giveaways' && (lang === 'ar' ? 'قيفاوي' : 'Giveaways')}
@@ -2417,7 +2417,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'overview' && (lang === 'ar' ? <>إحصائيات شاملة ومباشرة لمنصة {renderBrandText('تعن')} الرقمية.</> : 'Comprehensive live stats for the TA3N portal.')}
                   {adminSectionTab === 'products' && (lang === 'ar' ? 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.' : 'Full control over product settings and manual key addition.')}
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
-                  {adminSectionTab === 'customerRecovery' && (lang === 'ar' ? 'استرجع حساب عميل موثق في البوت بعد التحقق من رتبته في ديسكورد.' : 'Recover a bot verified customer after checking their Discord role.')}
+                  {adminSectionTab === 'customerRecovery' && (lang === 'ar' ? 'اعرض من هم داخل السيرفر أو غادروه، واسترجع الموثقين بعد موافقتهم.' : 'See members in or out of the server and recover verified members after consent.')}
                   {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة تصنيفات وأسئلة مركز المساعدة، وتتبع الأسئلة الأكثر بحثاً وتعديل الإجابات باحترافية.' : 'Manage Help Center categories and FAQs, view real search stats, and edit rich answers.')}
                   {adminSectionTab === 'updates' && (lang === 'ar' ? 'أنشئ تحديثاً موثقاً بصورة، اعتمده، ثم انشره مرة واحدة إلى Discord.' : 'Create an image-backed update, approve it, then publish it once to Discord.')}
                   {adminSectionTab === 'giveaways' && (lang === 'ar' ? 'أنشئ سحباً، أضف مفاتيحه الخاصة، وانشره في Discord مع تسليم آلي للفائز.' : 'Create a giveaway and deliver its separate key pool to the winner.')}
@@ -2464,7 +2464,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview', icon: Activity },
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'العملاء' : 'Customers', icon: Users },
-                { id: 'customerRecovery', label: lang === 'ar' ? 'استرجاع العملاء' : 'Recover customers', icon: UserCheck },
+                { id: 'customerRecovery', label: lang === 'ar' ? 'استرجاع أعضاء ديسكورد' : 'Recover Discord members', icon: UserCheck },
                 { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'giveaways', label: lang === 'ar' ? 'قيفاوي' : 'Giveaways', icon: Gift },

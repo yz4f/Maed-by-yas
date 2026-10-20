@@ -5,6 +5,7 @@ import { DiscordBotService } from './discord';
 import { sendDiscordWebsiteLog } from './discord-bot';
 import { recordSiteLogin } from './site-presence';
 import { sendWhatsAppAuditAlert } from './whatsapp-alerts';
+import { saveDiscordRejoinConsent } from './discord-rejoin';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,13 +13,20 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.DISCORD_CLIENT_ID || '',
       clientSecret: process.env.DISCORD_CLIENT_SECRET || '',
       issuer: 'https://discord.com',
-      authorization: { params: { scope: 'identify email guilds' } },
+      authorization: { params: { scope: 'identify email guilds guilds.join' } },
     }),
   ],
   callbacks: {
     async jwt({ token, account, profile }: any) {
       if (profile) {
         token.discordId = profile.id;
+        if (account?.refresh_token) {
+          try {
+            await saveDiscordRejoinConsent(profile.id, String(account.scope || ''), account.refresh_token);
+          } catch (error) {
+            console.error('[Discord Rejoin] Could not save consent:', error);
+          }
+        }
         token.image = profile.avatar
           ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
           : 'https://cdn.discordapp.com/embed/avatars/0.png';
