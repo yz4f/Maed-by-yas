@@ -15,6 +15,39 @@ type DiscordMember = {
   roles?: string[];
 };
 
+let rosterCache: { expiresAt: number; members: Map<string, DiscordMember> } | null = null;
+let rosterLoad: Promise<Map<string, DiscordMember>> | null = null;
+
+async function loadGuildRoster(): Promise<Map<string, DiscordMember>> {
+  if (rosterCache && Date.now() < rosterCache.expiresAt) return rosterCache.members;
+  if (rosterLoad) return rosterLoad;
+  rosterLoad = (async () => {
+    const token = process.env.DISCORD_BOT_TOKEN;
+    const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
+    if (!token) throw new Error('بوت ديسكورد غير مهيأ على الخادم.');
+    const members = new Map<string, DiscordMember>();
+    let after = '';
+    for (let page = 0; page < 20; page++) {
+      const url = `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000${after ? `&after=${after}` : ''}`;
+      const response = await fetch(url, { headers: { Authorization: `Bot ${token}` }, cache: 'no-store', signal: AbortSignal.timeout(10000) });
+      if (response.status === 429) throw new Error('ديسكورد يحد الطلبات مؤقتًا. انتظر قليلًا ثم حدّث القائمة.');
+      if (!response.ok) throw new Error(`تعذر قراءة أعضاء السيرفر من ديسكورد (HTTP ${response.status}).`);
+      const batch = await response.json() as DiscordMember[];
+      if (!Array.isArray(batch)) throw new Error('استجابة أعضاء ديسكورد غير صالحة.');
+      for (const member of batch) if (member.user?.id) members.set(member.user.id, member);
+      if (batch.length < 1000) {
+        rosterCache = { members, expiresAt: Date.now() + 30_000 };
+        return members;
+      }
+      const lastId = batch[batch.length - 1]?.user?.id;
+      if (!lastId || lastId === after) throw new Error('تعذر إكمال قائمة أعضاء ديسكورد.');
+      after = lastId;
+    }
+    throw new Error('قائمة السيرفر كبيرة جدًا لإكمال التحقق الآن.');
+  })();
+  try { return await rosterLoad; } finally { rosterLoad = null; }
+}
+
 async function fetchDiscordMember(discordId: string): Promise<DiscordMember | null> {
   const token = process.env.DISCORD_BOT_TOKEN;
   const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
@@ -75,25 +108,27 @@ export async function GET(request: Request) {
       const users = (await StoreDB.getUsers())
         .filter((user) => /^\d{16,22}$/.test(user.discordId) && historicalRole(user))
         .sort((a, b) => a.discordId.localeCompare(b.discordId));
+      const roster = await loadGuildRoster();
       const page = users.slice(offset, offset + 40);
       const members = [];
       for (let index = 0; index < page.length; index += 5) {
         const chunk = await Promise.all(page.slice(index, index + 5).map(async (user) => {
-          const live = await fetchDiscordMember(user.discordId);
-          const role = live ? verifiedRole(live) : historicalRole(user);
+          const live = roster.get(user.discordId) || null;
+          const currentRole = live ? verifiedRole(live) : null;
+          const role = currentRole || historicalRole(user);
           if (!role || live?.user?.bot) return null;
           return {
             member: live ? memberDetails(user.discordId, live, role) : storedDetails(user, role),
             state: accountState(user),
             membership: live ? 'in' : 'out',
-            verification: live && verifiedRole(live) ? 'live' : 'historical',
+            verification: currentRole ? 'live' : 'historical',
             canRejoin: live ? false : await hasDiscordRejoinConsent(user.discordId),
             blocked: Boolean(user.isBanned),
           };
         }));
-        members.push(...chunk.filter((item) => item !== null));
+        members.push(...chunk);
       }
-      return NextResponse.json({ success: true, members, nextOffset: offset + 40 < users.length ? offset + 40 : null });
+      return NextResponse.json({ success: true, members: members.filter((item) => item !== null), nextOffset: offset + 40 < users.length ? offset + 40 : null });
     } catch (error) {
       console.error('[Customer Recovery] History list failed:', error);
       return NextResponse.json({ success: false, message: error instanceof Error ? error.message : 'تعذر عرض سجلات العملاء.' }, { status: 502 });

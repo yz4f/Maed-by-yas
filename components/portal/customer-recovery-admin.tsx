@@ -12,6 +12,17 @@ type Result = {
   blocked: boolean;
 };
 
+async function readApiResponse(response: Response, ar: boolean) {
+  if (!response.headers.get('content-type')?.includes('application/json')) {
+    if (response.status === 401 || response.status === 403 || response.redirected) {
+      throw new Error(ar ? 'انتهت جلسة الإدارة. حدّث الصفحة وسجّل الدخول مجددًا.' : 'Admin session expired. Refresh and sign in again.');
+    }
+    throw new Error(ar ? 'تعذر الاتصال بخدمة الاسترجاع مؤقتًا. أعد المحاولة بعد قليل.' : 'Recovery service is temporarily unavailable. Try again shortly.');
+  }
+  try { return await response.json(); }
+  catch { throw new Error(ar ? 'استجابة الخدمة غير مكتملة. أعد المحاولة.' : 'The service returned an incomplete response. Try again.'); }
+}
+
 export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'; onRecovered: () => void }) {
   const ar = lang === 'ar';
   const [discordId, setDiscordId] = useState('');
@@ -33,7 +44,7 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
         ? `list=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
         : `list=history${cursor ? `&offset=${encodeURIComponent(cursor)}` : ''}`;
       const response = await fetch(`/api/admin/customers/recovery?${query}`, { cache: 'no-store' });
-      const data = await response.json();
+      const data = await readApiResponse(response, ar);
       if (!response.ok || !data.success) throw new Error(data.message || (ar ? 'تعذر تحميل أعضاء البوت.' : 'Could not load bot members.'));
       setMembers((current) => cursor ? [...current, ...data.members] : data.members);
       setNextCursor(mode === 'server' ? data.nextCursor || null : data.nextOffset === null ? null : String(data.nextOffset));
@@ -53,7 +64,7 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
     setError('');
     try {
       const response = await fetch(`/api/admin/customers/recovery?discordId=${encodeURIComponent(discordId.trim())}`, { cache: 'no-store' });
-      const data = await response.json();
+      const data = await readApiResponse(response, ar);
       if (!response.ok || !data.success) throw new Error(data.message || (ar ? 'تعذر فحص الحساب.' : 'Could not check the account.'));
       setResult({ member: data.member, state: data.state, membership: data.membership, verification: data.verification, canRejoin: data.canRejoin, blocked: data.blocked });
     } catch (cause) {
@@ -74,7 +85,7 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ discordId: candidate.member.discordId }),
       });
-      const data = await response.json();
+      const data = await readApiResponse(response, ar);
       if (!response.ok || !data.success) throw new Error(data.message || (ar ? 'تعذر الاسترجاع.' : 'Recovery failed.'));
       setResult((current) => current?.member.discordId === candidate.member.discordId ? { ...current, state: 'active', membership: 'in', verification: 'live' } : current);
       setMembers((current) => current.map((item) => item.member.discordId === candidate.member.discordId ? { ...item, state: 'active', membership: 'in', verification: 'live' } : item));
@@ -99,16 +110,18 @@ export function CustomerRecoveryAdmin({ lang, onRecovered }: { lang: 'ar' | 'en'
 
   const action = (candidate: Result) => candidate.blocked
     ? <span className="shrink-0 rounded-lg bg-rose-400/10 px-2.5 py-1.5 text-[11px] font-bold text-rose-300">{ar ? 'محظور إدارياً' : 'Admin blocked'}</span>
+    : candidate.membership === 'in' && candidate.verification === 'historical'
+      ? <span className="shrink-0 rounded-lg bg-amber-400/10 px-2.5 py-1.5 text-[11px] font-bold text-amber-200">{ar ? 'راجع الرتبة' : 'Review role'}</span>
     : candidate.membership === 'out' && !candidate.canRejoin
     ? <button type="button" onClick={() => void copyReturnLink()} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-[11px] font-bold text-amber-200 transition-colors hover:bg-amber-400/20"><Copy className="h-3.5 w-3.5" />{ar ? 'نسخ رابط الموافقة' : 'Copy consent link'}</button>
     : candidate.membership === 'out' || candidate.state !== 'active'
-      ? <button type="button" onClick={() => void recover(candidate)} disabled={busy} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-[11px] font-black text-cyan-200 transition-all hover:bg-cyan-400/20 active:translate-y-0.5 disabled:opacity-50">{busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserRoundPlus className="h-3.5 w-3.5" />}{ar ? 'استرجاع' : 'Recover'}</button>
+      ? <button type="button" onClick={() => void recover(candidate)} disabled={busy} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-[11px] font-black text-cyan-200 transition-all hover:bg-cyan-400/20 active:translate-y-0.5 disabled:opacity-50">{busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserRoundPlus className="h-3.5 w-3.5" />}{candidate.membership === 'out' ? (ar ? 'إعادة للسيرفر' : 'Rejoin server') : candidate.state === 'archived' ? (ar ? 'استعادة الحساب' : 'Restore account') : (ar ? 'إضافة للموقع' : 'Add to site')}</button>
       : <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" />{ar ? 'موجود' : 'Present'}</span>;
 
   const status = (candidate: Result) => <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
     <span className={`rounded-full px-2 py-0.5 ${candidate.membership === 'in' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-amber-400/10 text-amber-200'}`}>{candidate.membership === 'in' ? (ar ? 'داخل السيرفر' : 'In server') : (ar ? 'خارج السيرفر' : 'Left server')}</span>
     <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-cyan-200">{candidate.member.verifiedRole === 'Customer' ? (ar ? 'عميل' : 'Customer') : (ar ? 'عضو' : 'Member')}</span>
-    <span className="text-slate-400">{candidate.verification === 'historical' ? (ar ? 'رتبة محفوظة بالسجل' : 'Previously recorded role') : (ar ? 'رتبة مؤكدة الآن' : 'Role verified now')}</span>
+    <span className="text-slate-400">{candidate.verification === 'historical' ? candidate.membership === 'in' ? (ar ? 'الرتبة السابقة غير موجودة الآن' : 'Previous role missing now') : (ar ? 'رتبة محفوظة بالسجل' : 'Previously recorded role') : (ar ? 'رتبة مؤكدة الآن' : 'Role verified now')}</span>
     {candidate.state === 'archived' && <span className="text-amber-300">{ar ? 'حساب مؤرشف' : 'Archived account'}</span>}
   </div>;
 
