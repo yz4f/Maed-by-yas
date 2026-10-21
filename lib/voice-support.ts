@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, updateDoc } from '@/lib/server-firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
 import type { VoiceSupportSession, VoiceSupportSessionStatus } from '@/types';

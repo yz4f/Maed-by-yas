@@ -23,6 +23,9 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ success: false, message: 'تعذر تهيئة حساب المستخدم. أعد تسجيل الدخول وحاول مجدداً.' }, { status: 401 });
     }
+    if (user.isBanned) {
+      return NextResponse.json({ success: false, message: 'الحساب محظور من التحميل.' }, { status: 403 });
+    }
 
     const userProducts = await StoreDB.getUserProducts(user.id);
     const license = userProducts.find((item) => item.productId === productId && isLicenseCurrentlyActive(item));

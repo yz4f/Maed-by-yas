@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
 import { getClientIp, getSessionActor } from '@/lib/request-security';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +14,10 @@ export async function GET(req: Request) {
     }
 
     const ip = getClientIp(req);
+    const userAgent = String(req.headers.get('user-agent') || '').slice(0, 512);
+    const securityUserAgentHash = userAgent && process.env.NEXTAUTH_SECRET
+      ? createHmac('sha256', process.env.NEXTAUTH_SECRET).update(userAgent).digest('hex')
+      : undefined;
     let isNewUser = false;
     let user = await StoreDB.getUserByDiscordId(actor.discordId);
     if (!user) {
@@ -31,6 +35,7 @@ export async function GET(req: Request) {
         welcomeVideoCompletedAt: null,
         lastLogin: createdAt,
         lastIp: ip,
+        ...(securityUserAgentHash ? { securityUserAgentHash } : {}),
         isBanned: false,
         warningMessage: null,
         warningCount: 0,
@@ -50,8 +55,30 @@ export async function GET(req: Request) {
           metadata: { source: 'discord_oauth' },
         }
       );
+      if (ip !== 'unknown' && securityUserAgentHash) {
+        try {
+          const relatedAccounts = (await StoreDB.getUsers()).filter((candidate) =>
+            candidate.id !== newUser.id && !candidate.isArchived && candidate.lastIp === ip
+            && candidate.securityUserAgentHash === securityUserAgentHash
+          );
+          if (relatedAccounts.length) {
+            await StoreDB.addLog(
+              'Security Related Accounts',
+              `تطابق عنوان الاتصال والمتصفح مع ${relatedAccounts.length} حساب آخر؛ يلزم مراجعة بشرية.`,
+              newUser.id, newUser.name, ip,
+              {
+                eventType: 'security_related_accounts', actorUserId: newUser.id,
+                actorDiscordId: actor.discordId, actorName: newUser.name,
+                metadata: { relatedDiscordIds: relatedAccounts.slice(0, 10).map((candidate) => candidate.discordId), signal: 'ip_and_user_agent' },
+              }
+            );
+          }
+        } catch (error) {
+          console.error('Related-account review failed:', error);
+        }
+      }
     } else if (!isBackgroundSync) {
-      await StoreDB.updateUser(user.id, { lastLogin: new Date().toISOString(), lastIp: ip, name: actor.name, image: actor.image });
+      await StoreDB.updateUser(user.id, { lastLogin: new Date().toISOString(), lastIp: ip, ...(securityUserAgentHash ? { securityUserAgentHash } : {}), name: actor.name, image: actor.image });
     }
 
     if (!user) {

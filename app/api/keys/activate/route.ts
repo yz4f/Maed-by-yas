@@ -4,6 +4,7 @@ import { DiscordBotService } from '@/lib/discord';
 import { sendDiscordWebsiteLog } from '@/lib/discord-bot';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
 import { activateGiveawayKey } from '@/lib/giveaways';
+import { limitKeyActivation } from '@/lib/security-rate-limit';
 
 export async function POST(req: Request) {
   try {
@@ -16,8 +17,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'يجب تسجيل الدخول عبر Discord قبل تفعيل المفتاح.' }, { status: 401 });
     }
 
-    const { keyString } = await req.json();
-    if (!keyString || typeof keyString !== 'string') {
+    if (Number(req.headers.get('content-length') || 0) > 4096) {
+      return NextResponse.json({ success: false, message: 'الطلب كبير جداً.' }, { status: 413 });
+    }
+    const user = await StoreDB.getUserByDiscordId(actor.discordId);
+    if (user?.isBanned && (user.banType !== 'temporary' || !user.banExpiresAt || Date.parse(user.banExpiresAt) > Date.now())) {
+      return NextResponse.json({ success: false, message: 'الحساب محظور من تفعيل المفاتيح.' }, { status: 403 });
+    }
+    const ip = getClientIp(req);
+    const rateLimit = await limitKeyActivation(actor.discordId, ip);
+    if (!rateLimit.allowed) {
+      if (rateLimit.firstRejection) {
+        await StoreDB.addLog('Security Rate Limit', 'تجاوز حد محاولات تفعيل المفاتيح', user?.id, actor.name, ip, {
+          eventType: 'security_activation_rate_limit', actorDiscordId: actor.discordId,
+          actorUserId: user?.id || null, actorName: actor.name,
+        }).catch((error) => console.error('Unable to log activation rate limit:', error));
+      }
+      return NextResponse.json({ success: false, message: 'محاولات كثيرة. حاول لاحقاً.' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } });
+    }
+    const { keyString: submittedKey, key } = await req.json();
+    const keyString = submittedKey || key;
+    if (!keyString || typeof keyString !== 'string' || keyString.trim().length > 160) {
       return NextResponse.json({ success: false, message: 'مفتاح التفعيل مطلوب.' }, { status: 400 });
     }
 
@@ -27,9 +47,9 @@ export async function POST(req: Request) {
       email: actor.email || undefined,
       image: actor.image || undefined,
     };
-    let res = await activateGiveawayKey(keyString.trim(), userDetails, getClientIp(req));
+    let res = await activateGiveawayKey(keyString.trim(), userDetails, ip);
     if (!res.success && res.message === 'المفتاح غير صحيح أو غير موجود') {
-      res = await StoreDB.activateProductWithKey(keyString.trim(), userDetails, getClientIp(req));
+      res = await StoreDB.activateProductWithKey(keyString.trim(), userDetails, ip);
     }
 
     let discordRoleSync: { success: boolean; message: string; grantedRoleIds: string[]; failedRoleIds: string[] } | null = null;
@@ -61,6 +81,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ...res, discordRoleSync }, { status: res.success ? 200 : 400 });
   } catch (error: any) {
     console.error('Key activation failed:', error);
-    return NextResponse.json({ success: false, message: error?.message || 'خطأ غير متوقع أثناء تفعيل المفتاح.' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'تعذر تفعيل المفتاح الآن. حاول مرة أخرى لاحقاً.' }, { status: 503 });
   }
 }

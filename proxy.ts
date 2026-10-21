@@ -6,17 +6,14 @@ const ADMIN_ROLES = new Set(['Boss', 'Co-Boss', 'Admin', 'Owner']);
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function hasTrustedOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin');
-  if (!origin) return true;
-
   try {
-    const actualOrigin = new URL(origin).origin;
-    const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
-    const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() || 'https';
-    const configuredOrigin = process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).origin : null;
-    const allowedOrigins = new Set([request.nextUrl.origin, configuredOrigin].filter(Boolean) as string[]);
-    if (forwardedHost) allowedOrigins.add(`${forwardedProto}://${forwardedHost}`);
-    return allowedOrigins.has(actualOrigin);
+    const fetchSite = request.headers.get('sec-fetch-site');
+    if (fetchSite === 'cross-site' || fetchSite === 'same-site') return false;
+    const configuredOrigin = process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).origin : request.nextUrl.origin;
+    const origin = request.headers.get('origin');
+    const source = origin || request.headers.get('referer');
+    if (!source || source === 'null') return fetchSite === 'same-origin';
+    return new URL(source).origin === configuredOrigin;
   } catch {
     return false;
   }

@@ -1,22 +1,16 @@
 import { NextResponse } from 'next/server';
 import { StoreDB } from '@/lib/store-db';
+import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const steps: string[] = [];
+  if (!await isAuthorizedAdmin()) return NextResponse.json({ success: false }, { status: 403 });
   try {
-    steps.push("Calling StoreDB.getStats()");
     const stats = await StoreDB.getStats();
-    steps.push("getStats returned successfully");
-    return NextResponse.json({ success: true, stats, steps });
-  } catch (err: any) {
-    steps.push(`getStats thrown: ${err.message}`);
-    return NextResponse.json({
-      success: false,
-      error: err.message,
-      stack: err.stack,
-      steps
-    }, { status: 500 });
+    return NextResponse.json({ success: true, stats }, { headers: { 'Cache-Control': 'private, no-store' } });
+  } catch (err) {
+    console.error('Database diagnostics failed:', err);
+    return NextResponse.json({ success: false, message: 'تعذر فحص قاعدة البيانات.' }, { status: 500 });
   }
 }

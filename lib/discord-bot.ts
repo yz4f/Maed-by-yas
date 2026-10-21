@@ -1,5 +1,5 @@
 import WebSocket, { RawData } from 'ws';
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from '@/lib/server-firestore';
 import { db as getDb } from '@/lib/store-db';
 import type { SiteUpdate } from '@/types';
 import type { Giveaway } from '@/lib/giveaways';

@@ -29,19 +29,14 @@ export async function getSessionActor(): Promise<SessionActor | null> {
 }
 
 export function requestHasTrustedOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
-  if (!origin) return true;
-
   try {
-    const actualOrigin = new URL(origin).origin;
-    const requestOrigin = new URL(request.url).origin;
-    const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
-    const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() || 'https';
-    const configuredOrigin = process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).origin : null;
-    const allowedOrigins = new Set([requestOrigin, configuredOrigin].filter(Boolean) as string[]);
-
-    if (forwardedHost) allowedOrigins.add(`${forwardedProto}://${forwardedHost}`);
-    return allowedOrigins.has(actualOrigin);
+    const fetchSite = request.headers.get('sec-fetch-site');
+    if (fetchSite === 'cross-site' || fetchSite === 'same-site') return false;
+    const configuredOrigin = process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).origin : new URL(request.url).origin;
+    const origin = request.headers.get('origin');
+    const source = origin || request.headers.get('referer');
+    if (!source || source === 'null') return fetchSite === 'same-origin';
+    return new URL(source).origin === configuredOrigin;
   } catch {
     return false;
   }

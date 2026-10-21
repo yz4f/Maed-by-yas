@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { requestHasTrustedOrigin as isTrustedOrigin } from '@/lib/request-security';
 import { RoleType } from '@/types';
+import { getCurrentStaffRole } from '@/lib/current-staff-role';
 
 export interface TicketActor {
   id: string;
@@ -22,12 +23,13 @@ export async function getTicketActor(): Promise<TicketActor | null> {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user?.discordId) return null;
+  const currentStaffRole = await getCurrentStaffRole(String(user.discordId));
   return {
     id: String(user.discordId),
     name: user.name || 'مستخدم',
     email: user.email || null,
     image: user.image || null,
-    role: (user.role || 'Customer') as RoleType,
+    role: (currentStaffRole || 'Customer') as RoleType,
   };
 }
 

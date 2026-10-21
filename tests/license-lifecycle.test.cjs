@@ -41,12 +41,12 @@ test('lifetime opening returns explicit null and stays active', () => {
   assert.equal(api.getLicenseState({ ...base, ...timing }, now + 365 * 86400000).isUsable, true);
 });
 
-test('Spoofer Perm always receives a lifetime license regardless of a legacy three-day key', () => {
-  assert.equal(api.resolveProductKeyDuration('prod-hwid-master'), 'Lifetime');
-  assert.equal(api.resolveProductKeyDuration('prod-hwid-master', '3 Days'), 'Lifetime');
+test('the two fixed-term products use three days even for legacy lifetime keys', () => {
+  assert.equal(api.resolveProductKeyDuration('prod-hwid-master'), '3 Days');
+  assert.equal(api.resolveProductKeyDuration('prod-hwid-master', 'Lifetime'), '3 Days');
   assert.equal(api.resolveProductKeyDuration('prod-fortnite', '3 Days'), '3 Days');
   const old = { ...base, startedAt: '2026-10-11T12:00:00Z', expiresAt: '2026-10-14T12:00:00Z' };
-  assert.equal(api.getGuideStartTiming(old, api.resolveProductKeyDuration('prod-hwid-master', '3 Days'), new Date(now).toISOString()).expiresAt, null);
+  assert.equal(api.getGuideStartTiming(old, api.resolveProductKeyDuration('prod-hwid-master', 'Lifetime'), new Date(now).toISOString()).expiresAt, old.expiresAt);
 });
 
 test('reopening and legacy finite licenses do not extend their deadline', () => {

@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from '@/lib/server-firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
 import { sendDiscordConversationClosedAuditLog, sendDiscordResetCompletedDirectMessage, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';

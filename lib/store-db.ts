@@ -1,9 +1,9 @@
 import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
 import { computeLicenseExpiresAt, getNewLicenseTiming, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, isThreeDayOnlyProduct, resolveProductKeyDuration } from '@/lib/license-duration';
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { getServerFirestore } from '@/lib/server-firestore';
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
 import { CURRENT_PRODUCT_FILE_SIZE, CURRENT_PRODUCT_FILE_URL, CURRENT_PRODUCT_VIDEO_URL, withDefaultProductMedia } from '@/lib/product-media';
-import { getFirestore, collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, startAfter, writeBatch, runTransaction, increment } from "firebase/firestore";
+import { collection, getDocs, getCountFromServer, doc, setDoc, updateDoc, deleteDoc, query, where, getDoc, orderBy, limit, startAfter, writeBatch, runTransaction, increment } from '@/lib/server-firestore';
 
 
 // Safe dynamic imports for Server-side filesystem operations
@@ -14,25 +14,13 @@ if (typeof window === 'undefined') {
   path = require('path');
 }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDrMw5gxptqdancpaoSu2Mg0_C1DcSVqn8",
-  authDomain: "tnnn-aa170.firebaseapp.com",
-  projectId: "tnnn-aa170",
-  storageBucket: "tnnn-aa170.firebasestorage.app",
-  messagingSenderId: "540085648299",
-  appId: "1:540085648299:web:9451081f61c38cf45270ee",
-  measurementId: "G-R2CHP04HTE"
-};
-
-let app: any = null;
 let db: any = null;
 
 function getDb() {
   if (!db) {
     try {
-      app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-      db = getFirestore(app);
-    } catch (err) {}
+      db = getServerFirestore();
+    } catch (err) { console.error('Firestore initialization failed:', err); }
   }
   return db;
 }

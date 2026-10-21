@@ -26,6 +26,9 @@ export async function POST(req: Request, { params }: RouteContext) {
     if (!user) {
       return NextResponse.json({ success: false, code: 'USER_NOT_FOUND', message: 'لم يتم العثور على حساب العميل.' }, { status: 404 });
     }
+    if (user.isBanned) {
+      return NextResponse.json({ success: false, code: 'USER_BANNED', message: 'الحساب محظور من فتح دليل المنتج.' }, { status: 403 });
+    }
     const result = await StoreDB.openProductGuide(user.id, productId, getClientIp(req), parsed.data.licenseId);
     return NextResponse.json(result, { status: result.success ? 200 : 400 });
   } catch (error) {

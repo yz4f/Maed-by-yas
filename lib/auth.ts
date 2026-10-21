@@ -36,13 +36,11 @@ export const authOptions: NextAuthOptions = {
 
         // Check if user is Boss / Co-boss / Admin based on Discord ID or roles
         if (
-          profile.id === '1315014140804206636' || 
-          profile.id === DISCORD_ROLES.BOSS || 
+          profile.id === '1315014140804206636' ||
           memberRoles.includes(DISCORD_ROLES.BOSS)
         ) {
           token.role = 'Boss';
         } else if (
-          profile.id === DISCORD_ROLES.CO_BOSS || 
           memberRoles.includes(DISCORD_ROLES.CO_BOSS)
         ) {
           token.role = 'Co-Boss';

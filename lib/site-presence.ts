@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc } from '@/lib/server-firestore';
 import { db as getDb } from '@/lib/store-db';
 import type { SitePresence } from '@/types';
 

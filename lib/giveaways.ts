@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHash, randomInt, randomUUID } from 'node:crypto';
-import { collection, doc, getDoc, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, runTransaction, updateDoc, where } from '@/lib/server-firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import { getNewLicenseTiming, isLicenseCurrentlyActive, resolveProductKeyDuration } from '@/lib/license-duration';
 import type { KeyDuration, Product, User, UserProduct } from '@/types';

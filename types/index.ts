@@ -28,6 +28,7 @@ export interface User {
   createdAt: string;
   lastLogin?: string;
   lastIp?: string;
+  securityUserAgentHash?: string;
   isBanned?: boolean;
   banReason?: string | null;
   banType?: 'temporary' | 'permanent' | null;

@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, orderBy, query, runTransaction, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, orderBy, query, runTransaction, setDoc, updateDoc } from '@/lib/server-firestore';
 import { db as getDb } from '@/lib/store-db';
 import { sendDiscordSiteUpdate } from '@/lib/discord-bot';
 import type { TicketActor } from '@/lib/ticket-auth';

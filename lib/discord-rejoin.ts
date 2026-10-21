@@ -1,6 +1,6 @@
 import 'server-only';
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from '@/lib/server-firestore';
 import { db } from '@/lib/store-db';
 
 const COLLECTION = 'discordRejoinAuthorizations';

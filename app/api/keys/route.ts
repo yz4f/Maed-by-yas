@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: true, keys, stock: getKeyStockSummary(keys) });
   } catch (err: any) {
     console.error("Keys API failed:", err);
-    return NextResponse.json({ success: false, error: err.message, stack: err.stack }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'تعذر تحميل المفاتيح.' }, { status: 500 });
   }
 }
 
