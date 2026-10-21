@@ -5,7 +5,7 @@ export const initialProducts: Product[] = [
   {
     id: 'prod-fortnite',
     name: 'فك باند فورت نايت',
-    description: 'يقوم بتغيير معلومات جهازك إلى معلومات جديدة لإلغاء الحظر في لعبة فورت نايت نهائيًا.\n\nالمميزات:\n- فك باند فورت نايت.\n- فك باند البطولات.\n- نسبة نجاح 100%.\n- فك باند دائم.',
+    description: 'مدة المفتاح 3 أيام من وقت التفعيل.\n\nيقوم بتغيير معلومات جهازك لإلغاء حظر الهاردوير في لعبة فورت نايت.\n\nالمميزات:\n- فك باند فورت نايت.\n- فك باند البطولات.',
     image: '/products/fortnite-card.png',
     cardColor: 'blue',
     category: 'Spoofer',
@@ -24,11 +24,11 @@ export const initialProducts: Product[] = [
   },
   {
     id: 'prod-hwid-master',
-    name: 'سبوفر بيرم',
-    description: 'ترخيص مدى الحياة لمنتج سبوفر تعن.\n\nيقوم بتغيير معلومات جهازك إلى معلومات جديدة، لإلغاء الحظر الهاردوير في أي لعبة نهائيًا.\n\nالمميزات:\n- ترخيص مدى الحياة.\n- نسبة نجاح 100%.\n- فك باند دائم.',
+    name: 'سبوفر تعن',
+    description: 'مدة المفتاح 3 أيام من وقت التفعيل.\n\nيقوم بتغيير معلومات جهازك إلى معلومات جديدة لإلغاء حظر الهاردوير.\n\nالمميزات:\n- ترخيص 3 أيام.\n- أدوات تنظيف وتغيير معلومات الجهاز.',
     image: '/spoofer-logo.png',
     cardColor: 'purple',
-    category: 'PERM',
+    category: 'Utility',
     displayOrder: 2,
     version: 'v4.1.0',
     fileSize: CURRENT_PRODUCT_FILE_SIZE,

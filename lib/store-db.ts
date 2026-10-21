@@ -1,5 +1,5 @@
 import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
-import { computeLicenseExpiresAt, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, resolveProductKeyDuration } from '@/lib/license-duration';
+import { computeLicenseExpiresAt, getNewLicenseTiming, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, isThreeDayOnlyProduct, resolveProductKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
 import { CURRENT_PRODUCT_FILE_SIZE, CURRENT_PRODUCT_FILE_URL, CURRENT_PRODUCT_VIDEO_URL, withDefaultProductMedia } from '@/lib/product-media';
@@ -51,6 +51,7 @@ export type KeyStockSummary = {
 
 export function resolveKeyStatus(key: Key): KeyStatus {
   if (key.isDisabled || key.isArchived) return 'disabled';
+  if (isThreeDayOnlyProduct(key.productId) && key.isUsed && key.usedAt && Date.parse(key.usedAt) + PRODUCT_LICENSE_DURATION_MS <= Date.now()) return 'expired';
   if (key.status === 'activated_pending_start' || key.status === 'active' || key.status === 'expired') return key.status;
   if (key.isUsed) return 'activated_pending_start';
   return 'available';
@@ -92,7 +93,8 @@ export function getKeyStockSummary(keys: Key[]): KeyStockSummary {
   };
 }
 
-// Finite licenses run for exactly 72 hours from first guide open, never activation.
+// The two fixed-term products run for 72 hours from activation; other finite
+// licenses retain their existing guide-open start behavior.
 export const PRODUCT_LICENSE_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
 
 export const DISCORD_ROLES = {
@@ -108,7 +110,7 @@ export const initialProducts: Product[] = [
   {
     id: 'prod-fortnite',
     name: 'فك باند فورت نايت',
-    description: 'سبوفر فورت نايت الاحترافي الدائم - فك حظر الهاردوير (HWID) وتخطي أنظمة الحماية Easy Anti-Cheat و BattlEye بسرعة فائقة وبدون إعادة تهيئة النظام.',
+    description: 'منتج فك باند فورت نايت بترخيص مدته 3 أيام من وقت تفعيل المفتاح.',
     image: '/products/fortnite-card.png',
     cardColor: 'blue',
     category: 'Spoofer',
@@ -127,11 +129,11 @@ export const initialProducts: Product[] = [
   },
   {
     id: 'prod-hwid-master',
-    name: 'سبوفر بيرم',
-    description: 'ترخيص مدى الحياة لمنتج سبوفر تعن (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).',
+    name: 'سبوفر تعن',
+    description: 'ترخيص 3 أيام من وقت التفعيل لمنتج سبوفر تعن (Cleaner + Registry Eraser + MAC Changer + SMBIOS Rewriter).',
     image: '/spoofer-logo.png',
     cardColor: 'purple',
-    category: 'PERM',
+    category: 'Utility',
     displayOrder: 2,
     version: 'v4.1.0',
     fileSize: CURRENT_PRODUCT_FILE_SIZE,
@@ -318,7 +320,7 @@ function getFallbackData() {
             id: 'key-demo-2',
             key: 'KEY-T3N-SPOOF-DEMO-PERM',
             productId: 'prod-hwid-master',
-            productName: 'سبوفر بيرم',
+            productName: 'سبوفر تعن',
             duration: '3 Days',
             isUsed: false,
             usedByUserId: null,
@@ -576,6 +578,7 @@ const LocalDB = {
     return false;
   },
   setUnusedKeyDuration(id: string, productId: string, duration: KeyDuration): { success: boolean; message: string } {
+    if (isThreeDayOnlyProduct(productId) && duration !== '3 Days') return { success: false, message: 'مدة مفاتيح هذا المنتج 3 أيام فقط.' };
     const d = getFallbackData();
     const key = d.keys.find((item: Key) => item.id === id && item.productId === productId);
     if (!key || key.isArchived) return { success: false, message: 'المفتاح غير موجود في مخزون هذا المنتج.' };
@@ -925,7 +928,7 @@ const LocalDB = {
 
     const usedAt = new Date().toISOString();
     d.keys[keyIdx].isUsed = true;
-    d.keys[keyIdx].status = 'activated_pending_start';
+    d.keys[keyIdx].status = isThreeDayOnlyProduct(product.id) ? 'active' : 'activated_pending_start';
     d.keys[keyIdx].usedByUserId = user.id;
     d.keys[keyIdx].usedAt = usedAt;
 
@@ -937,8 +940,7 @@ const LocalDB = {
       keyString: keyObj.key,
       status: 'Active',
       activatedAt: usedAt,
-      startedAt: null,
-      expiresAt: null,
+      ...getNewLicenseTiming(product.id, usedAt),
       discordRoleGranted: true
     };
     d.userProducts.push(userProduct);
@@ -953,7 +955,7 @@ const LocalDB = {
     if (!userProduct) return { success: false, message: 'لا يوجد ترخيص لهذا المنتج.' };
     const key = userProduct.keyId ? d.keys.find((item: Key) => item.id === userProduct.keyId) : null;
     if (userProduct.startedAt) {
-      return { success: true, message: 'تم فتح الدليل مسبقاً.', licenseId: userProduct.id, startedAt: userProduct.startedAt, expiresAt: userProduct.expiresAt ?? null, status: key?.status || 'active' };
+      return { success: true, message: isThreeDayOnlyProduct(productId) ? 'بدأت المدة عند تفعيل المفتاح.' : 'تم فتح الدليل مسبقاً.', licenseId: userProduct.id, startedAt: userProduct.startedAt, expiresAt: userProduct.expiresAt ?? null, status: key?.status || 'active' };
     }
     const startedAt = new Date().toISOString();
     const { expiresAt } = getGuideStartTiming(userProduct, resolveProductKeyDuration(productId, key?.duration), startedAt);
@@ -993,7 +995,7 @@ const LocalDB = {
   },
   resetUserProductHwid(userId: string, productId: string, requestId?: string, keyId?: string): {success: boolean; message?: string; resetAt?: string} {
     const d = getFallbackData();
-    const product = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId && item.status === 'Active' && (!keyId || item.keyId === keyId));
+    const product = d.userProducts.find((item: UserProduct) => item.userId === userId && item.productId === productId && isLicenseCurrentlyActive(item) && (!keyId || item.keyId === keyId));
     if (!product) return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.' };
     if (requestId && product.lastHwidResetRequestId === requestId) {
       return { success: true, resetAt: product.hwidResetAt || undefined };
@@ -1634,6 +1636,7 @@ export const StoreDB = {
   },
 
   async setUnusedKeyDuration(id: string, productId: string, duration: KeyDuration): Promise<{ success: boolean; message: string }> {
+    if (isThreeDayOnlyProduct(productId) && duration !== '3 Days') return { success: false, message: 'مدة مفاتيح هذا المنتج 3 أيام فقط.' };
     return runDbOp(
       () => runTransaction(getDb(), async (transaction) => {
         const keyRef = doc(getDb(), 'keys', id);
@@ -2124,12 +2127,11 @@ export const StoreDB = {
               keyString: chosenKey.key,
               status: 'Active',
               activatedAt: usedAt,
-              startedAt: null,
-              expiresAt: null,
+              ...getNewLicenseTiming(product.id, usedAt),
               discordRoleGranted: true
             };
 
-            transaction.update(chosenRef, { isUsed: true, status: 'activated_pending_start', usedByUserId: user.id, usedAt });
+            transaction.update(chosenRef, { isUsed: true, status: isThreeDayOnlyProduct(product.id) ? 'active' : 'activated_pending_start', usedByUserId: user.id, usedAt });
             transaction.set(doc(getDb(), "userProducts", userProduct.id), userProduct);
           });
         } catch (error: any) {
@@ -2160,7 +2162,7 @@ export const StoreDB = {
           const current = currentSnapshot.data() as UserProduct;
           if (current.userId !== userId || current.productId !== productId || !getLicenseState(current).isUsable) return;
           if (current.startedAt) {
-            result = { success: true, message: 'تم فتح الدليل مسبقاً.', licenseId: candidate.id, startedAt: current.startedAt, expiresAt: current.expiresAt ?? null, status: 'active' };
+            result = { success: true, message: isThreeDayOnlyProduct(productId) ? 'بدأت المدة عند تفعيل المفتاح.' : 'تم فتح الدليل مسبقاً.', licenseId: candidate.id, startedAt: current.startedAt, expiresAt: current.expiresAt ?? null, status: 'active' };
             return;
           }
           const keyRef = current.keyId ? doc(getDb(), 'keys', current.keyId) : null;
@@ -2228,13 +2230,13 @@ export const StoreDB = {
         const snapshot = await getDocs(q);
         const activeLicense = snapshot.docs.find((item) => {
           const product = item.data() as UserProduct;
-          return product.status === 'Active' && (!keyId || product.keyId === keyId);
+          return isLicenseCurrentlyActive(product) && (!keyId || product.keyId === keyId);
         });
         if (!activeLicense) return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.' };
 
         const result = await runTransaction(getDb(), async (transaction) => {
           const latest = await transaction.get(activeLicense.ref);
-          if (!latest.exists() || (latest.data() as UserProduct).status !== 'Active' || (keyId && (latest.data() as UserProduct).keyId !== keyId)) {
+          if (!latest.exists() || !isLicenseCurrentlyActive(latest.data() as UserProduct) || (keyId && (latest.data() as UserProduct).keyId !== keyId)) {
             return { success: false, message: 'لا يوجد ترخيص نشط لهذا المنتج.', alreadyApplied: false };
           }
           const current = latest.data() as UserProduct;

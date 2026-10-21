@@ -31,6 +31,7 @@ import { Product, Key, KeyStatus, KeyDuration, ProductCustomField } from '@/type
 import { toast } from '@/lib/toast';
 import { ProductGuideSettings, DEFAULT_NOTICE } from '@/components/guides/product-guide-settings';
 import { DEFAULT_GUIDE_SECTIONS } from '@/lib/guide-library';
+import { isThreeDayOnlyProduct, resolveProductKeyDuration } from '@/lib/license-duration';
 
 async function prepareGuideCover(file: File): Promise<string> {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('اختر صورة JPG أو PNG أو WebP.');
@@ -363,7 +364,7 @@ export function ProductStockModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keys: parsedBulkAnalysis.cleanKeys,
-          duration: selectedDuration,
+          duration: resolveProductKeyDuration(product.id, selectedDuration),
           allowDuplicates,
         }),
       });
@@ -806,11 +807,12 @@ export function ProductStockModal({
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400">{lang === 'ar' ? 'المدة:' : 'Duration:'}</span>
                       <select
-                        value={selectedDuration}
+                        value={isThreeDayOnlyProduct(product.id) ? '3 Days' : selectedDuration}
                         onChange={(e) => setSelectedDuration(e.target.value as KeyDuration)}
+                        disabled={isThreeDayOnlyProduct(product.id)}
                         className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#090d16] text-xs font-semibold text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
                       >
-                        {KEY_DURATION_OPTIONS.map((opt) => (
+                        {(isThreeDayOnlyProduct(product.id) ? (['3 Days'] as KeyDuration[]) : KEY_DURATION_OPTIONS).map((opt) => (
                           <option key={opt} value={opt}>
                             {opt}
                           </option>
@@ -1086,8 +1088,8 @@ export function ProductStockModal({
                                 </td>
 
                                 <td className="py-3.5 px-4">
-                                  {item.isUsed || item.isArchived || currentStatus === 'activated_pending_start' || currentStatus === 'active' || currentStatus === 'expired' ? (
-                                    <span className="text-[11px] font-semibold text-slate-400">{item.duration === 'Lifetime' ? (lang === 'ar' ? 'مدى الحياة' : 'Lifetime') : (lang === 'ar' ? '3 أيام' : '3 days')}</span>
+                                  {isThreeDayOnlyProduct(product.id) || item.isUsed || item.isArchived || currentStatus === 'activated_pending_start' || currentStatus === 'active' || currentStatus === 'expired' ? (
+                                    <span className="text-[11px] font-semibold text-slate-400">{isThreeDayOnlyProduct(product.id) || item.duration !== 'Lifetime' ? (lang === 'ar' ? '3 أيام' : '3 days') : (lang === 'ar' ? 'مدى الحياة' : 'Lifetime')}</span>
                                   ) : (
                                     <select
                                       aria-label={lang === 'ar' ? `مدة المفتاح ${maskKeyString(item.key)}` : `Duration for ${maskKeyString(item.key)}`}

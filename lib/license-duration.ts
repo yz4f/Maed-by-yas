@@ -1,9 +1,14 @@
 import type { KeyDuration, UserProduct } from '@/types';
 
 export const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', 'Lifetime'];
+export const THREE_DAY_ONLY_PRODUCT_IDS = ['prod-fortnite', 'prod-hwid-master'] as const;
 
-export function resolveProductKeyDuration(_productId: string, duration?: unknown): KeyDuration {
-  return normalizeKeyDuration(duration);
+export function isThreeDayOnlyProduct(productId: string): boolean {
+  return THREE_DAY_ONLY_PRODUCT_IDS.some((id) => id === productId);
+}
+
+export function resolveProductKeyDuration(productId: string, duration?: unknown): KeyDuration {
+  return isThreeDayOnlyProduct(productId) ? '3 Days' : normalizeKeyDuration(duration);
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -32,6 +37,12 @@ export function computeLicenseExpiresAt(activatedAt: string, duration?: unknown)
   const startMs = Date.parse(activatedAt);
   const origin = Number.isFinite(startMs) ? startMs : Date.now();
   return new Date(origin + durationMs).toISOString();
+}
+
+export function getNewLicenseTiming(productId: string, activatedAt: string) {
+  return isThreeDayOnlyProduct(productId)
+    ? { startedAt: activatedAt, expiresAt: computeLicenseExpiresAt(activatedAt, '3 Days') }
+    : { startedAt: null, expiresAt: null };
 }
 
 export function isLicenseCurrentlyActive(license: Pick<UserProduct, 'status' | 'expiresAt'>, nowMs: number = Date.now()): boolean {

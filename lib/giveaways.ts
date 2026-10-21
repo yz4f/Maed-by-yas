@@ -2,7 +2,7 @@ import 'server-only';
 import { createHash, randomInt, randomUUID } from 'node:crypto';
 import { collection, doc, getDoc, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
-import { isLicenseCurrentlyActive, resolveProductKeyDuration } from '@/lib/license-duration';
+import { getNewLicenseTiming, isLicenseCurrentlyActive, resolveProductKeyDuration } from '@/lib/license-duration';
 import type { KeyDuration, Product, User, UserProduct } from '@/types';
 
 export const GIVEAWAY_GUILD_ID = '1396959491786018826';
@@ -119,7 +119,7 @@ export async function addGiveawayKeys(giveawayId: string, values: string[]) {
     if (!latest.exists() || latest.data().status !== 'DRAFT') throw new Error('إضافة المفاتيح متاحة للمسودة فقط.');
     if (previous.some(item => item.exists())) throw new Error('أحد المفاتيح موجود مسبقًا.');
     for (const key of keys) {
-      const item: GiveawayKey = { id: keyId(key), key, giveawayId, productId: giveaway.productId, duration: giveaway.duration, status: 'AVAILABLE', createdAt: new Date().toISOString() };
+      const item: GiveawayKey = { id: keyId(key), key, giveawayId, productId: giveaway.productId, duration: resolveProductKeyDuration(giveaway.productId, giveaway.duration), status: 'AVAILABLE', createdAt: new Date().toISOString() };
       transaction.set(doc(database(), 'giveawayKeys', item.id), item);
     }
   });
@@ -372,11 +372,11 @@ export async function activateGiveawayKey(keyString: string, userDetails: { disc
       const current = await transaction.get(keyRef);
       if (!current.exists() || current.data().status !== 'RESERVED' || current.data().winnerId !== userDetails.discordId) throw new Error('المفتاح مستخدم أو غير مخصص لهذا الحساب.');
       const now = new Date().toISOString();
-      const license: UserProduct = { id: `up-${randomUUID()}`, userId: user.id, productId: product.id, keyId: key.id, keyString: key.key, licenseDuration: key.duration, status: 'Active', activatedAt: now, startedAt: null, expiresAt: null, discordRoleGranted: true };
+      const license: UserProduct = { id: `up-${randomUUID()}`, userId: user.id, productId: product.id, keyId: key.id, keyString: key.key, licenseDuration: resolveProductKeyDuration(product.id, key.duration), status: 'Active', activatedAt: now, ...getNewLicenseTiming(product.id, now), discordRoleGranted: true };
       transaction.update(keyRef, { status: 'REDEEMED', usedAt: now });
       transaction.set(doc(database(), 'userProducts', license.id), license);
     });
   } catch (error) { return { success: false, message: error instanceof Error ? error.message : 'تعذر تفعيل المفتاح.' }; }
   await StoreDB.addLog('Giveaway Activation', `تم تفعيل مفتاح السحب ${product.name}`, user.id, user.name, ip);
-  return { success: true, message: 'تم تفعيل المنتج بنجاح.', product, duration: key.duration };
+  return { success: true, message: 'تم تفعيل المنتج بنجاح.', product, duration: resolveProductKeyDuration(product.id, key.duration) };
 }
