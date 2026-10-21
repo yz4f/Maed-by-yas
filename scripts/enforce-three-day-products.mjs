@@ -97,3 +97,4 @@ for (let start = 0; start < changes.length; start += 250) {
   console.log(`Committed ${Math.min(start + 250, changes.length)}/${changes.length} changes`);
 }
 console.log(JSON.stringify({ applied: changes.length, backupPath }));
+process.exit(0);
