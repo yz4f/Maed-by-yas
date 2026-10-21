@@ -1,5 +1,5 @@
 import { AuditEvent, Product, Key, KeyStatus, KeyDuration, User, UserProduct, DownloadLog, SystemLog, SystemStats, ProductStatus, FaqCategory, FaqItem, FaqSearchLog, FaqStats } from '@/types';
-import { computeLicenseExpiresAt, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, LIFETIME_PRODUCT_ID, resolveProductKeyDuration } from '@/lib/license-duration';
+import { computeLicenseExpiresAt, isLicenseCurrentlyActive, getLicenseState, selectGuideLicense, getGuideStartTiming, resolveProductKeyDuration } from '@/lib/license-duration';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { validateProductGuideFields } from '@/lib/product-guide-settings';
 import { CURRENT_PRODUCT_FILE_SIZE, CURRENT_PRODUCT_FILE_URL, CURRENT_PRODUCT_VIDEO_URL, withDefaultProductMedia } from '@/lib/product-media';
@@ -319,7 +319,7 @@ function getFallbackData() {
             key: 'KEY-T3N-SPOOF-DEMO-PERM',
             productId: 'prod-hwid-master',
             productName: 'سبوفر بيرم',
-            duration: 'Lifetime',
+            duration: '3 Days',
             isUsed: false,
             usedByUserId: null,
             usedByUserName: null,
@@ -574,6 +574,18 @@ const LocalDB = {
       return true;
     }
     return false;
+  },
+  setUnusedKeyDuration(id: string, productId: string, duration: KeyDuration): { success: boolean; message: string } {
+    const d = getFallbackData();
+    const key = d.keys.find((item: Key) => item.id === id && item.productId === productId);
+    if (!key || key.isArchived) return { success: false, message: 'المفتاح غير موجود في مخزون هذا المنتج.' };
+    if (key.isUsed || key.usedAt || key.status === 'activated_pending_start' || key.status === 'active' || key.status === 'expired') {
+      return { success: false, message: 'لا يمكن تغيير مدة مفتاح استُخدم بالفعل.' };
+    }
+    key.duration = duration;
+    key.updatedAt = new Date().toISOString();
+    saveFallbackData(d);
+    return { success: true, message: 'تم تحديث مدة المفتاح.' };
   },
   deleteKey(id: string): boolean {
     const d = getFallbackData();
@@ -966,14 +978,7 @@ const LocalDB = {
     const d = getFallbackData();
     const result: UserProduct[] = [];
     const ups = d.userProducts.filter((up: any) => up.userId === userId);
-    let correctedLifetime = false;
     for (const up of ups) {
-      if (up.productId === LIFETIME_PRODUCT_ID && up.status === 'Active' && up.expiresAt) {
-        up.expiresAt = null;
-        const linkedKey = d.keys.find((key: Key) => key.id === up.keyId);
-        if (linkedKey) linkedKey.duration = 'Lifetime';
-        correctedLifetime = true;
-      }
       if (up.keyId && !up.keyString) {
         const keyObj = d.keys.find((k: any) => k.id === up.keyId);
         if (keyObj) up.keyString = keyObj.key;
@@ -984,7 +989,6 @@ const LocalDB = {
         result.push(up);
       }
     }
-    if (correctedLifetime) saveFallbackData(d);
     return result;
   },
   resetUserProductHwid(userId: string, productId: string, requestId?: string, keyId?: string): {success: boolean; message?: string; resetAt?: string} {
@@ -1629,6 +1633,24 @@ export const StoreDB = {
     );
   },
 
+  async setUnusedKeyDuration(id: string, productId: string, duration: KeyDuration): Promise<{ success: boolean; message: string }> {
+    return runDbOp(
+      () => runTransaction(getDb(), async (transaction) => {
+        const keyRef = doc(getDb(), 'keys', id);
+        const snapshot = await transaction.get(keyRef);
+        if (!snapshot.exists()) return { success: false, message: 'المفتاح غير موجود في مخزون هذا المنتج.' };
+        const key = snapshot.data() as Key;
+        if (key.productId !== productId || key.isArchived) return { success: false, message: 'المفتاح غير موجود في مخزون هذا المنتج.' };
+        if (key.isUsed || key.usedAt || key.status === 'activated_pending_start' || key.status === 'active' || key.status === 'expired') {
+          return { success: false, message: 'لا يمكن تغيير مدة مفتاح استُخدم بالفعل.' };
+        }
+        transaction.update(keyRef, { duration, updatedAt: new Date().toISOString() });
+        return { success: true, message: 'تم تحديث مدة المفتاح.' };
+      }),
+      () => LocalDB.setUnusedKeyDuration(id, productId, duration)
+    );
+  },
+
   async deleteKey(id: string): Promise<boolean> {
     return runDbOp(
       async () => {
@@ -2179,28 +2201,9 @@ export const StoreDB = {
       async () => {
         const q = query(collection(getDb(), "userProducts"), where("userId", "==", userId));
         const [snapshot, catalog] = await Promise.all([getDocs(q), catalogPromise || Promise.resolve(undefined)]);
-        // Repair legacy finite Spoofer Perm licenses once for their owners, then persist the lifetime term.
-        const lifetimeLicenses = snapshot.docs.filter((item) => {
-          const license = item.data() as UserProduct;
-          return license.productId === LIFETIME_PRODUCT_ID && license.status === 'Active' && Boolean(license.expiresAt);
-        });
-        if (lifetimeLicenses.length) {
-          const batch = writeBatch(getDb());
-          const keySnapshots = await Promise.all(lifetimeLicenses.map(async (item) => {
-            const keyId = (item.data() as UserProduct).keyId;
-            return keyId ? getDoc(doc(getDb(), 'keys', keyId)) : null;
-          }));
-          lifetimeLicenses.forEach((item, index) => {
-            batch.update(item.ref, { expiresAt: null });
-            if (keySnapshots[index]?.exists()) batch.update(keySnapshots[index].ref, { duration: 'Lifetime' });
-          });
-          await batch.commit();
-        }
-        const correctedIds = new Set(lifetimeLicenses.map((item) => item.id));
         const productsById = catalog ? new Map(catalog.map((product) => [product.id, product])) : null;
         const result = await Promise.all(snapshot.docs.map(async (d) => {
           const up = { ...(d.data() as UserProduct) };
-          if (correctedIds.has(d.id)) up.expiresAt = null;
           const [keyResult, product] = await Promise.all([
             up.keyId && !up.keyString
               ? getDoc(doc(getDb(), "keys", up.keyId)).catch((error) => { console.error("Failed to fetch key for user product:", error); return null; })

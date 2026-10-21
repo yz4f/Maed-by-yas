@@ -21,11 +21,23 @@ export async function PATCH(req: Request, { params }: RouteContext) {
   try {
     const { id: productId, keyId } = await params;
     const body = await req.json();
-    const { status, key: newKeyString } = body;
+    const { status, key: newKeyString, duration } = body;
 
     const actor = await getSessionActor();
     const actorId = actor?.discordId || 'admin-system';
     const actorName = actor?.name || 'Admin';
+
+    if (Object.prototype.hasOwnProperty.call(body, 'duration')) {
+      if (!hasEdit) return NextResponse.json({ success: false, message: 'لا تملك صلاحية تعديل مدة المفتاح.' }, { status: 403 });
+      if (duration !== '3 Days' && duration !== 'Lifetime') return NextResponse.json({ success: false, message: 'مدة المفتاح غير صالحة.' }, { status: 400 });
+      const result = await StoreDB.setUnusedKeyDuration(keyId, productId, duration);
+      if (!result.success) return NextResponse.json(result, { status: 409 });
+      await StoreDB.addLog('Stock Key Duration Changed', `تم تغيير مدة المفتاح إلى ${duration}.`, actorId, actorName, getClientIp(req), {
+        eventType: 'stock_key_duration_changed', actorDiscordId: actor?.discordId || null, actorName, productId, keyId,
+        metadata: { duration },
+      });
+      return NextResponse.json(result);
+    }
 
     if (status) {
       const validStatuses: KeyStatus[] = ['available', 'disabled'];

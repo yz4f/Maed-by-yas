@@ -31,7 +31,6 @@ import { Product, Key, KeyStatus, KeyDuration, ProductCustomField } from '@/type
 import { toast } from '@/lib/toast';
 import { ProductGuideSettings, DEFAULT_NOTICE } from '@/components/guides/product-guide-settings';
 import { DEFAULT_GUIDE_SECTIONS } from '@/lib/guide-library';
-import { LIFETIME_PRODUCT_ID, resolveProductKeyDuration } from '@/lib/license-duration';
 
 async function prepareGuideCover(file: File): Promise<string> {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('اختر صورة JPG أو PNG أو WebP.');
@@ -133,6 +132,7 @@ export function ProductStockModal({
   const [deletingKey, setDeletingKey] = useState<Key | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingKeyId, setTogglingKeyId] = useState<string | null>(null);
+  const [savingDurationId, setSavingDurationId] = useState<string | null>(null);
 
   // Unsaved Changes & Product Form State
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -187,7 +187,6 @@ export function ProductStockModal({
   useEffect(() => {
     if (!product) return;
 
-    setSelectedDuration(resolveProductKeyDuration(product.id));
     setGuideSettings({ notice: product.notice || DEFAULT_NOTICE, guideSections: product.guideSections || DEFAULT_GUIDE_SECTIONS });
     setProductFormData({
       name: product.name || '',
@@ -450,6 +449,26 @@ export function ProductStockModal({
       toast.error(error.message);
     } finally {
       setTogglingKeyId(null);
+    }
+  };
+
+  const handleChangeKeyDuration = async (targetKey: Key, duration: KeyDuration) => {
+    if (!product || savingDurationId || targetKey.duration === duration) return;
+    setSavingDurationId(targetKey.id);
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}/stock/keys/${targetKey.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || (lang === 'ar' ? 'تعذر تحديث مدة المفتاح.' : 'Could not update key duration.'));
+      setKeys((current) => current.map((key) => key.id === targetKey.id ? { ...key, duration } : key));
+      toast.success(lang === 'ar' ? 'تم تحديث مدة المفتاح.' : 'Key duration updated.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : (lang === 'ar' ? 'تعذر تحديث مدة المفتاح.' : 'Could not update key duration.'));
+    } finally {
+      setSavingDurationId(null);
     }
   };
 
@@ -791,7 +810,7 @@ export function ProductStockModal({
                         onChange={(e) => setSelectedDuration(e.target.value as KeyDuration)}
                         className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#090d16] text-xs font-semibold text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
                       >
-                        {(product.id === LIFETIME_PRODUCT_ID ? (['Lifetime'] as KeyDuration[]) : KEY_DURATION_OPTIONS).map((opt) => (
+                        {KEY_DURATION_OPTIONS.map((opt) => (
                           <option key={opt} value={opt}>
                             {opt}
                           </option>
@@ -1001,6 +1020,7 @@ export function ProductStockModal({
                           <tr className="border-b border-white/10 bg-[#070a12]/70 text-slate-400 font-bold uppercase tracking-wider">
                             <th className="py-3 px-4">{lang === 'ar' ? 'المفتاح' : 'Key'}</th>
                             <th className="py-3 px-4">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                            <th className="py-3 px-4">{lang === 'ar' ? 'المدة' : 'Duration'}</th>
                             <th className="py-3 px-4">{lang === 'ar' ? 'تاريخ الإضافة' : 'Added At'}</th>
                             <th className="py-3 px-4">{lang === 'ar' ? 'تاريخ الاستخدام' : 'Used At'}</th>
                             <th className="py-3 px-4">{lang === 'ar' ? 'الطلب / العميل' : 'Order / Customer'}</th>
@@ -1062,6 +1082,23 @@ export function ProductStockModal({
                                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                                       {currentStatus === 'active' ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'منتهي' : 'Expired')}
                                     </span>
+                                  )}
+                                </td>
+
+                                <td className="py-3.5 px-4">
+                                  {item.isUsed || item.isArchived || currentStatus === 'activated_pending_start' || currentStatus === 'active' || currentStatus === 'expired' ? (
+                                    <span className="text-[11px] font-semibold text-slate-400">{item.duration === 'Lifetime' ? (lang === 'ar' ? 'مدى الحياة' : 'Lifetime') : (lang === 'ar' ? '3 أيام' : '3 days')}</span>
+                                  ) : (
+                                    <select
+                                      aria-label={lang === 'ar' ? `مدة المفتاح ${maskKeyString(item.key)}` : `Duration for ${maskKeyString(item.key)}`}
+                                      value={item.duration === 'Lifetime' ? 'Lifetime' : '3 Days'}
+                                      onChange={(event) => void handleChangeKeyDuration(item, event.target.value as KeyDuration)}
+                                      disabled={Boolean(savingDurationId)}
+                                      className="rounded-lg border border-white/10 bg-[#090d16] px-2 py-1.5 text-[11px] font-semibold text-slate-200 outline-none transition-colors focus:border-cyan-400/50 disabled:opacity-50"
+                                    >
+                                      <option value="3 Days">{lang === 'ar' ? '3 أيام' : '3 days'}</option>
+                                      <option value="Lifetime">{lang === 'ar' ? 'مدى الحياة' : 'Lifetime'}</option>
+                                    </select>
                                   )}
                                 </td>
 

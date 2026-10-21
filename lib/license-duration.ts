@@ -1,10 +1,9 @@
 import type { KeyDuration, UserProduct } from '@/types';
 
 export const KEY_DURATION_OPTIONS: KeyDuration[] = ['3 Days', 'Lifetime'];
-export const LIFETIME_PRODUCT_ID = 'prod-hwid-master';
 
-export function resolveProductKeyDuration(productId: string, duration?: unknown): KeyDuration {
-  return productId === LIFETIME_PRODUCT_ID ? 'Lifetime' : normalizeKeyDuration(duration);
+export function resolveProductKeyDuration(_productId: string, duration?: unknown): KeyDuration {
+  return normalizeKeyDuration(duration);
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
