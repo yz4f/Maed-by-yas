@@ -2241,14 +2241,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'للمشاكل الفعلية في الجهاز أو الترخيص فقط' : 'For genuine device or license issues only'}</span>
                           </span>
                         </button>
-                        <button
+                        {!up.revokedAt && up.status !== 'Revoked' && <button
                           type="button"
                           onClick={() => setReviewProduct(up)}
                           className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-200/20 bg-cyan-300/[.07] px-3 text-[11px] font-black text-cyan-100 transition-colors hover:border-cyan-200/40 hover:bg-cyan-300/[.13] focus-visible:outline-2 focus-visible:outline-cyan-200"
                         >
                           <Star size={15} />
                           {lang === 'ar' ? 'تقييم المنتج' : 'Rate product'}
-                        </button>
+                        </button>}
                       </div>
                     </article>}
                     </React.Fragment>

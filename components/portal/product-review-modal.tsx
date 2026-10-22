@@ -85,8 +85,10 @@ export function ProductReviewModal({ license, productImage, lang, onClose, onNot
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseId: license.id, rating, comment: comment.trim(), ...(image ? { image } : {}) }),
       });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || (ar ? 'تعذر إرسال التقييم.' : 'Could not send review.'));
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || (ar ? 'تعذر الاتصال بخدمة التقييم. حاول مجددًا بعد قليل.' : 'Could not connect to the review service. Please try again shortly.'));
+      }
       onNotify(ar ? 'تم إرسال تقييمك إلى ديسكورد.' : 'Your review was sent to Discord.', 'success');
       onClose();
     } catch (cause) {
