@@ -523,19 +523,31 @@ function resetRequestAdminComponents(event: DiscordResetRequestLog) {
   ] }];
 }
 
+function resetCardImageUrl(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value, websiteUrl);
+    return url.protocol === 'https:' && url.href.length <= 2_000 ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog): Promise<{ messageId: string; channelId: string }> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال سجل الريست.');
   const channels = await ensurePrivateAuditChannels(token);
   const logChannelId = channels.resetAuditChannelId;
   const status = resetStatusPresentation(event.status);
+  const customerImageUrl = resetCardImageUrl(event.customerImage);
+  const productImageUrl = resetCardImageUrl(event.productImage);
   const embed = {
     color: status.color,
     author: { name: 'تعن • طلبات رستات المفاتيح', icon_url: `${websiteUrl}/logo.png` },
     title: event.status === 'PENDING' ? 'طلب رستات مفتاح جديد' : `تحديث طلب رستات ${event.reference}`,
     description: event.status === 'COMPLETED' ? 'تم تنفيذ إعادة ضبط الترخيص بنجاح. هذه البطاقة محفوظة داخل سجل الإدارة الخاص.' : 'سجل متابعة منظم لطلب إعادة ضبط الترخيص. لا يظهر المفتاح الكامل إلا في لوحة الإدارة بالموقع.',
-    thumbnail: event.customerImage ? { url: event.customerImage } : undefined,
-    image: event.productImage ? { url: event.productImage } : undefined,
+    thumbnail: customerImageUrl ? { url: customerImageUrl } : undefined,
+    image: productImageUrl ? { url: productImageUrl } : undefined,
     fields: [
       { name: 'رقم الطلب', value: `\`${event.reference}\``, inline: true },
       { name: 'الحالة', value: status.label, inline: true },
@@ -564,7 +576,11 @@ export async function syncDiscordResetRequestLog(event: DiscordResetRequestLog):
       components: resetRequestAdminComponents(event),
     }),
   });
-  if (!response.ok) throw new Error(`تعذر مزامنة بطاقة الريست مع Discord (HTTP ${response.status}).`);
+  if (!response.ok) {
+    const details = await response.json().catch(() => null) as { code?: number; errors?: Record<string, unknown> } | null;
+    const fields = details?.errors ? Object.keys(details.errors).slice(0, 8).join(', ') : 'unknown';
+    throw new Error(`تعذر مزامنة بطاقة الريست مع Discord (HTTP ${response.status}, code ${details?.code ?? 'unknown'}, fields ${fields}).`);
+  }
   const message = await response.json() as { id?: string };
   if (!message.id) throw new Error('لم يعرض Discord معرف بطاقة الريست.');
   return { messageId: message.id, channelId: logChannelId };
