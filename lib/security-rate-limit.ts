@@ -36,3 +36,13 @@ export async function limitKeyActivation(discordId: string, ip: string) {
     firstRejection: account.firstRejection || network.firstRejection,
   };
 }
+
+/** Prevent review spam while keeping the customer's Discord identity out of the counter ID. */
+export async function limitProductReview(discordId: string, ip: string) {
+  const account = await consumeCounter('product-review-account', discordId, 5);
+  const network = ip === 'unknown' ? { allowed: true, retryAfter: 0 } : await consumeCounter('product-review-ip', ip, 20);
+  return {
+    allowed: account.allowed && network.allowed,
+    retryAfter: Math.max(account.allowed ? 0 : account.retryAfter, network.allowed ? 0 : network.retryAfter),
+  };
+}

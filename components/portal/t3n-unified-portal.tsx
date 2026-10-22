@@ -54,6 +54,7 @@ import {
   Megaphone,
   Gift,
   Send,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AuditEvent, Product, UserProduct, SystemLog, Key as KeyType, User as UserType, KeyDuration, ResetRequest, SupportNotification } from '@/types';
@@ -61,6 +62,7 @@ import { durationLabel, KEY_DURATION_OPTIONS, getLicenseState } from '@/lib/lice
 import { DashboardLayout } from './DashboardLayout';
 import { PortalNavigation, type PortalTab } from './portal-navigation';
 import { ResaleRules } from './resale-rules';
+import { ProductReviewModal } from './product-review-modal';
 import { DiscordMark as DiscordIcon } from './discord-mark';
 import { LoginPage } from './login-page';
 const WelcomeVideo = dynamic(() => import('./welcome-video').then((module) => module.WelcomeVideo), { ssr: false });
@@ -305,6 +307,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   const [guideIssueId, setGuideIssueId] = useState<string | null>(null);
   const [openingGuideProductId, setOpeningGuideProductId] = useState<string | null>(null);
   const [resetRequestProduct, setResetRequestProduct] = useState<UserProduct | null>(null);
+  const [reviewProduct, setReviewProduct] = useState<UserProduct | null>(null);
   const [resetRequestReason, setResetRequestReason] = useState('');
   const [isSubmittingResetRequest, setIsSubmittingResetRequest] = useState(false);
   const [resetCompletionNotice, setResetCompletionNotice] = useState<ResetCompletionNotice | null>(null);
@@ -2238,6 +2241,14 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                             <span className="mt-0.5 block text-[8px] font-bold opacity-70">{lang === 'ar' ? 'للمشاكل الفعلية في الجهاز أو الترخيص فقط' : 'For genuine device or license issues only'}</span>
                           </span>
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setReviewProduct(up)}
+                          className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-200/20 bg-cyan-300/[.07] px-3 text-[11px] font-black text-cyan-100 transition-colors hover:border-cyan-200/40 hover:bg-cyan-300/[.13] focus-visible:outline-2 focus-visible:outline-cyan-200"
+                        >
+                          <Star size={15} />
+                          {lang === 'ar' ? 'تقييم المنتج' : 'Rate product'}
+                        </button>
                       </div>
                     </article>}
                     </React.Fragment>
@@ -3055,6 +3066,16 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
       {/* ------------------------------------------------------------------------------------------------ */}
       {/* GUIDE MODAL */}
       {/* ------------------------------------------------------------------------------------------------ */}
+      {reviewProduct && (
+        <ProductReviewModal
+          key={reviewProduct.id}
+          license={reviewProduct}
+          productImage={getProductImage(reviewProduct.product)}
+          lang={lang}
+          onClose={() => setReviewProduct(null)}
+          onNotify={showToast}
+        />
+      )}
       <AnimatePresence>
       {resetRequestProduct && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.18 }} className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
