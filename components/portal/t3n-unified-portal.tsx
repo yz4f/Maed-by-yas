@@ -66,7 +66,6 @@ import { ProductReviewModal } from './product-review-modal';
 import { DiscordMark as DiscordIcon } from './discord-mark';
 import { LoginPage } from './login-page';
 const WelcomeVideo = dynamic(() => import('./welcome-video').then((module) => module.WelcomeVideo), { ssr: false });
-import { Footer } from '@/components/ui/footer';
 import { ProductNotice } from '@/components/guides/product-notice';
 const HelpCenter = dynamic(() => import('./help-center').then((module) => module.HelpCenter), { ssr: false });
 const HelpAdminSection = dynamic(() => import('./help-admin-section').then((module) => module.HelpAdminSection), { ssr: false });
@@ -3025,12 +3024,6 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
           </div>
         )}
 
-        {/* SITE FOOTER */}
-        {(activeTab === 'overview' || activeTab === 'my-products') && (
-          <div className="mt-auto pt-8 sm:pt-10">
-            <Footer lang={lang} isDark={isDark} onNavigate={setActiveTab} />
-          </div>
-        )}
         </motion.div>
         </AnimatePresence>
         </div>
