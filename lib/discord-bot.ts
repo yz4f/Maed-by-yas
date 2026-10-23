@@ -851,7 +851,10 @@ async function ensureDiscordSupportLinkSent() {
 
 async function postDiscordMessage(channelId: string, token: string, data: Record<string, unknown>) {
   const response = await discordApi(`/channels/${channelId}/messages`, token, { method: 'POST', body: JSON.stringify(data) });
-  if (!response.ok) throw new Error(`تعذر إرسال رسالة دعم Discord (HTTP ${response.status}).`);
+  if (!response.ok) {
+    const details = await response.json().catch(() => null) as { code?: number } | null;
+    throw new Error(`تعذر إرسال رسالة Discord إلى الروم ${channelId} (HTTP ${response.status}, code ${details?.code ?? 'unknown'}).`);
+  }
   return response.json() as Promise<{ id: string }>;
 }
 
@@ -1593,10 +1596,14 @@ export async function startDiscordBot() {
     if (migratedResetLogs) console.info(`[Discord Reset] Moved ${migratedResetLogs} active request logs to the private audit channel.`);
     const panel = await ensureDiscordResetPanelPublished();
     if (panel.published) console.info(`[Discord Reset] Published panel ${panel.messageId}.`);
+  } catch (error) {
+    console.error('[Discord Reset] Channel permissions, private audit setup, or panel publish failed:', error);
+  }
+  try {
     const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
     if (announcement.published) console.info(`[Discord Updates] Published reset feature announcement ${announcement.messageId}.`);
   } catch (error) {
-    console.error('[Discord Audit] Private reset channel permissions, private audit setup, or reset panel publish failed:', error);
+    console.error('[Discord Updates] Reset announcement failed:', error);
   }
   await verifyCustomerAuditRooms(token).catch((error) => console.error('[Discord Audit] Customer audit rooms are unavailable:', error));
   connect(token);
