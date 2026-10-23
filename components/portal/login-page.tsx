@@ -4,8 +4,7 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { ArrowUpLeft, Check, ChevronDown, Copy, Globe2, LoaderCircle, Moon, Sun } from 'lucide-react';
-import { FREELANCE_DOCUMENT_NUMBER } from '@/lib/site-identity';
+import { ArrowUpLeft, Check, ChevronDown, Globe2, LoaderCircle, Moon, Sun } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import styles from './login-page.module.css';
 
@@ -33,7 +32,6 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
   const pending = useRef(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [certificateCopied, setCertificateCopied] = useState(false);
   const languageControl = useRef<HTMLDivElement>(null);
   const languageButton = useRef<HTMLButtonElement>(null);
 
@@ -96,16 +94,6 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
       y: (clientY ?? rect.top + rect.height / 2) - rect.top - size / 2,
       size,
     });
-  }
-
-  async function copyCertificate() {
-    try {
-      await navigator.clipboard.writeText(FREELANCE_DOCUMENT_NUMBER);
-      setCertificateCopied(true);
-      window.setTimeout(() => setCertificateCopied(false), 2000);
-    } catch {
-      toast.error(ar ? 'تعذر نسخ رقم الوثيقة.' : 'Could not copy the certificate number.');
-    }
   }
 
   return (
@@ -171,16 +159,6 @@ export function LoginPage({ lang, isDark, onLanguageChange, onToggleTheme }: Log
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <p>{ar ? 'جميع الحقوق محفوظة' : 'All rights reserved'} <span dir="ltr">© {new Date().getFullYear()}</span> {ar ? 'تعن' : 'T3N'}</p>
-          <button type="button" className={styles.certificate} onClick={copyCertificate} aria-label={ar ? `نسخ رقم وثيقة العمل الحر ${FREELANCE_DOCUMENT_NUMBER}` : `Copy freelance certificate number ${FREELANCE_DOCUMENT_NUMBER}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/freelance-mark.png" width={72} height={32} alt="" />
-            <span className={styles.certificateText}>
-              <span>{ar ? 'وثيقة العمل الحر' : 'Freelance certificate'}</span>
-              <bdi>{FREELANCE_DOCUMENT_NUMBER}</bdi>
-            </span>
-            {certificateCopied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-          </button>
-          <span className={styles.copyStatus} role="status">{certificateCopied ? (ar ? 'تم نسخ الرقم' : 'Number copied') : ''}</span>
         </div>
       </footer>
     </div>
