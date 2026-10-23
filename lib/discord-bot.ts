@@ -4,6 +4,7 @@ import { db as getDb } from '@/lib/store-db';
 import type { SiteUpdate } from '@/types';
 import type { Giveaway } from '@/lib/giveaways';
 import { DISCORD_ROLES } from '@/lib/roles';
+import { PRODUCT_REVIEW_CHANNEL_ID } from '@/lib/discord-channels';
 
 const guildId = process.env.DISCORD_GUILD_ID || '1396959491786018826';
 const websiteUrl = (process.env.NEXTAUTH_URL || 'https://t3nn.wtf').replace(/\/$/, '');
@@ -19,12 +20,10 @@ const DISCORD_MAX_MESSAGE_LENGTH = 1_900;
 const DISCORD_AUDIT_CONFIG_COLLECTION = 'discordBotConfig';
 const DISCORD_AUDIT_CONFIG_ID = 'privateAuditChannels';
 const DISCORD_RESET_PANEL_CONFIG_ID = 'resetPanel';
-const DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID = 'resetFeatureAnnouncement';
 const DISCORD_SUPPORT_LINK_CONFIG_ID = 'supportLinkAnnouncement';
 const DISCORD_SUPPORT_LINK_URL = 'https://t3nn.wtf/support';
 const DISCORD_SUPPORT_LINK_IMAGE_URL = `${websiteUrl}/assets/discord/support-center.png`;
 const DISCORD_SUPPORT_LINK_PAYLOAD_VERSION = 'support-link-image-v1';
-const DISCORD_UPDATES_CHANNEL_ID = '1540878976166400060';
 const DISCORD_AUDIT_CATEGORY_NAME = '🔐・private-logs';
 const DISCORD_RESET_AUDIT_CATEGORY_NAME = '🔐・reset-logs';
 const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-requests-log';
@@ -706,10 +705,6 @@ function resetPanelImageUrl() {
   return `${websiteUrl}/assets/discord/reset-panel.webp`;
 }
 
-function resetPanelPreviewImageUrl() {
-  return `${websiteUrl}/assets/discord/reset-panel-preview.png`;
-}
-
 function resetPanelEmbed() {
   return {
     color: 0x5865f2,
@@ -774,48 +769,6 @@ async function ensureDiscordResetPanelPublished() {
   return { ...result, published: true, refreshed: false };
 }
 
-function resetFeatureAnnouncementEmbed() {
-  return {
-    color: 0x5865f2,
-    author: { name: 'Ta3n • New Feature', icon_url: `${websiteUrl}/logo.png` },
-    title: '🔄 ميزة جديدة: طلب ريستات',
-    description: 'أصبح بإمكانك الآن تقديم طلب ريستات بشكل أسرع وأكثر أماناً من الروم المخصص.',
-    image: { url: resetPanelPreviewImageUrl() },
-    fields: [
-      { name: 'معاينة اللوحة', value: 'الصورة أعلاه توضح شكل لوحة طلب الريست الجديدة داخل Discord.', inline: false },
-      { name: 'كيف تستخدمها؟', value: 'اضغط زر **ابدأ طلب الريستات** • اكتب سبب الطلب • أرسل النموذج', inline: false },
-      { name: 'مهم', value: 'لا تحتاج إلى كتابة مفتاحك. يتم التحقق من حسابك والمنتج المفعّل تلقائياً داخل النظام.', inline: false },
-    ],
-    footer: { text: 'Ta3n • Key Reset Center is now live' },
-    timestamp: new Date().toISOString(),
-  };
-}
-
-async function ensureDiscordResetFeatureAnnouncementPublished() {
-  const token = process.env.DISCORD_BOT_TOKEN;
-  if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال إعلان التحديث.');
-  const announcementRef = doc(supportDatabase(), DISCORD_AUDIT_CONFIG_COLLECTION, DISCORD_RESET_ANNOUNCEMENT_CONFIG_ID);
-  const saved = await getDoc(announcementRef);
-  const messageId = saved.exists() ? String(saved.data()?.messageId || '') : '';
-  if (messageId) {
-    const response = await discordApi(`/channels/${DISCORD_UPDATES_CHANNEL_ID}/messages/${messageId}`, token, {
-      method: 'PATCH',
-      body: JSON.stringify({ embeds: [resetFeatureAnnouncementEmbed()] }),
-    });
-    if (response.ok) {
-      await setDoc(announcementRef, { refreshedAt: new Date().toISOString() }, { merge: true });
-      return { messageId, published: false, refreshed: true };
-    }
-  }
-  const message = await postDiscordMessage(DISCORD_UPDATES_CHANNEL_ID, token, {
-    content: '@everyone',
-    allowed_mentions: { parse: ['everyone'] },
-    embeds: [resetFeatureAnnouncementEmbed()],
-  });
-  await setDoc(announcementRef, { messageId: message.id, channelId: DISCORD_UPDATES_CHANNEL_ID, publishedAt: new Date().toISOString() }, { merge: true });
-  return { messageId: message.id, published: true, refreshed: false };
-}
-
 async function ensureDiscordSupportLinkSent() {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير متصل حالياً، لذلك لم يتم إرسال رابط الدعم.');
@@ -856,6 +809,17 @@ async function postDiscordMessage(channelId: string, token: string, data: Record
     throw new Error(`تعذر إرسال رسالة Discord إلى الروم ${channelId} (HTTP ${response.status}, code ${details?.code ?? 'unknown'}).`);
   }
   return response.json() as Promise<{ id: string }>;
+}
+
+async function verifyReviewChannel(token: string): Promise<void> {
+  const response = await discordApi(`/channels/${PRODUCT_REVIEW_CHANNEL_ID}`, token);
+  if (!response.ok) {
+    const details = await response.json().catch(() => null) as { code?: number } | null;
+    throw new Error(`روم التقييم غير متاح للبوت (HTTP ${response.status}, code ${details?.code ?? 'unknown'}).`);
+  }
+  const channel = await response.json() as { guild_id?: string; type?: number };
+  if (channel.guild_id !== guildId) throw new Error('روم التقييم ليس داخل سيرفر تعن المحدد.');
+  console.info(`[Discord Reviews] Channel reachable (type ${channel.type ?? 'unknown'}).`);
 }
 
 export async function publishDiscordGiveaway(giveaway: Giveaway, replacement = false): Promise<string> {
@@ -1599,12 +1563,7 @@ export async function startDiscordBot() {
   } catch (error) {
     console.error('[Discord Reset] Channel permissions, private audit setup, or panel publish failed:', error);
   }
-  try {
-    const announcement = await ensureDiscordResetFeatureAnnouncementPublished();
-    if (announcement.published) console.info(`[Discord Updates] Published reset feature announcement ${announcement.messageId}.`);
-  } catch (error) {
-    console.error('[Discord Updates] Reset announcement failed:', error);
-  }
+  await verifyReviewChannel(token).catch((error) => console.error('[Discord Reviews] Channel check failed:', error));
   await verifyCustomerAuditRooms(token).catch((error) => console.error('[Discord Audit] Customer audit rooms are unavailable:', error));
   connect(token);
 }

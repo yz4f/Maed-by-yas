@@ -3,10 +3,10 @@ import { z } from 'zod';
 import { StoreDB } from '@/lib/store-db';
 import { getClientIp, getSessionActor, requestHasTrustedOrigin } from '@/lib/request-security';
 import { limitProductReview } from '@/lib/security-rate-limit';
+import { PRODUCT_REVIEW_CHANNEL_ID } from '@/lib/discord-channels';
 
 export const dynamic = 'force-dynamic';
 
-const REVIEW_CHANNEL_ID = '1397221014215331891';
 const MAX_REQUEST_CHARS = 750_000;
 const reviewSchema = z.object({
   licenseId: z.string().trim().min(1).max(180),
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
       headers = { ...headers, 'Content-Type': 'application/json' };
     }
 
-    const response = await fetch(`https://discord.com/api/v10/channels/${REVIEW_CHANNEL_ID}/messages`, {
+    const response = await fetch(`https://discord.com/api/v10/channels/${PRODUCT_REVIEW_CHANNEL_ID}/messages`, {
       method: 'POST', headers, body, cache: 'no-store', signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) {
