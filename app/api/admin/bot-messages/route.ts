@@ -6,11 +6,13 @@ import { StoreDB } from '@/lib/store-db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!await isAuthorizedAdmin()) return NextResponse.json({ success: false, error: 'غير مصرح لك بعرض رسائل البوت.' }, { status: 403 });
+  const before = new URL(request.url).searchParams.get('before');
+  if (before && !/^\d{16,22}$/.test(before)) return NextResponse.json({ success: false, error: 'مؤشر الرسائل غير صالح.' }, { status: 400 });
   try {
-    const messages = await listDiscordBotDirectMessages();
-    return NextResponse.json({ success: true, messages }, { headers: { 'Cache-Control': 'private, no-store' } });
+    const result = await listDiscordBotDirectMessages(before || undefined);
+    return NextResponse.json({ success: true, ...result }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('[Discord Bot DM] Unable to load messages:', error);
     return NextResponse.json({ success: false, error: 'تعذر تحميل رسائل البوت الآن.' }, { status: 502 });

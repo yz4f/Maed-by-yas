@@ -1089,11 +1089,24 @@ export async function sendDiscordAdminDirectMessage(event: {
     return { sent: false, reason: 'duplicate' as const };
   }
 
+  let customerName = event.customerName;
+  let customerImage: string | null = null;
+  if (!customerName || customerName === customerDiscordId) {
+    const profileResponse = await discordApi(`/users/${customerDiscordId}`, token).catch(() => null);
+    if (profileResponse?.ok) {
+      const profile = await profileResponse.json().catch(() => null) as { global_name?: string | null; username?: string; avatar?: string | null } | null;
+      if (profile) {
+        customerName = profile.global_name || profile.username || customerDiscordId;
+        if (profile.avatar) customerImage = `https://cdn.discordapp.com/avatars/${customerDiscordId}/${profile.avatar}.png`;
+      }
+    }
+  }
+
   const dmId = await openDiscordDm(customerDiscordId, token);
   const sentMessage = await postDiscordMessage(dmId, token, { content: body, allowed_mentions: { parse: [] } });
-  await setDoc(cooldownRef, { customerDiscordId, customerName: event.customerName, body, sentAt: new Date().toISOString(), staffName: event.staffName }, { merge: true });
+  await setDoc(cooldownRef, { customerDiscordId, customerName, body, sentAt: new Date().toISOString(), staffName: event.staffName }, { merge: true });
   await postBotDirectMessageAudit(token, {
-    direction: 'out', customerDiscordId, customerName: event.customerName,
+    direction: 'out', customerDiscordId, customerName, customerImage,
     content: body, sourceMessageId: sentMessage.id, staffName: event.staffName,
   }).catch((error) => console.error('[Discord Bot DM] Unable to log outbound message:', error));
   return { sent: true, reason: 'sent' as const };
@@ -1137,11 +1150,11 @@ async function postBotDirectMessageAudit(token: string, item: BotDirectMessageAu
   if (!response.ok) throw new Error(`Discord direct message log HTTP ${response.status}`);
 }
 
-export async function listDiscordBotDirectMessages() {
+export async function listDiscordBotDirectMessages(before?: string) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error('بوت Discord غير مهيأ.');
   const channelId = (await ensurePrivateAuditChannels(token)).botDirectMessagesChannelId;
-  const response = await discordApi(`/channels/${channelId}/messages?limit=50`, token);
+  const response = await discordApi(`/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ''}`, token);
   if (!response.ok) throw new Error(`تعذر قراءة سجل رسائل البوت (HTTP ${response.status}).`);
   const messages = await response.json() as Array<{
     id: string; timestamp: string; embeds?: Array<{
@@ -1149,7 +1162,7 @@ export async function listDiscordBotDirectMessages() {
       fields?: Array<{ name: string; value: string }>; footer?: { text?: string }; timestamp?: string;
     }>;
   }>;
-  return messages.flatMap((message) => {
+  const entries = messages.flatMap((message) => {
     const embed = message.embeds?.[0];
     const match = /^T3N-BOT-DM\|(in|out)\|(\d{16,22})\|(\d{16,22})$/.exec(embed?.footer?.text || '');
     if (!embed || !match) return [];
@@ -1164,6 +1177,7 @@ export async function listDiscordBotDirectMessages() {
       createdAt: embed.timestamp || message.timestamp,
     }];
   });
+  return { messages: entries, nextBefore: messages.length === 100 ? messages[messages.length - 1].id : null };
 }
 
 async function handleIncomingBotDirectMessage(message: {
