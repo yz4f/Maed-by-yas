@@ -80,15 +80,15 @@ export function PortalNavigation({
   const Chevron = ar ? ChevronLeft : ChevronRight;
   const shouldAnimate = animateCollapse && !reducedMotion;
   const layoutTransition = shouldAnimate
-    ? { duration: 0.28, ease: 'easeOut' as const }
+    ? { duration: 0.46, ease: [0.22, 1, 0.36, 1] as const }
     : { duration: 0 };
   const labelMotion = (compact: boolean, order: number) => ({
     initial: false as const,
     animate: compact ? { opacity: 0, x: ar ? -8 : 8 } : { opacity: 1, x: 0 },
     transition: shouldAnimate
       ? compact
-        ? { duration: 0.12 }
-        : { duration: 0.24, delay: 0.07 + order * 0.035 }
+        ? { duration: 0.2, ease: 'easeOut' as const }
+        : { duration: 0.32, delay: 0.1 + order * 0.012, ease: 'easeOut' as const }
       : { duration: 0 },
   });
 
@@ -385,7 +385,7 @@ export function PortalNavigation({
                 initial={shouldAnimate ? { opacity: 0, rotate: -35, scale: 0.75 } : false}
                 animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 exit={shouldAnimate ? { opacity: 0, rotate: 35, scale: 0.75 } : undefined}
-                transition={{ duration: shouldAnimate ? 0.14 : 0 }}
+                transition={{ duration: shouldAnimate ? 0.22 : 0 }}
               >
                 {collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
               </motion.span>
