@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, setDoc, updateDoc, where } from '@/lib/server-firestore';
 import { db as getDb, StoreDB } from '@/lib/store-db';
 import type { TicketActor } from '@/lib/ticket-auth';
-import { sendDiscordConversationClosedAuditLog, sendDiscordResetCompletedDirectMessage, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
+import { deleteDiscordResetRequestCard, sendDiscordConversationClosedAuditLog, sendDiscordResetCompletedDirectMessage, sendDiscordWebsiteLog, syncDiscordResetRequestLog } from '@/lib/discord-bot';
 import type { AiConversation, AiConversationStatus, AiImageAttachment, AiKnowledgeEntry, AiMessage, ResetRequest, ResetRequestStatus, SupportNotification, User, UserProduct } from '@/types';
 
 const AI_COLLECTION = 'aiConversations';
@@ -1058,6 +1058,42 @@ export async function listResetRequests(actor: TicketActor) {
   if (!isStaff(actor)) throw new Error('هذه القائمة مخصصة للإدارة.');
   const snapshot = await getDocs(collection(database(), RESET_COLLECTION));
   return snapshot.docs.map(toResetRequest).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+}
+
+export async function deleteResetRequests(actor: TicketActor, requestId?: string) {
+  if (!isStaff(actor)) throw new Error('حذف طلبات الرستات مخصص للإدارة.');
+  const snapshots = requestId
+    ? [await getDoc(doc(database(), RESET_COLLECTION, requestId))]
+    : (await getDocs(collection(database(), RESET_COLLECTION))).docs;
+  let deletedCount = 0;
+  let skippedCount = 0;
+  const deletedIds: string[] = [];
+  for (const snapshot of snapshots) {
+    if (!snapshot.exists()) continue;
+    let request: ResetRequest | null = null;
+    let skipped = false;
+    const reference = doc(database(), RESET_COLLECTION, snapshot.id);
+    await runTransaction(database(), async (transaction) => {
+      request = null;
+      skipped = false;
+      const current = await transaction.get(reference);
+      if (!current.exists()) return;
+      const data = current.data() as Record<string, unknown>;
+      if (data.completionClaimId || data.customerDmClaimId) { skipped = true; return; }
+      request = toResetRequest(current);
+      transaction.delete(reference);
+    });
+    if (skipped) skippedCount += 1;
+    if (!request) continue;
+    deletedCount += 1;
+    const removed = request as ResetRequest;
+    deletedIds.push(removed.id);
+    await deleteDiscordResetRequestCard(removed.discordMessageId, removed.discordLogChannelId)
+      .catch((error) => console.error('[Discord Reset] Unable to remove deleted request card:', error));
+  }
+  if (deletedCount) await StoreDB.addLog('Reset Requests Deleted', `حذف ${actor.name} ${deletedCount} طلب رستات من الإدارة.`, actor.id, actor.name)
+    .catch((error) => console.error('[Reset] Unable to save deletion audit:', error));
+  return { deletedCount, skippedCount, deletedIds };
 }
 
 async function getConversationMessages(conversationId: string) {

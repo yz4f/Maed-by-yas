@@ -29,6 +29,7 @@ const DISCORD_RESET_AUDIT_CATEGORY_NAME = '🔐・reset-logs';
 const DISCORD_RESET_AUDIT_CHANNEL_NAME = '📋・reset-requests-log';
 const DISCORD_CONVERSATION_AUDIT_CHANNEL_NAME = '💬・support-closures';
 const DISCORD_WEBSITE_EVENTS_CHANNEL_NAME = '🖥️・website-events';
+const DISCORD_BOT_MESSAGES_CHANNEL_NAME = '📨・bot-messages';
 const CUSTOMER_LOGIN_CHANNEL_ID = '1541944037119103169';
 const CUSTOMER_LOGOUT_CHANNEL_ID = '1541944040163909633';
 const CUSTOMER_EVENTS_CHANNEL_ID = '1541944042492002324';
@@ -41,6 +42,7 @@ type DiscordPrivateAuditChannels = {
   loginAuditChannelId: string;
   logoutAuditChannelId: string;
   websiteEventsChannelId: string;
+  botDirectMessagesChannelId: string;
 };
 let privateAuditChannelCache: DiscordPrivateAuditChannels | null = null;
 
@@ -208,7 +210,12 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
     if (existing) return ensureChannelParent(existing);
     const response = await discordApi(`/guilds/${guildId}/channels`, token, {
       method: 'POST',
-      body: JSON.stringify({ name, type: 0, parent_id: parentId, topic: 'Private administrative audit log. No full license keys, chat content, email, or IP addresses.' }),
+      body: JSON.stringify({
+        name, type: 0, parent_id: parentId,
+        topic: name === DISCORD_BOT_MESSAGES_CHANNEL_NAME
+          ? 'Private bot DM inbox for authorized staff. Contains customer messages and attachments.'
+          : 'Private administrative audit log. No full license keys, chat content, email, or IP addresses.',
+      }),
     });
     if (!response.ok) throw new Error(`تعذر إنشاء روم سجل Discord الخاص (HTTP ${response.status}).`);
     return String((await response.json() as { id: string }).id);
@@ -223,6 +230,7 @@ async function ensurePrivateAuditChannels(token: string): Promise<DiscordPrivate
     loginAuditChannelId: CUSTOMER_LOGIN_CHANNEL_ID,
     logoutAuditChannelId: CUSTOMER_LOGOUT_CHANNEL_ID,
     websiteEventsChannelId: await createOrRenameLogChannel(storedChannels?.websiteEventsChannelId, DISCORD_WEBSITE_EVENTS_CHANNEL_NAME, category.id),
+    botDirectMessagesChannelId: await createOrRenameLogChannel(storedChannels?.botDirectMessagesChannelId, DISCORD_BOT_MESSAGES_CHANNEL_NAME, category.id),
   };
   await setDoc(configRef, { ...privateAuditChannelCache, updatedAt: new Date().toISOString() }, { merge: true });
   return privateAuditChannelCache;
@@ -1082,9 +1090,99 @@ export async function sendDiscordAdminDirectMessage(event: {
   }
 
   const dmId = await openDiscordDm(customerDiscordId, token);
-  await postDiscordMessage(dmId, token, { content: body });
+  const sentMessage = await postDiscordMessage(dmId, token, { content: body, allowed_mentions: { parse: [] } });
   await setDoc(cooldownRef, { customerDiscordId, customerName: event.customerName, body, sentAt: new Date().toISOString(), staffName: event.staffName }, { merge: true });
+  await postBotDirectMessageAudit(token, {
+    direction: 'out', customerDiscordId, customerName: event.customerName,
+    content: body, sourceMessageId: sentMessage.id, staffName: event.staffName,
+  }).catch((error) => console.error('[Discord Bot DM] Unable to log outbound message:', error));
   return { sent: true, reason: 'sent' as const };
+}
+
+type BotDirectMessageAudit = {
+  direction: 'in' | 'out';
+  customerDiscordId: string;
+  customerName: string;
+  customerImage?: string | null;
+  content: string;
+  attachments?: Array<{ name: string; url: string }>;
+  sourceMessageId: string;
+  staffName?: string;
+};
+
+async function postBotDirectMessageAudit(token: string, item: BotDirectMessageAudit) {
+  const channelId = (await ensurePrivateAuditChannels(token)).botDirectMessagesChannelId;
+  const attachments = (item.attachments || []).slice(0, 5)
+    .filter((attachment) => /^https:\/\/cdn\.discordapp\.com\/attachments\//.test(attachment.url))
+    .map((attachment) => `[${attachment.name.replace(/[\[\]]/g, '').slice(0, 80)}](${attachment.url})`);
+  const response = await discordApi(`/channels/${channelId}/messages`, token, {
+    method: 'POST',
+    body: JSON.stringify({
+      embeds: [{
+        color: item.direction === 'in' ? 0x38bdf8 : 0x818cf8,
+        title: item.direction === 'in' ? 'رسالة واردة إلى البوت' : 'رسالة مرسلة من الإدارة',
+        description: item.content.trim().slice(0, 3500) || 'رسالة تحتوي على مرفق فقط.',
+        author: { name: item.customerName.slice(0, 200), ...(item.customerImage ? { icon_url: item.customerImage } : {}) },
+        fields: [
+          { name: 'حساب Discord', value: `<@${item.customerDiscordId}> · \`${item.customerDiscordId}\``, inline: true },
+          ...(item.staffName ? [{ name: 'الإدارة', value: item.staffName.slice(0, 200), inline: true }] : []),
+          ...(attachments.length ? [{ name: 'المرفقات', value: attachments.join('\n').slice(0, 1000), inline: false }] : []),
+        ],
+        footer: { text: `T3N-BOT-DM|${item.direction}|${item.customerDiscordId}|${item.sourceMessageId}` },
+        timestamp: new Date().toISOString(),
+      }],
+      allowed_mentions: { parse: [] },
+    }),
+  });
+  if (!response.ok) throw new Error(`Discord direct message log HTTP ${response.status}`);
+}
+
+export async function listDiscordBotDirectMessages() {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('بوت Discord غير مهيأ.');
+  const channelId = (await ensurePrivateAuditChannels(token)).botDirectMessagesChannelId;
+  const response = await discordApi(`/channels/${channelId}/messages?limit=50`, token);
+  if (!response.ok) throw new Error(`تعذر قراءة سجل رسائل البوت (HTTP ${response.status}).`);
+  const messages = await response.json() as Array<{
+    id: string; timestamp: string; embeds?: Array<{
+      title?: string; description?: string; author?: { name?: string; icon_url?: string };
+      fields?: Array<{ name: string; value: string }>; footer?: { text?: string }; timestamp?: string;
+    }>;
+  }>;
+  return messages.flatMap((message) => {
+    const embed = message.embeds?.[0];
+    const match = /^T3N-BOT-DM\|(in|out)\|(\d{16,22})\|(\d{16,22})$/.exec(embed?.footer?.text || '');
+    if (!embed || !match) return [];
+    return [{
+      id: message.id,
+      direction: match[1] as 'in' | 'out',
+      discordId: match[2],
+      name: embed.author?.name || match[2],
+      image: embed.author?.icon_url || null,
+      content: embed.description || '',
+      attachments: embed.fields?.find((field) => field.name === 'المرفقات')?.value || '',
+      createdAt: embed.timestamp || message.timestamp,
+    }];
+  });
+}
+
+async function handleIncomingBotDirectMessage(message: {
+  id?: string; guild_id?: string; channel_id?: string; content?: string;
+  author?: { id?: string; username?: string; global_name?: string; avatar?: string | null; bot?: boolean };
+  attachments?: Array<{ filename?: string; url?: string }>;
+}, token: string) {
+  if (message.guild_id || !message.id || !message.author?.id || message.author.bot) return;
+  const author = message.author;
+  const authorId = author.id!;
+  const avatar = author.avatar
+    ? `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png`
+    : null;
+  await postBotDirectMessageAudit(token, {
+    direction: 'in', customerDiscordId: authorId,
+    customerName: author.global_name || author.username || authorId,
+    customerImage: avatar, content: message.content || '', sourceMessageId: message.id,
+    attachments: (message.attachments || []).map((item) => ({ name: item.filename || 'attachment', url: item.url || '' })),
+  });
 }
 
 export async function sendDiscordResetCompletedDirectMessage(event: {
@@ -1482,7 +1580,7 @@ async function answerInteraction(interaction: any, token: string) {
 function identify(token: string) {
   sendGateway(2, {
     token,
-    intents: 33_281,
+    intents: 37_377,
     properties: { os: 'linux', browser: 't3nn.wtf', device: 't3nn.wtf' },
   });
 }
@@ -1526,6 +1624,7 @@ function handleGatewayMessage(data: RawData, token: string) {
     return;
   }
   if (packet.t === 'INTERACTION_CREATE') void answerInteraction(packet.d, token).catch((error) => console.error('[Discord Bot] Interaction handling failed:', error));
+  if (packet.t === 'MESSAGE_CREATE') void handleIncomingBotDirectMessage(packet.d, token).catch((error) => console.error('[Discord Bot DM] Incoming message log failed:', error));
 }
 
 function connect(token: string) {

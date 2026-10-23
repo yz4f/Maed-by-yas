@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, Send, UserRound, XCircle } from 'lucide-react';
+import { Check, CheckCircle2, Clock3, Copy, KeyRound, MessageSquareText, RefreshCw, Send, Trash2, UserRound, XCircle } from 'lucide-react';
 import type { ResetRequest, ResetRequestStatus } from '@/types';
 
 interface ResetKeyRequestsAdminProps {
@@ -42,6 +42,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [view, setView] = useState<'active' | 'history'>('active');
   const mutationVersionRef = useRef(0);
   const mountedRef = useRef(false);
@@ -141,6 +142,41 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
     }
   };
 
+  const removeRequests = async (requestId?: string) => {
+    const target = requestId ? requests.find((item) => item.id === requestId) : null;
+    const confirmation = requestId
+      ? (lang === 'ar' ? `حذف طلب ${target?.reference || requestId} نهائيًا؟` : `Permanently delete request ${target?.reference || requestId}?`)
+      : (lang === 'ar' ? `حذف جميع طلبات الرستات (${requests.length}) نهائيًا؟` : `Permanently delete all reset requests (${requests.length})?`);
+    if (!window.confirm(confirmation)) return;
+    mutationVersionRef.current += 1;
+    if (requestId) setBusyId(requestId);
+    else setIsDeletingAll(true);
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'delete_reset_requests', ...(requestId ? { requestId } : {}) }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'تعذر حذف الطلبات.');
+      mutationVersionRef.current += 1;
+      const deletedIds = new Set<string>(Array.isArray(data.deletedIds) ? data.deletedIds : []);
+      setRequests((current) => {
+        const next = current.filter((item) => !deletedIds.has(item.id));
+        requestCacheRef.current = next;
+        return next;
+      });
+      void load();
+      onNotify(lang === 'ar'
+        ? `تم حذف ${data.deletedCount} طلب${data.skippedCount ? `؛ تعذر حذف ${data.skippedCount} طلب قيد التنفيذ` : ''}.`
+        : `Deleted ${data.deletedCount} request(s)${data.skippedCount ? `; ${data.skippedCount} in progress` : ''}.`, 'success');
+    } catch (error) {
+      onNotify(error instanceof Error ? error.message : 'تعذر حذف الطلبات.', 'error');
+    } finally {
+      setBusyId(null);
+      setIsDeletingAll(false);
+    }
+  };
+
   const pendingCount = requests.filter((request) => request.status === 'PENDING').length;
   const completedCount = requests.filter((request) => request.status === 'COMPLETED').length;
   const history = requests.filter((request) => ['COMPLETED', 'REJECTED', 'CANCELLED'].includes(request.status));
@@ -167,6 +203,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
           <span className={`rounded-xl border px-3 py-2 text-[11px] font-black ${isDark ? 'border-emerald-300/15 bg-emerald-300/[0.08] text-emerald-100' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{completedCount} {lang === 'ar' ? 'مكتمل' : 'completed'}</span>
           <button onClick={() => void publishPanel()} disabled={isPublishing} className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[10px] font-black transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-amber-300/20 bg-amber-300/[0.1] text-amber-100 hover:bg-amber-300/[0.17]' : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'}`} title={lang === 'ar' ? 'نشر لوحة طلب الريست في Discord' : 'Publish reset request panel in Discord'}><Send size={13} />{isPublishing ? (lang === 'ar' ? 'جارٍ النشر…' : 'Publishing…') : (lang === 'ar' ? 'نشر اللوحة' : 'Publish panel')}</button>
           <button onClick={() => void load()} disabled={isLoading} className={`grid h-9 w-9 place-items-center rounded-xl border transition active:scale-95 disabled:opacity-55 ${isDark ? 'border-white/[0.1] bg-white/[0.04] text-slate-300 hover:bg-white/[0.09]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`} title={lang === 'ar' ? 'تحديث' : 'Refresh'}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /></button>
+          <button type="button" onClick={() => void removeRequests()} disabled={isDeletingAll || requests.length === 0} className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[10px] font-black transition active:scale-95 disabled:opacity-50 ${isDark ? 'border-rose-300/20 bg-rose-300/[0.08] text-rose-200 hover:bg-rose-300/[0.15]' : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'}`}><Trash2 size={13} />{lang === 'ar' ? 'حذف الكل' : 'Delete all'}</button>
         </div>
       </div>
 
@@ -191,7 +228,7 @@ export function ResetKeyRequestsAdmin({ lang, isDark, onNotify }: ResetKeyReques
                   <img src={request.customerImage || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className={`h-11 w-11 rounded-2xl border object-cover ${isDark ? 'border-cyan-300/20' : 'border-sky-200'}`} onError={(event) => { event.currentTarget.src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }} />
                   <div className="min-w-0"><h4 className={`truncate text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{request.customerName}</h4><p className={`mt-0.5 text-[11px] ${muted}`}>{request.reference}</p><div className={`mt-2 inline-flex max-w-full items-center gap-2 rounded-xl border px-2 py-1 ${isDark ? 'border-cyan-300/[0.14] bg-cyan-300/[0.06] text-cyan-100' : 'border-sky-200 bg-sky-50 text-sky-800'}`}><img src={request.productImage || '/logo.png'} alt="" loading="lazy" className="h-5 w-5 shrink-0 rounded-md object-cover" onError={(event) => { event.currentTarget.src = '/logo.png'; }} /><span className="truncate text-[10px] font-black">{request.productName}</span></div></div>
                 </div>
-                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black ${statusStyle[request.status]}`}>{statusLabel(request.status, lang)}</span>
+                <div className="flex shrink-0 items-center gap-2"><span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${statusStyle[request.status]}`}>{statusLabel(request.status, lang)}</span><button type="button" onClick={() => void removeRequests(request.id)} disabled={busyId === request.id || isDeletingAll} className={`grid h-7 w-7 place-items-center rounded-lg border transition disabled:opacity-50 ${isDark ? 'border-rose-300/20 text-rose-200 hover:bg-rose-300/[0.12]' : 'border-rose-200 text-rose-700 hover:bg-rose-50'}`} title={lang === 'ar' ? 'حذف الطلب' : 'Delete request'} aria-label={lang === 'ar' ? 'حذف الطلب' : 'Delete request'}><Trash2 size={13} /></button></div>
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">

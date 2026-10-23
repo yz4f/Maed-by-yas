@@ -75,6 +75,7 @@ const GiveawayAdmin = dynamic(() => import('./giveaway-admin').then((module) => 
 const ResetKeyRequestsAdmin = dynamic(() => import('./reset-key-requests-admin').then((module) => module.ResetKeyRequestsAdmin), { ssr: false });
 const SitePresenceAdmin = dynamic(() => import('./site-presence-admin').then((module) => module.SitePresenceAdmin), { ssr: false });
 const CustomerRecoveryAdmin = dynamic(() => import('./customer-recovery-admin').then((module) => module.CustomerRecoveryAdmin), { ssr: false });
+const BotMessagesAdmin = dynamic(() => import('./bot-messages-admin').then((module) => module.BotMessagesAdmin), { ssr: false });
 const AdminAuditLog = dynamic(() => import('./admin-audit-log').then((module) => module.AdminAuditLog), { ssr: false });
 const loadProductStockModal = () => import('@/components/admin/stock/ProductStockModal').then((module) => module.ProductStockModal);
 const ProductStockModal = dynamic(loadProductStockModal, { ssr: false });
@@ -447,7 +448,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
   }[lang];
 
   // Admin Categorized Dashboard Sub-Tabs
-  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'customerRecovery' | 'sitePresence' | 'help' | 'updates' | 'giveaways' | 'resetRequests' | 'keys' | 'logs'>('overview');
+  const [adminSectionTab, setAdminSectionTab] = useState<'overview' | 'products' | 'customers' | 'customerRecovery' | 'botMessages' | 'sitePresence' | 'help' | 'updates' | 'giveaways' | 'resetRequests' | 'keys' | 'logs'>('overview');
   const [allCustomersList, setAllCustomersList] = useState<any[]>([]);
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
   const [selectedAdminCustomer, setSelectedAdminCustomer] = useState<any | null>(null);
@@ -2404,6 +2405,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'products' && <Package className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />}
                     {adminSectionTab === 'customers' && <Users className="w-6 h-6 text-pink-500 dark:text-pink-400" />}
                     {adminSectionTab === 'customerRecovery' && <UserCheck className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
+                    {adminSectionTab === 'botMessages' && <MessageSquare className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'help' && <HelpCircle className="w-6 h-6 text-teal-500 dark:text-teal-400" />}
                     {adminSectionTab === 'updates' && <Megaphone className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
                     {adminSectionTab === 'giveaways' && <Gift className="w-6 h-6 text-cyan-500 dark:text-cyan-300" />}
@@ -2416,6 +2418,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                     {adminSectionTab === 'products' && (lang === 'ar' ? 'إدارة المنتجات والمخزون' : 'Products & Inventory')}
                     {adminSectionTab === 'customers' && (lang === 'ar' ? 'إدارة العملاء' : 'Customers Management')}
                   {adminSectionTab === 'customerRecovery' && (lang === 'ar' ? 'استرجاع أعضاء ديسكورد' : 'Discord Member Recovery')}
+                  {adminSectionTab === 'botMessages' && (lang === 'ar' ? 'رسائل البوت الخاصة' : 'Bot Direct Messages')}
                     {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة مركز المساعدة والأسئلة الشائعة' : 'Help Center & FAQ Management')}
                     {adminSectionTab === 'updates' && (lang === 'ar' ? 'تحديثات الموقع الرسمية' : 'Official Website Updates')}
                     {adminSectionTab === 'giveaways' && (lang === 'ar' ? 'قيفاوي' : 'Giveaways')}
@@ -2429,6 +2432,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                   {adminSectionTab === 'products' && (lang === 'ar' ? 'تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.' : 'Full control over product settings and manual key addition.')}
                   {adminSectionTab === 'customers' && (lang === 'ar' ? 'استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.' : 'Browse customer data, manage bans, and audit their activities.')}
                   {adminSectionTab === 'customerRecovery' && (lang === 'ar' ? 'اعرض من هم داخل السيرفر أو غادروه، واسترجع الموثقين بعد موافقتهم.' : 'See members in or out of the server and recover verified members after consent.')}
+                  {adminSectionTab === 'botMessages' && (lang === 'ar' ? 'اقرأ رسائل البوت الخاصة وأرسل ردودًا للأعضاء من لوحة الإدارة.' : 'Read bot direct messages and send replies to members from the admin panel.')}
                   {adminSectionTab === 'help' && (lang === 'ar' ? 'إدارة تصنيفات وأسئلة مركز المساعدة، وتتبع الأسئلة الأكثر بحثاً وتعديل الإجابات باحترافية.' : 'Manage Help Center categories and FAQs, view real search stats, and edit rich answers.')}
                   {adminSectionTab === 'updates' && (lang === 'ar' ? 'أنشئ تحديثاً موثقاً بصورة، اعتمده، ثم انشره مرة واحدة إلى Discord.' : 'Create an image-backed update, approve it, then publish it once to Discord.')}
                   {adminSectionTab === 'giveaways' && (lang === 'ar' ? 'أنشئ سحباً، أضف مفاتيحه الخاصة، وانشره في Discord مع تسليم آلي للفائز.' : 'Create a giveaway and deliver its separate key pool to the winner.')}
@@ -2476,6 +2480,7 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
                 { id: 'products', label: lang === 'ar' ? 'المنتجات والمخزون' : 'Products & Stock', icon: Package },
                 { id: 'customers', label: lang === 'ar' ? 'العملاء' : 'Customers', icon: Users },
                 { id: 'customerRecovery', label: lang === 'ar' ? 'استرجاع أعضاء ديسكورد' : 'Recover Discord members', icon: UserCheck },
+                { id: 'botMessages', label: lang === 'ar' ? 'رسائل البوت' : 'Bot messages', icon: MessageSquare },
                 { id: 'help', label: lang === 'ar' ? 'مركز المساعدة' : 'Help center', icon: HelpCircle },
                 { id: 'updates', label: lang === 'ar' ? 'تحديثات الموقع' : 'Website Updates', icon: Megaphone },
                 { id: 'giveaways', label: lang === 'ar' ? 'قيفاوي' : 'Giveaways', icon: Gift },
@@ -2732,6 +2737,8 @@ export function T3NUnifiedPortal({ initialProducts }: T3NUnifiedPortalProps) {
             {adminSectionTab === 'customerRecovery' && (
               <CustomerRecoveryAdmin lang={lang} onRecovered={() => void loadAdminCustomersList()} />
             )}
+
+            {adminSectionTab === 'botMessages' && <BotMessagesAdmin lang={lang} isDark={isDark} />}
 
 
             {adminSectionTab === 'updates' && (

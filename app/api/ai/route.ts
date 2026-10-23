@@ -5,6 +5,7 @@ import {
   createResetRequest,
   listCustomerResetRequests,
   listResetRequests,
+  deleteResetRequests,
   processResetRequest,
   purgeTerminalResetRequests,
   listCustomerSupportNotifications,
@@ -107,5 +108,18 @@ export async function PATCH(request: NextRequest) {
     if (body?.action !== 'process_reset') return NextResponse.json({ success: false, error: 'هذه الخدمة غير متاحة.' }, { status: 404 });
     const input = adminResetPatchSchema.parse(body);
     return NextResponse.json({ success: true, request: await processResetRequest(current, { requestId: input.requestId, action: input.decision, note: input.note }) });
+  } catch (error) { return failed(error); }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!requestHasTrustedOrigin(request)) return NextResponse.json({ success: false, error: 'مصدر الطلب غير موثوق.' }, { status: 403 });
+    const current = await actor();
+    if (!current) return NextResponse.json({ success: false, error: 'يجب تسجيل الدخول أولاً.' }, { status: 401 });
+    if (!actorCanManageAi(current)) return NextResponse.json({ success: false, error: 'هذه العملية مخصصة للإدارة.' }, { status: 403 });
+    const body = await request.json().catch(() => ({}));
+    if (body?.action !== 'delete_reset_requests') return NextResponse.json({ success: false, error: 'هذه الخدمة غير متاحة.' }, { status: 404 });
+    const requestId = body.requestId === undefined ? undefined : z.string().trim().regex(/^[a-zA-Z0-9_-]{1,180}$/).parse(body.requestId);
+    return NextResponse.json({ success: true, ...(await deleteResetRequests(current, requestId)) });
   } catch (error) { return failed(error); }
 }
